@@ -1,0 +1,153 @@
+# Fox ML Theme for Yazi
+# Matches waybar, hyprland, tmux, kitty, and spicetify
+
+# Color Palette:
+# bg:       #1f242b
+# fg:       #f5f5f7
+# slate:    #3a414b
+# peach:    #f4b58a
+# lavender: #9a8ac4
+# pink:     #f5a9b8
+
+[manager]
+cwd = { fg = "#f4b58a", bold = true }
+
+# Hovered
+hovered         = { fg = "#1f242b", bg = "#f4b58a" }
+preview_hovered = { underline = true }
+
+# Find
+find_keyword  = { fg = "#f9e2af", bold = true, italic = true, underline = true }
+find_position = { fg = "#9a8ac4", bg = "reset", italic = true }
+
+# Marker
+marker_copied   = { fg = "#8bd5a2", bg = "#8bd5a2" }
+marker_cut      = { fg = "#ff6b6b", bg = "#ff6b6b" }
+marker_marked   = { fg = "#9a8ac4", bg = "#9a8ac4" }
+marker_selected = { fg = "#f5a9b8", bg = "#f5a9b8" }
+
+# Tab
+tab_active   = { fg = "#1f242b", bg = "#f4b58a" }
+tab_inactive = { fg = "#888888", bg = "#3a414b" }
+tab_width    = 1
+
+# Count
+count_copied   = { fg = "#1f242b", bg = "#8bd5a2" }
+count_cut      = { fg = "#1f242b", bg = "#ff6b6b" }
+count_selected = { fg = "#1f242b", bg = "#f5a9b8" }
+
+# Border
+border_symbol = "│"
+border_style  = { fg = "#3a414b" }
+
+[status]
+separator_open  = ""
+separator_close = ""
+separator_style = { fg = "#3a414b", bg = "#3a414b" }
+
+# Mode
+mode_normal = { fg = "#1f242b", bg = "#f4b58a", bold = true }
+mode_select = { fg = "#1f242b", bg = "#f5a9b8", bold = true }
+mode_unset  = { fg = "#1f242b", bg = "#9a8ac4", bold = true }
+
+# Progress
+progress_label  = { fg = "#f5f5f7", bold = true }
+progress_normal = { fg = "#f4b58a", bg = "#3a414b" }
+progress_error  = { fg = "#ff6b6b", bg = "#3a414b" }
+
+# Permissions
+permissions_t = { fg = "#f4b58a" }
+permissions_r = { fg = "#8bd5a2" }
+permissions_w = { fg = "#ff6b6b" }
+permissions_x = { fg = "#9a8ac4" }
+permissions_s = { fg = "#888888" }
+
+[input]
+border   = { fg = "#f4b58a" }
+title    = {}
+value    = {}
+selected = { reversed = true }
+
+[pick]
+border   = { fg = "#f4b58a" }
+active   = { fg = "#f5a9b8", bold = true }
+inactive = {}
+
+[confirm]
+border     = { fg = "#f4b58a" }
+title      = { fg = "#f4b58a", bold = true }
+content    = {}
+list       = {}
+btn_yes    = { bg = "#f4b58a", fg = "#1f242b" }
+btn_no     = { bg = "#3a414b", fg = "#f5f5f7" }
+btn_labels = [ "  Yes  ", "  No  " ]
+
+[spot]
+border = { fg = "#f4b58a" }
+title  = { fg = "#f4b58a", bold = true }
+
+[completion]
+border   = { fg = "#f4b58a" }
+active   = { fg = "#f5a9b8", bold = true }
+inactive = {}
+icon_file    = ""
+icon_folder  = ""
+icon_command = ""
+
+[tasks]
+border  = { fg = "#f4b58a" }
+title   = {}
+hovered = { fg = "#f5a9b8", underline = true }
+
+[which]
+cols            = 3
+mask            = { bg = "#1f242b" }
+cand            = { fg = "#9a8ac4" }
+rest            = { fg = "#888888" }
+desc            = { fg = "#f5a9b8" }
+separator       = "  "
+separator_style = { fg = "#3a414b" }
+
+[help]
+on      = { fg = "#9a8ac4" }
+run     = { fg = "#f5a9b8" }
+desc    = {}
+hovered = { reversed = true, bold = true }
+footer  = { fg = "#888888", bg = "#1f242b" }
+
+[notify]
+title_info  = { fg = "#8bd5a2" }
+title_warn  = { fg = "#f9e2af" }
+title_error = { fg = "#ff6b6b" }
+icon_info  = ""
+icon_warn  = ""
+icon_error = ""
+
+[filetype]
+rules = [
+    # Images
+    { mime = "image/*", fg = "#f5a9b8" },
+
+    # Media
+    { mime = "{audio,video}/*", fg = "#9a8ac4" },
+
+    # Archives
+    { mime = "application/*zip*", fg = "#f9e2af" },
+    { mime = "application/x-{tar,bzip*,7z-compressed,xz,rar}", fg = "#f9e2af" },
+
+    # Documents
+    { mime = "application/{pdf,doc,rtf}", fg = "#89b4fa" },
+    { mime = "application/vnd.*", fg = "#89b4fa" },
+
+    # Fallback
+    { name = "*", fg = "#f5f5f7" },
+    { name = "*/", fg = "#f4b58a" },
+]
+
+[icon]
+# Default icons
+globs = []
+dirs = []
+files = []
+exts = []
+conds = []

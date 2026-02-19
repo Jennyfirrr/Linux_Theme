@@ -1,0 +1,415 @@
+/* Fox ML Theme for Firefox
+   bg: #1a0d1a | fg: #f5f5f7 | peach: #f4b58a | lavender: #9a8ac4 | pink: #f5a9b8
+   Sharp corners throughout
+*/
+
+:root {
+  --fox-bg: #1a0d1a;
+  --fox-bg-alt: #2d1a2d;
+  --fox-fg: #f5f5f7;
+  --fox-dim: #888888;
+  --fox-peach: #f4b58a;
+  --fox-pink: #f5a9b8;
+  --fox-lavender: #9a8ac4;
+  --fox-slate: #3a414b;
+
+  /* Firefox internal overrides */
+  --autocomplete-popup-background: var(--fox-bg) !important;
+  --autocomplete-popup-color: var(--fox-fg) !important;
+  --arrowpanel-background: var(--fox-bg) !important;
+  --arrowpanel-color: var(--fox-fg) !important;
+  --panel-background: var(--fox-bg) !important;
+  --panel-color: var(--fox-fg) !important;
+  --toolbar-bgcolor: var(--fox-bg) !important;
+}
+
+/* ===== Toolbar & Navigation ===== */
+#navigator-toolbox,
+#titlebar,
+#TabsToolbar,
+#TabsToolbar-customization-target,
+.titlebar-buttonbox-container,
+.titlebar-spacer,
+.toolbar-items,
+#tabbrowser-tabs,
+#tabbrowser-arrowscrollbox,
+.tabbrowser-arrowscrollbox,
+#scrollbutton-up,
+#scrollbutton-down,
+.scrollbutton-up,
+.scrollbutton-down,
+#alltabs-button,
+#new-tab-button,
+.tabs-newtab-button,
+toolbarbutton.titlebar-button,
+.titlebar-buttonbox {
+  background: var(--fox-bg) !important;
+  background-color: var(--fox-bg) !important;
+  border: none !important;
+}
+
+#navigator-toolbox {
+  background: var(--fox-bg) !important;
+  border: none !important;
+}
+
+/* Force tab bar background */
+#TabsToolbar::before,
+#TabsToolbar::after,
+#tabbrowser-tabs::before,
+#tabbrowser-tabs::after {
+  background: var(--fox-bg) !important;
+  background-color: var(--fox-bg) !important;
+}
+
+#nav-bar {
+  background: var(--fox-bg) !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* URL bar */
+#urlbar,
+#urlbar * {
+  background-color: var(--fox-bg-alt) !important;
+  color: var(--fox-fg) !important;
+  border-radius: 0 !important;
+}
+
+#urlbar {
+  border: 2px solid var(--fox-peach) !important;
+}
+
+#urlbar:focus-within {
+  border-color: var(--fox-pink) !important;
+  box-shadow: 0 0 6px rgba(244, 181, 138, 0.3) !important;
+}
+
+#urlbar-input {
+  color: var(--fox-fg) !important;
+}
+
+#urlbar-input::placeholder {
+  color: var(--fox-dim) !important;
+}
+
+#urlbar-background,
+#urlbar-input-container {
+  background: var(--fox-bg-alt) !important;
+  border-radius: 0 !important;
+}
+
+/* Firefox 120+ URL bar overrides */
+#urlbar[open] > #urlbar-input-container,
+#urlbar[focused] > #urlbar-input-container,
+#urlbar:not([open]) > #urlbar-input-container,
+#urlbar-container,
+#urlbar-search-mode-indicator,
+#urlbar-label-box {
+  background-color: var(--fox-bg-alt) !important;
+  color: var(--fox-fg) !important;
+}
+
+/* URL bar dropdown */
+#urlbar-results,
+.urlbarView,
+.urlbarView-body-inner,
+.urlbarView-body-outer {
+  background: var(--fox-bg) !important;
+  color: var(--fox-fg) !important;
+  border-radius: 0 !important;
+}
+
+.urlbarView-row,
+.urlbarView-row-inner {
+  background: var(--fox-bg) !important;
+  color: var(--fox-fg) !important;
+  border-radius: 0 !important;
+}
+
+.urlbarView-row:hover,
+.urlbarView-row[selected] {
+  background: var(--fox-bg-alt) !important;
+}
+
+.urlbarView-title strong,
+.urlbarView-url strong {
+  color: var(--fox-peach) !important;
+}
+
+.urlbarView-url {
+  color: var(--fox-dim) !important;
+}
+
+.urlbarView-favicon {
+  fill: var(--fox-peach) !important;
+}
+
+/* ===== Tabs ===== */
+.tabbrowser-tab,
+.tabbrowser-tab .tab-stack,
+.tabbrowser-tab .tab-background,
+.tabbrowser-tab .tab-content {
+  background: transparent !important;
+  background-color: transparent !important;
+  color: var(--fox-dim) !important;
+  border-radius: 0 !important;
+}
+
+.tabbrowser-tab[selected="true"],
+.tabbrowser-tab[selected="true"] .tab-stack,
+.tabbrowser-tab[selected="true"] .tab-background,
+.tabbrowser-tab[selected="true"] .tab-content {
+  background: var(--fox-bg-alt) !important;
+  background-color: var(--fox-bg-alt) !important;
+  color: var(--fox-fg) !important;
+}
+
+.tabbrowser-tab[selected="true"] {
+  border-bottom: 2px solid var(--fox-peach) !important;
+}
+
+.tabbrowser-tab:hover:not([selected="true"]),
+.tabbrowser-tab:hover:not([selected="true"]) .tab-stack,
+.tabbrowser-tab:hover:not([selected="true"]) .tab-background,
+.tabbrowser-tab:hover:not([selected="true"]) .tab-content {
+  background: rgba(244, 181, 138, 0.1) !important;
+  background-color: rgba(244, 181, 138, 0.1) !important;
+  color: var(--fox-fg) !important;
+}
+
+.tab-background,
+.tab-stack {
+  border-radius: 0 !important;
+}
+
+.tab-close-button {
+  color: var(--fox-dim) !important;
+  border-radius: 0 !important;
+}
+
+.tab-close-button:hover {
+  background: var(--fox-peach) !important;
+  color: var(--fox-bg) !important;
+}
+
+#tabs-newtab-button {
+  color: var(--fox-peach) !important;
+}
+
+#tabs-newtab-button:hover {
+  background: var(--fox-bg-alt) !important;
+}
+
+/* ===== Sidebar ===== */
+#sidebar-box,
+#sidebar,
+#sidebar-header,
+#sidebar-search-container,
+#sidebar-switcher-target,
+#sidebar-switcher-arrow {
+  background: var(--fox-bg) !important;
+  color: var(--fox-fg) !important;
+}
+
+#sidebar-box {
+  border-right: 2px solid var(--fox-peach) !important;
+}
+
+#sidebar-header {
+  background: var(--fox-bg-alt) !important;
+  border-bottom: 1px solid var(--fox-peach) !important;
+}
+
+#sidebar {
+  background: var(--fox-bg) !important;
+}
+
+/* Sidebar content - bookmarks/history trees */
+#sidebar-box treechildren,
+#sidebar-box tree,
+#sidebar-box .sidebar-panel,
+#sidebar-box browser {
+  background: var(--fox-bg) !important;
+  color: var(--fox-fg) !important;
+}
+
+#sidebar-box treechildren::-moz-tree-row {
+  background: var(--fox-bg) !important;
+}
+
+#sidebar-box treechildren::-moz-tree-row(hover) {
+  background: var(--fox-bg-alt) !important;
+}
+
+#sidebar-box treechildren::-moz-tree-row(selected) {
+  background: var(--fox-peach) !important;
+}
+
+#sidebar-box treechildren::-moz-tree-cell-text {
+  color: var(--fox-fg) !important;
+}
+
+#sidebar-box treechildren::-moz-tree-cell-text(selected) {
+  color: var(--fox-bg) !important;
+}
+
+#sidebar-box treechildren::-moz-tree-twisty {
+  color: var(--fox-peach) !important;
+}
+
+#sidebar-box input,
+#sidebar-box textbox,
+#sidebar-search-container input {
+  background: var(--fox-bg-alt) !important;
+  color: var(--fox-fg) !important;
+  border: 1px solid var(--fox-peach) !important;
+}
+
+/* ===== Menus & Popups ===== */
+menupopup {
+  background: var(--fox-bg) !important;
+  color: var(--fox-fg) !important;
+  border: 2px solid var(--fox-peach) !important;
+  border-radius: 0 !important;
+  padding: 4px !important;
+}
+
+menuitem {
+  color: var(--fox-fg) !important;
+  border-radius: 0 !important;
+}
+
+menuitem:hover {
+  background: rgba(244, 181, 138, 0.25) !important;
+  color: var(--fox-fg) !important;
+}
+
+menuitem[disabled="true"] {
+  color: var(--fox-dim) !important;
+}
+
+menuseparator {
+  border-color: var(--fox-slate) !important;
+}
+
+/* Panels */
+panel,
+.panel-arrowcontent,
+panelview,
+panelmultiview {
+  background: var(--fox-bg) !important;
+  color: var(--fox-fg) !important;
+  border-radius: 0 !important;
+}
+
+.panel-viewstack,
+.panel-subview-body {
+  background: var(--fox-bg) !important;
+  color: var(--fox-fg) !important;
+}
+
+/* ===== Toolbar Buttons ===== */
+toolbarbutton {
+  color: var(--fox-fg) !important;
+  border-radius: 0 !important;
+}
+
+toolbarbutton:hover {
+  background: var(--fox-bg-alt) !important;
+}
+
+#back-button,
+#forward-button {
+  color: var(--fox-peach) !important;
+}
+
+/* ===== Search Bar ===== */
+#searchbar {
+  background: var(--fox-bg-alt) !important;
+  color: var(--fox-fg) !important;
+  border: 2px solid var(--fox-peach) !important;
+  border-radius: 0 !important;
+}
+
+.search-panel-one-offs {
+  background: var(--fox-bg) !important;
+}
+
+.searchbar-engine-one-off-item {
+  background: var(--fox-bg) !important;
+  border-radius: 0 !important;
+}
+
+.searchbar-engine-one-off-item:hover {
+  background: var(--fox-bg-alt) !important;
+}
+
+/* ===== Findbar ===== */
+findbar {
+  background: var(--fox-bg) !important;
+  border-top: 2px solid var(--fox-peach) !important;
+}
+
+.findbar-textbox {
+  background: var(--fox-bg-alt) !important;
+  color: var(--fox-fg) !important;
+  border: 1px solid var(--fox-peach) !important;
+  border-radius: 0 !important;
+}
+
+/* ===== Scrollbars ===== */
+scrollbar {
+  background: var(--fox-bg) !important;
+}
+
+scrollbar thumb {
+  background: rgba(244, 181, 138, 0.4) !important;
+  border-radius: 0 !important;
+}
+
+scrollbar thumb:hover {
+  background: rgba(244, 181, 138, 0.6) !important;
+}
+
+/* ===== Notifications ===== */
+notification {
+  background: var(--fox-bg) !important;
+  color: var(--fox-fg) !important;
+  border: 2px solid var(--fox-peach) !important;
+  border-radius: 0 !important;
+}
+
+.notification-button {
+  background: var(--fox-peach) !important;
+  color: var(--fox-bg) !important;
+  border-radius: 0 !important;
+}
+
+/* ===== Tooltips ===== */
+tooltip {
+  background: var(--fox-bg) !important;
+  color: var(--fox-fg) !important;
+  border: 1px solid var(--fox-peach) !important;
+  border-radius: 0 !important;
+}
+
+/* ===== Catch-all for remaining elements ===== */
+#PopupAutoComplete,
+#PopupAutoCompleteRichResult,
+.autocomplete-richlistbox,
+.autocomplete-richlistitem {
+  background: var(--fox-bg) !important;
+  color: var(--fox-fg) !important;
+  border-radius: 0 !important;
+}
+
+.autocomplete-richlistitem:hover,
+.autocomplete-richlistitem[selected] {
+  background: var(--fox-bg-alt) !important;
+}
+
+/* Remove all border-radius */
+* {
+  border-radius: 0 !important;
+}

@@ -1,0 +1,226 @@
+/* Fox ML Theme for Firefox Content */
+
+/* New Tab & Home Page */
+@-moz-document url("about:newtab"), url("about:home") {
+  :root,
+  body {
+    --newtab-background-color: #1a0d1a !important;
+    --newtab-background-color-secondary: #2d1a2d !important;
+    --newtab-element-hover-color: rgba(244, 181, 138, 0.1) !important;
+    --newtab-element-active-color: rgba(244, 181, 138, 0.2) !important;
+    --newtab-text-primary-color: #f5f5f7 !important;
+    --newtab-text-secondary-color: #888888 !important;
+    --newtab-primary-action-background: #f4b58a !important;
+    --newtab-card-background-color: #2d1a2d !important;
+    --newtab-card-placeholder-color: #3a414b !important;
+    --newtab-link-primary-color: #f4b58a !important;
+    --newtab-link-secondary-color: #9a8ac4 !important;
+    --newtab-contextmenu-background-color: #1a0d1a !important;
+    --newtab-contextmenu-button-color: #f5f5f7 !important;
+    --newtab-button-secondary-color: #2d1a2d !important;
+    --newtab-wordmark-color: #f5f5f7 !important;
+    --newtab-status-success: #a7f1c2 !important;
+    --newtab-status-warning: #fce7b2 !important;
+    --newtab-status-error: #f5a9b8 !important;
+    --newtab-inner-box-shadow-color: rgba(244, 181, 138, 0.1) !important;
+    --newtab-overlay-color: rgba(26, 13, 26, 0.8) !important;
+
+    /* Additional overrides */
+    --newtab-topsites-background-color: #2d1a2d !important;
+    --newtab-topsites-label-color: #f5f5f7 !important;
+    --newtab-section-header-text-color: #f4b58a !important;
+    --newtab-card-active-outline-color: #f4b58a !important;
+    --newtab-card-hairline-color: #3a414b !important;
+
+    background-color: #1a0d1a !important;
+    scrollbar-color: rgba(244, 181, 138, 0.4) #1a0d1a !important;
+    scrollbar-width: thin !important;
+  }
+
+  body,
+  .outer-wrapper,
+  .body-wrapper,
+  main {
+    background-color: #1a0d1a !important;
+    color: #f5f5f7 !important;
+  }
+
+  /* Activity Stream outer wrapper */
+  .activity-stream {
+    background-color: #1a0d1a !important;
+  }
+
+  /* Search box */
+  .search-wrapper,
+  .search-inner-wrapper {
+    background-color: transparent !important;
+  }
+
+  .search-wrapper input,
+  .search-wrapper .search-handoff-button,
+  .fake-editable,
+  .search-handoff-button {
+    background-color: #2d1a2d !important;
+    color: #f5f5f7 !important;
+    border: 2px solid #f4b58a !important;
+    border-radius: 0 !important;
+  }
+
+  .search-wrapper .search-handoff-button .fake-caret {
+    background-color: #f4b58a !important;
+  }
+
+  .search-wrapper input::placeholder,
+  .search-handoff-button .fake-textbox {
+    color: #888888 !important;
+  }
+
+  /* Top sites */
+  .top-sites-list {
+    background-color: transparent !important;
+  }
+
+  .top-site-outer,
+  .top-site-inner,
+  .tile,
+  .top-site-button {
+    background-color: #2d1a2d !important;
+    border-radius: 0 !important;
+  }
+
+  .top-site-outer:hover .tile,
+  .top-site-outer:focus .tile {
+    background-color: rgba(244, 181, 138, 0.15) !important;
+  }
+
+  .top-site-outer .title,
+  .top-site-outer .title span {
+    color: #f5f5f7 !important;
+  }
+
+  .top-site-outer .sponsored-label {
+    color: #888888 !important;
+  }
+
+  /* Cards */
+  .ds-card,
+  .ds-card-grid .ds-card,
+  .card-outer,
+  .card {
+    background-color: #2d1a2d !important;
+    border-radius: 0 !important;
+    color: #f5f5f7 !important;
+  }
+
+  .ds-card:hover,
+  .card-outer:hover {
+    box-shadow: 0 0 8px rgba(244, 181, 138, 0.3) !important;
+  }
+
+  .ds-card .meta,
+  .ds-card .title,
+  .ds-card .excerpt,
+  .card-details {
+    color: #f5f5f7 !important;
+  }
+
+  .ds-card .source,
+  .ds-card .story-sponsored-label,
+  .card-host-name {
+    color: #888888 !important;
+  }
+
+  /* Card images */
+  .ds-card .img-wrapper,
+  .card-preview-image-outer {
+    border-radius: 0 !important;
+  }
+
+  /* Section headers */
+  .section-title,
+  .section-title span,
+  .ds-section-title,
+  .section-top-bar .section-title span {
+    color: #f4b58a !important;
+  }
+
+  /* Buttons */
+  button,
+  .actions button {
+    background-color: #2d1a2d !important;
+    color: #f5f5f7 !important;
+    border: 1px solid #f4b58a !important;
+    border-radius: 0 !important;
+  }
+
+  button:hover {
+    background-color: rgba(244, 181, 138, 0.2) !important;
+  }
+
+  /* Context menus */
+  .context-menu,
+  .context-menu-list,
+  .context-menu-item {
+    background-color: #1a0d1a !important;
+    color: #f5f5f7 !important;
+    border-radius: 0 !important;
+  }
+
+  .context-menu {
+    border: 2px solid #f4b58a !important;
+  }
+
+  .context-menu-item:hover,
+  .context-menu-item:focus {
+    background-color: rgba(244, 181, 138, 0.25) !important;
+  }
+
+  /* Collapsible sections */
+  .collapsible-section {
+    background-color: transparent !important;
+  }
+
+  /* Personalize button and panel */
+  .personalize-button {
+    background-color: #2d1a2d !important;
+    color: #f5f5f7 !important;
+    border-radius: 0 !important;
+  }
+
+  .customize-menu,
+  .home-section,
+  .home-section-title {
+    background-color: #1a0d1a !important;
+    color: #f5f5f7 !important;
+  }
+
+  /* Weather widget */
+  .weather {
+    color: #f5f5f7 !important;
+  }
+
+  /* Selection */
+  ::selection {
+    background: rgba(244, 181, 138, 0.35) !important;
+    color: #1a0d1a !important;
+  }
+
+  /* Force all backgrounds */
+  * {
+    --newtab-background-color: #1a0d1a !important;
+    --newtab-card-background-color: #2d1a2d !important;
+  }
+}
+
+/* General web content scrollbars and selection */
+@-moz-document url-prefix("http"), url-prefix("https"), url-prefix("about:reader") {
+  :root {
+    scrollbar-color: rgba(244, 181, 138, 0.4) #1a0d1a !important;
+    scrollbar-width: thin !important;
+  }
+
+  ::selection {
+    background: rgba(244, 181, 138, 0.35) !important;
+    color: #1a0d1a !important;
+  }
+}

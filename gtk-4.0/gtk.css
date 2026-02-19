@@ -1,0 +1,164 @@
+/* ====== Fox ML Theme Palette (GTK4) ====== */
+@define-color bg        #1a0d1a;                     /* deep plum - matches tmux/rofi */
+@define-color fg        #f5f5f7;                     /* off-white text */
+@define-color accent    #f4b58a;                     /* peach accent */
+@define-color accent2   #f5a9b8;                     /* pink accent */
+@define-color sel_bg    rgba(244,181,138,0.25);      /* selection bg */
+@define-color sel_fg    #f5f5f7;                     /* selection text */
+@define-color panel     rgba(26,13,26,0.95);         /* plum panel */
+@define-color panel2    rgba(58,65,75,0.5);          /* slate glass */
+@define-color border    @accent;
+
+@define-color ok        #a7f1c2;
+@define-color warn      #fce7b2;
+@define-color info      #9a8ac4;                     /* lavender */
+@define-color danger    #f5a9b8;                     /* pink */
+
+/* ====== Global ====== */
+window, dialog, .background {
+  background-color: @bg;
+  color: @fg;
+}
+.view, textview {
+  background-color: transparent;
+  color: @fg;
+}
+*:link, *:visited { color: @info; }
+
+/* ====== Headerbars / Titlebars ====== */
+headerbar, .titlebar {
+  background: @panel;
+  color: @fg;
+  border-bottom: 1px solid @accent;
+}
+headerbar .title, headerbar .subtitle { color: @fg; }
+headerbar button {
+  background: transparent;
+  border: 1px solid rgba(244,181,138,0.4);
+}
+headerbar button:hover {
+  background: rgba(244,181,138,0.15);
+  border-color: @accent;
+}
+
+/* ====== Sidebars / Nav panes ====== */
+.navigation-sidebar, .sidebar, .side-bar, .sidebar .view {
+  background-color: rgba(26,13,26,0.85);
+  color: @fg;
+  border-right: 1px solid rgba(244,181,138,0.4);
+}
+.navigation-sidebar row,
+.sidebar row {
+  border-radius: 0;
+  margin: 2px 4px;
+}
+.navigation-sidebar row:selected,
+.sidebar row:selected,
+.sidebar row:selected label {
+  background-color: @sel_bg;
+  color: @fg;
+  border-left: 2px solid @accent;
+}
+
+/* ====== Lists / Rows / ColumnView ====== */
+.view:selected,
+listview row:selected,
+columnview row:selected,
+treeview:selected,
+textview text:selected {
+  background-color: @sel_bg;
+  color: @sel_fg;
+}
+.view:not(:selected):hover,
+listview row:hover,
+columnview row:hover {
+  background-color: alpha(@panel2, 0.35);
+}
+
+/* ====== Buttons ====== */
+button {
+  background: alpha(@panel, 0.85);
+  color: @fg;
+  border: 1px solid rgba(244,181,138,0.4);
+  border-radius: 0;
+}
+button:hover {
+  background: rgba(244,181,138,0.15);
+  border-color: @accent;
+}
+button:active { background: alpha(@accent, 0.25); border-color: @accent; }
+button.suggested-action, button.default {
+  background: alpha(@accent, 0.25);
+  border-color: @accent;
+}
+
+/* ====== Entries / Search fields ====== */
+entry, searchbar entry, .search-bar entry, entry.search {
+  background: rgba(31,36,43,0.85);
+  color: @fg;
+  border: 1px solid @accent;
+  border-radius: 0;
+  caret-color: @accent;
+  padding: 6px 8px;
+}
+textview {
+  background: transparent;
+  color: @fg;
+}
+entry:focus {
+  border-color: @accent;
+  box-shadow: 0 0 0 2px rgba(244,181,138,0.25);
+}
+entry placeholder, entry > text placeholder {
+  color: rgba(245,245,247,0.5);
+}
+
+/* Keep bars glassy; style only the entries */
+toolbar, searchbar, .search-bar { background-color: transparent; }
+
+/* ====== Notebook tabs ====== */
+notebook > header, notebook > header tabs {
+  background: @panel;
+  border-bottom: 1px solid @border;
+}
+notebook tab { background: alpha(@panel, 0.8); color: @fg; }
+notebook tab:checked { background: alpha(@panel2, 0.9); border-bottom: 2px solid @accent; }
+
+/* ====== Scrollbars ====== */
+scrollbar { background-color: alpha(@panel, 0.5); }
+scrollbar slider { background-color: rgba(244,181,138,0.3); border-radius: 0; }
+scrollbar slider:hover { background-color: rgba(244,181,138,0.5); }
+
+/* ====== Tooltips ====== */
+tooltip { background: @panel2; color: @fg; border: 1px solid @border; }
+
+/* ====== Infobars ====== */
+.info    { background: alpha(@info, 0.15);   border: 1px solid alpha(@info, 0.6); }
+.warning { background: alpha(@warn, 0.15);   border: 1px solid alpha(@warn, 0.6); }
+.error,.danger { background: alpha(@danger, 0.15); border: 1px solid alpha(@danger, 0.6); }
+.success { background: alpha(@ok, 0.15);     border: 1px solid alpha(@ok, 0.6); }
+
+/* ====== Menus / Popovers ====== */
+popover, popover contents {
+  background-color: #1a0d1a;
+  color: @fg;
+  border: 1px solid @accent;
+}
+menu {
+  background-color: #1a0d1a;
+  color: @fg;
+  border: 1px solid @accent;
+  padding: 4px;
+}
+menubar {
+  background-color: @panel;
+  color: @fg;
+  border-bottom: 1px solid @accent;
+}
+menubar > menuitem:hover { background-color: rgba(244,181,138,0.15); }
+menu modelbutton:hover {
+  background-color: rgba(244,181,138,0.25);
+}
+
+/* ====== Separators ====== */
+separator { background-color: @border; }

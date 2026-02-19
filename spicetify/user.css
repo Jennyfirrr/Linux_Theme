@@ -1,0 +1,210 @@
+/* Fox ML Theme for Spicetify
+   Background matches tmux active pane: #1a0d1a
+   Accents: peach #f4b58a
+*/
+
+:root {
+    --font-family: 'JetBrainsMono Nerd Font', 'JetBrains Mono', monospace;
+    --fox-bg: #1a0d1a;
+    --fox-card: #2d1a2d;
+    --fox-peach: #f4b58a;
+    --fox-pink: #f5a9b8;
+    --fox-fg: #f5f5f7;
+    --fox-dim: #888888;
+}
+
+/* Base background - solid tmux pane color */
+html, body {
+    background: var(--fox-bg) !important;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--fox-bg);
+    z-index: -1;
+    pointer-events: none;
+}
+
+/* All main containers */
+.Root,
+.Root__main-view,
+.main-view-container,
+.main-view-container__scroll-node,
+.main-view-container__scroll-node-child,
+.main-nowPlayingBar-container,
+.main-navBar-navBar,
+.Root__nav-bar,
+.main-yourLibraryX-libraryContainer {
+    background: var(--fox-bg) !important;
+    background-color: var(--fox-bg) !important;
+}
+
+/* Now playing bar */
+.main-nowPlayingBar-container,
+footer {
+    background: var(--fox-bg) !important;
+    border-top: 1px solid rgba(244, 181, 138, 0.4) !important;
+}
+
+/* Top bar */
+.main-topBar-container {
+    background: var(--fox-bg) !important;
+}
+
+/* Cards and panels */
+.main-card-card,
+.main-cardImage-imageWrapper,
+.x-entityImage-imageWrapper {
+    background: var(--fox-card) !important;
+}
+
+.main-card-card:hover {
+    background: #3d2a3d !important;
+}
+
+/* Play buttons - PEACH */
+.main-playButton-PlayButton,
+button[data-testid="play-button"],
+.player-controls__buttons button,
+.main-playPauseButton-button {
+    background-color: var(--fox-peach) !important;
+    color: var(--fox-bg) !important;
+}
+
+.main-playButton-PlayButton:hover,
+button[data-testid="play-button"]:hover {
+    background-color: var(--fox-peach) !important;
+    filter: brightness(1.1);
+    transform: scale(1.04);
+}
+
+/* Control buttons (shuffle, repeat, skip) */
+.player-controls button,
+.control-button {
+    color: var(--fox-fg) !important;
+}
+
+.player-controls button:hover,
+.control-button:hover {
+    color: var(--fox-peach) !important;
+}
+
+/* Active control buttons */
+.control-button--active,
+button[aria-checked="true"] {
+    color: var(--fox-peach) !important;
+}
+
+/* Search input */
+.x-searchInput-searchInputInput,
+input[type="text"],
+input[type="search"] {
+    background: var(--fox-card) !important;
+    border: 1px solid rgba(244, 181, 138, 0.3) !important;
+    color: var(--fox-fg) !important;
+    font-family: var(--font-family) !important;
+}
+
+.x-searchInput-searchInputInput:focus,
+input[type="text"]:focus,
+input[type="search"]:focus {
+    border-color: var(--fox-peach) !important;
+}
+
+/* Track list rows */
+.main-trackList-trackListRow:hover {
+    background: rgba(244, 181, 138, 0.1) !important;
+}
+
+.main-trackList-trackListRow.main-trackList-selected {
+    background: rgba(244, 181, 138, 0.15) !important;
+}
+
+/* Text colors */
+.main-type-mesto,
+.main-type-minuet,
+a {
+    color: var(--fox-fg) !important;
+}
+
+.main-type-mesto:hover,
+a:hover {
+    color: var(--fox-peach) !important;
+}
+
+/* Progress bar - peach */
+.x-progressBar-progressBarBg {
+    background: var(--fox-card) !important;
+}
+
+.x-progressBar-fillColor,
+.playback-bar .x-progressBar-fillColor {
+    background: var(--fox-peach) !important;
+}
+
+/* Volume bar */
+.x-progressBar-sliderArea .x-progressBar-fillColor {
+    background: var(--fox-peach) !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--fox-bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(244, 181, 138, 0.4);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(244, 181, 138, 0.6);
+}
+
+/* Context menus and dropdowns */
+.main-contextMenu-menu,
+.Dropdown-menu {
+    background: var(--fox-bg) !important;
+    border: 1px solid rgba(244, 181, 138, 0.4) !important;
+}
+
+.main-contextMenu-menuItem:hover,
+.Dropdown-menuItem:hover {
+    background: rgba(244, 181, 138, 0.15) !important;
+}
+
+/* Active/playing indicator */
+.main-trackList-playingIcon,
+.main-trackList-rowPlayPauseButton[aria-label="Pause"] {
+    color: var(--fox-peach) !important;
+}
+
+/* Navigation active state */
+.main-navBar-navBarLinkActive {
+    background: rgba(244, 181, 138, 0.15) !important;
+    border-left: 3px solid var(--fox-peach) !important;
+}
+
+/* Liked/heart icon when active */
+button[aria-checked="true"] svg,
+.main-addButton-button[aria-checked="true"] svg {
+    fill: var(--fox-peach) !important;
+}
+
+/* Remove all border radius - crisp edges */
+*,
+*::before,
+*::after {
+    border-radius: 0 !important;
+}
+
+/* Fonts */
+* {
+    font-family: var(--font-family) !important;
+}
