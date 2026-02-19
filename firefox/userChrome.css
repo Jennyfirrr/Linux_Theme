@@ -10,17 +10,21 @@
   --fox-dim: #888888;
   --fox-peach: #f4b58a;
   --fox-pink: #f5a9b8;
+  --fox-pastel: #f5c2d0;
   --fox-lavender: #9a8ac4;
   --fox-slate: #3a414b;
 
   /* Firefox internal overrides */
   --autocomplete-popup-background: var(--fox-bg) !important;
-  --autocomplete-popup-color: var(--fox-fg) !important;
+  --autocomplete-popup-color: var(--fox-pastel) !important;
   --arrowpanel-background: var(--fox-bg) !important;
-  --arrowpanel-color: var(--fox-fg) !important;
+  --arrowpanel-color: var(--fox-pastel) !important;
   --panel-background: var(--fox-bg) !important;
-  --panel-color: var(--fox-fg) !important;
+  --panel-color: var(--fox-pastel) !important;
   --toolbar-bgcolor: var(--fox-bg) !important;
+  --toolbar-color: var(--fox-pastel) !important;
+  --toolbarbutton-icon-fill: var(--fox-pastel) !important;
+  --lwt-toolbarbutton-icon-fill: var(--fox-pastel) !important;
 }
 
 /* ===== Toolbar & Navigation ===== */
@@ -86,7 +90,7 @@ toolbarbutton.titlebar-button,
 }
 
 #urlbar-input {
-  color: var(--fox-fg) !important;
+  color: var(--fox-pastel) !important;
 }
 
 #urlbar-input::placeholder {
@@ -152,7 +156,7 @@ toolbarbutton.titlebar-button,
 .tabbrowser-tab .tab-content {
   background: transparent !important;
   background-color: transparent !important;
-  color: var(--fox-dim) !important;
+  color: rgba(245, 194, 208, 0.5) !important;
   border-radius: 0 !important;
 }
 
@@ -162,7 +166,7 @@ toolbarbutton.titlebar-button,
 .tabbrowser-tab[selected="true"] .tab-content {
   background: var(--fox-bg-alt) !important;
   background-color: var(--fox-bg-alt) !important;
-  color: var(--fox-fg) !important;
+  color: var(--fox-pastel) !important;
 }
 
 .tabbrowser-tab[selected="true"] {
@@ -175,7 +179,7 @@ toolbarbutton.titlebar-button,
 .tabbrowser-tab:hover:not([selected="true"]) .tab-content {
   background: rgba(244, 181, 138, 0.1) !important;
   background-color: rgba(244, 181, 138, 0.1) !important;
-  color: var(--fox-fg) !important;
+  color: var(--fox-pastel) !important;
 }
 
 .tab-background,
@@ -209,7 +213,7 @@ toolbarbutton.titlebar-button,
 #sidebar-switcher-target,
 #sidebar-switcher-arrow {
   background: var(--fox-bg) !important;
-  color: var(--fox-fg) !important;
+  color: var(--fox-pastel) !important;
 }
 
 #sidebar-box {
@@ -223,6 +227,95 @@ toolbarbutton.titlebar-button,
 
 #sidebar {
   background: var(--fox-bg) !important;
+}
+
+/* New vertical sidebar (Firefox 131+) */
+#sidebar-main,
+#sidebar-main *,
+.sidebar-panel,
+.sidebar-panel * {
+  background-color: var(--fox-bg) !important;
+  color: var(--fox-pastel) !important;
+  border-color: var(--fox-slate) !important;
+}
+
+/* Sidebar bottom toolbar / action buttons */
+#sidebar-main toolbar,
+#sidebar-main .sidebar-footer,
+#sidebar-main [class*="footer"],
+#sidebar-main [class*="bottom"],
+#sidebar-main [class*="actions"],
+.sidebar-panel-footer,
+#sidebar-bottom,
+#sidebar-box toolbar {
+  background: var(--fox-bg) !important;
+  background-color: var(--fox-bg) !important;
+  color: var(--fox-pastel) !important;
+  border-color: var(--fox-slate) !important;
+}
+
+/* Sidebar icons */
+#sidebar-main toolbarbutton,
+#sidebar-main button {
+  color: var(--fox-pastel) !important;
+  fill: var(--fox-pastel) !important;
+  background: transparent !important;
+}
+
+#sidebar-main toolbarbutton:hover,
+#sidebar-main button:hover {
+  background: var(--fox-bg-alt) !important;
+}
+
+/* Separator lines in sidebar */
+#sidebar-main separator,
+#sidebar-main hr,
+#sidebar-main [class*="separator"],
+#sidebar-box separator,
+#sidebar-box hr {
+  background-color: var(--fox-slate) !important;
+  border-color: var(--fox-slate) !important;
+  color: var(--fox-slate) !important;
+}
+
+/* Bookmarks toolbar separator */
+#PersonalToolbar,
+#personal-bookmarks {
+  background: var(--fox-bg) !important;
+  background-color: var(--fox-bg) !important;
+  border: none !important;
+}
+
+/* Kill any white lines between toolbars */
+#navigator-toolbox > *,
+#navigator-toolbox toolbar {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Kill ALL white borders/lines in sidebar area */
+#sidebar-box,
+#sidebar-box *,
+#sidebar-main,
+#sidebar-main * {
+  border-color: var(--fox-slate) !important;
+}
+
+/* Vertical divider between sidebar and content */
+#sidebar-box {
+  border-right: 1px solid var(--fox-slate) !important;
+  box-shadow: none !important;
+}
+
+/* Horizontal separators inside sidebar panels */
+#sidebar-box hr,
+#sidebar-box [role="separator"],
+#sidebar-box .separator,
+#sidebar-main hr,
+#sidebar-main [role="separator"] {
+  background-color: var(--fox-slate) !important;
+  border: none !important;
+  opacity: 0.5 !important;
 }
 
 /* Sidebar content - bookmarks/history trees */
@@ -269,20 +362,20 @@ toolbarbutton.titlebar-button,
 /* ===== Menus & Popups ===== */
 menupopup {
   background: var(--fox-bg) !important;
-  color: var(--fox-fg) !important;
+  color: var(--fox-pastel) !important;
   border: 2px solid var(--fox-peach) !important;
   border-radius: 0 !important;
   padding: 4px !important;
 }
 
 menuitem {
-  color: var(--fox-fg) !important;
+  color: var(--fox-pastel) !important;
   border-radius: 0 !important;
 }
 
 menuitem:hover {
   background: rgba(244, 181, 138, 0.25) !important;
-  color: var(--fox-fg) !important;
+  color: var(--fox-peach) !important;
 }
 
 menuitem[disabled="true"] {
@@ -299,29 +392,46 @@ panel,
 panelview,
 panelmultiview {
   background: var(--fox-bg) !important;
-  color: var(--fox-fg) !important;
+  color: var(--fox-pastel) !important;
   border-radius: 0 !important;
 }
 
 .panel-viewstack,
 .panel-subview-body {
   background: var(--fox-bg) !important;
-  color: var(--fox-fg) !important;
+  color: var(--fox-pastel) !important;
 }
 
 /* ===== Toolbar Buttons ===== */
 toolbarbutton {
-  color: var(--fox-fg) !important;
+  color: var(--fox-pastel) !important;
+  fill: var(--fox-pastel) !important;
   border-radius: 0 !important;
 }
 
 toolbarbutton:hover {
   background: var(--fox-bg-alt) !important;
+  color: var(--fox-peach) !important;
+  fill: var(--fox-peach) !important;
 }
 
 #back-button,
 #forward-button {
-  color: var(--fox-peach) !important;
+  color: var(--fox-pastel) !important;
+  fill: var(--fox-pastel) !important;
+}
+
+/* All toolbar icons pastel pink */
+#nav-bar toolbarbutton .toolbarbutton-icon,
+#TabsToolbar toolbarbutton .toolbarbutton-icon,
+#navigator-toolbox toolbarbutton .toolbarbutton-icon {
+  fill: var(--fox-pastel) !important;
+  color: var(--fox-pastel) !important;
+  -moz-context-properties: fill, fill-opacity !important;
+}
+
+#nav-bar toolbarbutton:hover .toolbarbutton-icon {
+  fill: var(--fox-peach) !important;
 }
 
 /* ===== Search Bar ===== */

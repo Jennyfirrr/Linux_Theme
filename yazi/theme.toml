@@ -2,7 +2,7 @@
 # Matches waybar, hyprland, tmux, kitty, and spicetify
 
 # Color Palette:
-# bg:       #1f242b
+# bg:       #1a1214
 # fg:       #f5f5f7
 # slate:    #3a414b
 # peach:    #f4b58a
@@ -13,7 +13,7 @@
 cwd = { fg = "#f4b58a", bold = true }
 
 # Hovered
-hovered         = { fg = "#1f242b", bg = "#f4b58a" }
+hovered         = { fg = "#1a1214", bg = "#f4b58a" }
 preview_hovered = { underline = true }
 
 # Find
@@ -27,14 +27,14 @@ marker_marked   = { fg = "#9a8ac4", bg = "#9a8ac4" }
 marker_selected = { fg = "#f5a9b8", bg = "#f5a9b8" }
 
 # Tab
-tab_active   = { fg = "#1f242b", bg = "#f4b58a" }
+tab_active   = { fg = "#1a1214", bg = "#f4b58a" }
 tab_inactive = { fg = "#888888", bg = "#3a414b" }
 tab_width    = 1
 
 # Count
-count_copied   = { fg = "#1f242b", bg = "#8bd5a2" }
-count_cut      = { fg = "#1f242b", bg = "#ff6b6b" }
-count_selected = { fg = "#1f242b", bg = "#f5a9b8" }
+count_copied   = { fg = "#1a1214", bg = "#8bd5a2" }
+count_cut      = { fg = "#1a1214", bg = "#ff6b6b" }
+count_selected = { fg = "#1a1214", bg = "#f5a9b8" }
 
 # Border
 border_symbol = "│"
@@ -46,9 +46,9 @@ separator_close = ""
 separator_style = { fg = "#3a414b", bg = "#3a414b" }
 
 # Mode
-mode_normal = { fg = "#1f242b", bg = "#f4b58a", bold = true }
-mode_select = { fg = "#1f242b", bg = "#f5a9b8", bold = true }
-mode_unset  = { fg = "#1f242b", bg = "#9a8ac4", bold = true }
+mode_normal = { fg = "#1a1214", bg = "#f4b58a", bold = true }
+mode_select = { fg = "#1a1214", bg = "#f5a9b8", bold = true }
+mode_unset  = { fg = "#1a1214", bg = "#9a8ac4", bold = true }
 
 # Progress
 progress_label  = { fg = "#f5f5f7", bold = true }
@@ -78,7 +78,7 @@ border     = { fg = "#f4b58a" }
 title      = { fg = "#f4b58a", bold = true }
 content    = {}
 list       = {}
-btn_yes    = { bg = "#f4b58a", fg = "#1f242b" }
+btn_yes    = { bg = "#f4b58a", fg = "#1a1214" }
 btn_no     = { bg = "#3a414b", fg = "#f5f5f7" }
 btn_labels = [ "  Yes  ", "  No  " ]
 
@@ -101,7 +101,7 @@ hovered = { fg = "#f5a9b8", underline = true }
 
 [which]
 cols            = 3
-mask            = { bg = "#1f242b" }
+mask            = { bg = "#1a1214" }
 cand            = { fg = "#9a8ac4" }
 rest            = { fg = "#888888" }
 desc            = { fg = "#f5a9b8" }
@@ -113,7 +113,7 @@ on      = { fg = "#9a8ac4" }
 run     = { fg = "#f5a9b8" }
 desc    = {}
 hovered = { reversed = true, bold = true }
-footer  = { fg = "#888888", bg = "#1f242b" }
+footer  = { fg = "#888888", bg = "#1a1214" }
 
 [notify]
 title_info  = { fg = "#8bd5a2" }

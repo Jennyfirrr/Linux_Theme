@@ -13,6 +13,7 @@ echo "╰───────────────────────�
 echo ""
 echo "This will install the Fox ML theme for:"
 echo "  - Hyprland (theme + hyprlock + hyprpaper)"
+echo "  - Neovim"
 echo "  - Wallpaper"
 echo "  - Waybar"
 echo "  - Kitty"
@@ -64,6 +65,16 @@ mkdir -p ~/.config/hypr/modules
 backup_and_copy "$SCRIPT_DIR/hyprland/theme.conf" ~/.config/hypr/modules/theme.conf
 backup_and_copy "$SCRIPT_DIR/hyprlock/hyprlock.conf" ~/.config/hypr/hyprlock.conf
 backup_and_copy "$SCRIPT_DIR/hyprpaper/hyprpaper.conf" ~/.config/hypr/hyprpaper.conf
+
+# ─────────────────────────────────────────
+# Neovim
+# ─────────────────────────────────────────
+echo ""
+echo "Installing Neovim config..."
+mkdir -p ~/.config/nvim/ftplugin
+backup_and_copy "$SCRIPT_DIR/nvim/init.lua" ~/.config/nvim/init.lua
+backup_and_copy "$SCRIPT_DIR/nvim/lazy-lock.json" ~/.config/nvim/lazy-lock.json
+backup_and_copy "$SCRIPT_DIR/nvim/ftplugin/cpp.lua" ~/.config/nvim/ftplugin/cpp.lua
 
 # ─────────────────────────────────────────
 # Wallpaper
@@ -240,13 +251,14 @@ echo "│                    Installation Complete!                       │"
 echo "╰──────────────────────────────────────────────────────────────────╯"
 echo ""
 echo "Post-install steps:"
-echo "  1. Reload Hyprland: hyprctl reload"
-echo "  2. Restart hyprpaper: pkill hyprpaper && hyprpaper &"
-echo "  3. Restart Waybar, Dunst: pkill waybar && waybar & pkill dunst && dunst &"
-echo "  4. Apply Spicetify: spicetify backup apply"
-echo "  5. Restart Firefox and enable userChrome in about:config"
-echo "  6. Select 'Fox ML' theme in Cursor/VS Code"
-echo "  7. Enable foxml.css in Discord > Vencord > Themes"
+echo "  1. Open nvim and run :Lazy sync to install plugins"
+echo "  2. Reload Hyprland: hyprctl reload"
+echo "  3. Restart hyprpaper: pkill hyprpaper && hyprpaper &"
+echo "  4. Restart Waybar, Dunst: pkill waybar && waybar & pkill dunst && dunst &"
+echo "  5. Apply Spicetify: spicetify backup apply"
+echo "  6. Restart Firefox and enable userChrome in about:config"
+echo "  7. Select 'Fox ML' theme in Cursor/VS Code"
+echo "  8. Enable foxml.css in Discord > Vencord > Themes"
 echo ""
 echo "Backups saved to: $BACKUP_DIR"
 echo ""

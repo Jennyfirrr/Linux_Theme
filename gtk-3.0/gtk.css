@@ -1,11 +1,11 @@
 /* ====== Fox ML Theme Palette ====== */
-@define-color bg        #1a0d1a;                     /* deep plum - matches tmux/rofi */
+@define-color bg        #1a1214;                     /* FoML slate bg */
 @define-color fg        #f5f5f7;                     /* off-white text */
 @define-color accent    #f4b58a;                     /* peach accent */
 @define-color accent2   #f5a9b8;                     /* pink accent */
 @define-color sel_bg    rgba(244,181,138,0.25);      /* selection bg */
 @define-color sel_fg    #f5f5f7;                     /* selection text */
-@define-color panel     rgba(26,13,26,0.95);         /* plum panel */
+@define-color panel     rgba(26,18,20,0.95);         /* FoML panel */
 @define-color panel2    rgba(58,65,75,0.5);          /* slate glass */
 @define-color border    @accent;
 
@@ -48,7 +48,7 @@ headerbar button:hover {
 
 /* ====== Sidebars ====== */
 .sidebar, .side-bar, .sidebar .view, .places-treeview, .source-list {
-  background-color: rgba(26,13,26,0.85);
+  background-color: rgba(26,18,20,0.85);
   color: @fg;
   border-right: 1px solid rgba(244,181,138,0.4);
 }
@@ -94,7 +94,7 @@ entry {
 /* Thunar search/location bar — matches rofi inputbar */
 searchbar, .search-bar, toolbar { background-color: transparent; }
 searchbar entry, .search-bar entry, entry.search, search entry, GtkSearchEntry {
-  background: rgba(31,36,43,0.85);
+  background: rgba(26,18,20,0.85);
   color: #f5f5f7;
   border: 1px solid @accent;
   border-radius: 0;
@@ -155,7 +155,7 @@ menubar > menuitem:hover {
   color: @fg;
 }
 menu {
-  background-color: #1a0d1a;
+  background-color: #1a1214;
   color: @fg;
   border: 1px solid @accent;
   padding: 4px;
@@ -246,31 +246,31 @@ iconview .rubberband {
 
 /* Main background for non-document areas */
 window.soffice {
-    background-color: #1a0d1a;
+    background-color: #1a1214;
 }
 
 /* Toolbars & menubars */
 window.soffice toolbar,
 window.soffice menubar {
-    background-color: rgba(26,13,26,0.95);
+    background-color: rgba(26,18,20,0.95);
     color: #f5f5f7;
     border-bottom: 1px solid rgba(244,181,138,0.4);
 }
 
 /* Sidebar background */
 window.soffice box.right {
-    background-color: rgba(26,13,26,0.85);
+    background-color: rgba(26,18,20,0.85);
 }
 
 /* Status bar at the bottom */
 window.soffice statusbar {
-    background-color: rgba(26,13,26,0.95);
+    background-color: rgba(26,18,20,0.95);
     color: #f5f5f7;
 }
 
 /* Prevent black fill on nested boxes */
 window.soffice box {
-    background-color: #1a0d1a;
+    background-color: #1a1214;
 }
 
 /* Buttons in LibreOffice */

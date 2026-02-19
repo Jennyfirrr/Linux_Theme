@@ -2,11 +2,11 @@
 # Matches waybar, hyprland, kitty, tmux, etc.
 
 # Main backgrounds
-theme[main_bg]="#1a0d1a"
+theme[main_bg]="#1a1214"
 theme[main_fg]="#f5f5f7"
 theme[title]="#f4b58a"
 theme[hi_fg]="#f4b58a"
-theme[selected_bg]="#2d1a2d"
+theme[selected_bg]="#2d1f27"
 theme[selected_fg]="#f5f5f7"
 theme[inactive_fg]="#888888"
 

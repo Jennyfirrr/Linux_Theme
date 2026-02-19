@@ -32,6 +32,7 @@ The installer will:
 | Hyprlock | `~/.config/hypr/hyprlock.conf` |
 | Hyprpaper | `~/.config/hypr/hyprpaper.conf` |
 | Wallpaper | `~/.wallpapers/foxml.png` |
+| Neovim | `~/.config/nvim/init.lua` |
 | Waybar | `~/.config/waybar/style.css` |
 | Kitty | `~/.config/kitty/kitty.conf` |
 | Tmux | `~/.tmux.conf` |

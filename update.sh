@@ -37,6 +37,15 @@ update_file ~/.config/hypr/hyprlock.conf "$SCRIPT_DIR/hyprlock/hyprlock.conf" "h
 update_file ~/.config/hypr/hyprpaper.conf "$SCRIPT_DIR/hyprpaper/hyprpaper.conf" "hyprpaper.conf"
 
 # ─────────────────────────────────────────
+# Neovim
+# ─────────────────────────────────────────
+echo ""
+echo "Updating Neovim..."
+update_file ~/.config/nvim/init.lua "$SCRIPT_DIR/nvim/init.lua" "init.lua"
+update_file ~/.config/nvim/lazy-lock.json "$SCRIPT_DIR/nvim/lazy-lock.json" "lazy-lock.json"
+update_file ~/.config/nvim/ftplugin/cpp.lua "$SCRIPT_DIR/nvim/ftplugin/cpp.lua" "ftplugin/cpp.lua"
+
+# ─────────────────────────────────────────
 # Wallpapers
 # ─────────────────────────────────────────
 echo ""
