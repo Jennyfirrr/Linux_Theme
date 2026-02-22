@@ -83,6 +83,21 @@ echo "Updating Tmux..."
 update_file ~/.tmux.conf "$SCRIPT_DIR/tmux/.tmux.conf" ".tmux.conf"
 
 # ─────────────────────────────────────────
+# Zsh
+# ─────────────────────────────────────────
+echo ""
+echo "Updating Zsh..."
+update_file ~/.zshrc "$SCRIPT_DIR/zsh/.zshrc" ".zshrc"
+update_file ~/.config/zsh/colors.zsh "$SCRIPT_DIR/zsh/colors.zsh" "colors.zsh"
+update_file ~/.config/zsh/aliases.zsh "$SCRIPT_DIR/zsh/aliases.zsh" "aliases.zsh"
+update_file ~/.config/zsh/paths.zsh "$SCRIPT_DIR/zsh/paths.zsh" "paths.zsh"
+update_file ~/.config/zsh/welcome.zsh "$SCRIPT_DIR/zsh/welcome.zsh" "welcome.zsh"
+update_file ~/.config/zsh/conda.zsh "$SCRIPT_DIR/zsh/conda.zsh" "conda.zsh"
+if [[ -f ~/.oh-my-zsh/themes/caramel.zsh-theme ]]; then
+    update_file ~/.oh-my-zsh/themes/caramel.zsh-theme "$SCRIPT_DIR/zsh/caramel.zsh-theme" "caramel.zsh-theme"
+fi
+
+# ─────────────────────────────────────────
 # Spicetify
 # ─────────────────────────────────────────
 echo ""
