@@ -18,6 +18,7 @@ echo "  - Wallpaper"
 echo "  - Waybar"
 echo "  - Kitty"
 echo "  - Tmux"
+echo "  - Zsh (caramel prompt + config)"
 echo "  - Spicetify (Spotify)"
 echo "  - Yazi"
 echo "  - Dunst"
@@ -38,6 +39,76 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
 fi
 
 mkdir -p "$BACKUP_DIR"
+
+# ─────────────────────────────────────────
+# Dependencies
+# ─────────────────────────────────────────
+echo ""
+echo "Installing dependencies..."
+
+PACMAN_PKGS=(
+    ttf-jetbrains-mono-nerd
+    hyprland
+    hyprlock
+    hyprpaper
+    neovim
+    waybar
+    kitty
+    tmux
+    zsh
+    fzf
+    eza
+    bat
+    yazi
+    dunst
+    rofi-wayland
+    btop
+    firefox
+)
+
+# Only install what's missing
+TO_INSTALL=()
+for pkg in "${PACMAN_PKGS[@]}"; do
+    if ! pacman -Qi "$pkg" &>/dev/null; then
+        TO_INSTALL+=("$pkg")
+    fi
+done
+
+if [[ ${#TO_INSTALL[@]} -gt 0 ]]; then
+    echo "  Packages to install: ${TO_INSTALL[*]}"
+    read -p "  Install with pacman? [y/N] " -n 1 -r
+    echo ""
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        sudo pacman -S --needed "${TO_INSTALL[@]}"
+    else
+        echo "  Skipping pacman install"
+    fi
+else
+    echo "  All packages already installed"
+fi
+
+# Oh My Zsh
+if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
+    echo ""
+    read -p "  Install Oh My Zsh? [y/N] " -n 1 -r
+    echo ""
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+    fi
+fi
+
+# zsh plugins
+ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
+if [[ -d "$HOME/.oh-my-zsh" ]]; then
+    if [[ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]]; then
+        echo "  Installing zsh-syntax-highlighting..."
+        git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
+    fi
+    if [[ ! -d "$ZSH_CUSTOM/plugins/zsh-autosuggestions" ]]; then
+        echo "  Installing zsh-autosuggestions..."
+        git clone https://github.com/zsh-users/zsh-autosuggestions.git "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
+    fi
+fi
 
 backup_and_copy() {
     local src="$1"
@@ -113,6 +184,22 @@ backup_and_copy "$SCRIPT_DIR/kitty/kitty.conf" ~/.config/kitty/kitty.conf
 echo ""
 echo "Installing Tmux theme..."
 backup_and_copy "$SCRIPT_DIR/tmux/.tmux.conf" ~/.tmux.conf
+
+# ─────────────────────────────────────────
+# Zsh
+# ─────────────────────────────────────────
+echo ""
+echo "Installing Zsh config..."
+backup_and_copy "$SCRIPT_DIR/zsh/.zshrc" ~/.zshrc
+mkdir -p ~/.config/zsh
+backup_and_copy "$SCRIPT_DIR/zsh/colors.zsh" ~/.config/zsh/colors.zsh
+backup_and_copy "$SCRIPT_DIR/zsh/aliases.zsh" ~/.config/zsh/aliases.zsh
+backup_and_copy "$SCRIPT_DIR/zsh/paths.zsh" ~/.config/zsh/paths.zsh
+backup_and_copy "$SCRIPT_DIR/zsh/welcome.zsh" ~/.config/zsh/welcome.zsh
+backup_and_copy "$SCRIPT_DIR/zsh/conda.zsh" ~/.config/zsh/conda.zsh
+if [[ -d "$HOME/.oh-my-zsh/themes" ]]; then
+    backup_and_copy "$SCRIPT_DIR/zsh/caramel.zsh-theme" ~/.oh-my-zsh/themes/caramel.zsh-theme
+fi
 
 # ─────────────────────────────────────────
 # Spicetify
@@ -251,14 +338,15 @@ echo "│                    Installation Complete!                       │"
 echo "╰──────────────────────────────────────────────────────────────────╯"
 echo ""
 echo "Post-install steps:"
-echo "  1. Open nvim and run :Lazy sync to install plugins"
-echo "  2. Reload Hyprland: hyprctl reload"
-echo "  3. Restart hyprpaper: pkill hyprpaper && hyprpaper &"
-echo "  4. Restart Waybar, Dunst: pkill waybar && waybar & pkill dunst && dunst &"
-echo "  5. Apply Spicetify: spicetify backup apply"
-echo "  6. Restart Firefox and enable userChrome in about:config"
-echo "  7. Select 'Fox ML' theme in Cursor/VS Code"
-echo "  8. Enable foxml.css in Discord > Vencord > Themes"
+echo "  1. Set zsh as default shell: chsh -s \$(which zsh)"
+echo "  2. Open nvim and run :Lazy sync to install plugins"
+echo "  3. Reload Hyprland: hyprctl reload"
+echo "  4. Restart hyprpaper: pkill hyprpaper && hyprpaper &"
+echo "  5. Restart Waybar, Dunst: pkill waybar && waybar & pkill dunst && dunst &"
+echo "  6. Apply Spicetify: spicetify backup apply"
+echo "  7. Restart Firefox and enable userChrome in about:config"
+echo "  8. Select 'Fox ML' theme in Cursor/VS Code"
+echo "  9. Enable foxml.css in Discord > Vencord > Themes"
 echo ""
 echo "Backups saved to: $BACKUP_DIR"
 echo ""
