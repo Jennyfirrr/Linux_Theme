@@ -2,7 +2,13 @@
 
 A dark, crisp theme with peach and lavender accents. No rounded corners.
 
-## Preview
+## Screenshots
+
+![Terminal](screenshots/terminal.png)
+
+![Desktop](screenshots/desktop.png)
+
+## Palette
 
 | Element | Color |
 |---------|-------|
@@ -46,6 +52,37 @@ The installer will:
 | Firefox | `<profile>/chrome/userChrome.css` |
 | Cursor/VS Code | `~/.cursor/extensions/foxml-theme/` |
 | Discord | `~/.config/Vencord/themes/foxml.css` |
+| Zsh | `~/.zshrc` + `~/.config/zsh/` + `~/.oh-my-zsh/themes/caramel.zsh-theme` |
+
+## Zsh / Shell
+
+The `zsh/` directory includes the full shell setup:
+
+| File | Description |
+|------|-------------|
+| `.zshrc` | Main zsh config — Oh My Zsh, completions, fzf, tmux auto-attach |
+| `caramel.zsh-theme` | Custom prompt with gradient path, git status, conda/venv, elapsed time |
+| `colors.zsh` | LS_COLORS and zsh-syntax-highlighting colors |
+| `aliases.zsh` | Aliases for eza, bat, navigation, utilities |
+| `welcome.zsh` | Terminal splash screen with system info and todo list |
+| `paths.zsh` | PATH setup |
+| `conda.zsh` | Conda initialization |
+
+To use:
+```bash
+# Copy the theme
+cp zsh/caramel.zsh-theme ~/.oh-my-zsh/themes/
+
+# Copy zsh config modules
+mkdir -p ~/.config/zsh
+cp zsh/aliases.zsh zsh/colors.zsh zsh/paths.zsh zsh/welcome.zsh zsh/conda.zsh ~/.config/zsh/
+
+# Copy .zshrc (back up yours first)
+cp ~/.zshrc ~/.zshrc.bak
+cp zsh/.zshrc ~/.zshrc
+```
+
+Requires: [Oh My Zsh](https://ohmyz.sh/), [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting), [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions), [eza](https://github.com/eza-community/eza), [bat](https://github.com/sharkdp/bat)
 
 ## Dependencies
 
