@@ -32,13 +32,6 @@ alias flush='~/.contextai/src/flush_llm_cache.sh'
 
 # ─── Functions ────────────────────────────────
 give() {
-  echo "Yeeting $1 to desktop.."
-  rsync -avP "$1" Jennifer@100.113.148.120:~/
-}
-
-grab() {
-  echo "Grabbing $1 from desktop..."
-  rsync -avP Jennifer@100.113.148.120:~/"$1" .
 }
 
 pdf() {
