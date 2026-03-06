@@ -1,0 +1,21 @@
+[user]
+	name = Aurora-Jennifer
+	email = jtlewis204@gmail.com
+[color]
+	ui = auto
+[color "diff"]
+	meta = 218
+	frag = 217 bold
+	old = 203
+	new = 150
+	whitespace = red reverse
+[color "status"]
+	added = 150
+	changed = 218
+	untracked = 217
+[color "branch"]
+	current = 218 bold
+	local = 217
+	remote = 150
+[color "log"]
+	date = 217

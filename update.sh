@@ -35,6 +35,10 @@ echo "Updating Hyprland configs..."
 update_file ~/.config/hypr/modules/theme.conf "$SCRIPT_DIR/hyprland/theme.conf" "theme.conf"
 update_file ~/.config/hypr/hyprlock.conf "$SCRIPT_DIR/hyprlock/hyprlock.conf" "hyprlock.conf"
 update_file ~/.config/hypr/hyprpaper.conf "$SCRIPT_DIR/hyprpaper/hyprpaper.conf" "hyprpaper.conf"
+update_file ~/.config/hypr/hypridle.conf "$SCRIPT_DIR/hyprland/hypridle.conf" "hypridle.conf"
+for script in ~/.config/hypr/scripts/*.sh; do
+    update_file "$script" "$SCRIPT_DIR/hyprland/scripts/$(basename "$script")" "scripts/$(basename "$script")"
+done
 
 # ─────────────────────────────────────────
 # Neovim
@@ -93,9 +97,26 @@ update_file ~/.config/zsh/aliases.zsh "$SCRIPT_DIR/zsh/aliases.zsh" "aliases.zsh
 update_file ~/.config/zsh/paths.zsh "$SCRIPT_DIR/zsh/paths.zsh" "paths.zsh"
 update_file ~/.config/zsh/welcome.zsh "$SCRIPT_DIR/zsh/welcome.zsh" "welcome.zsh"
 update_file ~/.config/zsh/conda.zsh "$SCRIPT_DIR/zsh/conda.zsh" "conda.zsh"
+update_file ~/.config/zsh/async.zsh "$SCRIPT_DIR/zsh/async.zsh" "async.zsh"
+update_file ~/.config/zsh/gradient.zsh "$SCRIPT_DIR/zsh/gradient.zsh" "gradient.zsh"
+update_file ~/.config/zsh/prompt.zsh "$SCRIPT_DIR/zsh/prompt.zsh" "prompt.zsh"
 if [[ -f ~/.oh-my-zsh/themes/caramel.zsh-theme ]]; then
     update_file ~/.oh-my-zsh/themes/caramel.zsh-theme "$SCRIPT_DIR/zsh/caramel.zsh-theme" "caramel.zsh-theme"
 fi
+
+# -----------------------------------------
+# Mako
+# -----------------------------------------
+echo ""
+echo "Updating Mako..."
+update_file ~/.config/mako/config "$SCRIPT_DIR/mako/config" "config"
+
+# -----------------------------------------
+# Fastfetch
+# -----------------------------------------
+echo ""
+echo "Updating Fastfetch..."
+update_file ~/.config/fastfetch/config.jsonc "$SCRIPT_DIR/fastfetch/config.jsonc" "config.jsonc"
 
 # ─────────────────────────────────────────
 # Spicetify

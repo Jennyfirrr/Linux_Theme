@@ -1,0 +1,109 @@
+{
+  "layer": "top",
+  "position": "top",
+  "height": 52,
+  "margin": "12 12 0 12",
+
+  "modules-left": [
+    "custom/logo",
+    "hyprland/workspaces"
+  ],
+
+  "modules-center": [
+    "custom/media"
+  ],
+
+  "modules-right": [
+    "custom/system_health",
+    "network",
+    "pulseaudio",
+    "backlight",
+    "battery",
+    "custom/weather",
+    "clock",
+    "tray"
+  ],
+
+  "hyprland/workspaces": {
+    "format": "{name}",
+    "disable-scroll": false,
+    "all-outputs": true,
+    "persistent-workspaces": {
+        "*": [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    }
+  },
+
+  "custom/system_health": {
+    "exec": "~/.config/waybar/scripts/system_health.sh",
+    "return-type": "json",
+    "interval": 5,
+    "tooltip": false
+  },
+
+  "network": {
+    "format-wifi": "󰖩  {essid} {signalStrength}%",
+    "format-ethernet": "󰈀  {ipaddr}",
+    "format-disconnected": "󰖪  offline",
+    "tooltip-format": "{ifname}\n{ipaddr}",
+    "family": "ipv4"
+  },
+
+  "pulseaudio": {
+    "format": "{icon} {volume}%",
+    "format-muted": "󰝟  mute",
+    "format-icons": {
+      "headphones": "󰋋",
+      "default": ["󰕿", "󰖀", "󰕾"]
+    },
+    "on-click": "pavucontrol"
+  },
+
+  "backlight": {
+    "format": "󰃟  {percent}%",
+    "interval": 2
+  },
+
+  "battery": {
+    "bat": "BAT1",
+    "format": "{icon} {capacity}%",
+    "format-charging": "󰂄  {capacity}%",
+    "format-icons": ["󰁺", "󰁼", "󰁾", "󰂀", "󰁹"],
+    "interval": 10,
+    "states": {
+      "warning": 25,
+      "critical": 10
+    }
+  },
+
+  "clock": {
+    "format": "  {:%a %b %d  %I:%M %p}",
+    "tooltip-format": "{:%A, %B %d, %Y}\nWeek %V"
+  },
+
+  "tray": {
+    "icon-size": 16,
+    "spacing": 8
+  },
+
+  "custom/logo": {
+    "format": "󰣇",
+    "tooltip": "Launcher",
+    "on-click": "bash -lc 'command -v wheel && wheel || rofi -show drun'"
+  },
+
+  "custom/media": {
+    "exec": "~/.config/waybar/scripts/media.sh",
+    "return-type": "json",
+    "interval": 1,
+    "on-click": "playerctl play-pause",
+    "on-scroll-up": "playerctl next",
+    "on-scroll-down": "playerctl previous"
+  },
+
+  "custom/weather": {
+    "exec": "~/.config/waybar/scripts/weather.sh",
+    "return-type": "json",
+    "interval": 900,
+    "tooltip": true
+  }
+}

@@ -210,6 +210,17 @@ local plugins = {
     end,
   },
 
+  -- LaTeX
+  {
+    "lervag/vimtex",
+    lazy = false,
+    init = function()
+      vim.g.vimtex_view_method = "zathura"  -- change to "general" if no zathura
+      vim.g.vimtex_compiler_method = "latexmk"
+      vim.g.vimtex_quickfix_mode = 0  -- don't auto-open quickfix on errors
+    end,
+  },
+
   { "stevearc/aerial.nvim",                    opts = {} },
   { "nvim-treesitter/nvim-treesitter-context", opts = {} },
 
@@ -217,6 +228,53 @@ local plugins = {
   { "nvim-neotest/neotest",                    dependencies = { "nvim-lua/plenary.nvim", "nvim-treesitter/nvim-treesitter", "nvim-neotest/nvim-nio" } },
   { "alfaix/neotest-gtest" },  -- GoogleTest
   { "orjangj/neotest-ctest" }, -- CTest (GTest/Catch2/doctest)
+
+  -- Treesitter textobjects (daf = delete a function, vac = select a class, etc.)
+  {
+    "nvim-treesitter/nvim-treesitter-textobjects",
+    dependencies = { "nvim-treesitter/nvim-treesitter" },
+  },
+
+  -- Flash.nvim (jump anywhere with s + 2 chars)
+  {
+    "folke/flash.nvim",
+    event = "VeryLazy",
+    opts = {},
+    keys = {
+      { "s", mode = { "n", "x", "o" }, function() require("flash").jump() end, desc = "Flash" },
+      { "S", mode = { "n", "x", "o" }, function() require("flash").treesitter() end, desc = "Flash Treesitter" },
+    },
+  },
+
+  -- Surround (ysiw" to wrap word in quotes, cs"' to change, ds" to delete)
+  { "kylechui/nvim-surround", version = "*", event = "VeryLazy", opts = {} },
+
+  -- Harpoon (bookmark files, jump with Ctrl+1-4)
+  {
+    "ThePrimeagen/harpoon",
+    branch = "harpoon2",
+    dependencies = { "nvim-lua/plenary.nvim" },
+    config = function()
+      local harpoon = require("harpoon")
+      harpoon:setup()
+    end,
+  },
+
+  -- Undotree (visual undo history)
+  { "mbbill/undotree" },
+
+  -- DAP virtual text (inline variable values while debugging)
+  {
+    "theHamsta/nvim-dap-virtual-text",
+    dependencies = { "mfussenegger/nvim-dap", "nvim-treesitter/nvim-treesitter" },
+    opts = {},
+  },
+
+  -- Fidget (LSP progress spinner)
+  { "j-hui/fidget.nvim", opts = {} },
+
+  -- Diffview (full git diff/merge viewer)
+  { "sindrets/diffview.nvim", dependencies = { "nvim-lua/plenary.nvim" } },
 
 }
 
@@ -291,16 +349,53 @@ require("lualine").setup({ options = { theme = "tokyonight" } })
 
 -- Treesitter
 require("nvim-treesitter.configs").setup({
-  ensure_installed = { "lua", "python", "c", "cpp", "bash", "json", "yaml", "markdown", "vim", "vimdoc", "java", "javadoc" },
+  ensure_installed = { "lua", "python", "c", "cpp", "bash", "json", "yaml", "markdown", "vim", "vimdoc", "java", "javadoc", "latex" },
   highlight = { enable = true },
   incremental_selection = { enable = true },
   indent = { enable = true },
+  textobjects = {
+    select = {
+      enable = true,
+      lookahead = true,
+      keymaps = {
+        ["af"] = "@function.outer",
+        ["if"] = "@function.inner",
+        ["ac"] = "@class.outer",
+        ["ic"] = "@class.inner",
+        ["aa"] = "@parameter.outer",
+        ["ia"] = "@parameter.inner",
+        ["ai"] = "@conditional.outer",
+        ["ii"] = "@conditional.inner",
+        ["al"] = "@loop.outer",
+        ["il"] = "@loop.inner",
+      },
+    },
+    move = {
+      enable = true,
+      set_jumps = true,
+      goto_next_start = {
+        ["]m"] = "@function.outer",
+        ["]]"] = "@class.outer",
+        ["]a"] = "@parameter.inner",
+      },
+      goto_prev_start = {
+        ["[m"] = "@function.outer",
+        ["[["] = "@class.outer",
+        ["[a"] = "@parameter.inner",
+      },
+    },
+    swap = {
+      enable = true,
+      swap_next = { ["<leader>sa"] = "@parameter.inner" },
+      swap_previous = { ["<leader>sA"] = "@parameter.inner" },
+    },
+  },
 })
 
 -- Mason (LSP installer)
 require("mason").setup()
 require("mason-lspconfig").setup({
-  ensure_installed = { "lua_ls", "pyright", "clangd", "bashls", "jsonls", "yamlls" },
+  ensure_installed = { "lua_ls", "pyright", "clangd", "bashls", "jsonls", "yamlls", "texlab" },
 })
 
 -- format on save
@@ -399,7 +494,21 @@ lsp.config.lua_ls  = {
 }
 
 -- Enable all of them (auto-attach for matching filetypes)
-lsp.enable({ "pyright", "clangd", "bashls", "jsonls", "yamlls", "lua_ls" })
+lsp.config.texlab = {
+  capabilities = caps,
+  on_attach = on_attach,
+  settings = {
+    texlab = {
+      build = {
+        executable = "latexmk",
+        args = { "-pdf", "-interaction=nonstopmode", "-synctex=1", "%f" },
+        onSave = true,
+      },
+    },
+  },
+}
+
+lsp.enable({ "pyright", "clangd", "bashls", "jsonls", "yamlls", "lua_ls", "texlab" })
 
 -- Keymaps (global)
 local map = vim.keymap.set
@@ -466,3 +575,20 @@ map("n", "<leader>xq", "<cmd>Trouble quickfix toggle<cr>", { desc = "Quickfix (T
 -- Quality of life
 map({ "n", "v" }, "<leader>/", function() require("Comment.api").toggle.linewise.current() end,
   { desc = "Comment toggle" })
+
+-- Harpoon
+local harpoon = require("harpoon")
+map("n", "<leader>ha", function() harpoon:list():add() end, { desc = "Harpoon add file" })
+map("n", "<leader>hh", function() harpoon.ui:toggle_quick_menu(harpoon:list()) end, { desc = "Harpoon menu" })
+map("n", "<C-1>", function() harpoon:list():select(1) end, { desc = "Harpoon 1" })
+map("n", "<C-2>", function() harpoon:list():select(2) end, { desc = "Harpoon 2" })
+map("n", "<C-3>", function() harpoon:list():select(3) end, { desc = "Harpoon 3" })
+map("n", "<C-4>", function() harpoon:list():select(4) end, { desc = "Harpoon 4" })
+
+-- Undotree
+map("n", "<leader>u", "<cmd>UndotreeToggle<cr>", { desc = "Undotree" })
+
+-- Diffview
+map("n", "<leader>gd", "<cmd>DiffviewOpen<cr>", { desc = "Git diff view" })
+map("n", "<leader>gh", "<cmd>DiffviewFileHistory %<cr>", { desc = "Git file history" })
+map("n", "<leader>gq", "<cmd>DiffviewClose<cr>", { desc = "Close diff view" })
