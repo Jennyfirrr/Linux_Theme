@@ -346,6 +346,52 @@ In visual mode:
 | `:Gitsigns blame_line` | Show git blame |
 | `:Gitsigns diffthis` | Diff against index |
 
+### LazyGit (Git TUI)
+| Key | Action |
+|-----|--------|
+| `Space gg` | Open LazyGit |
+
+Inside LazyGit:
+| Key | Action |
+|-----|--------|
+| `space` | Stage/unstage file |
+| `c` | Commit |
+| `p` / `P` | Pull / Push |
+| `s` | Stash |
+| `b` | Branches |
+| `enter` | View file / Expand |
+| `q` | Quit |
+| `?` | Show all keybinds |
+
+Full git workflow without leaving nvim — stage, commit, push, rebase, resolve conflicts, cherry-pick, etc.
+
+### Persistence (Sessions)
+| Key | Action |
+|-----|--------|
+| `Space qs` | Restore session for current directory |
+| `Space ql` | Restore last session |
+| `Space qd` | Stop auto-saving session |
+
+Automatically saves your session (open buffers, splits, cursor positions) when you quit. Restore it next time you open nvim in the same directory.
+
+### Spectre (Find & Replace)
+| Key | Action |
+|-----|--------|
+| `Space sr` | Toggle Spectre panel |
+| `Space sw` | Search current word (normal mode) |
+| `Space sw` | Search selection (visual mode) |
+
+Inside Spectre:
+| Key | Action |
+|-----|--------|
+| `Enter` | Go to match |
+| `dd` | Toggle exclude for current item |
+| `<leader>R` | Replace all |
+| `<leader>rc` | Replace current |
+| `q` | Close |
+
+Project-wide find and replace with live preview. Supports regex.
+
 ### Which-Key
 Press **Space** and wait — which-key pops up showing all leader binds and their descriptions.
 
@@ -387,6 +433,48 @@ Press **Space** and wait — which-key pops up showing all leader binds and thei
 | Key | Action |
 |-----|--------|
 | `Space pp` | Browse recent projects (Telescope) |
+
+---
+
+### Copilot (Inline AI Completions)
+| Key | Action |
+|-----|--------|
+| `Alt+l` | Accept suggestion |
+| `Alt+w` | Accept word |
+| `Alt+e` | Accept line |
+| `Alt+]` | Next suggestion |
+| `Alt+[` | Previous suggestion |
+| `Alt+c` | Dismiss suggestion |
+| `:Copilot auth` | Log in to GitHub |
+| `:Copilot status` | Check connection status |
+
+Ghost-text suggestions appear automatically as you type. Use `Alt+l` to accept the full suggestion, or `Alt+w` / `Alt+e` to accept partially.
+
+**Note:** If you want Copilot suggestions in the nvim-cmp completion menu (alongside LSP results) instead of or in addition to ghost text, add `zbirenbaum/copilot-cmp`. This lets you see Copilot as a ranked source in the popup menu rather than separate inline text.
+
+### Avante (AI Chat Panel)
+| Key | Action |
+|-----|--------|
+| `Space aa` | Ask AI (normal or visual selection) |
+| `Space at` | Toggle AI sidebar |
+| `Space ac` | Open AI chat |
+
+Inside Avante sidebar:
+| Key | Action |
+|-----|--------|
+| `Ctrl+s` | Submit prompt |
+| `q` | Close sidebar |
+| `Tab` | Cycle through code suggestions |
+
+Commands:
+| Command | Action |
+|---------|--------|
+| `:AvanteAsk` | Ask a question |
+| `:AvanteChat` | Open chat |
+| `:AvanteToggle` | Toggle sidebar |
+| `:AvanteEdit` | Edit selected code with AI |
+
+Uses **Copilot provider** (routes through your GitHub Copilot subscription — no API keys needed). Default model: Claude Sonnet.
 
 ---
 
@@ -454,6 +542,15 @@ Quick reference of all `Space` binds:
 | `g d` | Git diff view |
 | `g h` | Git file history |
 | `g q` | Close diff view |
+| `a a` | AI ask |
+| `a t` | AI toggle sidebar |
+| `a c` | AI chat |
+| `g g` | LazyGit |
+| `q s` | Restore session (cwd) |
+| `q l` | Restore last session |
+| `q d` | Stop session recording |
+| `s r` | Search & Replace (Spectre) |
+| `s w` | Search word / selection |
 | `x x` | Diagnostics |
 | `x q` | Quickfix |
 | `f` | Format |

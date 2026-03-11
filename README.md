@@ -84,9 +84,27 @@ cp zsh/.zshrc ~/.zshrc
 
 Requires: [Oh My Zsh](https://ohmyz.sh/), [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting), [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions), [eza](https://github.com/eza-community/eza), [bat](https://github.com/sharkdp/bat)
 
+## Neovim
+
+The `nvim/` directory includes a full lazy.nvim config with the Fox ML color palette. See [`nvim/NVIM-KEYBINDS.md`](nvim/NVIM-KEYBINDS.md) for the complete keybind reference.
+
+**AI integrations:**
+- [copilot.lua](https://github.com/zbirenbaum/copilot.lua) — inline ghost-text completions
+- [avante.nvim](https://github.com/yetone/avante.nvim) — Cursor-style AI chat panel (Copilot provider, no API keys needed)
+
+**Other highlights:**
+- LSP via mason (pyright, clangd, bashls, lua_ls, texlab)
+- DAP debugging with CodeLLDB
+- cmake-tools, neotest (GTest/CTest)
+- lazygit.nvim, persistence.nvim (sessions), nvim-spectre (find & replace)
+- Telescope, Harpoon, Flash, Oil, Treesitter textobjects
+
+Requires: `:Copilot auth` after first launch to authenticate with GitHub.
+
 ## Dependencies
 
 - JetBrainsMono Nerd Font
+- [lazygit](https://github.com/jesseduffield/lazygit)
 - For Spotify: [Spicetify](https://spicetify.app/)
 - For Discord: [Vencord](https://vencord.dev/)
 

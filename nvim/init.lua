@@ -143,7 +143,8 @@ local plugins = {
 
   -- === Add to your `plugins` list ===
   {
-    "ahmedkhalf/project.nvim",
+    "coffebar/project.nvim",
+    pin = true,
     opts = {
       detection_methods = { "lsp", "pattern" },
       patterns = { ".git", "compile_commands.json", "CMakeLists.txt", "Makefile" },
@@ -275,6 +276,91 @@ local plugins = {
 
   -- Diffview (full git diff/merge viewer)
   { "sindrets/diffview.nvim", dependencies = { "nvim-lua/plenary.nvim" } },
+
+  -- === AI ===
+
+  -- Copilot (inline ghost-text completions)
+  {
+    "zbirenbaum/copilot.lua",
+    cmd = "Copilot",
+    lazy = false,
+    opts = {
+      suggestion = {
+        enabled = true,
+        auto_trigger = true,
+        keymap = {
+          accept = "<M-l>",       -- Alt+l to accept
+          accept_word = "<M-w>",  -- Alt+w to accept word
+          accept_line = "<M-e>",  -- Alt+e to accept line
+          next = "<M-]>",
+          prev = "<M-[>",
+          dismiss = "<M-c>",
+        },
+      },
+      panel = { enabled = false },
+      filetypes = {
+        markdown = true,
+        ["."] = false,
+      },
+    },
+  },
+
+  -- Avante (Cursor-style AI panel, using Copilot provider)
+  {
+    "yetone/avante.nvim",
+    event = "VeryLazy",
+    version = false,
+    build = "make",
+    dependencies = {
+      "nvim-treesitter/nvim-treesitter",
+      "stevearc/dressing.nvim",
+      "nvim-lua/plenary.nvim",
+      "MunifTanjim/nui.nvim",
+      "zbirenbaum/copilot.lua",
+    },
+    opts = {
+      provider = "copilot",
+      providers = {
+        copilot = {
+          model = "claude-sonnet-4",
+        },
+      },
+      behaviour = {
+        auto_suggestions = false,
+        auto_set_keymaps = true,
+      },
+      windows = {
+        width = 30,
+        sidebar_header = {
+          rounded = true,
+        },
+      },
+    },
+  },
+  { "stevearc/dressing.nvim", opts = {} },
+  { "MunifTanjim/nui.nvim" },
+
+  -- === Quality of Life ===
+
+  -- Lazygit (full git TUI inside nvim)
+  {
+    "kdheepak/lazygit.nvim",
+    cmd = { "LazyGit", "LazyGitConfig", "LazyGitCurrentFile" },
+    dependencies = { "nvim-lua/plenary.nvim" },
+  },
+
+  -- Persistence (auto session save/restore)
+  {
+    "folke/persistence.nvim",
+    event = "BufReadPre",
+    opts = {},
+  },
+
+  -- Spectre (project-wide find and replace)
+  {
+    "nvim-pack/nvim-spectre",
+    dependencies = { "nvim-lua/plenary.nvim" },
+  },
 
 }
 
@@ -592,3 +678,22 @@ map("n", "<leader>u", "<cmd>UndotreeToggle<cr>", { desc = "Undotree" })
 map("n", "<leader>gd", "<cmd>DiffviewOpen<cr>", { desc = "Git diff view" })
 map("n", "<leader>gh", "<cmd>DiffviewFileHistory %<cr>", { desc = "Git file history" })
 map("n", "<leader>gq", "<cmd>DiffviewClose<cr>", { desc = "Close diff view" })
+
+-- AI (Avante)
+map("n", "<leader>aa", "<cmd>AvanteAsk<cr>", { desc = "Avante ask" })
+map("v", "<leader>aa", "<cmd>AvanteAsk<cr>", { desc = "Avante ask (selection)" })
+map("n", "<leader>at", "<cmd>AvanteToggle<cr>", { desc = "Avante toggle" })
+map("n", "<leader>ac", "<cmd>AvanteChat<cr>", { desc = "Avante chat" })
+
+-- Lazygit
+map("n", "<leader>gg", "<cmd>LazyGit<cr>", { desc = "LazyGit" })
+
+-- Persistence (sessions)
+map("n", "<leader>qs", function() require("persistence").load() end, { desc = "Restore session (cwd)" })
+map("n", "<leader>ql", function() require("persistence").load({ last = true }) end, { desc = "Restore last session" })
+map("n", "<leader>qd", function() require("persistence").stop() end, { desc = "Stop session recording" })
+
+-- Spectre (find & replace)
+map("n", "<leader>sr", function() require("spectre").toggle() end, { desc = "Search & Replace (Spectre)" })
+map("n", "<leader>sw", function() require("spectre").open_visual({ select_word = true }) end, { desc = "Search current word" })
+map("v", "<leader>sw", function() require("spectre").open_visual() end, { desc = "Search selection" })
