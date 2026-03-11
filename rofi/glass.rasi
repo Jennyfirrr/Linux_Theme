@@ -52,7 +52,7 @@ listview {
 
 /* base element */
 element {
-  background-color: rgba(26,18,20,0.8);
+  background-color: rgba(26,18,20,0.85);
   text-color: #f5f5f7;
   border-radius: 0;
   padding: 8px 12px;

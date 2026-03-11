@@ -77,11 +77,13 @@ window#waybar > box {
     background-color: rgba(244, 181, 138, 0.25);
     color: @peach;
     border: 1px solid @peach;
+    text-shadow: 0 0 8px rgba(244, 181, 138, 0.5);
 }
 
 #workspaces button:hover {
     background-color: @bubble_hover;
     color: @fg;
+    text-shadow: 0 0 6px rgba(245, 245, 247, 0.3);
 }
 
 /* ─────────────────────────────────────────
@@ -105,10 +107,12 @@ window#waybar > box {
 #clock {
     color: @peach;
     font-weight: bold;
+    text-shadow: 0 0 8px rgba(244, 181, 138, 0.4);
 }
 
 #pulseaudio {
     color: @lavender;
+    text-shadow: 0 0 6px rgba(154, 138, 196, 0.35);
 }
 
 #network {
@@ -142,10 +146,12 @@ window#waybar > box {
     color: @peach;
     font-size: 14pt;
     padding: 4px 14px;
+    text-shadow: 0 0 10px rgba(244, 181, 138, 0.5);
 }
 
 #custom-logo:hover {
     background-color: rgba(244, 181, 138, 0.2);
+    text-shadow: 0 0 14px rgba(244, 181, 138, 0.7);
 }
 
 /* ─────────────────────────────────────────

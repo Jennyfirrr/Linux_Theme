@@ -1,0 +1,47 @@
+# ╭──────────────────────────────────────────────────────────────────╮
+# │                    Fox ML Zathura Theme                         │
+# ╰──────────────────────────────────────────────────────────────────╯
+
+# Colors
+set default-bg                  "#1a1214"
+set default-fg                  "#f5f5f7"
+
+set statusbar-bg                "#150f0f"
+set statusbar-fg                "#f5f5f7"
+
+set inputbar-bg                 "#1a1214"
+set inputbar-fg                 "#f4b58a"
+
+set notification-bg             "#1a1214"
+set notification-fg             "#f5f5f7"
+set notification-error-bg       "#1a1214"
+set notification-error-fg       "#ff6b6b"
+set notification-warning-bg     "#1a1214"
+set notification-warning-fg     "#f9e2af"
+
+set highlight-color             "rgba(244,181,138,0.25)"
+set highlight-active-color      "rgba(245,169,184,0.40)"
+
+set completion-bg               "#1a1214"
+set completion-fg               "#f5f5f7"
+set completion-highlight-bg     "rgba(244,181,138,0.25)"
+set completion-highlight-fg     "#f5f5f7"
+set completion-group-bg         "#150f0f"
+set completion-group-fg         "#f4b58a"
+
+set index-bg                    "#1a1214"
+set index-fg                    "#f5f5f7"
+set index-active-bg             "rgba(244,181,138,0.25)"
+set index-active-fg             "#f5f5f7"
+
+set recolor-lightcolor          "#1a1214"
+set recolor-darkcolor           "#f5f5f7"
+set recolor                     "true"
+set recolor-keephue             "false"
+
+# Appearance
+set font                        "JetBrainsMono Nerd Font 11"
+set selection-clipboard         "clipboard"
+set window-title-basename       "true"
+set statusbar-home-tilde        "true"
+set guioptions                  "sv"

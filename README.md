@@ -1,6 +1,6 @@
 # Fox ML Theme
 
-A dark, crisp theme with peach and lavender accents. No rounded corners.
+A dark, crisp theme with peach and lavender accents. Sharp corners, neon glows, glassmorphic panels.
 
 ## Screenshots
 
@@ -55,6 +55,8 @@ The installer will:
 | Cursor/VS Code | `~/.cursor/extensions/foxml-theme/` |
 | Discord | `~/.config/Vencord/themes/foxml.css` |
 | Zsh | `~/.zshrc` + `~/.config/zsh/` + `~/.oh-my-zsh/themes/caramel.zsh-theme` |
+| Zathura | `~/.config/zathura/zathurarc` |
+| Bat | `~/.config/bat/themes/Fox ML.tmTheme` |
 
 ## Zsh / Shell
 
@@ -100,6 +102,9 @@ The `nvim/` directory includes a full lazy.nvim config with the Fox ML color pal
 - cmake-tools, neotest (GTest/CTest)
 - lazygit.nvim, persistence.nvim (sessions), nvim-spectre (find & replace)
 - Telescope, Harpoon, Flash, Oil, Treesitter textobjects
+- noice.nvim (floating cmdline/messages), snacks.nvim (dashboard), dropbar.nvim (breadcrumbs)
+- clangd_extensions.nvim (inlay hints, type hierarchy), friendly-snippets, zen-mode.nvim
+- All 60+ plugins themed to match the FoxML palette
 
 Requires: `:Copilot auth` after first launch to authenticate with GitHub.
 
@@ -107,6 +112,8 @@ Requires: `:Copilot auth` after first launch to authenticate with GitHub.
 
 - JetBrainsMono Nerd Font
 - [lazygit](https://github.com/jesseduffield/lazygit)
+- [bat](https://github.com/sharkdp/bat)
+- [zathura](https://pwmt.org/projects/zathura/) (PDF viewer)
 - For Spotify: [Spicetify](https://spicetify.app/)
 - For Discord: [Vencord](https://vencord.dev/)
 

@@ -29,6 +29,8 @@ echo "  - btop"
 echo "  - Firefox"
 echo "  - Cursor/VS Code"
 echo "  - Discord (Vencord)"
+echo "  - Zathura (PDF viewer)"
+echo "  - Bat (syntax-highlighted cat)"
 echo ""
 echo "Backups will be saved to: $BACKUP_DIR"
 echo ""
@@ -65,6 +67,8 @@ PACMAN_PKGS=(
     rofi-wayland
     btop
     firefox
+    zathura
+    zathura-pdf-mupdf
 )
 
 # Only install what's missing
@@ -339,6 +343,28 @@ if [[ -d ~/.vscode/extensions ]]; then
 EOF
     echo "  ✓ VS Code theme installed"
 fi
+
+# ─────────────────────────────────────────
+# Zathura
+# ─────────────────────────────────────────
+echo ""
+echo "Installing Zathura theme..."
+mkdir -p ~/.config/zathura
+backup_and_copy "$SCRIPT_DIR/zathura/zathurarc" ~/.config/zathura/zathurarc
+
+# ─────────────────────────────────────────
+# Bat
+# ─────────────────────────────────────────
+echo ""
+echo "Installing Bat theme..."
+BAT_CONFIG_DIR="$(bat --config-dir 2>/dev/null || echo "$HOME/.config/bat")"
+mkdir -p "$BAT_CONFIG_DIR/themes"
+cp "$SCRIPT_DIR/bat/foxml.tmTheme" "$BAT_CONFIG_DIR/themes/Fox ML.tmTheme"
+if command -v bat &> /dev/null; then
+    bat cache --build &>/dev/null
+fi
+echo "  ✓ Fox ML.tmTheme"
+echo "  Set theme in ~/.config/bat/config: --theme=\"Fox ML\""
 
 # ─────────────────────────────────────────
 # Vencord (Discord)

@@ -54,9 +54,9 @@
   --brand-experiment: var(--fox-peach);
   --brand-experiment-560: var(--fox-peach);
 
-  --scrollbar-thin-thumb: rgba(244, 181, 138, 0.3);
+  --scrollbar-thin-thumb: rgba(244, 181, 138, 0.4);
   --scrollbar-thin-track: transparent;
-  --scrollbar-auto-thumb: rgba(244, 181, 138, 0.3);
+  --scrollbar-auto-thumb: rgba(244, 181, 138, 0.4);
   --scrollbar-auto-track: transparent;
 
   --input-background: var(--fox-bg-alt);
@@ -284,10 +284,10 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(244, 181, 138, 0.3) !important;
+  background: rgba(244, 181, 138, 0.4) !important;
   border-radius: 0 !important;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(244, 181, 138, 0.5) !important;
+  background: rgba(244, 181, 138, 0.6) !important;
 }
