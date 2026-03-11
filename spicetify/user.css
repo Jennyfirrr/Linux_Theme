@@ -1,11 +1,11 @@
 /* Fox ML Theme for Spicetify
-   Background matches tmux active pane: #1a0d1a
+   Background matches tmux active pane: #1a1214
    Accents: peach #f4b58a
 */
 
 :root {
     --font-family: 'JetBrainsMono Nerd Font', 'JetBrains Mono', monospace;
-    --fox-bg: #1a0d1a;
+    --fox-bg: #1a1214;
     --fox-card: #2d1a2d;
     --fox-peach: #f4b58a;
     --fox-pink: #f5a9b8;

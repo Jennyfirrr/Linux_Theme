@@ -1,10 +1,10 @@
 /* Fox ML Theme for Firefox
-   bg: #1a0d1a | fg: #f5f5f7 | peach: #f4b58a | lavender: #9a8ac4 | pink: #f5a9b8
+   bg: #1a1214 | fg: #f5f5f7 | peach: #f4b58a | lavender: #9a8ac4 | pink: #f5a9b8
    Sharp corners throughout
 */
 
 :root {
-  --fox-bg: #1a0d1a;
+  --fox-bg: #1a1214;
   --fox-bg-alt: #2d1a2d;
   --fox-fg: #f5f5f7;
   --fox-dim: #888888;

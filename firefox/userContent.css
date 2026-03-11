@@ -4,7 +4,7 @@
 @-moz-document url("about:newtab"), url("about:home") {
   :root,
   body {
-    --newtab-background-color: #1a0d1a !important;
+    --newtab-background-color: #1a1214 !important;
     --newtab-background-color-secondary: #2d1a2d !important;
     --newtab-element-hover-color: rgba(244, 181, 138, 0.1) !important;
     --newtab-element-active-color: rgba(244, 181, 138, 0.2) !important;
@@ -15,7 +15,7 @@
     --newtab-card-placeholder-color: #3a414b !important;
     --newtab-link-primary-color: #f4b58a !important;
     --newtab-link-secondary-color: #9a8ac4 !important;
-    --newtab-contextmenu-background-color: #1a0d1a !important;
+    --newtab-contextmenu-background-color: #1a1214 !important;
     --newtab-contextmenu-button-color: #f5f5f7 !important;
     --newtab-button-secondary-color: #2d1a2d !important;
     --newtab-wordmark-color: #f5f5f7 !important;
@@ -32,8 +32,8 @@
     --newtab-card-active-outline-color: #f4b58a !important;
     --newtab-card-hairline-color: #3a414b !important;
 
-    background-color: #1a0d1a !important;
-    scrollbar-color: rgba(244, 181, 138, 0.4) #1a0d1a !important;
+    background-color: #1a1214 !important;
+    scrollbar-color: rgba(244, 181, 138, 0.4) #1a1214 !important;
     scrollbar-width: thin !important;
   }
 
@@ -41,13 +41,13 @@
   .outer-wrapper,
   .body-wrapper,
   main {
-    background-color: #1a0d1a !important;
+    background-color: #1a1214 !important;
     color: #f5f5f7 !important;
   }
 
   /* Activity Stream outer wrapper */
   .activity-stream {
-    background-color: #1a0d1a !important;
+    background-color: #1a1214 !important;
   }
 
   /* Search box */
@@ -161,7 +161,7 @@
   .context-menu,
   .context-menu-list,
   .context-menu-item {
-    background-color: #1a0d1a !important;
+    background-color: #1a1214 !important;
     color: #f5f5f7 !important;
     border-radius: 0 !important;
   }
@@ -190,7 +190,7 @@
   .customize-menu,
   .home-section,
   .home-section-title {
-    background-color: #1a0d1a !important;
+    background-color: #1a1214 !important;
     color: #f5f5f7 !important;
   }
 
@@ -202,12 +202,12 @@
   /* Selection */
   ::selection {
     background: rgba(244, 181, 138, 0.35) !important;
-    color: #1a0d1a !important;
+    color: #1a1214 !important;
   }
 
   /* Force all backgrounds */
   * {
-    --newtab-background-color: #1a0d1a !important;
+    --newtab-background-color: #1a1214 !important;
     --newtab-card-background-color: #2d1a2d !important;
   }
 }
@@ -215,12 +215,12 @@
 /* General web content scrollbars and selection */
 @-moz-document url-prefix("http"), url-prefix("https"), url-prefix("about:reader") {
   :root {
-    scrollbar-color: rgba(244, 181, 138, 0.4) #1a0d1a !important;
+    scrollbar-color: rgba(244, 181, 138, 0.4) #1a1214 !important;
     scrollbar-width: thin !important;
   }
 
   ::selection {
     background: rgba(244, 181, 138, 0.35) !important;
-    color: #1a0d1a !important;
+    color: #1a1214 !important;
   }
 }

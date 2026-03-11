@@ -12,7 +12,7 @@ echo "│                    Fox ML Theme Installer                       │"
 echo "╰──────────────────────────────────────────────────────────────────╯"
 echo ""
 echo "This will install the Fox ML theme for:"
-echo "  - Hyprland (theme + hyprlock + hyprpaper)"
+echo "  - Hyprland (theme + hyprlock + hyprpaper + hypridle)"
 echo "  - Neovim"
 echo "  - Wallpaper"
 echo "  - Waybar"
@@ -21,7 +21,8 @@ echo "  - Tmux"
 echo "  - Zsh (caramel prompt + config)"
 echo "  - Spicetify (Spotify)"
 echo "  - Yazi"
-echo "  - Dunst"
+echo "  - Mako / Dunst (notifications)"
+echo "  - Fastfetch"
 echo "  - Rofi"
 echo "  - GTK 3 & 4"
 echo "  - btop"
@@ -136,6 +137,9 @@ mkdir -p ~/.config/hypr/modules
 backup_and_copy "$SCRIPT_DIR/hyprland/theme.conf" ~/.config/hypr/modules/theme.conf
 backup_and_copy "$SCRIPT_DIR/hyprlock/hyprlock.conf" ~/.config/hypr/hyprlock.conf
 backup_and_copy "$SCRIPT_DIR/hyprpaper/hyprpaper.conf" ~/.config/hypr/hyprpaper.conf
+if [[ -f "$SCRIPT_DIR/hyprland/hypridle.conf" ]]; then
+    backup_and_copy "$SCRIPT_DIR/hyprland/hypridle.conf" ~/.config/hypr/hypridle.conf
+fi
 
 # ─────────────────────────────────────────
 # Neovim
@@ -226,12 +230,28 @@ mkdir -p ~/.config/yazi
 backup_and_copy "$SCRIPT_DIR/yazi/theme.toml" ~/.config/yazi/theme.toml
 
 # ─────────────────────────────────────────
+# Mako
+# ─────────────────────────────────────────
+echo ""
+echo "Installing Mako theme..."
+mkdir -p ~/.config/mako
+backup_and_copy "$SCRIPT_DIR/mako/config" ~/.config/mako/config
+
+# ─────────────────────────────────────────
 # Dunst
 # ─────────────────────────────────────────
 echo ""
 echo "Installing Dunst theme..."
 mkdir -p ~/.config/dunst
 backup_and_copy "$SCRIPT_DIR/dunst/dunstrc" ~/.config/dunst/dunstrc
+
+# ─────────────────────────────────────────
+# Fastfetch
+# ─────────────────────────────────────────
+echo ""
+echo "Installing Fastfetch config..."
+mkdir -p ~/.config/fastfetch
+backup_and_copy "$SCRIPT_DIR/fastfetch/config.jsonc" ~/.config/fastfetch/config.jsonc
 
 # ─────────────────────────────────────────
 # Rofi

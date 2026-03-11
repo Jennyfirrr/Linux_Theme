@@ -12,7 +12,7 @@ A dark, crisp theme with peach and lavender accents. No rounded corners.
 
 | Element | Color |
 |---------|-------|
-| Background | `#1a0d1a` |
+| Background | `#1a1214` |
 | Foreground | `#f5f5f7` |
 | Peach (primary) | `#f4b58a` |
 | Pink (active) | `#f5a9b8` |
@@ -44,7 +44,9 @@ The installer will:
 | Tmux | `~/.tmux.conf` |
 | Spicetify | `~/.config/spicetify/Themes/FoxML/` |
 | Yazi | `~/.config/yazi/theme.toml` |
+| Mako | `~/.config/mako/config` |
 | Dunst | `~/.config/dunst/dunstrc` |
+| Fastfetch | `~/.config/fastfetch/config.jsonc` |
 | Rofi | `~/.config/rofi/glass.rasi` |
 | GTK 3 | `~/.config/gtk-3.0/gtk.css` |
 | GTK 4 | `~/.config/gtk-4.0/gtk.css` |
