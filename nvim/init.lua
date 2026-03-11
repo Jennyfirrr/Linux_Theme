@@ -289,12 +289,12 @@ local plugins = {
         enabled = true,
         auto_trigger = true,
         keymap = {
-          accept = "<M-l>",       -- Alt+l to accept
-          accept_word = "<M-w>",  -- Alt+w to accept word
-          accept_line = "<M-e>",  -- Alt+e to accept line
-          next = "<M-]>",
-          prev = "<M-[>",
-          dismiss = "<M-c>",
+          accept = "<C-l>",       -- Ctrl+l to accept
+          accept_word = "<C-;>",  -- Ctrl+; to accept word
+          accept_line = "<C-'>",  -- Ctrl+' to accept line
+          next = "<C-]>",
+          prev = "<C-[>",
+          dismiss = "<C-\\>",
         },
       },
       panel = { enabled = false },

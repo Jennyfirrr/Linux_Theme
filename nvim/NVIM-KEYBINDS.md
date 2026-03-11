@@ -439,16 +439,16 @@ Press **Space** and wait — which-key pops up showing all leader binds and thei
 ### Copilot (Inline AI Completions)
 | Key | Action |
 |-----|--------|
-| `Alt+l` | Accept suggestion |
-| `Alt+w` | Accept word |
-| `Alt+e` | Accept line |
-| `Alt+]` | Next suggestion |
-| `Alt+[` | Previous suggestion |
-| `Alt+c` | Dismiss suggestion |
+| `Ctrl+l` | Accept suggestion |
+| `Ctrl+;` | Accept word |
+| `Ctrl+'` | Accept line |
+| `Ctrl+]` | Next suggestion |
+| `Ctrl+[` | Previous suggestion |
+| `Ctrl+\` | Dismiss suggestion |
 | `:Copilot auth` | Log in to GitHub |
 | `:Copilot status` | Check connection status |
 
-Ghost-text suggestions appear automatically as you type. Use `Alt+l` to accept the full suggestion, or `Alt+w` / `Alt+e` to accept partially.
+Ghost-text suggestions appear automatically as you type. Use `Ctrl+l` to accept the full suggestion, or `Ctrl+;` / `Ctrl+'` to accept partially.
 
 **Note:** If you want Copilot suggestions in the nvim-cmp completion menu (alongside LSP results) instead of or in addition to ghost text, add `zbirenbaum/copilot-cmp`. This lets you see Copilot as a ranked source in the popup menu rather than separate inline text.
 
