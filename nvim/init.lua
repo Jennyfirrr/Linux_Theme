@@ -293,8 +293,8 @@ local plugins = {
           accept_word = "<C-;>",  -- Ctrl+; to accept word
           accept_line = "<C-'>",  -- Ctrl+' to accept line
           next = "<C-]>",
-          prev = "<C-[>",
-          dismiss = "<C-\\>",
+          prev = "<C-k>",
+          dismiss = "<C-j>",
         },
       },
       panel = { enabled = false },

@@ -443,8 +443,8 @@ Press **Space** and wait — which-key pops up showing all leader binds and thei
 | `Ctrl+;` | Accept word |
 | `Ctrl+'` | Accept line |
 | `Ctrl+]` | Next suggestion |
-| `Ctrl+[` | Previous suggestion |
-| `Ctrl+\` | Dismiss suggestion |
+| `Ctrl+k` | Previous suggestion |
+| `Ctrl+j` | Dismiss suggestion |
 | `:Copilot auth` | Log in to GitHub |
 | `:Copilot status` | Check connection status |
 
