@@ -47,7 +47,7 @@ export LESS_TERMCAP_us=$'\e[4;38;5;211m'
 source /usr/share/fzf/key-bindings.zsh
 source /usr/share/fzf/completion.zsh
 export FZF_DEFAULT_OPTS="
-  --color=bg+:#3a414b,bg:#1a1214,fg:#f5f5f7,fg+:#f5f5f7
+  --color=bg+:#3a414b,bg:#1f242b,fg:#f5f5f7,fg+:#f5f5f7
   --color=hl:#e8a0bf,hl+:#ffafd7,info:#e8a0bf,marker:#ffafd7
   --color=prompt:#ffafd7,spinner:#e8a0bf,pointer:#ffafd7,header:#e8a0bf
   --color=border:#3a414b

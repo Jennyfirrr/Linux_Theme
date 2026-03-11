@@ -340,6 +340,136 @@ local plugins = {
   { "stevearc/dressing.nvim", opts = {} },
   { "MunifTanjim/nui.nvim" },
 
+  -- === New plugins ===
+
+  -- Noice (floating cmdline, messages, notifications)
+  {
+    "folke/noice.nvim",
+    event = "VeryLazy",
+    dependencies = { "MunifTanjim/nui.nvim" },
+    opts = {
+      cmdline = {
+        view = "cmdline_popup",
+        format = {
+          cmdline = { icon = " " },
+          search_down = { icon = " " },
+          search_up = { icon = " " },
+        },
+      },
+      messages = { view_search = false },
+      lsp = {
+        override = {
+          ["vim.lsp.util.convert_input_to_markdown_lines"] = true,
+          ["vim.lsp.util.stylize_markdown"] = true,
+          ["cmp.entry.get_documentation"] = true,
+        },
+        hover = { enabled = true },
+        signature = { enabled = true },
+      },
+      presets = {
+        bottom_search = false,
+        command_palette = true,
+        long_message_to_split = true,
+        lsp_doc_border = true,
+      },
+    },
+  },
+
+  -- mini.ai (enhanced text objects)
+  {
+    "echasnovski/mini.ai",
+    event = "VeryLazy",
+    opts = { n_lines = 500 },
+  },
+
+  -- Snacks (dashboard, notifications, terminal utilities)
+  {
+    "folke/snacks.nvim",
+    priority = 1000,
+    lazy = false,
+    opts = {
+      dashboard = {
+        enabled = true,
+        preset = {
+          header = [[
+   ____            __  __ _
+  |  __| _____  _|  \/  | |
+  | |__ / _ \ \/ / |\/| | |
+  |  __| (_) >  <| |  | | |___
+  |_|   \___/_/\_\_|  |_|_____|
+          ]],
+          keys = {
+            { icon = " ", key = "f", desc = "Find File", action = ":Telescope find_files" },
+            { icon = " ", key = "g", desc = "Find Text", action = ":Telescope live_grep" },
+            { icon = " ", key = "r", desc = "Recent Files", action = ":Telescope oldfiles" },
+            { icon = " ", key = "p", desc = "Projects", action = function() require("telescope").extensions.projects.projects({}) end },
+            { icon = " ", key = "s", desc = "Restore Session", action = function() require("persistence").load() end },
+            { icon = "󰒲 ", key = "l", desc = "Lazy", action = ":Lazy" },
+            { icon = " ", key = "q", desc = "Quit", action = ":qa" },
+          },
+        },
+      },
+      notifier = {
+        enabled = true,
+        style = "compact",
+      },
+      indent = { enabled = false }, -- already using indent-blankline
+    },
+  },
+
+  -- Dropbar (breadcrumb navigation)
+  {
+    "Bekaboo/dropbar.nvim",
+    event = { "BufReadPost", "BufNewFile" },
+  },
+
+  -- Clangd extensions (inlay hints, AST, type hierarchy for C++)
+  {
+    "p00f/clangd_extensions.nvim",
+    ft = { "c", "cpp" },
+    opts = {
+      inlay_hints = {
+        inline = true,
+        only_current_line = false,
+        show_parameter_hints = true,
+        parameter_hints_prefix = "← ",
+        other_hints_prefix = "→ ",
+        highlight = "Comment",
+      },
+      ast = {
+        role_icons = {
+          type = "",
+          declaration = "",
+          expression = "",
+          specifier = "",
+          statement = "",
+          ["template argument"] = "",
+        },
+      },
+    },
+  },
+
+  -- Friendly snippets (community snippet collection for LuaSnip)
+  {
+    "rafamadriz/friendly-snippets",
+    config = function()
+      require("luasnip.loaders.from_vscode").lazy_load()
+    end,
+  },
+
+  -- Zen mode (distraction-free writing, great for LaTeX)
+  {
+    "folke/zen-mode.nvim",
+    cmd = "ZenMode",
+    opts = {
+      window = {
+        backdrop = 0.93,
+        width = 100,
+        options = { signcolumn = "no", number = false, relativenumber = false },
+      },
+    },
+  },
+
   -- === Quality of Life ===
 
   -- Lazygit (full git TUI inside nvim)
@@ -429,9 +559,238 @@ vim.api.nvim_set_hl(0, "CmpBorder", { fg = "#f4b58a", bg = "none" })
 vim.api.nvim_set_hl(0, "Pmenu", { bg = "#1a1214" })
 vim.api.nvim_set_hl(0, "PmenuSel", { bg = "#3a414b" })
 
+-- Noice/notification highlights (neon glow)
+vim.api.nvim_set_hl(0, "NoiceCmdlinePopupBorder", { fg = "#f5a9b8" })
+vim.api.nvim_set_hl(0, "NoiceCmdlineIcon", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "NoiceCmdlinePopupTitle", { fg = "#f4b58a", bold = true })
+vim.api.nvim_set_hl(0, "NoiceConfirmBorder", { fg = "#8bd5a2" })
+
+-- Dropbar breadcrumb highlights
+vim.api.nvim_set_hl(0, "WinBar", { fg = "#5a6270", bg = "none" })
+vim.api.nvim_set_hl(0, "WinBarNC", { fg = "#3a414b", bg = "none" })
+
+-- Telescope border glow
+vim.api.nvim_set_hl(0, "TelescopeBorder", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "TelescopePromptBorder", { fg = "#f5a9b8" })
+vim.api.nvim_set_hl(0, "TelescopeResultsBorder", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "TelescopePreviewBorder", { fg = "#8bd5a2" })
+vim.api.nvim_set_hl(0, "TelescopePromptTitle", { fg = "#1a1214", bg = "#f5a9b8", bold = true })
+vim.api.nvim_set_hl(0, "TelescopeResultsTitle", { fg = "#1a1214", bg = "#f4b58a", bold = true })
+vim.api.nvim_set_hl(0, "TelescopePreviewTitle", { fg = "#1a1214", bg = "#8bd5a2", bold = true })
+
+-- Snacks dashboard highlights
+vim.api.nvim_set_hl(0, "SnacksDashboardHeader", { fg = "#f5a9b8", bold = true })
+vim.api.nvim_set_hl(0, "SnacksDashboardKey", { fg = "#f4b58a", bold = true })
+vim.api.nvim_set_hl(0, "SnacksDashboardDesc", { fg = "#f5f5f7" })
+vim.api.nvim_set_hl(0, "SnacksDashboardIcon", { fg = "#8bd5a2" })
+vim.api.nvim_set_hl(0, "SnacksDashboardFooter", { fg = "#5a6270", italic = true })
+
+-- Cursorline subtle glow
+vim.api.nvim_set_hl(0, "CursorLine", { bg = "#2d1f27" })
+vim.api.nvim_set_hl(0, "ColorColumn", { bg = "#2d1f27" })
+
+-- Git signs neon colors
+vim.api.nvim_set_hl(0, "GitSignsAdd", { fg = "#8bd5a2" })
+vim.api.nvim_set_hl(0, "GitSignsChange", { fg = "#f9e2af" })
+vim.api.nvim_set_hl(0, "GitSignsDelete", { fg = "#ff6b6b" })
+
+-- Flash.nvim
+vim.api.nvim_set_hl(0, "FlashLabel", { fg = "#1a1214", bg = "#f4b58a", bold = true })
+vim.api.nvim_set_hl(0, "FlashMatch", { fg = "#f5f5f7", bg = "#2d1f27" })
+vim.api.nvim_set_hl(0, "FlashCurrent", { fg = "#1a1214", bg = "#f5a9b8", bold = true })
+vim.api.nvim_set_hl(0, "FlashBackdrop", { fg = "#3a414b" })
+
+-- Trouble.nvim
+vim.api.nvim_set_hl(0, "TroubleNormal", { bg = "#150f0f" })
+vim.api.nvim_set_hl(0, "TroubleNormalNC", { bg = "#150f0f" })
+vim.api.nvim_set_hl(0, "TroubleText", { fg = "#f5f5f7" })
+vim.api.nvim_set_hl(0, "TroubleCount", { fg = "#1a1214", bg = "#f4b58a", bold = true })
+vim.api.nvim_set_hl(0, "TroubleFile", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "TroubleFoldIcon", { fg = "#f5a9b8" })
+vim.api.nvim_set_hl(0, "TroubleLocation", { fg = "#5a6270" })
+
+-- Which-key
+vim.api.nvim_set_hl(0, "WhichKey", { fg = "#f4b58a", bold = true })
+vim.api.nvim_set_hl(0, "WhichKeyGroup", { fg = "#f5a9b8" })
+vim.api.nvim_set_hl(0, "WhichKeyDesc", { fg = "#f5f5f7" })
+vim.api.nvim_set_hl(0, "WhichKeySeparator", { fg = "#3a414b" })
+vim.api.nvim_set_hl(0, "WhichKeyFloat", { bg = "#150f0f" })
+vim.api.nvim_set_hl(0, "WhichKeyBorder", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "WhichKeyValue", { fg = "#5a6270" })
+
+-- Indent blankline
+vim.api.nvim_set_hl(0, "IblIndent", { fg = "#2d1f27" })
+vim.api.nvim_set_hl(0, "IblScope", { fg = "#f4b58a" })
+
+-- Oil.nvim
+vim.api.nvim_set_hl(0, "OilDir", { fg = "#f4b58a", bold = true })
+vim.api.nvim_set_hl(0, "OilDirIcon", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "OilLink", { fg = "#89dceb" })
+vim.api.nvim_set_hl(0, "OilFile", { fg = "#f5f5f7" })
+
+-- DAP UI
+vim.api.nvim_set_hl(0, "DapUIScope", { fg = "#f4b58a", bold = true })
+vim.api.nvim_set_hl(0, "DapUIType", { fg = "#f5a9b8" })
+vim.api.nvim_set_hl(0, "DapUIValue", { fg = "#8bd5a2" })
+vim.api.nvim_set_hl(0, "DapUIVariable", { fg = "#f5f5f7" })
+vim.api.nvim_set_hl(0, "DapUIThread", { fg = "#8bd5a2" })
+vim.api.nvim_set_hl(0, "DapUIStoppedThread", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "DapUIFrameName", { fg = "#f5f5f7" })
+vim.api.nvim_set_hl(0, "DapUISource", { fg = "#f5a9b8" })
+vim.api.nvim_set_hl(0, "DapUIBreakpointsPath", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "DapUIBreakpointsInfo", { fg = "#89dceb" })
+vim.api.nvim_set_hl(0, "DapUIBreakpointsCurrentLine", { fg = "#8bd5a2", bold = true })
+vim.api.nvim_set_hl(0, "DapUIBreakpointsLine", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "DapUIBreakpointsDisabledLine", { fg = "#3a414b" })
+vim.api.nvim_set_hl(0, "DapUIDecoration", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "DapUIWatchesEmpty", { fg = "#3a414b" })
+vim.api.nvim_set_hl(0, "DapUIWatchesValue", { fg = "#8bd5a2" })
+vim.api.nvim_set_hl(0, "DapUIWatchesError", { fg = "#ff6b6b" })
+vim.api.nvim_set_hl(0, "DapUIModifiedValue", { fg = "#f9e2af", bold = true })
+vim.api.nvim_set_hl(0, "DapUIFloatNormal", { bg = "#150f0f" })
+vim.api.nvim_set_hl(0, "DapUIFloatBorder", { fg = "#f4b58a" })
+
+-- DAP breakpoint/stopped signs
+vim.api.nvim_set_hl(0, "DapBreakpoint", { fg = "#ff6b6b" })
+vim.api.nvim_set_hl(0, "DapBreakpointCondition", { fg = "#f9e2af" })
+vim.api.nvim_set_hl(0, "DapLogPoint", { fg = "#89dceb" })
+vim.api.nvim_set_hl(0, "DapStopped", { fg = "#8bd5a2", bg = "#2d1f27" })
+
+-- Aerial (symbols outline)
+vim.api.nvim_set_hl(0, "AerialLine", { bg = "#2d1f27" })
+vim.api.nvim_set_hl(0, "AerialGuide", { fg = "#2d1f27" })
+vim.api.nvim_set_hl(0, "AerialFunctionIcon", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "AerialClassIcon", { fg = "#f5a9b8" })
+vim.api.nvim_set_hl(0, "AerialVariableIcon", { fg = "#f5f5f7" })
+
+-- Diffview
+vim.api.nvim_set_hl(0, "DiffviewFilePanelTitle", { fg = "#f4b58a", bold = true })
+vim.api.nvim_set_hl(0, "DiffviewFilePanelCounter", { fg = "#f5a9b8" })
+vim.api.nvim_set_hl(0, "DiffviewFilePanelFileName", { fg = "#f5f5f7" })
+vim.api.nvim_set_hl(0, "DiffviewNormal", { bg = "#150f0f" })
+vim.api.nvim_set_hl(0, "DiffAdd", { bg = "#1a2e1a" })
+vim.api.nvim_set_hl(0, "DiffChange", { bg = "#2d2a1a" })
+vim.api.nvim_set_hl(0, "DiffDelete", { bg = "#2e1a1a" })
+vim.api.nvim_set_hl(0, "DiffText", { bg = "#3d3a1a" })
+
+-- Neotest
+vim.api.nvim_set_hl(0, "NeotestPassed", { fg = "#8bd5a2" })
+vim.api.nvim_set_hl(0, "NeotestFailed", { fg = "#ff6b6b" })
+vim.api.nvim_set_hl(0, "NeotestRunning", { fg = "#f9e2af" })
+vim.api.nvim_set_hl(0, "NeotestSkipped", { fg = "#5a6270" })
+vim.api.nvim_set_hl(0, "NeotestNamespace", { fg = "#f5a9b8" })
+vim.api.nvim_set_hl(0, "NeotestFile", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "NeotestDir", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "NeotestAdapterName", { fg = "#f5a9b8", bold = true })
+vim.api.nvim_set_hl(0, "NeotestFocused", { bold = true, underline = true })
+vim.api.nvim_set_hl(0, "NeotestIndent", { fg = "#2d1f27" })
+vim.api.nvim_set_hl(0, "NeotestExpandMarker", { fg = "#3a414b" })
+vim.api.nvim_set_hl(0, "NeotestWinSelect", { fg = "#f4b58a", bold = true })
+
+-- Harpoon
+vim.api.nvim_set_hl(0, "HarpoonWindow", { bg = "#150f0f" })
+vim.api.nvim_set_hl(0, "HarpoonBorder", { fg = "#f4b58a" })
+
+-- TODO comments
+vim.api.nvim_set_hl(0, "TodoBgTODO", { fg = "#1a1214", bg = "#f4b58a", bold = true })
+vim.api.nvim_set_hl(0, "TodoFgTODO", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "TodoBgFIX", { fg = "#1a1214", bg = "#ff6b6b", bold = true })
+vim.api.nvim_set_hl(0, "TodoFgFIX", { fg = "#ff6b6b" })
+vim.api.nvim_set_hl(0, "TodoBgHACK", { fg = "#1a1214", bg = "#f9e2af", bold = true })
+vim.api.nvim_set_hl(0, "TodoFgHACK", { fg = "#f9e2af" })
+vim.api.nvim_set_hl(0, "TodoBgNOTE", { fg = "#1a1214", bg = "#8bd5a2", bold = true })
+vim.api.nvim_set_hl(0, "TodoFgNOTE", { fg = "#8bd5a2" })
+vim.api.nvim_set_hl(0, "TodoBgWARN", { fg = "#1a1214", bg = "#f9e2af", bold = true })
+vim.api.nvim_set_hl(0, "TodoFgWARN", { fg = "#f9e2af" })
+vim.api.nvim_set_hl(0, "TodoBgPERF", { fg = "#1a1214", bg = "#f5a9b8", bold = true })
+vim.api.nvim_set_hl(0, "TodoFgPERF", { fg = "#f5a9b8" })
+
+-- Fidget (LSP progress)
+vim.api.nvim_set_hl(0, "FidgetTitle", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "FidgetTask", { fg = "#5a6270" })
+
+-- Treesitter context
+vim.api.nvim_set_hl(0, "TreesitterContext", { bg = "#1f1519" })
+vim.api.nvim_set_hl(0, "TreesitterContextLineNumber", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "TreesitterContextBottom", { underline = true, sp = "#2d1f27" })
+
+-- Mason
+vim.api.nvim_set_hl(0, "MasonHeader", { fg = "#1a1214", bg = "#f4b58a", bold = true })
+vim.api.nvim_set_hl(0, "MasonHighlight", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "MasonHighlightBlock", { fg = "#1a1214", bg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "MasonHighlightBlockBold", { fg = "#1a1214", bg = "#f4b58a", bold = true })
+vim.api.nvim_set_hl(0, "MasonMuted", { fg = "#5a6270" })
+vim.api.nvim_set_hl(0, "MasonMutedBlock", { fg = "#1a1214", bg = "#3a414b" })
+
+-- Lazy.nvim (plugin manager UI)
+vim.api.nvim_set_hl(0, "LazyH1", { fg = "#1a1214", bg = "#f4b58a", bold = true })
+vim.api.nvim_set_hl(0, "LazyH2", { fg = "#f4b58a", bold = true })
+vim.api.nvim_set_hl(0, "LazyButton", { bg = "#2d1f27" })
+vim.api.nvim_set_hl(0, "LazyButtonActive", { fg = "#1a1214", bg = "#f4b58a", bold = true })
+vim.api.nvim_set_hl(0, "LazySpecial", { fg = "#f5a9b8" })
+vim.api.nvim_set_hl(0, "LazyComment", { fg = "#5a6270" })
+vim.api.nvim_set_hl(0, "LazyProgressDone", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "LazyProgressTodo", { fg = "#3a414b" })
+vim.api.nvim_set_hl(0, "LazyReasonPlugin", { fg = "#f5a9b8" })
+vim.api.nvim_set_hl(0, "LazyReasonEvent", { fg = "#f9e2af" })
+vim.api.nvim_set_hl(0, "LazyReasonKeys", { fg = "#89dceb" })
+vim.api.nvim_set_hl(0, "LazyReasonCmd", { fg = "#8bd5a2" })
+
+-- Copilot ghost text
+vim.api.nvim_set_hl(0, "CopilotSuggestion", { fg = "#5a6270", italic = true })
+vim.api.nvim_set_hl(0, "CopilotAnnotation", { fg = "#3a414b" })
+
+-- Avante
+vim.api.nvim_set_hl(0, "AvanteTitle", { fg = "#f4b58a", bold = true })
+vim.api.nvim_set_hl(0, "AvanteSidebarNormal", { bg = "#150f0f" })
+
+-- nvim-cmp item kinds
+vim.api.nvim_set_hl(0, "CmpItemAbbrMatch", { fg = "#f4b58a", bold = true })
+vim.api.nvim_set_hl(0, "CmpItemAbbrMatchFuzzy", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "CmpItemAbbrDeprecated", { fg = "#3a414b", strikethrough = true })
+vim.api.nvim_set_hl(0, "CmpItemKindFunction", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "CmpItemKindMethod", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "CmpItemKindVariable", { fg = "#f5f5f7" })
+vim.api.nvim_set_hl(0, "CmpItemKindKeyword", { fg = "#f5a9b8" })
+vim.api.nvim_set_hl(0, "CmpItemKindClass", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "CmpItemKindStruct", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "CmpItemKindInterface", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "CmpItemKindModule", { fg = "#f5a9b8" })
+vim.api.nvim_set_hl(0, "CmpItemKindProperty", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "CmpItemKindField", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "CmpItemKindEnum", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "CmpItemKindEnumMember", { fg = "#89dceb" })
+vim.api.nvim_set_hl(0, "CmpItemKindConstant", { fg = "#f9e2af" })
+vim.api.nvim_set_hl(0, "CmpItemKindSnippet", { fg = "#8bd5a2" })
+vim.api.nvim_set_hl(0, "CmpItemKindText", { fg = "#5a6270" })
+vim.api.nvim_set_hl(0, "CmpItemKindFile", { fg = "#f5f5f7" })
+vim.api.nvim_set_hl(0, "CmpItemKindFolder", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "CmpItemMenu", { fg = "#5a6270", italic = true })
+
 --
--- Lualine theme sync
-require("lualine").setup({ options = { theme = "tokyonight" } })
+-- Lualine theme sync + noice integration
+require("lualine").setup({
+  options = {
+    theme = "tokyonight",
+    section_separators = { left = "", right = "" },
+    component_separators = { left = "", right = "" },
+  },
+  sections = {
+    lualine_a = { "mode" },
+    lualine_b = { "branch", "diff", "diagnostics" },
+    lualine_c = { { "filename", path = 1 } },
+    lualine_x = {
+      {
+        function() return require("noice").api.status.mode.get() end,
+        cond = function() return package.loaded["noice"] and require("noice").api.status.mode.has() end,
+        color = { fg = "#f5a9b8" },
+      },
+      "encoding", "fileformat", "filetype",
+    },
+    lualine_y = { "progress" },
+    lualine_z = { "location" },
+  },
+})
 
 -- Treesitter
 require("nvim-treesitter.configs").setup({
@@ -697,3 +1056,6 @@ map("n", "<leader>qd", function() require("persistence").stop() end, { desc = "S
 map("n", "<leader>sr", function() require("spectre").toggle() end, { desc = "Search & Replace (Spectre)" })
 map("n", "<leader>sw", function() require("spectre").open_visual({ select_word = true }) end, { desc = "Search current word" })
 map("v", "<leader>sw", function() require("spectre").open_visual() end, { desc = "Search selection" })
+
+-- Zen mode
+map("n", "<leader>z", "<cmd>ZenMode<cr>", { desc = "Zen Mode" })
