@@ -105,24 +105,28 @@ Leader: **Space** | Local leader: **Space**
 | `Ctrl+o` / `Ctrl+i` | Jump back / forward |
 | `gi` | Go to last insert position |
 
-### Windows
+### Windows & Splits
 | Key | Action |
 |-----|--------|
-| `Ctrl+w s` | Split horizontal |
-| `Ctrl+w v` | Split vertical |
+| `Space v` | Vertical split |
+| `Space s` | Horizontal split |
 | `Ctrl+w h/j/k/l` | Navigate splits |
 | `Ctrl+w q` | Close split |
 | `Ctrl+w o` | Close all other splits |
 | `Ctrl+w =` | Equalize split sizes |
-| `Ctrl+w +/-` | Resize height |
-| `Ctrl+w >/<` | Resize width |
+| `Ctrl+Left` / `Ctrl+Right` | Resize window width (-/+ 5 cols) |
+| `Ctrl+Up` / `Ctrl+Down` | Resize window height (+/- 3 rows) |
 
 ### Buffers & Tabs
 | Key | Action |
 |-----|--------|
+| `H` (Shift+h) | Previous buffer tab |
+| `L` (Shift+l) | Next buffer tab |
+| `Space bd` | Close current buffer |
+| `Space bo` | Close all other buffers |
+| `Space bh` | Close buffers to the left |
+| `Space bl` | Close buffers to the right |
 | `:e {file}` | Edit file |
-| `:bn` / `:bp` | Next / Previous buffer |
-| `:bd` | Delete (close) buffer |
 | `:ls` | List buffers |
 | `gt` / `gT` | Next / Previous tab |
 
@@ -169,7 +173,27 @@ Inside Telescope:
 | `Esc` / `Ctrl+c` | Close |
 | `Tab` | Toggle selection + move down |
 
-### Oil (File Explorer)
+### Neo-tree (File Tree Sidebar)
+| Key | Action |
+|-----|--------|
+| `Space e` | Toggle file tree sidebar |
+
+Inside Neo-tree:
+| Key | Action |
+|-----|--------|
+| `l` / `Enter` | Open file / Expand folder |
+| `h` | Collapse folder |
+| `s` | Open in horizontal split |
+| `v` | Open in vertical split |
+| `a` | Add (create) file/folder |
+| `d` | Delete |
+| `r` | Rename |
+| `y` | Copy file |
+| `x` | Cut file |
+| `p` | Paste file |
+| `q` | Close tree |
+
+### Oil (Buffer-style File Explorer)
 | Key | Action |
 |-----|--------|
 | `-` | Open parent directory |
@@ -391,9 +415,6 @@ Inside terminal:
 | Key | Action |
 |-----|--------|
 | `Space pp` | Browse recent projects (Telescope) |
-
-### Neoscroll
-Smooth scrolling is automatic for `Ctrl+d`, `Ctrl+u`, `Ctrl+f`, `Ctrl+b`, `zt`, `zz`, `zb`.
 
 ### Fidget (LSP Progress)
 Shows LSP indexing/progress automatically in the bottom-right. No keybinds.

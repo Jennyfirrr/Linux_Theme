@@ -8,6 +8,8 @@ A dark, crisp theme with peach and lavender accents. Sharp corners, neon glows, 
 
 ![Desktop](screenshots/desktop.png)
 
+![Neovim](screenshots/nvim.png)
+
 ## Palette
 
 | Element | Color |
@@ -102,9 +104,10 @@ The `nvim/` directory includes a full lazy.nvim config with the Fox ML color pal
 - cmake-tools, neotest (GTest/CTest)
 - lazygit.nvim, persistence.nvim (sessions), nvim-spectre (find & replace)
 - Telescope, Harpoon, Flash, Oil, Treesitter textobjects
-- noice.nvim (floating cmdline/messages), snacks.nvim (dashboard), dropbar.nvim (breadcrumbs)
-- clangd_extensions.nvim (inlay hints, type hierarchy), friendly-snippets, zen-mode.nvim
-- All 60+ plugins themed to match the FoxML palette
+- neo-tree.nvim (file tree sidebar), bufferline.nvim (buffer tabs), dropbar.nvim (breadcrumbs)
+- snacks.nvim (dashboard), clangd_extensions.nvim (inlay hints, type hierarchy), friendly-snippets, zen-mode.nvim
+- All plugins lazy-loaded where possible for minimal RAM usage
+- All plugins themed to match the FoxML palette
 
 Requires: `:Copilot auth` after first launch to authenticate with GitHub.
 

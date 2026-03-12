@@ -102,7 +102,6 @@ local plugins = {
 
   { "nvim-lualine/lualine.nvim",           dependencies = { "nvim-tree/nvim-web-devicons" } },
   { "lukas-reineke/indent-blankline.nvim", main = "ibl",                                    opts = {} },
-  { "karb94/neoscroll.nvim",               event = "VeryLazy",                              opts = { easing_function = "quadratic", hide_cursor = true } },
 
   -- Core editing
   { "numToStr/Comment.nvim",               config = true },
@@ -115,8 +114,122 @@ local plugins = {
     branch = "0.1.x",
     dependencies = { "nvim-lua/plenary.nvim", "nvim-tree/nvim-web-devicons" }
   },
-  -- File explorer (choose one; this is lightweight)
+  -- File explorer (oil for buffer-style editing)
   { "stevearc/oil.nvim",                opts = { default_file_explorer = true } },
+
+  -- Neo-tree (file tree sidebar)
+  {
+    "nvim-neo-tree/neo-tree.nvim",
+    branch = "v3.x",
+    cmd = "Neotree",
+    keys = {
+      { "<leader>e", "<cmd>Neotree toggle<cr>", desc = "File Explorer (Neo-tree)" },
+    },
+    dependencies = {
+      "nvim-lua/plenary.nvim",
+      "nvim-tree/nvim-web-devicons",
+      "MunifTanjim/nui.nvim",
+    },
+    opts = {
+      close_if_last_window = true,
+      popup_border_style = "rounded",
+      enable_git_status = true,
+      enable_diagnostics = true,
+      window = {
+        width = 36,
+        mappings = {
+          ["<space>"] = "none",
+          ["l"] = "open",
+          ["h"] = "close_node",
+          ["<cr>"] = "open",
+          ["s"] = "open_split",
+          ["v"] = "open_vsplit",
+        },
+      },
+      filesystem = {
+        follow_current_file = { enabled = true },
+        use_libuv_file_watcher = true,
+        group_empty_dirs = true,
+        filtered_items = {
+          visible = false,
+          hide_dotfiles = false,
+          hide_gitignored = false,
+          hide_by_name = { ".git", "node_modules", ".cache" },
+        },
+      },
+      default_component_configs = {
+        indent = {
+          indent_size = 2,
+          padding = 1,
+          with_markers = true,
+          indent_marker = "│",
+          last_indent_marker = "└",
+        },
+        icon = {
+          folder_closed = "",
+          folder_open = "",
+          folder_empty = "",
+        },
+        name = {
+          trailing_slash = false,
+          use_git_status_colors = true,
+        },
+        git_status = {
+          symbols = {
+            added     = "",
+            modified  = "",
+            deleted   = "",
+            renamed   = "",
+            untracked = "",
+            ignored   = "",
+            unstaged  = "",
+            staged    = "",
+            conflict  = "",
+          },
+        },
+      },
+    },
+  },
+
+  -- Bufferline (buffer tabs)
+  {
+    "akinsho/bufferline.nvim",
+    version = "*",
+    event = "BufReadPost",
+    dependencies = { "nvim-tree/nvim-web-devicons" },
+    opts = {
+      options = {
+        diagnostics = "nvim_lsp",
+        offsets = {
+          { filetype = "neo-tree", text = "  File Explorer", text_align = "left", highlight = "Directory", separator = true },
+        },
+        separator_style = "thin",
+        show_buffer_close_icons = false,
+        show_close_icon = false,
+      },
+      highlights = {
+        fill = { bg = "#150f0f" },
+        background = { fg = "#5a6270", bg = "#150f0f" },
+        buffer_selected = { fg = "#f5f5f7", bg = "#1a1214", bold = true },
+        buffer_visible = { fg = "#5a6270", bg = "#150f0f" },
+        separator = { fg = "#2d1f27", bg = "#150f0f" },
+        separator_selected = { fg = "#2d1f27", bg = "#1a1214" },
+        separator_visible = { fg = "#2d1f27", bg = "#150f0f" },
+        indicator_selected = { fg = "#f4b58a", bg = "#1a1214" },
+        modified = { fg = "#f9e2af", bg = "#150f0f" },
+        modified_selected = { fg = "#f9e2af", bg = "#1a1214" },
+        modified_visible = { fg = "#f9e2af", bg = "#150f0f" },
+        tab = { fg = "#5a6270", bg = "#150f0f" },
+        tab_selected = { fg = "#f4b58a", bg = "#1a1214", bold = true },
+        tab_separator = { fg = "#2d1f27", bg = "#150f0f" },
+        tab_separator_selected = { fg = "#2d1f27", bg = "#1a1214" },
+        duplicate = { fg = "#5a6270", bg = "#150f0f", italic = true },
+        duplicate_selected = { fg = "#f5f5f7", bg = "#1a1214", italic = true },
+        duplicate_visible = { fg = "#5a6270", bg = "#150f0f", italic = true },
+        diagnostic_selected = { bold = true },
+      },
+    },
+  },
 
   -- Git
   { "lewis6991/gitsigns.nvim",          config = true },
@@ -136,18 +249,25 @@ local plugins = {
   { "saadparwaiz1/cmp_luasnip" },
   { "echasnovski/mini.icons",           version = false },
 
-  -- Diagnostics UI (optional but great)
-  { "folke/trouble.nvim",               dependencies = { "nvim-tree/nvim-web-devicons" }, opts = {} },
+  -- Diagnostics UI
+  {
+    "folke/trouble.nvim",
+    cmd = "Trouble",
+    dependencies = { "nvim-tree/nvim-web-devicons" },
+    opts = {},
+  },
   -- TODO highlights
   { "folke/todo-comments.nvim",         dependencies = { "nvim-lua/plenary.nvim" },       opts = {} },
 
-  -- === Add to your `plugins` list ===
+  -- Projects
   {
     "coffebar/project.nvim",
     pin = true,
+    event = "VeryLazy",
     opts = {
       detection_methods = { "lsp", "pattern" },
       patterns = { ".git", "compile_commands.json", "CMakeLists.txt", "Makefile" },
+      silent_chdir = true,
     },
     config = function(_, opts)
       require("project_nvim").setup(opts)
@@ -155,11 +275,25 @@ local plugins = {
     end,
   },
 
-  { "stevearc/overseer.nvim",  opts = {} },
-  { "akinsho/toggleterm.nvim", opts = {} },
+  {
+    "stevearc/overseer.nvim",
+    cmd = "OverseerRun",
+    opts = {},
+  },
+  {
+    "akinsho/toggleterm.nvim",
+    cmd = "ToggleTerm",
+    keys = {
+      { "<C-\\>", "<cmd>ToggleTerm<cr>", desc = "Toggle Terminal" },
+    },
+    opts = {
+      open_mapping = [[<C-\>]],
+    },
+  },
 
   {
     "Civitasv/cmake-tools.nvim",
+    ft = { "c", "cpp", "cmake" },
     dependencies = { "nvim-lua/plenary.nvim", "stevearc/overseer.nvim", "akinsho/toggleterm.nvim" },
     opts = {
       cmake_use_preset = true,
@@ -171,11 +305,20 @@ local plugins = {
     },
   },
 
-  { "mfussenegger/nvim-dap" },
-  { "nvim-neotest/nvim-nio" },
+  {
+    "mfussenegger/nvim-dap",
+    keys = {
+      { "<F5>", function() require("dap").continue() end, desc = "DAP Continue" },
+      { "<F9>", function() require("dap").toggle_breakpoint() end, desc = "DAP Toggle Breakpoint" },
+      { "<F10>", function() require("dap").step_over() end, desc = "DAP Step Over" },
+      { "<F11>", function() require("dap").step_into() end, desc = "DAP Step Into" },
+    },
+  },
+  { "nvim-neotest/nvim-nio",             lazy = true },
   {
     "rcarriga/nvim-dap-ui",
     dependencies = { "mfussenegger/nvim-dap", "nvim-neotest/nvim-nio" },
+    lazy = true,
     config = function()
       local dap, dapui = require("dap"), require("dapui")
       dapui.setup()
@@ -186,10 +329,17 @@ local plugins = {
   },
   {
     "jay-babu/mason-nvim-dap.nvim",
+    lazy = true,
     opts = {
       automatic_installation = true,
       ensure_installed = { "codelldb" },
     },
+  },
+  {
+    "theHamsta/nvim-dap-virtual-text",
+    dependencies = { "mfussenegger/nvim-dap", "nvim-treesitter/nvim-treesitter" },
+    lazy = true,
+    opts = {},
   },
 
   {
@@ -214,21 +364,35 @@ local plugins = {
   -- LaTeX
   {
     "lervag/vimtex",
-    lazy = false,
+    ft = "tex",
     init = function()
-      vim.g.vimtex_view_method = "zathura"  -- change to "general" if no zathura
+      vim.g.vimtex_view_method = "zathura"
       vim.g.vimtex_compiler_method = "latexmk"
-      vim.g.vimtex_quickfix_mode = 0  -- don't auto-open quickfix on errors
+      vim.g.vimtex_quickfix_mode = 0
     end,
   },
 
-  { "stevearc/aerial.nvim",                    opts = {} },
+  {
+    "stevearc/aerial.nvim",
+    cmd = "AerialToggle",
+    opts = {},
+  },
   { "nvim-treesitter/nvim-treesitter-context", opts = {} },
 
-  -- Neotest core + C/C++ adapters (pick one adapter)
-  { "nvim-neotest/neotest",                    dependencies = { "nvim-lua/plenary.nvim", "nvim-treesitter/nvim-treesitter", "nvim-neotest/nvim-nio" } },
-  { "alfaix/neotest-gtest" },  -- GoogleTest
-  { "orjangj/neotest-ctest" }, -- CTest (GTest/Catch2/doctest)
+  -- Neotest core + GTest adapter (lazy-loaded)
+  {
+    "nvim-neotest/neotest",
+    cmd = "Neotest",
+    dependencies = { "nvim-lua/plenary.nvim", "nvim-treesitter/nvim-treesitter", "nvim-neotest/nvim-nio", "alfaix/neotest-gtest" },
+    config = function()
+      require("neotest").setup({
+        adapters = {
+          require("neotest-gtest").setup({}),
+        },
+      })
+    end,
+  },
+  { "alfaix/neotest-gtest", lazy = true },
 
   -- Treesitter textobjects (daf = delete a function, vac = select a class, etc.)
   {
@@ -262,20 +426,17 @@ local plugins = {
   },
 
   -- Undotree (visual undo history)
-  { "mbbill/undotree" },
-
-  -- DAP virtual text (inline variable values while debugging)
-  {
-    "theHamsta/nvim-dap-virtual-text",
-    dependencies = { "mfussenegger/nvim-dap", "nvim-treesitter/nvim-treesitter" },
-    opts = {},
-  },
+  { "mbbill/undotree", cmd = "UndotreeToggle" },
 
   -- Fidget (LSP progress spinner)
   { "j-hui/fidget.nvim", opts = {} },
 
   -- Diffview (full git diff/merge viewer)
-  { "sindrets/diffview.nvim", dependencies = { "nvim-lua/plenary.nvim" } },
+  {
+    "sindrets/diffview.nvim",
+    cmd = { "DiffviewOpen", "DiffviewFileHistory", "DiffviewClose" },
+    dependencies = { "nvim-lua/plenary.nvim" },
+  },
 
   -- === AI ===
 
@@ -283,7 +444,7 @@ local plugins = {
   {
     "zbirenbaum/copilot.lua",
     cmd = "Copilot",
-    lazy = false,
+    event = "InsertEnter",
     opts = {
       suggestion = {
         enabled = true,
@@ -337,43 +498,7 @@ local plugins = {
       },
     },
   },
-  { "stevearc/dressing.nvim", opts = {} },
   { "MunifTanjim/nui.nvim" },
-
-  -- === New plugins ===
-
-  -- Noice (floating cmdline, messages, notifications)
-  {
-    "folke/noice.nvim",
-    event = "VeryLazy",
-    dependencies = { "MunifTanjim/nui.nvim" },
-    opts = {
-      cmdline = {
-        view = "cmdline_popup",
-        format = {
-          cmdline = { icon = " " },
-          search_down = { icon = " " },
-          search_up = { icon = " " },
-        },
-      },
-      messages = { view_search = false },
-      lsp = {
-        override = {
-          ["vim.lsp.util.convert_input_to_markdown_lines"] = true,
-          ["vim.lsp.util.stylize_markdown"] = true,
-          ["cmp.entry.get_documentation"] = true,
-        },
-        hover = { enabled = true },
-        signature = { enabled = true },
-      },
-      presets = {
-        bottom_search = false,
-        command_palette = true,
-        long_message_to_split = true,
-        lsp_doc_border = true,
-      },
-    },
-  },
 
   -- mini.ai (enhanced text objects)
   {
@@ -382,7 +507,7 @@ local plugins = {
     opts = { n_lines = 500 },
   },
 
-  -- Snacks (dashboard, notifications, terminal utilities)
+  -- Snacks (dashboard only — notifier disabled)
   {
     "folke/snacks.nvim",
     priority = 1000,
@@ -410,10 +535,9 @@ local plugins = {
         },
       },
       notifier = {
-        enabled = true,
-        style = "compact",
+        enabled = false,
       },
-      indent = { enabled = false }, -- already using indent-blankline
+      indent = { enabled = false },
     },
   },
 
@@ -490,6 +614,11 @@ local plugins = {
   {
     "nvim-pack/nvim-spectre",
     dependencies = { "nvim-lua/plenary.nvim" },
+    keys = {
+      { "<leader>sr", function() require("spectre").toggle() end, desc = "Search & Replace (Spectre)" },
+      { "<leader>sw", function() require("spectre").open_visual({ select_word = true }) end, desc = "Search current word" },
+      { "<leader>sw", function() require("spectre").open_visual() end, desc = "Search selection", mode = "v" },
+    },
   },
 
 }
@@ -497,16 +626,6 @@ local plugins = {
 -- lazy.nvim setup
 require("lazy").setup(plugins, {
   rocks = { enabled = false },
-})
-
--- Neotest setup (pick ONE adapter)
-local neotest = require("neotest")
-neotest.setup({
-  adapters = {
-    require("neotest-gtest").setup({}),
-    -- OR, if you prefer CTest as the runner:
-    -- require("neotest-ctest").setup({}),
-  },
 })
 
 -- setup optional
@@ -540,7 +659,7 @@ do
 end
 
 -- Neon diagnostic icons
-local icons = { Error = " ", Warn = " ", Info = " ", Hint = " " }
+local icons = { Error = " ", Warn = " ", Info = " ", Hint = " " }
 
 vim.diagnostic.config({
   signs = {
@@ -558,12 +677,6 @@ vim.api.nvim_set_hl(0, "FloatBorder", { fg = "#f4b58a", bg = "none" })
 vim.api.nvim_set_hl(0, "CmpBorder", { fg = "#f4b58a", bg = "none" })
 vim.api.nvim_set_hl(0, "Pmenu", { bg = "#1a1214" })
 vim.api.nvim_set_hl(0, "PmenuSel", { bg = "#3a414b" })
-
--- Noice/notification highlights (neon glow)
-vim.api.nvim_set_hl(0, "NoiceCmdlinePopupBorder", { fg = "#f5a9b8" })
-vim.api.nvim_set_hl(0, "NoiceCmdlineIcon", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "NoiceCmdlinePopupTitle", { fg = "#f4b58a", bold = true })
-vim.api.nvim_set_hl(0, "NoiceConfirmBorder", { fg = "#8bd5a2" })
 
 -- Dropbar breadcrumb highlights
 vim.api.nvim_set_hl(0, "WinBar", { fg = "#5a6270", bg = "none" })
@@ -627,6 +740,27 @@ vim.api.nvim_set_hl(0, "OilDir", { fg = "#f4b58a", bold = true })
 vim.api.nvim_set_hl(0, "OilDirIcon", { fg = "#f4b58a" })
 vim.api.nvim_set_hl(0, "OilLink", { fg = "#89dceb" })
 vim.api.nvim_set_hl(0, "OilFile", { fg = "#f5f5f7" })
+
+-- Neo-tree
+vim.api.nvim_set_hl(0, "NeoTreeNormal", { bg = "#150f0f" })
+vim.api.nvim_set_hl(0, "NeoTreeNormalNC", { bg = "#150f0f" })
+vim.api.nvim_set_hl(0, "NeoTreeEndOfBuffer", { fg = "#150f0f", bg = "#150f0f" })
+vim.api.nvim_set_hl(0, "NeoTreeDirectoryName", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "NeoTreeDirectoryIcon", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "NeoTreeRootName", { fg = "#f5a9b8", bold = true })
+vim.api.nvim_set_hl(0, "NeoTreeFileName", { fg = "#f5f5f7" })
+vim.api.nvim_set_hl(0, "NeoTreeFileIcon", { fg = "#f5f5f7" })
+vim.api.nvim_set_hl(0, "NeoTreeGitAdded", { fg = "#8bd5a2" })
+vim.api.nvim_set_hl(0, "NeoTreeGitModified", { fg = "#f9e2af" })
+vim.api.nvim_set_hl(0, "NeoTreeGitDeleted", { fg = "#ff6b6b" })
+vim.api.nvim_set_hl(0, "NeoTreeGitUntracked", { fg = "#89dceb" })
+vim.api.nvim_set_hl(0, "NeoTreeGitConflict", { fg = "#ff6b6b", bold = true })
+vim.api.nvim_set_hl(0, "NeoTreeIndentMarker", { fg = "#2d1f27" })
+vim.api.nvim_set_hl(0, "NeoTreeWinSeparator", { fg = "#2d1f27", bg = "#150f0f" })
+vim.api.nvim_set_hl(0, "NeoTreeCursorLine", { bg = "#2d1f27" })
+vim.api.nvim_set_hl(0, "NeoTreeTitleBar", { fg = "#1a1214", bg = "#f4b58a", bold = true })
+vim.api.nvim_set_hl(0, "NeoTreeFloatBorder", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "NeoTreeFloatTitle", { fg = "#f4b58a", bold = true })
 
 -- DAP UI
 vim.api.nvim_set_hl(0, "DapUIScope", { fg = "#f4b58a", bold = true })
@@ -768,7 +902,7 @@ vim.api.nvim_set_hl(0, "CmpItemKindFolder", { fg = "#f4b58a" })
 vim.api.nvim_set_hl(0, "CmpItemMenu", { fg = "#5a6270", italic = true })
 
 --
--- Lualine theme sync + noice integration
+-- Lualine theme sync (noice integration removed)
 require("lualine").setup({
   options = {
     theme = "tokyonight",
@@ -779,14 +913,7 @@ require("lualine").setup({
     lualine_a = { "mode" },
     lualine_b = { "branch", "diff", "diagnostics" },
     lualine_c = { { "filename", path = 1 } },
-    lualine_x = {
-      {
-        function() return require("noice").api.status.mode.get() end,
-        cond = function() return package.loaded["noice"] and require("noice").api.status.mode.has() end,
-        color = { fg = "#f5a9b8" },
-      },
-      "encoding", "fileformat", "filetype",
-    },
+    lualine_x = { "encoding", "fileformat", "filetype" },
     lualine_y = { "progress" },
     lualine_z = { "location" },
   },
@@ -917,8 +1044,6 @@ lsp.config.pyright = { capabilities = caps, on_attach = on_attach }
 lsp.config.clangd  = {
   capabilities = caps,
   on_attach = on_attach,
-  -- Uncomment to enable clang-tidy hints from clangd itself:
-  -- cmd = { "clangd", "--background-index", "--clang-tidy" },
 }
 lsp.config.bashls  = { capabilities = caps, on_attach = on_attach }
 lsp.config.jsonls  = { capabilities = caps, on_attach = on_attach }
@@ -934,7 +1059,6 @@ lsp.config.lua_ls  = {
       workspace   = { checkThirdParty = false },
     },
   },
-  -- 0.11 prefers root_markers over a custom root_dir function
   root_markers = { ".luarc.json", ".luarc.jsonc", ".stylua.toml", ".luacheckrc", ".git" },
 }
 
@@ -985,13 +1109,6 @@ map("n", "<leader>ct", function() safe_call("cmake-tools", function(c) c.select_
 map("n", "<leader>cl", function() safe_call("cmake-tools", function(c) c.select_launch_target() end) end,
   { desc = "CMake Launch Target" })
 
--- DAP (codelldb via mason-nvim-dap)
-map("n", "<F5>", function() safe_call("dap", function(d) d.continue() end) end, { desc = "DAP Continue" })
-map("n", "<F9>", function() safe_call("dap", function(d) d.toggle_breakpoint() end) end,
-  { desc = "DAP Toggle Breakpoint" })
-map("n", "<F10>", function() safe_call("dap", function(d) d.step_over() end) end, { desc = "DAP Step Over" })
-map("n", "<F11>", function() safe_call("dap", function(d) d.step_into() end) end, { desc = "DAP Step Into" })
-
 -- Neotest (pick gtest or ctest adapter in your setup)
 map("n", "<leader>tn", function() safe_call("neotest", function(n) n.run.run() end) end, { desc = "Test Nearest" })
 map("n", "<leader>ts", function() safe_call("neotest", function(n) n.summary.toggle() end) end, { desc = "Test Summary" })
@@ -1038,6 +1155,22 @@ map("n", "<leader>gd", "<cmd>DiffviewOpen<cr>", { desc = "Git diff view" })
 map("n", "<leader>gh", "<cmd>DiffviewFileHistory %<cr>", { desc = "Git file history" })
 map("n", "<leader>gq", "<cmd>DiffviewClose<cr>", { desc = "Close diff view" })
 
+-- Bufferline navigation
+map("n", "H", "<cmd>BufferLineCyclePrev<cr>", { desc = "Prev buffer" })
+map("n", "L", "<cmd>BufferLineCycleNext<cr>", { desc = "Next buffer" })
+map("n", "<leader>bd", "<cmd>bdelete<cr>", { desc = "Close buffer" })
+map("n", "<leader>bo", "<cmd>BufferLineCloseOthers<cr>", { desc = "Close other buffers" })
+map("n", "<leader>bl", "<cmd>BufferLineCloseRight<cr>", { desc = "Close buffers to right" })
+map("n", "<leader>bh", "<cmd>BufferLineCloseLeft<cr>", { desc = "Close buffers to left" })
+
+-- Window management
+map("n", "<leader>v", "<cmd>vsplit<cr>", { desc = "Vertical split" })
+map("n", "<leader>s", "<cmd>split<cr>", { desc = "Horizontal split" })
+map("n", "<C-Left>", "<cmd>vertical resize -5<cr>", { desc = "Shrink window" })
+map("n", "<C-Right>", "<cmd>vertical resize +5<cr>", { desc = "Grow window" })
+map("n", "<C-Up>", "<cmd>resize +3<cr>", { desc = "Grow window height" })
+map("n", "<C-Down>", "<cmd>resize -3<cr>", { desc = "Grow window height" })
+
 -- AI (Avante)
 map("n", "<leader>aa", "<cmd>AvanteAsk<cr>", { desc = "Avante ask" })
 map("v", "<leader>aa", "<cmd>AvanteAsk<cr>", { desc = "Avante ask (selection)" })
@@ -1051,11 +1184,6 @@ map("n", "<leader>gg", "<cmd>LazyGit<cr>", { desc = "LazyGit" })
 map("n", "<leader>qs", function() require("persistence").load() end, { desc = "Restore session (cwd)" })
 map("n", "<leader>ql", function() require("persistence").load({ last = true }) end, { desc = "Restore last session" })
 map("n", "<leader>qd", function() require("persistence").stop() end, { desc = "Stop session recording" })
-
--- Spectre (find & replace)
-map("n", "<leader>sr", function() require("spectre").toggle() end, { desc = "Search & Replace (Spectre)" })
-map("n", "<leader>sw", function() require("spectre").open_visual({ select_word = true }) end, { desc = "Search current word" })
-map("v", "<leader>sw", function() require("spectre").open_visual() end, { desc = "Search selection" })
 
 -- Zen mode
 map("n", "<leader>z", "<cmd>ZenMode<cr>", { desc = "Zen Mode" })
