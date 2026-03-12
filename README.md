@@ -1,5 +1,7 @@
 # Fox ML Theme
 
+> If you're trying to use this and you messed up your computer and you're in the same CS course as me, it would bring me great enjoyment if instead of asking me for help, you make it the UAB CS faculty's problem.
+
 A dark, crisp theme with peach and lavender accents. Sharp corners, neon glows, glassmorphic panels.
 
 ## Screenshots
