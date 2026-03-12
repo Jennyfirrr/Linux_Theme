@@ -1158,7 +1158,16 @@ map("n", "<leader>gq", "<cmd>DiffviewClose<cr>", { desc = "Close diff view" })
 -- Bufferline navigation
 map("n", "H", "<cmd>BufferLineCyclePrev<cr>", { desc = "Prev buffer" })
 map("n", "L", "<cmd>BufferLineCycleNext<cr>", { desc = "Next buffer" })
-map("n", "<leader>bd", "<cmd>bdelete<cr>", { desc = "Close buffer" })
+map("n", "<leader>bd", function()
+  local bufs = vim.tbl_filter(function(b)
+    return vim.api.nvim_buf_is_valid(b) and vim.bo[b].buflisted
+  end, vim.api.nvim_list_bufs())
+  if #bufs <= 1 then
+    vim.cmd("enew | bdelete #")
+  else
+    vim.cmd("bprevious | bdelete #")
+  end
+end, { desc = "Close buffer" })
 map("n", "<leader>bo", "<cmd>BufferLineCloseOthers<cr>", { desc = "Close other buffers" })
 map("n", "<leader>bl", "<cmd>BufferLineCloseRight<cr>", { desc = "Close buffers to right" })
 map("n", "<leader>bh", "<cmd>BufferLineCloseLeft<cr>", { desc = "Close buffers to left" })
@@ -1187,3 +1196,59 @@ map("n", "<leader>qd", function() require("persistence").stop() end, { desc = "S
 
 -- Zen mode
 map("n", "<leader>z", "<cmd>ZenMode<cr>", { desc = "Zen Mode" })
+
+-- === QoL ===
+
+-- Navigate splits with Ctrl+hjkl (no Ctrl+w prefix needed)
+map("n", "<C-h>", "<C-w>h", { desc = "Focus left split" })
+map("n", "<C-j>", "<C-w>j", { desc = "Focus below split" })
+map("n", "<C-k>", "<C-w>k", { desc = "Focus above split" })
+map("n", "<C-l>", "<C-w>l", { desc = "Focus right split" })
+
+-- Quick close window
+map("n", "<leader>q", "<cmd>close<cr>", { desc = "Close window" })
+
+-- Esc clears search highlights
+map("n", "<Esc>", "<cmd>nohlsearch<cr>", { desc = "Clear search highlight" })
+
+-- Esc exits terminal mode
+map("t", "<Esc>", "<C-\\><C-n>", { desc = "Exit terminal mode" })
+
+-- Move selected lines up/down with Alt+j/k
+map("v", "<A-j>", ":m '>+1<cr>gv=gv", { desc = "Move selection down" })
+map("v", "<A-k>", ":m '<-2<cr>gv=gv", { desc = "Move selection up" })
+
+-- Keep visual selection when indenting
+map("v", "<", "<gv", { desc = "Indent left and reselect" })
+map("v", ">", ">gv", { desc = "Indent right and reselect" })
+
+-- Centered scrolling (cursor stays mid-screen)
+map("n", "<C-d>", "<C-d>zz", { desc = "Scroll down (centered)" })
+map("n", "<C-u>", "<C-u>zz", { desc = "Scroll up (centered)" })
+map("n", "n", "nzzzv", { desc = "Next search result (centered)" })
+map("n", "N", "Nzzzv", { desc = "Prev search result (centered)" })
+
+-- Highlight on yank (brief flash)
+vim.api.nvim_create_autocmd("TextYankPost", {
+  callback = function() vim.highlight.on_yank({ timeout = 200 }) end,
+})
+
+-- Remember cursor position when reopening files
+vim.api.nvim_create_autocmd("BufReadPost", {
+  callback = function()
+    local mark = vim.api.nvim_buf_get_mark(0, '"')
+    if mark[1] > 0 and mark[1] <= vim.api.nvim_buf_line_count(0) then
+      pcall(vim.api.nvim_win_set_cursor, 0, mark)
+    end
+  end,
+})
+
+-- Strip trailing whitespace on save
+vim.api.nvim_create_autocmd("BufWritePre", {
+  pattern = "*",
+  callback = function()
+    local pos = vim.api.nvim_win_get_cursor(0)
+    vim.cmd([[%s/\s\+$//e]])
+    pcall(vim.api.nvim_win_set_cursor, 0, pos)
+  end,
+})
