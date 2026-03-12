@@ -114,9 +114,6 @@ local plugins = {
     branch = "0.1.x",
     dependencies = { "nvim-lua/plenary.nvim", "nvim-tree/nvim-web-devicons" }
   },
-  -- File explorer (oil for buffer-style editing)
-  { "stevearc/oil.nvim",                opts = { default_file_explorer = true } },
-
   -- Neo-tree (file tree sidebar)
   {
     "nvim-neo-tree/neo-tree.nvim",
@@ -735,12 +732,6 @@ vim.api.nvim_set_hl(0, "WhichKeyValue", { fg = "#5a6270" })
 vim.api.nvim_set_hl(0, "IblIndent", { fg = "#2d1f27" })
 vim.api.nvim_set_hl(0, "IblScope", { fg = "#f4b58a" })
 
--- Oil.nvim
-vim.api.nvim_set_hl(0, "OilDir", { fg = "#f4b58a", bold = true })
-vim.api.nvim_set_hl(0, "OilDirIcon", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "OilLink", { fg = "#89dceb" })
-vim.api.nvim_set_hl(0, "OilFile", { fg = "#f5f5f7" })
-
 -- Neo-tree
 vim.api.nvim_set_hl(0, "NeoTreeNormal", { bg = "#150f0f" })
 vim.api.nvim_set_hl(0, "NeoTreeNormalNC", { bg = "#150f0f" })
@@ -1127,8 +1118,8 @@ end
 map("n", "<leader>ch", switch_header_source, { desc = "C/C++ Switch header/source" })
 
 
--- Oil file explorer
-map("n", "-", "<cmd>Oil<cr>", { desc = "Open parent directory" })
+-- Open neo-tree at current file's directory
+map("n", "-", "<cmd>Neotree reveal<cr>", { desc = "Reveal file in tree" })
 
 -- Trouble diagnostics
 map("n", "<leader>xx", "<cmd>Trouble diagnostics toggle<cr>", { desc = "Diagnostics (Trouble)" })

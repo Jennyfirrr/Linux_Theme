@@ -177,6 +177,7 @@ Inside Telescope:
 | Key | Action |
 |-----|--------|
 | `Space e` | Toggle file tree sidebar |
+| `-` | Reveal current file in tree |
 | `Ctrl+h` | Focus into neo-tree (from code) |
 | `Ctrl+l` | Focus back to code (from neo-tree) |
 
@@ -221,29 +222,6 @@ Inside Neo-tree — Other:
 | `R` | Refresh |
 | `q` | Close tree |
 | `?` | Show full help / all keybinds |
-
-### Oil (Buffer-style File Explorer)
-| Key | Action |
-|-----|--------|
-| `-` | Open parent directory |
-
-Inside Oil buffer:
-| Key | Action |
-|-----|--------|
-| `Enter` | Open file / Enter directory |
-| `-` | Go up one directory |
-| `Ctrl+p` | Preview file |
-| `g.` | Toggle hidden files |
-| `g?` | Show help / all keybinds |
-| `gs` | Change sort |
-| `gx` | Open with system app |
-| `Ctrl+l` | Refresh |
-| `Ctrl+s` | Save changes (renames/moves/deletes) |
-
-To create/rename/delete files in Oil:
-- Just edit the buffer like normal text — type a new filename to create, rename by editing the name, delete a line to delete the file
-- Press `Ctrl+s` (or `:w`) to apply changes
-- Oil will confirm before deleting
 
 ### LSP (active in any LSP buffer)
 | Key | Action |
