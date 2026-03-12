@@ -1,0 +1,96 @@
+# Changelog
+
+All notable changes to the Fox ML theme.
+
+---
+
+## 2026-03-12
+
+### Neovim - RAM Reduction & IDE Features
+- Dropped `noice.nvim`, `neoscroll.nvim`, `neotest-ctest`, standalone `dressing.nvim`
+- Disabled snacks.nvim notifier
+- Lazy-loaded 15+ plugins (copilot, vimtex, neotest, diffview, undotree, trouble, spectre, aerial, dap, cmake-tools, overseer, toggleterm, project.nvim)
+- Added **neo-tree.nvim** — file tree sidebar (`Space e`)
+- Added **bufferline.nvim** — buffer tabs at top (`Shift+H/L` to cycle, `Space bd` to close)
+- Added window management keybinds (`Space v/s` for splits, `Ctrl+Arrow` to resize)
+- Moved neotest setup into lazy config function
+- Removed all `Noice*` highlight groups, added `NeoTree*` highlights in Fox ML palette
+- Silenced project.nvim CWD notifications
+
+### Neovim - QoL Improvements
+- `Ctrl+h/j/k/l` to navigate splits directly
+- `Alt+j/k` in visual mode to move lines up/down
+- `Ctrl+d/u` and `n/N` keep cursor centered
+- `Esc` clears search highlights and exits terminal mode
+- Visual mode `<`/`>` indent without losing selection
+- `Space q` to close window
+- Auto yank highlight (200ms flash)
+- Auto cursor position restore on file reopen
+- Auto trailing whitespace strip on save
+- Smarter `Space bd` — prevents neo-tree from expanding when closing last buffer
+
+### Docs
+- Added nvim screenshot to README
+- Updated KEYBINDS.md with neo-tree, bufferline, split, and QoL keybinds
+- Removed neoscroll references from KEYBINDS.md
+- Updated README nvim section (removed noice, added neo-tree/bufferline)
+
+---
+
+## 2026-03-11
+
+### Neovim - AI & Plugin Expansion
+- Added copilot.lua (inline ghost-text completions, `Ctrl+l` to accept)
+- Added avante.nvim (Cursor-style AI chat panel with Copilot provider)
+- Added noice.nvim, snacks.nvim (dashboard), dropbar.nvim (breadcrumbs)
+- Added mini.ai, flash.nvim, nvim-surround, harpoon, undotree
+- Added diffview.nvim, nvim-spectre, lazygit.nvim, persistence.nvim
+- Added friendly-snippets, zen-mode.nvim, clangd_extensions.nvim
+- Added neotest + gtest/ctest adapters, cmake-tools, overseer, toggleterm
+- Added DAP debugging with CodeLLDB via mason-nvim-dap
+- Added treesitter textobjects and context
+- Fixed copilot keybinds: Alt to Ctrl (Alt conflicts with Hyprland mainMod)
+- Fixed Ctrl+[ breaking Escape, switched to Ctrl+k/j for copilot prev/dismiss
+
+### Theme Polish
+- Fixed background color mismatches and typos across theme configs
+- Added zathura and bat themes
+- Enhanced hyprland animations
+- Full Fox ML palette applied to all 60+ nvim plugins
+
+### Hyprland
+- Reduced blur intensity (size 2, 1 pass)
+- Synced repo with live system configs
+
+### Wallpaper
+- Warm-shifted wallpaper to match palette
+- Adjusted kitty opacity for readability
+- Reverted wallpaper to original after testing
+
+---
+
+## 2026-03-06
+
+### Hyprland & System
+- Added hyprland, waybar, mako, fastfetch, launcher configs
+- Added KEYBINDS.md with full hyprland and tmux reference
+- Cleaned up launcher scripts
+
+---
+
+## 2026-02-22
+
+### Shell
+- Added full zsh config (caramel theme, aliases, colors, welcome screen)
+- Added screenshots to repo and README
+- Added pacman deps and zsh install to installer
+- Added zsh config backup to update script
+
+---
+
+## 2026-02-18
+
+### Initial Release
+- First commit with Fox ML theme files
+- Kitty, tmux, nvim, GTK, rofi, spicetify, vencord, firefox configs
+- Install script and wallpapers
