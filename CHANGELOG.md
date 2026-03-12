@@ -6,6 +6,9 @@ All notable changes to the Fox ML theme.
 
 ## 2026-03-12
 
+### Docs
+- Friendly note added to README for fellow CS students
+
 ### Neovim - Plugin Cleanup
 - Removed `oil.nvim` — neo-tree covers all file management needs
 - Remapped `-` to reveal current file in neo-tree sidebar
