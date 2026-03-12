@@ -177,21 +177,50 @@ Inside Telescope:
 | Key | Action |
 |-----|--------|
 | `Space e` | Toggle file tree sidebar |
+| `Ctrl+h` | Focus into neo-tree (from code) |
+| `Ctrl+l` | Focus back to code (from neo-tree) |
 
-Inside Neo-tree:
+Inside Neo-tree — Navigation:
 | Key | Action |
 |-----|--------|
+| `j` / `k` | Move up / down |
 | `l` / `Enter` | Open file / Expand folder |
 | `h` | Collapse folder |
+| `Backspace` | Navigate up a directory |
+| `H` | Toggle hidden files |
+| `.` | Toggle dotfiles |
+| `/` | Filter / search |
+| `<` / `>` | Navigate prev/next source (filesystem, buffers, git) |
+
+Inside Neo-tree — Opening Files:
+| Key | Action |
+|-----|--------|
+| `l` / `Enter` | Open in current window |
 | `s` | Open in horizontal split |
 | `v` | Open in vertical split |
-| `a` | Add (create) file/folder |
+| `t` | Open in new tab |
+| `P` | Toggle preview |
+| `S` | Open with system default |
+
+Inside Neo-tree — File Operations:
+| Key | Action |
+|-----|--------|
+| `a` | Add file/folder (end name with `/` for folder) |
 | `d` | Delete |
 | `r` | Rename |
-| `y` | Copy file |
+| `y` | Copy file to clipboard |
 | `x` | Cut file |
 | `p` | Paste file |
+| `c` | Copy (prompts for destination) |
+| `m` | Move (prompts for destination) |
+
+Inside Neo-tree — Other:
+| Key | Action |
+|-----|--------|
+| `i` | Show file info |
+| `R` | Refresh |
 | `q` | Close tree |
+| `?` | Show full help / all keybinds |
 
 ### Oil (Buffer-style File Explorer)
 | Key | Action |
