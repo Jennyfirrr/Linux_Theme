@@ -6,6 +6,11 @@ All notable changes to the Fox ML theme.
 
 ## 2026-03-12
 
+### Neovim - Plugin Cleanup
+- Removed `oil.nvim` — neo-tree covers all file management needs
+- Remapped `-` to reveal current file in neo-tree sidebar
+- Removed Oil highlight groups and keybinds
+
 ### Docs
 - Added `CHANGELOG.md` with full project history
 - Added `/changelog` skill for auto-updating changelog
