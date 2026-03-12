@@ -6,6 +6,12 @@ All notable changes to the Fox ML theme.
 
 ## 2026-03-12
 
+### Docs
+- Added `CHANGELOG.md` with full project history
+- Added `/changelog` skill for auto-updating changelog
+- Expanded neo-tree keybinds in `KEYBINDS.md` (navigation, file ops, opening, help)
+- Added nvim screenshot to README
+
 ### Neovim - RAM Reduction & IDE Features
 - Dropped `noice.nvim`, `neoscroll.nvim`, `neotest-ctest`, standalone `dressing.nvim`
 - Disabled snacks.nvim notifier
