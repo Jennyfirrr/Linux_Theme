@@ -8,6 +8,13 @@ vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 vim.g.python3_host_prog = vim.fn.expand("~/.venvs/nvim/bin/python")
 
+-- Suppress deprecation warnings from plugins we don't control (project.nvim, telescope)
+local _orig_deprecate = vim.deprecate
+vim.deprecate = function(name, alternative, version, plugin, backtrace)
+  if name and name:match("buf_get_clients") then return end
+  return _orig_deprecate(name, alternative, version, plugin, backtrace)
+end
+
 -- Basics
 vim.opt.number = true
 vim.opt.relativenumber = true
@@ -856,6 +863,33 @@ vim.api.nvim_set_hl(0, "FloatBorder", { fg = "#f4b58a", bg = "none" })
 vim.api.nvim_set_hl(0, "CmpBorder", { fg = "#f4b58a", bg = "none" })
 vim.api.nvim_set_hl(0, "Pmenu", { bg = "#1a1214" })
 vim.api.nvim_set_hl(0, "PmenuSel", { bg = "#3a414b" })
+vim.api.nvim_set_hl(0, "PmenuSbar", { bg = "#2d1f27" })
+vim.api.nvim_set_hl(0, "PmenuThumb", { bg = "#5a6270" })
+
+-- Search
+vim.api.nvim_set_hl(0, "CurSearch", { fg = "#1a1214", bg = "#f4b58a", bold = true })
+
+-- Fold
+vim.api.nvim_set_hl(0, "Folded", { fg = "#5a6270", bg = "#2d1f27" })
+vim.api.nvim_set_hl(0, "FoldColumn", { fg = "#3a414b", bg = "none" })
+
+-- Tab line (fallback for when bufferline isn't active)
+vim.api.nvim_set_hl(0, "TabLine", { fg = "#5a6270", bg = "#150f0f" })
+vim.api.nvim_set_hl(0, "TabLineSel", { fg = "#f4b58a", bg = "#2d1f27", bold = true })
+vim.api.nvim_set_hl(0, "TabLineFill", { bg = "#150f0f" })
+
+-- Status line (fallback)
+vim.api.nvim_set_hl(0, "StatusLine", { fg = "#c4b6a8", bg = "#150f0f" })
+vim.api.nvim_set_hl(0, "StatusLineNC", { fg = "#3a414b", bg = "#150f0f" })
+
+-- Misc UI
+vim.api.nvim_set_hl(0, "WildMenu", { fg = "#1a1214", bg = "#f4b58a", bold = true })
+vim.api.nvim_set_hl(0, "Title", { fg = "#f4b58a", bold = true })
+vim.api.nvim_set_hl(0, "Directory", { fg = "#89dceb" })
+vim.api.nvim_set_hl(0, "Question", { fg = "#8bd5a2" })
+vim.api.nvim_set_hl(0, "SpecialKey", { fg = "#3a414b" })
+vim.api.nvim_set_hl(0, "NonText", { fg = "#3a414b" })
+vim.api.nvim_set_hl(0, "Conceal", { fg = "#5a6270" })
 
 -- Dropbar breadcrumb highlights
 vim.api.nvim_set_hl(0, "WinBar", { fg = "#5a6270", bg = "none" })
@@ -1075,6 +1109,16 @@ vim.api.nvim_set_hl(0, "NoiceFormatProgressTodo", { fg = "#5a6270", bg = "#2d1f2
 vim.api.nvim_set_hl(0, "NoiceLspProgressTitle", { fg = "#f4b58a" })
 vim.api.nvim_set_hl(0, "NoiceConfirm", { bg = "#150f0f" })
 vim.api.nvim_set_hl(0, "NoiceConfirmBorder", { fg = "#f5a9b8" })
+vim.api.nvim_set_hl(0, "NoiceVirtualText", { fg = "#f4b58a" })
+vim.api.nvim_set_hl(0, "NoiceSplit", { bg = "#150f0f" })
+vim.api.nvim_set_hl(0, "NoiceSplitBorder", { fg = "#f4b58a", bg = "#150f0f" })
+
+-- :messages window highlights
+vim.api.nvim_set_hl(0, "MsgArea", { fg = "#c4b6a8", bg = "#150f0f" })
+vim.api.nvim_set_hl(0, "WarningMsg", { fg = "#f9e2af", bold = true })
+vim.api.nvim_set_hl(0, "ErrorMsg", { fg = "#ff6b6b", bold = true })
+vim.api.nvim_set_hl(0, "ModeMsg", { fg = "#f4b58a", bold = true })
+vim.api.nvim_set_hl(0, "MoreMsg", { fg = "#8bd5a2" })
 
 -- Notify
 vim.api.nvim_set_hl(0, "NotifyERRORBorder", { fg = "#ff6b6b" })
@@ -1119,8 +1163,43 @@ vim.api.nvim_set_hl(0, "HlSearchLens", { fg = "#5a6270" })
 vim.api.nvim_set_hl(0, "HlSearchLensNear", { fg = "#1a1214", bg = "#f4b58a" })
 
 -- Avante
-vim.api.nvim_set_hl(0, "AvanteTitle", { fg = "#f4b58a", bold = true })
+vim.api.nvim_set_hl(0, "AvanteTitle", { fg = "#1a1214", bg = "#f4b58a", bold = true })
+vim.api.nvim_set_hl(0, "AvanteReversedTitle", { fg = "#f4b58a", bg = "#150f0f" })
+vim.api.nvim_set_hl(0, "AvanteSubtitle", { fg = "#1a1214", bg = "#89dceb", bold = true })
+vim.api.nvim_set_hl(0, "AvanteReversedSubtitle", { fg = "#89dceb", bg = "#150f0f" })
+vim.api.nvim_set_hl(0, "AvanteThirdTitle", { fg = "#c4b6a8", bg = "#2d1f27" })
+vim.api.nvim_set_hl(0, "AvanteReversedThirdTitle", { fg = "#2d1f27", bg = "#150f0f" })
 vim.api.nvim_set_hl(0, "AvanteSidebarNormal", { bg = "#150f0f" })
+vim.api.nvim_set_hl(0, "AvanteSidebarWinSeparator", { fg = "#2d1f27", bg = "#150f0f" })
+vim.api.nvim_set_hl(0, "AvanteSidebarWinHorizontalSeparator", { fg = "#2d1f27" })
+vim.api.nvim_set_hl(0, "AvantePromptInput", { bg = "#1a1214" })
+vim.api.nvim_set_hl(0, "AvantePromptInputBorder", { fg = "#f4b58a", bg = "#150f0f" })
+vim.api.nvim_set_hl(0, "AvanteInlineHint", { fg = "#f5a9b8", italic = true })
+vim.api.nvim_set_hl(0, "AvantePopupHint", { fg = "#5a6270", bg = "#150f0f" })
+vim.api.nvim_set_hl(0, "AvanteConfirmTitle", { fg = "#1a1214", bg = "#ff6b6b", bold = true })
+vim.api.nvim_set_hl(0, "AvanteButtonDefault", { fg = "#1a1214", bg = "#5a6270" })
+vim.api.nvim_set_hl(0, "AvanteButtonDefaultHover", { fg = "#1a1214", bg = "#8bd5a2" })
+vim.api.nvim_set_hl(0, "AvanteButtonPrimary", { fg = "#1a1214", bg = "#c4b6a8" })
+vim.api.nvim_set_hl(0, "AvanteButtonPrimaryHover", { fg = "#1a1214", bg = "#89dceb" })
+vim.api.nvim_set_hl(0, "AvanteButtonDanger", { fg = "#1a1214", bg = "#c4b6a8" })
+vim.api.nvim_set_hl(0, "AvanteButtonDangerHover", { fg = "#1a1214", bg = "#ff6b6b" })
+vim.api.nvim_set_hl(0, "AvanteToBeDeleted", { bg = "#3d1f23", strikethrough = true })
+vim.api.nvim_set_hl(0, "AvanteToBeDeletedWOStrikethrough", { bg = "#3d1f23" })
+vim.api.nvim_set_hl(0, "AvanteConflictCurrent", { bg = "#3d1f23", bold = true })
+vim.api.nvim_set_hl(0, "AvanteConflictCurrentLabel", { bg = "#4d2529" })
+vim.api.nvim_set_hl(0, "AvanteConflictIncoming", { bg = "#1a3328", bold = true })
+vim.api.nvim_set_hl(0, "AvanteConflictIncomingLabel", { bg = "#1f3d2e" })
+vim.api.nvim_set_hl(0, "AvanteStateSpinnerGenerating", { fg = "#1a1214", bg = "#f5a9b8" })
+vim.api.nvim_set_hl(0, "AvanteStateSpinnerToolCalling", { fg = "#1a1214", bg = "#89dceb" })
+vim.api.nvim_set_hl(0, "AvanteStateSpinnerFailed", { fg = "#1a1214", bg = "#ff6b6b" })
+vim.api.nvim_set_hl(0, "AvanteStateSpinnerSucceeded", { fg = "#1a1214", bg = "#8bd5a2" })
+vim.api.nvim_set_hl(0, "AvanteStateSpinnerSearching", { fg = "#1a1214", bg = "#f9e2af" })
+vim.api.nvim_set_hl(0, "AvanteStateSpinnerThinking", { fg = "#1a1214", bg = "#f5a9b8" })
+vim.api.nvim_set_hl(0, "AvanteStateSpinnerCompacting", { fg = "#1a1214", bg = "#f9e2af" })
+vim.api.nvim_set_hl(0, "AvanteTaskRunning", { fg = "#f5a9b8" })
+vim.api.nvim_set_hl(0, "AvanteTaskCompleted", { fg = "#8bd5a2" })
+vim.api.nvim_set_hl(0, "AvanteTaskFailed", { fg = "#ff6b6b" })
+vim.api.nvim_set_hl(0, "AvanteThinking", { fg = "#f5a9b8", italic = true })
 
 -- nvim-cmp item kinds
 vim.api.nvim_set_hl(0, "CmpItemAbbrMatch", { fg = "#f4b58a", bold = true })

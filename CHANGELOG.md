@@ -18,6 +18,10 @@ All notable changes to the Fox ML theme.
 - Disabled Copilot ghost text in Avante input/sidebar buffers
 - Added Copilot status indicator in lualine (green = ready, yellow = thinking, red = error)
 - Fixed `vim.tbl_filter` deprecation warnings → `vim.iter():filter():totable()` (nvim 0.11+)
+- Suppressed `vim.lsp.buf_get_clients` deprecation from project.nvim/telescope (upstream issue)
+- Full FoxML theme for all Avante highlights — sidebar, titles, buttons, spinners, conflict markers, task status, thinking indicator
+- Themed missing core UI groups: PmenuSbar/Thumb, CurSearch, Folded, TabLine, StatusLine, WildMenu, Title, Directory, Question, SpecialKey, NonText, Conceal
+- Themed noice message split window and :messages highlights (MsgArea, WarningMsg, ErrorMsg, ModeMsg, MoreMsg)
 
 ---
 
