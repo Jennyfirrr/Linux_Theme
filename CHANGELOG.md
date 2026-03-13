@@ -6,6 +6,11 @@ All notable changes to the Fox ML theme.
 
 ## 2026-03-12
 
+### Neovim - Window & Buffer Keybind Fixes
+- `Space q` is now smart — won't leave neo-tree filling the whole screen when closing the last file window
+- `Space bd` no longer silently fails on empty/unnamed buffers
+- Added `Space o` to unsplit (close all other windows, keep current)
+
 ### Multi-Theme Hub Restructure
 - Converted from single-theme repo to **multi-theme hub** with template-based rendering
 - All 23+ app configs are now **templates** with `{{COLOR}}` placeholders — one set of configs, any number of themes
