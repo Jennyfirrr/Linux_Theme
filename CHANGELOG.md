@@ -6,6 +6,33 @@ All notable changes to the Fox ML theme.
 
 ## 2026-03-13
 
+### Neovim - Syntax Color Refinement & Window Fixes
+- Improved syntax color differentiation: types (peach italic), functions (peach), variables (lavender), parameters (cyan), members (soft pink), operators (pink), keywords (pink bold)
+- Updated LSP semantic token highlights to match treesitter palette — fixes colors shifting 1-2 seconds after file open when clangd attaches
+- Added `ColorScheme` autocmd to re-apply FoxML theme after plugin/treesitter loads
+- Fixed which-key popup transparency — added `WhichKeyNormal` highlight group with solid `bg_deep` background
+- Set inactive window background to solid `bg` — provides visual distinction from active (transparent) window
+- Removed `tint.nvim` plugin (inactive window dimming)
+- Updated README screenshots (nvim 3-pane layout + avante sidebar)
+
+### Neovim - Custom FoxML Colorscheme (Tokyo Night removed)
+- Replaced `folke/tokyonight.nvim` dependency with a fully self-contained FoxML colorscheme — all highlights now live in `apply_foxml_theme()` inside init.lua
+- Added `local P = { ... }` palette table (32 colors) as single source of truth — all hex values reference `P.xxx` instead of repeating strings
+- Added built-in Vim syntax groups (~35): Comment, String, Function, Keyword, Type, Statement, PreProc, Special, etc.
+- Added full diagnostics coverage (~18): Error/Warn/Info/Hint with undercurl underlines, virtual text, and sign variants
+- Added Treesitter highlight groups (~55): all @function, @keyword, @string, @constant, @markup, @tag families
+- Added LSP semantic token groups (~21): @lsp.type.class, @lsp.type.function, @lsp.mod.deprecated, etc.
+- Added Diff & Spell groups (8): DiffAdd/Change/Delete/Text, SpellBad/Cap/Rare/Local with undercurl
+- Added terminal ANSI colors (16): vim.g.terminal_color_0 through _15 mapped to FoxML palette
+- Registered as proper colorscheme via `vim.g.colors_name = "foxml"`
+- Converted all plugin opts (bufferline, notify, scrollbar, colorful-winsep, lualine) from hardcoded hex to `P.xxx` references
+- Removed tokyonight from lazy-lock.json
+- Changed default fg from cold white `#f5f5f7` to warm coffee cream `#d5c4b0`
+- Fixed sidebar transparency — neo-tree, Avante, Trouble, and aerial panels now get solid `bg_deep` backgrounds via `NormalSidebar` + FileType autocmd (prevents terminal opacity bleeding through)
+- Removed transparent gap between splits — WinSeparator and VertSplit use solid `bg_deep` on both fg/bg, fillchars vert changed to space
+- Removed global `winblend = 15` (was making all floats semi-transparent); kept `pumblend = 15` for popup menu only
+- Improved Avante edit (`<leader>ae`) UX — removed Visual blend for solid selection highlight, brighter prompt input background, bolder inline hints
+
 ### Neovim - Avante & Copilot QoL
 - Set `auto_add_current_file = false` — visual selections now send only the selected code to Copilot, not the entire file
 - Added `<leader>ae` — edit selection in-place with Avante (visual mode)

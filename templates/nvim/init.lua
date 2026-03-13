@@ -32,6 +32,41 @@ vim.opt.cursorline = true
 vim.opt.guicursor = "n-v-c:block,i-ci-ve:ver25,r-cr:hor20,o:hor50,a:blinkwait400-blinkoff400-blinkon250"
 vim.opt.clipboard = "unnamedplus"
 
+-- FoxML palette (single source of truth)
+local P = {
+  bg_deep   = "#150f0f",
+  bg        = "#1a1214",
+  bg_alt    = "#2d1a2d",
+  bg_hl     = "#2d1f27",
+  sel       = "#4d2f34",
+  fg        = "#d5c4b0",
+  fg_pastel = "#f5c2d0",
+  fg_dim    = "#888888",
+  comment   = "#5a6270",
+  peach     = "#f4b58a",
+  pink      = "#f5a9b8",
+  lavender  = "#9a8ac4",
+  surface   = "#3a414b",
+  red       = "#ff6b6b",
+  red_br    = "#ff8787",
+  green     = "#8bd5a2",
+  green_br  = "#a6e3a1",
+  yellow    = "#f9e2af",
+  yellow_br = "#f5e0b8",
+  blue      = "#89b4fa",
+  blue_br   = "#b4beff",
+  cyan      = "#89dceb",
+  cyan_br   = "#94e2d5",
+  white     = "#ffffff",
+  warm      = "#c4b6a8",
+  diff_add  = "#1a2e1a",
+  diff_chg  = "#2d2a1a",
+  diff_del  = "#2e1a1a",
+  diff_txt  = "#3d3a1a",
+  ts_ctx    = "#1f1519",
+  none      = "none",
+}
+
 -- Bootstrap lazy.nvim
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.uv.fs_stat(lazypath) then
@@ -43,81 +78,14 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 local plugins = {
-  {
-    "folke/tokyonight.nvim",
-    priority = 1000,
-    opts = {
-      style = "storm",
-      terminal_colors = true,
-      transparent = false,
-      styles = {
-        comments = { italic = false },
-        keywords = { bold = true },
-        functions = { bold = true },
-      },
-      on_colors = function(c)
-        -- Fox ML palette
-        c.bg          = "#1a1214"
-        c.bg_dark     = "#150f0f"
-        c.bg_float    = "#1a1214"
-        c.bg_popup    = "#1a1214"
-        c.bg_sidebar  = "#150f0f"
-        c.bg_highlight = "#2d1f27"
-        c.fg          = "#f5f5f7"
-        c.fg_dark     = "#f4b58a"
-        c.fg_gutter   = "#3a414b"
-        c.comment     = "#5a6270"
-        c.border      = "#f4b58a"
-        -- Syntax mapping
-        c.blue    = "#f4b58a"   -- functions → peach
-        c.cyan    = "#8bd5a2"   -- types/builtins → mint
-        c.green   = "#8bd5a2"   -- strings → mint
-        c.magenta = "#f5a9b8"   -- keywords → pink
-        c.orange  = "#f4b58a"   -- constants → peach
-        c.purple  = "#f5a9b8"   -- operators → pink
-        c.red     = "#ff6b6b"   -- errors → red
-        c.yellow  = "#f9e2af"   -- warnings → warm yellow
-        c.teal    = "#89dceb"   -- info/hints → soft cyan
-      end,
-      on_highlights = function(hl, c)
-        hl.CursorLine    = { bg = "#2d1f27" }
-        hl.Visual        = { bg = "#4d2f34", blend = 28 }
-        hl.LineNr        = { fg = "#3a414b" }
-        hl.CursorLineNr  = { fg = "#f4b58a", bold = true }
-        hl.Search        = { fg = "#1a1214", bg = "#f4b58a" }
-        hl.IncSearch     = { fg = "#1a1214", bg = "#f5a9b8" }
-        hl.MatchParen    = { fg = "#f5a9b8", bold = true, underline = true }
-        hl.DiagnosticInfo = { fg = "#89dceb" }
-        hl.DiagnosticHint = { fg = "#8bd5a2" }
-        -- Treesitter
-        hl["@function"]      = { fg = "#f4b58a" }
-        hl["@function.call"] = { fg = "#f4b58a" }
-        hl["@keyword"]       = { fg = "#f5a9b8", bold = true }
-        hl["@string"]        = { fg = "#8bd5a2" }
-        hl["@number"]        = { fg = "#f9e2af", bold = true }
-        hl["@number.hex"]    = { fg = "#f9e2af", bold = true }
-        hl["@type"]          = { fg = "#f4b58a" }
-        hl["@variable"]      = { fg = "#f5f5f7" }
-        hl["@parameter"]     = { fg = "#f5f5f7" }
-        hl["@property"]      = { fg = "#f4b58a" }
-        hl["@operator"]      = { fg = "#f5a9b8" }
-        hl["@punctuation"]   = { fg = "#f5f5f7" }
-        hl["@comment"]       = { fg = "#5a6270", italic = true }
-      end,
-    },
-    config = function(_, opts)
-      require("tokyonight").setup(opts)
-      vim.cmd.colorscheme("tokyonight")
-    end
-  },
-
   { "nvim-lualine/lualine.nvim",           dependencies = { "nvim-tree/nvim-web-devicons" } },
   { "lukas-reineke/indent-blankline.nvim", main = "ibl",                                    opts = {} },
 
   -- Core editing
   { "numToStr/Comment.nvim",               config = true },
   { "windwp/nvim-autopairs",               config = true },
-  { "folke/which-key.nvim",                event = "VeryLazy",                              opts = {} },
+  { "folke/which-key.nvim",                event = "VeryLazy",
+    opts = {} },
 
   -- Fuzzy finding
   {
@@ -216,24 +184,24 @@ local plugins = {
         show_close_icon = false,
       },
       highlights = {
-        fill = { bg = "#150f0f" },
-        background = { fg = "#5a6270", bg = "#150f0f" },
-        buffer_selected = { fg = "#f5f5f7", bg = "#1a1214", bold = true },
-        buffer_visible = { fg = "#5a6270", bg = "#150f0f" },
-        separator = { fg = "#2d1f27", bg = "#150f0f" },
-        separator_selected = { fg = "#2d1f27", bg = "#1a1214" },
-        separator_visible = { fg = "#2d1f27", bg = "#150f0f" },
-        indicator_selected = { fg = "#f4b58a", bg = "#1a1214" },
-        modified = { fg = "#f9e2af", bg = "#150f0f" },
-        modified_selected = { fg = "#f9e2af", bg = "#1a1214" },
-        modified_visible = { fg = "#f9e2af", bg = "#150f0f" },
-        tab = { fg = "#5a6270", bg = "#150f0f" },
-        tab_selected = { fg = "#f4b58a", bg = "#1a1214", bold = true },
-        tab_separator = { fg = "#2d1f27", bg = "#150f0f" },
-        tab_separator_selected = { fg = "#2d1f27", bg = "#1a1214" },
-        duplicate = { fg = "#5a6270", bg = "#150f0f", italic = true },
-        duplicate_selected = { fg = "#f5f5f7", bg = "#1a1214", italic = true },
-        duplicate_visible = { fg = "#5a6270", bg = "#150f0f", italic = true },
+        fill = { bg = P.bg_deep },
+        background = { fg = P.comment, bg = P.bg_deep },
+        buffer_selected = { fg = P.fg, bg = P.bg, bold = true },
+        buffer_visible = { fg = P.comment, bg = P.bg_deep },
+        separator = { fg = P.bg_hl, bg = P.bg_deep },
+        separator_selected = { fg = P.bg_hl, bg = P.bg },
+        separator_visible = { fg = P.bg_hl, bg = P.bg_deep },
+        indicator_selected = { fg = P.peach, bg = P.bg },
+        modified = { fg = P.yellow, bg = P.bg_deep },
+        modified_selected = { fg = P.yellow, bg = P.bg },
+        modified_visible = { fg = P.yellow, bg = P.bg_deep },
+        tab = { fg = P.comment, bg = P.bg_deep },
+        tab_selected = { fg = P.peach, bg = P.bg, bold = true },
+        tab_separator = { fg = P.bg_hl, bg = P.bg_deep },
+        tab_separator_selected = { fg = P.bg_hl, bg = P.bg },
+        duplicate = { fg = P.comment, bg = P.bg_deep, italic = true },
+        duplicate_selected = { fg = P.fg, bg = P.bg, italic = true },
+        duplicate_visible = { fg = P.comment, bg = P.bg_deep, italic = true },
         diagnostic_selected = { bold = true },
       },
     },
@@ -685,7 +653,7 @@ local plugins = {
   {
     "rcarriga/nvim-notify",
     opts = {
-      background_colour = "#1a1214",
+      background_colour = P.bg,
       fps = 60,
       render = "wrapped-compact",
       stages = "fade",
@@ -747,7 +715,7 @@ local plugins = {
     event = "WinNew",
     opts = {
       hi = {
-        fg = "#f4b58a",
+        fg = P.peach,
       },
       symbols = { "─", "│", "╭", "╮", "╰", "╯" },
     },
@@ -759,19 +727,19 @@ local plugins = {
     event = "BufReadPost",
     opts = {
       handle = {
-        color = "#2d1f27",
+        color = P.bg_hl,
         highlight = "ScrollbarHandle",
       },
       marks = {
-        Search = { color = "#f4b58a" },
-        Error = { color = "#ff6b6b" },
-        Warn = { color = "#f9e2af" },
-        Info = { color = "#89dceb" },
-        Hint = { color = "#8bd5a2" },
-        Misc = { color = "#f5a9b8" },
-        GitAdd = { color = "#8bd5a2" },
-        GitChange = { color = "#f9e2af" },
-        GitDelete = { color = "#ff6b6b" },
+        Search = { color = P.peach },
+        Error = { color = P.red },
+        Warn = { color = P.yellow },
+        Info = { color = P.cyan },
+        Hint = { color = P.green },
+        Misc = { color = P.pink },
+        GitAdd = { color = P.green },
+        GitChange = { color = P.yellow },
+        GitDelete = { color = P.red },
       },
       excluded_filetypes = { "neo-tree", "dashboard", "lazy", "mason", "notify" },
     },
@@ -790,23 +758,6 @@ local plugins = {
     opts = { calm_down = true, nearest_only = true },
   },
 
-  -- Tint (dim inactive windows)
-  {
-    "levouh/tint.nvim",
-    event = "WinNew",
-    opts = {
-      tint = -30,
-      saturation = 0.7,
-      tint_background_colors = true,
-      highlight_ignore_patterns = { "WinSeparator", "Status.*", "EndOfBuffer" },
-      window_ignore_function = function(winid)
-        local buf = vim.api.nvim_win_get_buf(winid)
-        local ft = vim.bo[buf].filetype
-        return ft == "neo-tree" or ft == "aerial" or ft == "Trouble"
-      end,
-    },
-  },
-
 }
 
 -- lazy.nvim setup
@@ -816,22 +767,609 @@ require("lazy").setup(plugins, {
 
 -- setup optional
 vim.opt.signcolumn = "yes:1"
-vim.opt.fillchars:append({ eob = " ", vert = "│" })
+vim.opt.fillchars:append({ eob = " ", vert = " " })
 
--- Semi-transparent windows (2B aesthetic)
-vim.opt.winblend = 15
+-- Popup menu transparency only (winblend left at 0 so splits stay solid)
 vim.opt.pumblend = 15
 
--- Transparent background (let kitty/tmux handle it)
-vim.api.nvim_set_hl(0, "Normal", { bg = "none" })
-vim.api.nvim_set_hl(0, "NormalFloat", { bg = "#1a1214" })
+-- ═══════════════════════════════════════════════════════════════
+-- FoxML custom colorscheme (no external theme dependency)
+-- ═══════════════════════════════════════════════════════════════
+local function apply_foxml_theme()
+  vim.o.background = "dark"
+  vim.g.colors_name = "foxml"
+
+  local hl = function(name, opts) vim.api.nvim_set_hl(0, name, opts) end
+
+  -- ── Terminal colors (16 ANSI) ──
+  vim.g.terminal_color_0  = P.bg_deep
+  vim.g.terminal_color_1  = P.red
+  vim.g.terminal_color_2  = P.green
+  vim.g.terminal_color_3  = P.yellow
+  vim.g.terminal_color_4  = P.blue
+  vim.g.terminal_color_5  = P.pink
+  vim.g.terminal_color_6  = P.cyan
+  vim.g.terminal_color_7  = P.fg
+  vim.g.terminal_color_8  = P.surface
+  vim.g.terminal_color_9  = P.red_br
+  vim.g.terminal_color_10 = P.green_br
+  vim.g.terminal_color_11 = P.yellow_br
+  vim.g.terminal_color_12 = P.blue_br
+  vim.g.terminal_color_13 = P.fg_pastel
+  vim.g.terminal_color_14 = P.cyan_br
+  vim.g.terminal_color_15 = P.white
+
+  -- ── Editor UI ──
+  hl("Normal",        { fg = P.fg, bg = P.none })
+  hl("NormalSidebar", { fg = P.fg, bg = P.bg_deep })
+  hl("NormalNC",     { fg = P.fg, bg = P.bg })
+  hl("NormalFloat",  { fg = P.fg, bg = P.bg })
+  hl("FloatBorder",  { fg = P.peach, bg = P.none })
+  hl("FloatTitle",   { fg = P.peach, bg = P.none, bold = true })
+  hl("CursorLine",  { bg = P.bg_hl })
+  hl("CursorColumn", { bg = P.bg_hl })
+  hl("ColorColumn",  { bg = P.bg_hl })
+  hl("Visual",       { bg = P.sel })
+  hl("VisualNOS",    { bg = P.sel })
+  hl("LineNr",       { fg = P.surface })
+  hl("CursorLineNr", { fg = P.peach, bold = true })
+  hl("SignColumn",   { fg = P.surface, bg = P.none })
+  hl("EndOfBuffer",  { fg = P.bg })
+  hl("VertSplit",    { fg = P.bg_deep, bg = P.bg_deep })
+  hl("WinSeparator", { fg = P.bg_deep, bg = P.bg_deep })
+  hl("Pmenu",        { fg = P.fg, bg = P.bg })
+  hl("PmenuSel",     { bg = P.surface })
+  hl("PmenuSbar",    { bg = P.bg_hl })
+  hl("PmenuThumb",   { bg = P.comment })
+  hl("WildMenu",     { fg = P.bg, bg = P.peach, bold = true })
+  hl("StatusLine",   { fg = P.warm, bg = P.bg_deep })
+  hl("StatusLineNC", { fg = P.surface, bg = P.bg_deep })
+  hl("TabLine",      { fg = P.comment, bg = P.bg_deep })
+  hl("TabLineSel",   { fg = P.peach, bg = P.bg_hl, bold = true })
+  hl("TabLineFill",  { bg = P.bg_deep })
+  hl("WinBar",       { fg = P.comment, bg = P.none })
+  hl("WinBarNC",     { fg = P.surface, bg = P.none })
+  hl("Title",        { fg = P.peach, bold = true })
+  hl("Directory",    { fg = P.cyan })
+  hl("Question",     { fg = P.green })
+  hl("SpecialKey",   { fg = P.surface })
+  hl("NonText",      { fg = P.surface })
+  hl("Conceal",      { fg = P.comment })
+  hl("Cursor",       { fg = P.bg, bg = P.fg })
+  hl("lCursor",      { fg = P.bg, bg = P.fg })
+  hl("CursorIM",     { fg = P.bg, bg = P.fg })
+
+  -- ── Search & Match ──
+  hl("Search",       { fg = P.bg, bg = P.peach })
+  hl("IncSearch",    { fg = P.bg, bg = P.pink })
+  hl("CurSearch",    { fg = P.bg, bg = P.peach, bold = true })
+  hl("Substitute",   { fg = P.bg, bg = P.red })
+  hl("MatchParen",   { fg = P.pink, bold = true, underline = true })
+
+  -- ── Fold ──
+  hl("Folded",       { fg = P.comment, bg = P.bg_hl })
+  hl("FoldColumn",   { fg = P.surface, bg = P.none })
+
+  -- ── Messages ──
+  hl("MsgArea",      { fg = P.warm, bg = P.bg_deep })
+  hl("WarningMsg",   { fg = P.yellow, bold = true })
+  hl("ErrorMsg",     { fg = P.red, bold = true })
+  hl("ModeMsg",      { fg = P.peach, bold = true })
+  hl("MoreMsg",      { fg = P.green })
+
+  -- ── Built-in syntax groups ──
+  hl("Comment",      { fg = P.comment, italic = true })
+  hl("Constant",     { fg = P.peach })
+  hl("String",       { fg = P.green })
+  hl("Character",    { fg = P.green })
+  hl("Number",       { fg = P.yellow, bold = true })
+  hl("Boolean",      { fg = P.peach, bold = true })
+  hl("Float",        { fg = P.yellow, bold = true })
+  hl("Identifier",   { fg = P.fg })
+  hl("Function",     { fg = P.peach })
+  hl("Statement",    { fg = P.pink, bold = true })
+  hl("Conditional",  { fg = P.pink, bold = true })
+  hl("Repeat",       { fg = P.pink, bold = true })
+  hl("Label",        { fg = P.pink })
+  hl("Operator",     { fg = P.pink })
+  hl("Keyword",      { fg = P.pink, bold = true })
+  hl("Exception",    { fg = P.pink })
+  hl("PreProc",      { fg = P.cyan })
+  hl("Include",      { fg = P.cyan })
+  hl("Define",       { fg = P.pink })
+  hl("Macro",        { fg = P.pink })
+  hl("PreCondit",    { fg = P.cyan })
+  hl("Type",         { fg = P.peach })
+  hl("StorageClass", { fg = P.pink })
+  hl("Structure",    { fg = P.peach })
+  hl("Typedef",      { fg = P.peach })
+  hl("Special",      { fg = P.peach })
+  hl("SpecialChar",  { fg = P.green })
+  hl("Tag",          { fg = P.peach })
+  hl("Delimiter",    { fg = P.fg })
+  hl("SpecialComment", { fg = P.comment, bold = true })
+  hl("Debug",        { fg = P.red })
+  hl("Underlined",   { underline = true })
+  hl("Bold",         { bold = true })
+  hl("Italic",       { italic = true })
+  hl("Ignore",       {})
+  hl("Error",        { fg = P.red })
+  hl("Todo",         { fg = P.bg, bg = P.yellow, bold = true })
+
+  -- ── Diagnostics ──
+  hl("DiagnosticError",          { fg = P.red })
+  hl("DiagnosticWarn",           { fg = P.yellow })
+  hl("DiagnosticInfo",           { fg = P.cyan })
+  hl("DiagnosticHint",           { fg = P.green })
+  hl("DiagnosticOk",             { fg = P.green })
+  hl("DiagnosticUnderlineError", { undercurl = true, sp = P.red })
+  hl("DiagnosticUnderlineWarn",  { undercurl = true, sp = P.yellow })
+  hl("DiagnosticUnderlineInfo",  { undercurl = true, sp = P.cyan })
+  hl("DiagnosticUnderlineHint",  { undercurl = true, sp = P.green })
+  hl("DiagnosticUnderlineOk",    { undercurl = true, sp = P.green })
+  hl("DiagnosticVirtualTextError", { fg = P.red, bg = P.diff_del })
+  hl("DiagnosticVirtualTextWarn",  { fg = P.yellow, bg = P.diff_chg })
+  hl("DiagnosticVirtualTextInfo",  { fg = P.cyan })
+  hl("DiagnosticVirtualTextHint",  { fg = P.green })
+  hl("DiagnosticSignError",       { fg = P.red })
+  hl("DiagnosticSignWarn",        { fg = P.yellow })
+  hl("DiagnosticSignInfo",        { fg = P.cyan })
+  hl("DiagnosticSignHint",        { fg = P.green })
+
+  -- ── Treesitter ──
+  hl("@variable",            { fg = P.lavender })
+  hl("@variable.builtin",    { fg = P.pink })
+  hl("@variable.parameter",  { fg = P.cyan })
+  hl("@variable.member",     { fg = P.fg_pastel })
+  hl("@constant",            { fg = P.yellow })
+  hl("@constant.builtin",    { fg = P.yellow, bold = true })
+  hl("@constant.macro",      { fg = P.yellow })
+  hl("@module",              { fg = P.pink })
+  hl("@string",              { fg = P.green })
+  hl("@string.escape",       { fg = P.cyan })
+  hl("@string.regex",        { fg = P.cyan })
+  hl("@string.special",      { fg = P.cyan })
+  hl("@character",           { fg = P.green })
+  hl("@number",              { fg = P.yellow, bold = true })
+  hl("@number.float",        { fg = P.yellow, bold = true })
+  hl("@number.hex",          { fg = P.yellow, bold = true })
+  hl("@boolean",             { fg = P.peach, bold = true })
+  hl("@type",                { fg = P.peach, italic = true })
+  hl("@type.builtin",        { fg = P.peach, italic = true })
+  hl("@type.definition",     { fg = P.peach, italic = true })
+  hl("@type.qualifier",      { fg = P.pink })
+  hl("@attribute",           { fg = P.peach })
+  hl("@property",            { fg = P.fg_pastel })
+  hl("@function",            { fg = P.peach })
+  hl("@function.call",       { fg = P.peach })
+  hl("@function.builtin",    { fg = P.peach })
+  hl("@function.macro",      { fg = P.pink })
+  hl("@function.method",     { fg = P.peach })
+  hl("@function.method.call", { fg = P.peach })
+  hl("@constructor",         { fg = P.peach })
+  hl("@operator",            { fg = P.pink })
+  hl("@keyword",             { fg = P.pink, bold = true })
+  hl("@keyword.function",    { fg = P.pink, bold = true })
+  hl("@keyword.operator",    { fg = P.pink })
+  hl("@keyword.return",      { fg = P.pink, bold = true })
+  hl("@keyword.import",      { fg = P.cyan })
+  hl("@keyword.conditional", { fg = P.pink, bold = true })
+  hl("@keyword.repeat",      { fg = P.pink, bold = true })
+  hl("@keyword.exception",   { fg = P.pink })
+  hl("@punctuation",         { fg = P.fg })
+  hl("@punctuation.bracket",  { fg = P.fg })
+  hl("@punctuation.delimiter", { fg = P.fg })
+  hl("@punctuation.special",  { fg = P.pink })
+  hl("@comment",             { fg = P.comment, italic = true })
+  hl("@comment.todo",        { fg = P.bg, bg = P.yellow, bold = true })
+  hl("@comment.note",        { fg = P.bg, bg = P.green, bold = true })
+  hl("@comment.warning",     { fg = P.bg, bg = P.yellow, bold = true })
+  hl("@comment.error",       { fg = P.bg, bg = P.red, bold = true })
+  hl("@tag",                 { fg = P.peach })
+  hl("@tag.attribute",       { fg = P.pink })
+  hl("@tag.delimiter",       { fg = P.fg })
+  hl("@markup.heading",      { fg = P.peach, bold = true })
+  hl("@markup.italic",       { italic = true })
+  hl("@markup.strong",       { bold = true })
+  hl("@markup.strikethrough", { strikethrough = true })
+  hl("@markup.underline",    { underline = true })
+  hl("@markup.link",         { fg = P.cyan, underline = true })
+  hl("@markup.link.url",     { fg = P.cyan, underline = true })
+  hl("@markup.raw",          { fg = P.green })
+  hl("@markup.list",         { fg = P.pink })
+
+  -- ── LSP semantic tokens ──
+  hl("@lsp.type.class",         { fg = P.peach, italic = true })
+  hl("@lsp.type.struct",        { fg = P.peach, italic = true })
+  hl("@lsp.type.enum",          { fg = P.peach, italic = true })
+  hl("@lsp.type.enumMember",    { fg = P.cyan })
+  hl("@lsp.type.interface",     { fg = P.peach, italic = true })
+  hl("@lsp.type.function",      { fg = P.peach })
+  hl("@lsp.type.method",        { fg = P.peach })
+  hl("@lsp.type.macro",         { fg = P.pink })
+  hl("@lsp.type.decorator",     { fg = P.pink })
+  hl("@lsp.type.variable",      { fg = P.lavender })
+  hl("@lsp.type.parameter",     { fg = P.cyan })
+  hl("@lsp.type.property",      { fg = P.fg_pastel })
+  hl("@lsp.type.namespace",     { fg = P.pink })
+  hl("@lsp.type.keyword",       { fg = P.pink, bold = true })
+  hl("@lsp.type.type",          { fg = P.peach, italic = true })
+  hl("@lsp.type.typeParameter", { fg = P.peach, italic = true })
+  hl("@lsp.type.comment",       { fg = P.comment, italic = true })
+  hl("@lsp.mod.deprecated",     { strikethrough = true })
+  hl("@lsp.mod.readonly",       { bold = true })
+  hl("@lsp.typemod.function.defaultLibrary", { fg = P.peach })
+  hl("@lsp.typemod.variable.defaultLibrary", { fg = P.pink })
+
+  -- ── Diff & Spell ──
+  hl("DiffAdd",      { bg = P.diff_add })
+  hl("DiffChange",   { bg = P.diff_chg })
+  hl("DiffDelete",   { bg = P.diff_del })
+  hl("DiffText",     { bg = P.diff_txt })
+  hl("SpellBad",     { undercurl = true, sp = P.red })
+  hl("SpellCap",     { undercurl = true, sp = P.yellow })
+  hl("SpellRare",    { undercurl = true, sp = P.cyan })
+  hl("SpellLocal",   { undercurl = true, sp = P.green })
+
+  -- ── Plugin highlights ──
+
+  -- CmpBorder
+  hl("CmpBorder", { fg = P.peach, bg = P.none })
+
+  -- Telescope
+  hl("TelescopeBorder",        { fg = P.peach })
+  hl("TelescopePromptBorder",  { fg = P.pink })
+  hl("TelescopeResultsBorder", { fg = P.peach })
+  hl("TelescopePreviewBorder", { fg = P.green })
+  hl("TelescopePromptTitle",   { fg = P.bg, bg = P.pink, bold = true })
+  hl("TelescopeResultsTitle",  { fg = P.bg, bg = P.peach, bold = true })
+  hl("TelescopePreviewTitle",  { fg = P.bg, bg = P.green, bold = true })
+
+  -- Snacks dashboard
+  hl("SnacksDashboardHeader",  { fg = P.pink, bold = true })
+  hl("SnacksDashboardKey",     { fg = P.peach, bold = true })
+  hl("SnacksDashboardDesc",    { fg = P.fg })
+  hl("SnacksDashboardIcon",    { fg = P.green })
+  hl("SnacksDashboardFooter",  { fg = P.comment, italic = true })
+
+  -- Git signs
+  hl("GitSignsAdd",    { fg = P.green })
+  hl("GitSignsChange", { fg = P.yellow })
+  hl("GitSignsDelete", { fg = P.red })
+
+  -- Flash.nvim
+  hl("FlashLabel",    { fg = P.bg, bg = P.peach, bold = true })
+  hl("FlashMatch",    { fg = P.fg, bg = P.bg_hl })
+  hl("FlashCurrent",  { fg = P.bg, bg = P.pink, bold = true })
+  hl("FlashBackdrop", { fg = P.surface })
+
+  -- Trouble.nvim
+  hl("TroubleNormal",   { bg = P.bg_deep })
+  hl("TroubleNormalNC", { bg = P.bg_deep })
+  hl("TroubleText",     { fg = P.fg })
+  hl("TroubleCount",    { fg = P.bg, bg = P.peach, bold = true })
+  hl("TroubleFile",     { fg = P.peach })
+  hl("TroubleFoldIcon", { fg = P.pink })
+  hl("TroubleLocation", { fg = P.comment })
+
+  -- Which-key
+  hl("WhichKey",          { fg = P.peach, bold = true })
+  hl("WhichKeyGroup",     { fg = P.pink })
+  hl("WhichKeyDesc",      { fg = P.fg })
+  hl("WhichKeySeparator", { fg = P.surface })
+  hl("WhichKeyNormal",    { bg = P.bg_deep })
+  hl("WhichKeyFloat",     { bg = P.bg_deep })
+  hl("WhichKeyBorder",    { fg = P.peach, bg = P.bg_deep })
+  hl("WhichKeyTitle",     { fg = P.peach, bg = P.bg_deep })
+  hl("WhichKeyValue",     { fg = P.comment })
+
+  -- Indent blankline
+  hl("IblIndent", { fg = P.bg_hl })
+  hl("IblScope",  { fg = P.peach })
+
+  -- Neo-tree
+  hl("NeoTreeNormal",        { bg = P.bg_deep })
+  hl("NeoTreeNormalNC",      { bg = P.bg_deep })
+  hl("NeoTreeEndOfBuffer",   { fg = P.bg_deep, bg = P.bg_deep })
+  hl("NeoTreeDirectoryName", { fg = P.peach })
+  hl("NeoTreeDirectoryIcon", { fg = P.peach })
+  hl("NeoTreeRootName",      { fg = P.pink, bold = true })
+  hl("NeoTreeFileName",      { fg = P.fg })
+  hl("NeoTreeFileIcon",      { fg = P.fg })
+  hl("NeoTreeGitAdded",      { fg = P.green })
+  hl("NeoTreeGitModified",   { fg = P.yellow })
+  hl("NeoTreeGitDeleted",    { fg = P.red })
+  hl("NeoTreeGitUntracked",  { fg = P.cyan })
+  hl("NeoTreeGitConflict",   { fg = P.red, bold = true })
+  hl("NeoTreeIndentMarker",  { fg = P.bg_hl })
+  hl("NeoTreeWinSeparator",  { fg = P.bg_deep, bg = P.bg_deep })
+  hl("NeoTreeCursorLine",    { bg = P.bg_hl })
+  hl("NeoTreeTitleBar",      { fg = P.bg, bg = P.peach, bold = true })
+  hl("NeoTreeFloatBorder",   { fg = P.peach })
+  hl("NeoTreeFloatTitle",    { fg = P.peach, bold = true })
+
+  -- DAP UI
+  hl("DapUIScope",                   { fg = P.peach, bold = true })
+  hl("DapUIType",                    { fg = P.pink })
+  hl("DapUIValue",                   { fg = P.green })
+  hl("DapUIVariable",                { fg = P.fg })
+  hl("DapUIThread",                  { fg = P.green })
+  hl("DapUIStoppedThread",           { fg = P.peach })
+  hl("DapUIFrameName",               { fg = P.fg })
+  hl("DapUISource",                  { fg = P.pink })
+  hl("DapUIBreakpointsPath",         { fg = P.peach })
+  hl("DapUIBreakpointsInfo",         { fg = P.cyan })
+  hl("DapUIBreakpointsCurrentLine",  { fg = P.green, bold = true })
+  hl("DapUIBreakpointsLine",         { fg = P.peach })
+  hl("DapUIBreakpointsDisabledLine", { fg = P.surface })
+  hl("DapUIDecoration",              { fg = P.peach })
+  hl("DapUIWatchesEmpty",            { fg = P.surface })
+  hl("DapUIWatchesValue",            { fg = P.green })
+  hl("DapUIWatchesError",            { fg = P.red })
+  hl("DapUIModifiedValue",           { fg = P.yellow, bold = true })
+  hl("DapUIFloatNormal",             { bg = P.bg_deep })
+  hl("DapUIFloatBorder",             { fg = P.peach })
+
+  -- DAP breakpoint/stopped signs
+  hl("DapBreakpoint",          { fg = P.red })
+  hl("DapBreakpointCondition", { fg = P.yellow })
+  hl("DapLogPoint",            { fg = P.cyan })
+  hl("DapStopped",             { fg = P.green, bg = P.bg_hl })
+
+  -- Aerial
+  hl("AerialLine",         { bg = P.bg_hl })
+  hl("AerialGuide",        { fg = P.bg_hl })
+  hl("AerialFunctionIcon", { fg = P.peach })
+  hl("AerialClassIcon",    { fg = P.pink })
+  hl("AerialVariableIcon", { fg = P.fg })
+
+  -- Diffview
+  hl("DiffviewFilePanelTitle",   { fg = P.peach, bold = true })
+  hl("DiffviewFilePanelCounter", { fg = P.pink })
+  hl("DiffviewFilePanelFileName", { fg = P.fg })
+  hl("DiffviewNormal",           { bg = P.bg_deep })
+
+  -- Neotest
+  hl("NeotestPassed",       { fg = P.green })
+  hl("NeotestFailed",       { fg = P.red })
+  hl("NeotestRunning",      { fg = P.yellow })
+  hl("NeotestSkipped",      { fg = P.comment })
+  hl("NeotestNamespace",    { fg = P.pink })
+  hl("NeotestFile",         { fg = P.peach })
+  hl("NeotestDir",          { fg = P.peach })
+  hl("NeotestAdapterName",  { fg = P.pink, bold = true })
+  hl("NeotestFocused",      { bold = true, underline = true })
+  hl("NeotestIndent",       { fg = P.bg_hl })
+  hl("NeotestExpandMarker", { fg = P.surface })
+  hl("NeotestWinSelect",    { fg = P.peach, bold = true })
+
+  -- Harpoon
+  hl("HarpoonWindow", { bg = P.bg_deep })
+  hl("HarpoonBorder", { fg = P.peach })
+
+  -- TODO comments
+  hl("TodoBgTODO", { fg = P.bg, bg = P.peach, bold = true })
+  hl("TodoFgTODO", { fg = P.peach })
+  hl("TodoBgFIX",  { fg = P.bg, bg = P.red, bold = true })
+  hl("TodoFgFIX",  { fg = P.red })
+  hl("TodoBgHACK", { fg = P.bg, bg = P.yellow, bold = true })
+  hl("TodoFgHACK", { fg = P.yellow })
+  hl("TodoBgNOTE", { fg = P.bg, bg = P.green, bold = true })
+  hl("TodoFgNOTE", { fg = P.green })
+  hl("TodoBgWARN", { fg = P.bg, bg = P.yellow, bold = true })
+  hl("TodoFgWARN", { fg = P.yellow })
+  hl("TodoBgPERF", { fg = P.bg, bg = P.pink, bold = true })
+  hl("TodoFgPERF", { fg = P.pink })
+
+  -- Fidget
+  hl("FidgetTitle", { fg = P.peach })
+  hl("FidgetTask",  { fg = P.comment })
+
+  -- Treesitter context
+  hl("TreesitterContext",           { bg = P.ts_ctx })
+  hl("TreesitterContextLineNumber", { fg = P.peach })
+  hl("TreesitterContextBottom",     { underline = true, sp = P.bg_hl })
+
+  -- Mason
+  hl("MasonHeader",             { fg = P.bg, bg = P.peach, bold = true })
+  hl("MasonHighlight",          { fg = P.peach })
+  hl("MasonHighlightBlock",     { fg = P.bg, bg = P.peach })
+  hl("MasonHighlightBlockBold", { fg = P.bg, bg = P.peach, bold = true })
+  hl("MasonMuted",              { fg = P.comment })
+  hl("MasonMutedBlock",         { fg = P.bg, bg = P.surface })
+
+  -- Lazy.nvim
+  hl("LazyH1",            { fg = P.bg, bg = P.peach, bold = true })
+  hl("LazyH2",            { fg = P.peach, bold = true })
+  hl("LazyButton",        { bg = P.bg_hl })
+  hl("LazyButtonActive",  { fg = P.bg, bg = P.peach, bold = true })
+  hl("LazySpecial",       { fg = P.pink })
+  hl("LazyComment",       { fg = P.comment })
+  hl("LazyProgressDone",  { fg = P.peach })
+  hl("LazyProgressTodo",  { fg = P.surface })
+  hl("LazyReasonPlugin",  { fg = P.pink })
+  hl("LazyReasonEvent",   { fg = P.yellow })
+  hl("LazyReasonKeys",    { fg = P.cyan })
+  hl("LazyReasonCmd",     { fg = P.green })
+
+  -- Copilot
+  hl("CopilotSuggestion", { fg = P.comment, italic = true })
+  hl("CopilotAnnotation", { fg = P.surface })
+
+  -- Rainbow delimiters
+  hl("RainbowDelimiterPeach",  { fg = P.peach })
+  hl("RainbowDelimiterPink",   { fg = P.pink })
+  hl("RainbowDelimiterMint",   { fg = P.green })
+  hl("RainbowDelimiterYellow", { fg = P.yellow })
+  hl("RainbowDelimiterCyan",   { fg = P.cyan })
+  hl("RainbowDelimiterRed",    { fg = P.red })
+
+  -- Noice
+  hl("NoiceCmdlinePopup",            { bg = P.bg_deep })
+  hl("NoiceCmdlinePopupBorder",      { fg = P.peach })
+  hl("NoiceCmdlinePopupTitle",       { fg = P.peach, bold = true })
+  hl("NoiceCmdlinePopupBorderSearch", { fg = P.yellow })
+  hl("NoiceCmdlineIcon",             { fg = P.peach })
+  hl("NoiceCmdlineIconSearch",       { fg = P.yellow })
+  hl("NoicePopupmenu",               { bg = P.bg_deep })
+  hl("NoicePopupmenuBorder",         { fg = P.peach })
+  hl("NoicePopupmenuSelected",       { bg = P.bg_hl })
+  hl("NoicePopupmenuMatch",          { fg = P.peach, bold = true })
+  hl("NoiceMini",                    { bg = P.bg_deep })
+  hl("NoiceFormatProgressDone",      { fg = P.bg, bg = P.peach })
+  hl("NoiceFormatProgressTodo",      { fg = P.comment, bg = P.bg_hl })
+  hl("NoiceLspProgressTitle",        { fg = P.peach })
+  hl("NoiceConfirm",                 { bg = P.bg_deep })
+  hl("NoiceConfirmBorder",           { fg = P.pink })
+  hl("NoiceVirtualText",             { fg = P.peach })
+  hl("NoiceSplit",                   { bg = P.bg_deep })
+  hl("NoiceSplitBorder",             { fg = P.peach, bg = P.bg_deep })
+
+  -- Notify
+  hl("NotifyERRORBorder", { fg = P.red })
+  hl("NotifyWARNBorder",  { fg = P.yellow })
+  hl("NotifyINFOBorder",  { fg = P.cyan })
+  hl("NotifyDEBUGBorder", { fg = P.comment })
+  hl("NotifyTRACEBorder", { fg = P.pink })
+  hl("NotifyERRORIcon",   { fg = P.red })
+  hl("NotifyWARNIcon",    { fg = P.yellow })
+  hl("NotifyINFOIcon",    { fg = P.cyan })
+  hl("NotifyDEBUGIcon",   { fg = P.comment })
+  hl("NotifyTRACEIcon",   { fg = P.pink })
+  hl("NotifyERRORTitle",  { fg = P.red })
+  hl("NotifyWARNTitle",   { fg = P.yellow })
+  hl("NotifyINFOTitle",   { fg = P.cyan })
+  hl("NotifyDEBUGTitle",  { fg = P.comment })
+  hl("NotifyTRACETitle",  { fg = P.pink })
+  hl("NotifyBackground",  { bg = P.bg })
+
+  -- Scrollbar
+  hl("ScrollbarHandle",          { bg = P.bg_hl })
+  hl("ScrollbarSearchHandle",    { fg = P.peach, bg = P.bg_hl })
+  hl("ScrollbarSearch",          { fg = P.peach })
+  hl("ScrollbarErrorHandle",     { fg = P.red, bg = P.bg_hl })
+  hl("ScrollbarError",           { fg = P.red })
+  hl("ScrollbarWarnHandle",      { fg = P.yellow, bg = P.bg_hl })
+  hl("ScrollbarWarn",            { fg = P.yellow })
+  hl("ScrollbarInfoHandle",      { fg = P.cyan, bg = P.bg_hl })
+  hl("ScrollbarInfo",            { fg = P.cyan })
+  hl("ScrollbarHintHandle",      { fg = P.green, bg = P.bg_hl })
+  hl("ScrollbarHint",            { fg = P.green })
+  hl("ScrollbarGitAddHandle",    { fg = P.green, bg = P.bg_hl })
+  hl("ScrollbarGitAdd",          { fg = P.green })
+  hl("ScrollbarGitChangeHandle", { fg = P.yellow, bg = P.bg_hl })
+  hl("ScrollbarGitChange",       { fg = P.yellow })
+  hl("ScrollbarGitDeleteHandle", { fg = P.red, bg = P.bg_hl })
+  hl("ScrollbarGitDelete",       { fg = P.red })
+
+  -- hlslens
+  hl("HlSearchNear",     { fg = P.bg, bg = P.peach, bold = true })
+  hl("HlSearchLens",     { fg = P.comment })
+  hl("HlSearchLensNear", { fg = P.bg, bg = P.peach })
+
+  -- Avante
+  hl("AvanteTitle",                        { fg = P.bg, bg = P.peach, bold = true })
+  hl("AvanteReversedTitle",                { fg = P.peach, bg = P.bg_deep })
+  hl("AvanteSubtitle",                     { fg = P.bg, bg = P.cyan, bold = true })
+  hl("AvanteReversedSubtitle",             { fg = P.cyan, bg = P.bg_deep })
+  hl("AvanteThirdTitle",                   { fg = P.warm, bg = P.bg_hl })
+  hl("AvanteReversedThirdTitle",           { fg = P.bg_hl, bg = P.bg_deep })
+  hl("AvanteSidebarNormal",                { bg = P.bg_deep })
+  hl("AvanteSidebarWinSeparator",          { fg = P.bg_deep, bg = P.bg_deep })
+  hl("AvanteSidebarWinHorizontalSeparator", { fg = P.bg_hl })
+  hl("AvantePromptInput",                  { fg = P.fg, bg = P.bg_hl })
+  hl("AvantePromptInputBorder",            { fg = P.peach, bg = P.bg_hl })
+  hl("AvanteInlineHint",                   { fg = P.peach, bg = P.bg_deep, bold = true })
+  hl("AvantePopupHint",                    { fg = P.comment, bg = P.bg_deep })
+  hl("AvanteConfirmTitle",                 { fg = P.bg, bg = P.red, bold = true })
+  hl("AvanteButtonDefault",               { fg = P.bg, bg = P.comment })
+  hl("AvanteButtonDefaultHover",          { fg = P.bg, bg = P.green })
+  hl("AvanteButtonPrimary",               { fg = P.bg, bg = P.warm })
+  hl("AvanteButtonPrimaryHover",          { fg = P.bg, bg = P.cyan })
+  hl("AvanteButtonDanger",                { fg = P.bg, bg = P.warm })
+  hl("AvanteButtonDangerHover",           { fg = P.bg, bg = P.red })
+  hl("AvanteToBeDeleted",                 { bg = "#3d1f23", strikethrough = true })
+  hl("AvanteToBeDeletedWOStrikethrough",  { bg = "#3d1f23" })
+  hl("AvanteConflictCurrent",             { bg = "#3d1f23", bold = true })
+  hl("AvanteConflictCurrentLabel",        { bg = "#4d2529" })
+  hl("AvanteConflictIncoming",            { bg = "#1a3328", bold = true })
+  hl("AvanteConflictIncomingLabel",       { bg = "#1f3d2e" })
+  hl("AvanteStateSpinnerGenerating",      { fg = P.bg, bg = P.pink })
+  hl("AvanteStateSpinnerToolCalling",     { fg = P.bg, bg = P.cyan })
+  hl("AvanteStateSpinnerFailed",          { fg = P.bg, bg = P.red })
+  hl("AvanteStateSpinnerSucceeded",       { fg = P.bg, bg = P.green })
+  hl("AvanteStateSpinnerSearching",       { fg = P.bg, bg = P.yellow })
+  hl("AvanteStateSpinnerThinking",        { fg = P.bg, bg = P.pink })
+  hl("AvanteStateSpinnerCompacting",      { fg = P.bg, bg = P.yellow })
+  hl("AvanteTaskRunning",                 { fg = P.pink })
+  hl("AvanteTaskCompleted",               { fg = P.green })
+  hl("AvanteTaskFailed",                  { fg = P.red })
+  hl("AvanteThinking",                    { fg = P.pink, italic = true })
+
+  -- nvim-cmp
+  hl("CmpItemAbbrMatch",      { fg = P.peach, bold = true })
+  hl("CmpItemAbbrMatchFuzzy", { fg = P.peach })
+  hl("CmpItemAbbrDeprecated", { fg = P.surface, strikethrough = true })
+  hl("CmpItemKindFunction",   { fg = P.peach })
+  hl("CmpItemKindMethod",     { fg = P.peach })
+  hl("CmpItemKindVariable",   { fg = P.fg })
+  hl("CmpItemKindKeyword",    { fg = P.pink })
+  hl("CmpItemKindClass",      { fg = P.peach })
+  hl("CmpItemKindStruct",     { fg = P.peach })
+  hl("CmpItemKindInterface",  { fg = P.peach })
+  hl("CmpItemKindModule",     { fg = P.pink })
+  hl("CmpItemKindProperty",   { fg = P.peach })
+  hl("CmpItemKindField",      { fg = P.peach })
+  hl("CmpItemKindEnum",       { fg = P.peach })
+  hl("CmpItemKindEnumMember", { fg = P.cyan })
+  hl("CmpItemKindConstant",   { fg = P.yellow })
+  hl("CmpItemKindSnippet",    { fg = P.green })
+  hl("CmpItemKindText",       { fg = P.comment })
+  hl("CmpItemKindFile",       { fg = P.fg })
+  hl("CmpItemKindFolder",     { fg = P.peach })
+  hl("CmpItemMenu",           { fg = P.comment, italic = true })
+end
+
+apply_foxml_theme()
+
+-- Re-apply theme after any colorscheme event (prevents treesitter/plugin overrides)
+vim.api.nvim_create_autocmd("ColorScheme", {
+  callback = function() apply_foxml_theme() end,
+})
+
+-- Force solid background on sidebar/panel filetypes
+-- (uses vim.schedule so it runs AFTER plugins set their own winhighlight)
+local sidebar_fts = { ["neo-tree"] = true, ["Avante"] = true, ["AvanteInput"] = true,
+  ["AvantePrompt"] = true, ["Trouble"] = true, ["aerial"] = true, ["markdown"] = false }
+vim.api.nvim_create_autocmd({ "FileType", "BufWinEnter" }, {
+  callback = function()
+    vim.schedule(function()
+      if not vim.api.nvim_buf_is_valid(0) then return end
+      local ft = vim.bo.filetype
+      if not sidebar_fts[ft] then return end
+      local whl = vim.wo.winhighlight
+      if not whl:find("NormalSidebar") then
+        vim.wo.winhighlight = whl .. (whl ~= "" and "," or "")
+          .. "Normal:NormalSidebar,NormalNC:NormalSidebar,EndOfBuffer:NormalSidebar"
+      end
+    end)
+  end,
+})
 
 -- Unified rounded borders for all LSP floats (hover, signature, diagnostics)
 local border = "rounded"
 
--- Diagnostics float border
+-- Diagnostics config
 vim.diagnostic.config({
   float = { border = border },
+  signs = {
+    text = {
+      [vim.diagnostic.severity.ERROR] = " ",
+      [vim.diagnostic.severity.WARN]  = " ",
+      [vim.diagnostic.severity.INFO]  = " ",
+      [vim.diagnostic.severity.HINT]  = " ",
+    },
+  },
 })
 
 -- Patch the common float helper used by LSP UIs (fallback when noice isn't active)
@@ -844,397 +1382,17 @@ do
   end
 end
 
--- Neon diagnostic icons
-local icons = { Error = " ", Warn = " ", Info = " ", Hint = " " }
-
-vim.diagnostic.config({
-  signs = {
-    text = {
-      [vim.diagnostic.severity.ERROR] = icons.Error,
-      [vim.diagnostic.severity.WARN]  = icons.Warn,
-      [vim.diagnostic.severity.INFO]  = icons.Info,
-      [vim.diagnostic.severity.HINT]  = icons.Hint,
-    },
-  },
-})
-
--- Better float window and menu highlights (neon theme)
-vim.api.nvim_set_hl(0, "FloatBorder", { fg = "#f4b58a", bg = "none" })
-vim.api.nvim_set_hl(0, "CmpBorder", { fg = "#f4b58a", bg = "none" })
-vim.api.nvim_set_hl(0, "Pmenu", { bg = "#1a1214" })
-vim.api.nvim_set_hl(0, "PmenuSel", { bg = "#3a414b" })
-vim.api.nvim_set_hl(0, "PmenuSbar", { bg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "PmenuThumb", { bg = "#5a6270" })
-
--- Search
-vim.api.nvim_set_hl(0, "CurSearch", { fg = "#1a1214", bg = "#f4b58a", bold = true })
-
--- Fold
-vim.api.nvim_set_hl(0, "Folded", { fg = "#5a6270", bg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "FoldColumn", { fg = "#3a414b", bg = "none" })
-
--- Tab line (fallback for when bufferline isn't active)
-vim.api.nvim_set_hl(0, "TabLine", { fg = "#5a6270", bg = "#150f0f" })
-vim.api.nvim_set_hl(0, "TabLineSel", { fg = "#f4b58a", bg = "#2d1f27", bold = true })
-vim.api.nvim_set_hl(0, "TabLineFill", { bg = "#150f0f" })
-
--- Status line (fallback)
-vim.api.nvim_set_hl(0, "StatusLine", { fg = "#c4b6a8", bg = "#150f0f" })
-vim.api.nvim_set_hl(0, "StatusLineNC", { fg = "#3a414b", bg = "#150f0f" })
-
--- Misc UI
-vim.api.nvim_set_hl(0, "WildMenu", { fg = "#1a1214", bg = "#f4b58a", bold = true })
-vim.api.nvim_set_hl(0, "Title", { fg = "#f4b58a", bold = true })
-vim.api.nvim_set_hl(0, "Directory", { fg = "#89dceb" })
-vim.api.nvim_set_hl(0, "Question", { fg = "#8bd5a2" })
-vim.api.nvim_set_hl(0, "SpecialKey", { fg = "#3a414b" })
-vim.api.nvim_set_hl(0, "NonText", { fg = "#3a414b" })
-vim.api.nvim_set_hl(0, "Conceal", { fg = "#5a6270" })
-
--- Dropbar breadcrumb highlights
-vim.api.nvim_set_hl(0, "WinBar", { fg = "#5a6270", bg = "none" })
-vim.api.nvim_set_hl(0, "WinBarNC", { fg = "#3a414b", bg = "none" })
-
--- Telescope border glow
-vim.api.nvim_set_hl(0, "TelescopeBorder", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "TelescopePromptBorder", { fg = "#f5a9b8" })
-vim.api.nvim_set_hl(0, "TelescopeResultsBorder", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "TelescopePreviewBorder", { fg = "#8bd5a2" })
-vim.api.nvim_set_hl(0, "TelescopePromptTitle", { fg = "#1a1214", bg = "#f5a9b8", bold = true })
-vim.api.nvim_set_hl(0, "TelescopeResultsTitle", { fg = "#1a1214", bg = "#f4b58a", bold = true })
-vim.api.nvim_set_hl(0, "TelescopePreviewTitle", { fg = "#1a1214", bg = "#8bd5a2", bold = true })
-
--- Snacks dashboard highlights
-vim.api.nvim_set_hl(0, "SnacksDashboardHeader", { fg = "#f5a9b8", bold = true })
-vim.api.nvim_set_hl(0, "SnacksDashboardKey", { fg = "#f4b58a", bold = true })
-vim.api.nvim_set_hl(0, "SnacksDashboardDesc", { fg = "#f5f5f7" })
-vim.api.nvim_set_hl(0, "SnacksDashboardIcon", { fg = "#8bd5a2" })
-vim.api.nvim_set_hl(0, "SnacksDashboardFooter", { fg = "#5a6270", italic = true })
-
--- Cursorline subtle glow
-vim.api.nvim_set_hl(0, "CursorLine", { bg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "ColorColumn", { bg = "#2d1f27" })
-
--- Window separator accent
-vim.api.nvim_set_hl(0, "WinSeparator", { fg = "#2d1f27" })
-
--- Git signs neon colors
-vim.api.nvim_set_hl(0, "GitSignsAdd", { fg = "#8bd5a2" })
-vim.api.nvim_set_hl(0, "GitSignsChange", { fg = "#f9e2af" })
-vim.api.nvim_set_hl(0, "GitSignsDelete", { fg = "#ff6b6b" })
-
--- Flash.nvim
-vim.api.nvim_set_hl(0, "FlashLabel", { fg = "#1a1214", bg = "#f4b58a", bold = true })
-vim.api.nvim_set_hl(0, "FlashMatch", { fg = "#f5f5f7", bg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "FlashCurrent", { fg = "#1a1214", bg = "#f5a9b8", bold = true })
-vim.api.nvim_set_hl(0, "FlashBackdrop", { fg = "#3a414b" })
-
--- Trouble.nvim
-vim.api.nvim_set_hl(0, "TroubleNormal", { bg = "#150f0f" })
-vim.api.nvim_set_hl(0, "TroubleNormalNC", { bg = "#150f0f" })
-vim.api.nvim_set_hl(0, "TroubleText", { fg = "#f5f5f7" })
-vim.api.nvim_set_hl(0, "TroubleCount", { fg = "#1a1214", bg = "#f4b58a", bold = true })
-vim.api.nvim_set_hl(0, "TroubleFile", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "TroubleFoldIcon", { fg = "#f5a9b8" })
-vim.api.nvim_set_hl(0, "TroubleLocation", { fg = "#5a6270" })
-
--- Which-key
-vim.api.nvim_set_hl(0, "WhichKey", { fg = "#f4b58a", bold = true })
-vim.api.nvim_set_hl(0, "WhichKeyGroup", { fg = "#f5a9b8" })
-vim.api.nvim_set_hl(0, "WhichKeyDesc", { fg = "#f5f5f7" })
-vim.api.nvim_set_hl(0, "WhichKeySeparator", { fg = "#3a414b" })
-vim.api.nvim_set_hl(0, "WhichKeyFloat", { bg = "#150f0f" })
-vim.api.nvim_set_hl(0, "WhichKeyBorder", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "WhichKeyValue", { fg = "#5a6270" })
-
--- Indent blankline
-vim.api.nvim_set_hl(0, "IblIndent", { fg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "IblScope", { fg = "#f4b58a" })
-
--- Neo-tree
-vim.api.nvim_set_hl(0, "NeoTreeNormal", { bg = "#150f0f" })
-vim.api.nvim_set_hl(0, "NeoTreeNormalNC", { bg = "#150f0f" })
-vim.api.nvim_set_hl(0, "NeoTreeEndOfBuffer", { fg = "#150f0f", bg = "#150f0f" })
-vim.api.nvim_set_hl(0, "NeoTreeDirectoryName", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "NeoTreeDirectoryIcon", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "NeoTreeRootName", { fg = "#f5a9b8", bold = true })
-vim.api.nvim_set_hl(0, "NeoTreeFileName", { fg = "#f5f5f7" })
-vim.api.nvim_set_hl(0, "NeoTreeFileIcon", { fg = "#f5f5f7" })
-vim.api.nvim_set_hl(0, "NeoTreeGitAdded", { fg = "#8bd5a2" })
-vim.api.nvim_set_hl(0, "NeoTreeGitModified", { fg = "#f9e2af" })
-vim.api.nvim_set_hl(0, "NeoTreeGitDeleted", { fg = "#ff6b6b" })
-vim.api.nvim_set_hl(0, "NeoTreeGitUntracked", { fg = "#89dceb" })
-vim.api.nvim_set_hl(0, "NeoTreeGitConflict", { fg = "#ff6b6b", bold = true })
-vim.api.nvim_set_hl(0, "NeoTreeIndentMarker", { fg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "NeoTreeWinSeparator", { fg = "#2d1f27", bg = "#150f0f" })
-vim.api.nvim_set_hl(0, "NeoTreeCursorLine", { bg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "NeoTreeTitleBar", { fg = "#1a1214", bg = "#f4b58a", bold = true })
-vim.api.nvim_set_hl(0, "NeoTreeFloatBorder", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "NeoTreeFloatTitle", { fg = "#f4b58a", bold = true })
-
--- DAP UI
-vim.api.nvim_set_hl(0, "DapUIScope", { fg = "#f4b58a", bold = true })
-vim.api.nvim_set_hl(0, "DapUIType", { fg = "#f5a9b8" })
-vim.api.nvim_set_hl(0, "DapUIValue", { fg = "#8bd5a2" })
-vim.api.nvim_set_hl(0, "DapUIVariable", { fg = "#f5f5f7" })
-vim.api.nvim_set_hl(0, "DapUIThread", { fg = "#8bd5a2" })
-vim.api.nvim_set_hl(0, "DapUIStoppedThread", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "DapUIFrameName", { fg = "#f5f5f7" })
-vim.api.nvim_set_hl(0, "DapUISource", { fg = "#f5a9b8" })
-vim.api.nvim_set_hl(0, "DapUIBreakpointsPath", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "DapUIBreakpointsInfo", { fg = "#89dceb" })
-vim.api.nvim_set_hl(0, "DapUIBreakpointsCurrentLine", { fg = "#8bd5a2", bold = true })
-vim.api.nvim_set_hl(0, "DapUIBreakpointsLine", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "DapUIBreakpointsDisabledLine", { fg = "#3a414b" })
-vim.api.nvim_set_hl(0, "DapUIDecoration", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "DapUIWatchesEmpty", { fg = "#3a414b" })
-vim.api.nvim_set_hl(0, "DapUIWatchesValue", { fg = "#8bd5a2" })
-vim.api.nvim_set_hl(0, "DapUIWatchesError", { fg = "#ff6b6b" })
-vim.api.nvim_set_hl(0, "DapUIModifiedValue", { fg = "#f9e2af", bold = true })
-vim.api.nvim_set_hl(0, "DapUIFloatNormal", { bg = "#150f0f" })
-vim.api.nvim_set_hl(0, "DapUIFloatBorder", { fg = "#f4b58a" })
-
--- DAP breakpoint/stopped signs
-vim.api.nvim_set_hl(0, "DapBreakpoint", { fg = "#ff6b6b" })
-vim.api.nvim_set_hl(0, "DapBreakpointCondition", { fg = "#f9e2af" })
-vim.api.nvim_set_hl(0, "DapLogPoint", { fg = "#89dceb" })
-vim.api.nvim_set_hl(0, "DapStopped", { fg = "#8bd5a2", bg = "#2d1f27" })
-
--- Aerial (symbols outline)
-vim.api.nvim_set_hl(0, "AerialLine", { bg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "AerialGuide", { fg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "AerialFunctionIcon", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "AerialClassIcon", { fg = "#f5a9b8" })
-vim.api.nvim_set_hl(0, "AerialVariableIcon", { fg = "#f5f5f7" })
-
--- Diffview
-vim.api.nvim_set_hl(0, "DiffviewFilePanelTitle", { fg = "#f4b58a", bold = true })
-vim.api.nvim_set_hl(0, "DiffviewFilePanelCounter", { fg = "#f5a9b8" })
-vim.api.nvim_set_hl(0, "DiffviewFilePanelFileName", { fg = "#f5f5f7" })
-vim.api.nvim_set_hl(0, "DiffviewNormal", { bg = "#150f0f" })
-vim.api.nvim_set_hl(0, "DiffAdd", { bg = "#1a2e1a" })
-vim.api.nvim_set_hl(0, "DiffChange", { bg = "#2d2a1a" })
-vim.api.nvim_set_hl(0, "DiffDelete", { bg = "#2e1a1a" })
-vim.api.nvim_set_hl(0, "DiffText", { bg = "#3d3a1a" })
-
--- Neotest
-vim.api.nvim_set_hl(0, "NeotestPassed", { fg = "#8bd5a2" })
-vim.api.nvim_set_hl(0, "NeotestFailed", { fg = "#ff6b6b" })
-vim.api.nvim_set_hl(0, "NeotestRunning", { fg = "#f9e2af" })
-vim.api.nvim_set_hl(0, "NeotestSkipped", { fg = "#5a6270" })
-vim.api.nvim_set_hl(0, "NeotestNamespace", { fg = "#f5a9b8" })
-vim.api.nvim_set_hl(0, "NeotestFile", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "NeotestDir", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "NeotestAdapterName", { fg = "#f5a9b8", bold = true })
-vim.api.nvim_set_hl(0, "NeotestFocused", { bold = true, underline = true })
-vim.api.nvim_set_hl(0, "NeotestIndent", { fg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "NeotestExpandMarker", { fg = "#3a414b" })
-vim.api.nvim_set_hl(0, "NeotestWinSelect", { fg = "#f4b58a", bold = true })
-
--- Harpoon
-vim.api.nvim_set_hl(0, "HarpoonWindow", { bg = "#150f0f" })
-vim.api.nvim_set_hl(0, "HarpoonBorder", { fg = "#f4b58a" })
-
--- TODO comments
-vim.api.nvim_set_hl(0, "TodoBgTODO", { fg = "#1a1214", bg = "#f4b58a", bold = true })
-vim.api.nvim_set_hl(0, "TodoFgTODO", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "TodoBgFIX", { fg = "#1a1214", bg = "#ff6b6b", bold = true })
-vim.api.nvim_set_hl(0, "TodoFgFIX", { fg = "#ff6b6b" })
-vim.api.nvim_set_hl(0, "TodoBgHACK", { fg = "#1a1214", bg = "#f9e2af", bold = true })
-vim.api.nvim_set_hl(0, "TodoFgHACK", { fg = "#f9e2af" })
-vim.api.nvim_set_hl(0, "TodoBgNOTE", { fg = "#1a1214", bg = "#8bd5a2", bold = true })
-vim.api.nvim_set_hl(0, "TodoFgNOTE", { fg = "#8bd5a2" })
-vim.api.nvim_set_hl(0, "TodoBgWARN", { fg = "#1a1214", bg = "#f9e2af", bold = true })
-vim.api.nvim_set_hl(0, "TodoFgWARN", { fg = "#f9e2af" })
-vim.api.nvim_set_hl(0, "TodoBgPERF", { fg = "#1a1214", bg = "#f5a9b8", bold = true })
-vim.api.nvim_set_hl(0, "TodoFgPERF", { fg = "#f5a9b8" })
-
--- Fidget (LSP progress)
-vim.api.nvim_set_hl(0, "FidgetTitle", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "FidgetTask", { fg = "#5a6270" })
-
--- Treesitter context
-vim.api.nvim_set_hl(0, "TreesitterContext", { bg = "#1f1519" })
-vim.api.nvim_set_hl(0, "TreesitterContextLineNumber", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "TreesitterContextBottom", { underline = true, sp = "#2d1f27" })
-
--- Mason
-vim.api.nvim_set_hl(0, "MasonHeader", { fg = "#1a1214", bg = "#f4b58a", bold = true })
-vim.api.nvim_set_hl(0, "MasonHighlight", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "MasonHighlightBlock", { fg = "#1a1214", bg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "MasonHighlightBlockBold", { fg = "#1a1214", bg = "#f4b58a", bold = true })
-vim.api.nvim_set_hl(0, "MasonMuted", { fg = "#5a6270" })
-vim.api.nvim_set_hl(0, "MasonMutedBlock", { fg = "#1a1214", bg = "#3a414b" })
-
--- Lazy.nvim (plugin manager UI)
-vim.api.nvim_set_hl(0, "LazyH1", { fg = "#1a1214", bg = "#f4b58a", bold = true })
-vim.api.nvim_set_hl(0, "LazyH2", { fg = "#f4b58a", bold = true })
-vim.api.nvim_set_hl(0, "LazyButton", { bg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "LazyButtonActive", { fg = "#1a1214", bg = "#f4b58a", bold = true })
-vim.api.nvim_set_hl(0, "LazySpecial", { fg = "#f5a9b8" })
-vim.api.nvim_set_hl(0, "LazyComment", { fg = "#5a6270" })
-vim.api.nvim_set_hl(0, "LazyProgressDone", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "LazyProgressTodo", { fg = "#3a414b" })
-vim.api.nvim_set_hl(0, "LazyReasonPlugin", { fg = "#f5a9b8" })
-vim.api.nvim_set_hl(0, "LazyReasonEvent", { fg = "#f9e2af" })
-vim.api.nvim_set_hl(0, "LazyReasonKeys", { fg = "#89dceb" })
-vim.api.nvim_set_hl(0, "LazyReasonCmd", { fg = "#8bd5a2" })
-
--- Copilot ghost text
-vim.api.nvim_set_hl(0, "CopilotSuggestion", { fg = "#5a6270", italic = true })
-vim.api.nvim_set_hl(0, "CopilotAnnotation", { fg = "#3a414b" })
-
--- Rainbow delimiters (FoxML palette)
-vim.api.nvim_set_hl(0, "RainbowDelimiterPeach", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "RainbowDelimiterPink", { fg = "#f5a9b8" })
-vim.api.nvim_set_hl(0, "RainbowDelimiterMint", { fg = "#8bd5a2" })
-vim.api.nvim_set_hl(0, "RainbowDelimiterYellow", { fg = "#f9e2af" })
-vim.api.nvim_set_hl(0, "RainbowDelimiterCyan", { fg = "#89dceb" })
-vim.api.nvim_set_hl(0, "RainbowDelimiterRed", { fg = "#ff6b6b" })
-
--- Noice cmdline & popups
-vim.api.nvim_set_hl(0, "NoiceCmdlinePopup", { bg = "#150f0f" })
-vim.api.nvim_set_hl(0, "NoiceCmdlinePopupBorder", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "NoiceCmdlinePopupTitle", { fg = "#f4b58a", bold = true })
-vim.api.nvim_set_hl(0, "NoiceCmdlinePopupBorderSearch", { fg = "#f9e2af" })
-vim.api.nvim_set_hl(0, "NoiceCmdlineIcon", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "NoiceCmdlineIconSearch", { fg = "#f9e2af" })
-vim.api.nvim_set_hl(0, "NoicePopupmenu", { bg = "#150f0f" })
-vim.api.nvim_set_hl(0, "NoicePopupmenuBorder", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "NoicePopupmenuSelected", { bg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "NoicePopupmenuMatch", { fg = "#f4b58a", bold = true })
-vim.api.nvim_set_hl(0, "NoiceMini", { bg = "#150f0f" })
-vim.api.nvim_set_hl(0, "NoiceFormatProgressDone", { fg = "#1a1214", bg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "NoiceFormatProgressTodo", { fg = "#5a6270", bg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "NoiceLspProgressTitle", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "NoiceConfirm", { bg = "#150f0f" })
-vim.api.nvim_set_hl(0, "NoiceConfirmBorder", { fg = "#f5a9b8" })
-vim.api.nvim_set_hl(0, "NoiceVirtualText", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "NoiceSplit", { bg = "#150f0f" })
-vim.api.nvim_set_hl(0, "NoiceSplitBorder", { fg = "#f4b58a", bg = "#150f0f" })
-
--- :messages window highlights
-vim.api.nvim_set_hl(0, "MsgArea", { fg = "#c4b6a8", bg = "#150f0f" })
-vim.api.nvim_set_hl(0, "WarningMsg", { fg = "#f9e2af", bold = true })
-vim.api.nvim_set_hl(0, "ErrorMsg", { fg = "#ff6b6b", bold = true })
-vim.api.nvim_set_hl(0, "ModeMsg", { fg = "#f4b58a", bold = true })
-vim.api.nvim_set_hl(0, "MoreMsg", { fg = "#8bd5a2" })
-
--- Notify
-vim.api.nvim_set_hl(0, "NotifyERRORBorder", { fg = "#ff6b6b" })
-vim.api.nvim_set_hl(0, "NotifyWARNBorder", { fg = "#f9e2af" })
-vim.api.nvim_set_hl(0, "NotifyINFOBorder", { fg = "#89dceb" })
-vim.api.nvim_set_hl(0, "NotifyDEBUGBorder", { fg = "#5a6270" })
-vim.api.nvim_set_hl(0, "NotifyTRACEBorder", { fg = "#f5a9b8" })
-vim.api.nvim_set_hl(0, "NotifyERRORIcon", { fg = "#ff6b6b" })
-vim.api.nvim_set_hl(0, "NotifyWARNIcon", { fg = "#f9e2af" })
-vim.api.nvim_set_hl(0, "NotifyINFOIcon", { fg = "#89dceb" })
-vim.api.nvim_set_hl(0, "NotifyDEBUGIcon", { fg = "#5a6270" })
-vim.api.nvim_set_hl(0, "NotifyTRACEIcon", { fg = "#f5a9b8" })
-vim.api.nvim_set_hl(0, "NotifyERRORTitle", { fg = "#ff6b6b" })
-vim.api.nvim_set_hl(0, "NotifyWARNTitle", { fg = "#f9e2af" })
-vim.api.nvim_set_hl(0, "NotifyINFOTitle", { fg = "#89dceb" })
-vim.api.nvim_set_hl(0, "NotifyDEBUGTitle", { fg = "#5a6270" })
-vim.api.nvim_set_hl(0, "NotifyTRACETitle", { fg = "#f5a9b8" })
-vim.api.nvim_set_hl(0, "NotifyBackground", { bg = "#1a1214" })
-
--- Scrollbar
-vim.api.nvim_set_hl(0, "ScrollbarHandle", { bg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "ScrollbarSearchHandle", { fg = "#f4b58a", bg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "ScrollbarSearch", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "ScrollbarErrorHandle", { fg = "#ff6b6b", bg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "ScrollbarError", { fg = "#ff6b6b" })
-vim.api.nvim_set_hl(0, "ScrollbarWarnHandle", { fg = "#f9e2af", bg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "ScrollbarWarn", { fg = "#f9e2af" })
-vim.api.nvim_set_hl(0, "ScrollbarInfoHandle", { fg = "#89dceb", bg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "ScrollbarInfo", { fg = "#89dceb" })
-vim.api.nvim_set_hl(0, "ScrollbarHintHandle", { fg = "#8bd5a2", bg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "ScrollbarHint", { fg = "#8bd5a2" })
-vim.api.nvim_set_hl(0, "ScrollbarGitAddHandle", { fg = "#8bd5a2", bg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "ScrollbarGitAdd", { fg = "#8bd5a2" })
-vim.api.nvim_set_hl(0, "ScrollbarGitChangeHandle", { fg = "#f9e2af", bg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "ScrollbarGitChange", { fg = "#f9e2af" })
-vim.api.nvim_set_hl(0, "ScrollbarGitDeleteHandle", { fg = "#ff6b6b", bg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "ScrollbarGitDelete", { fg = "#ff6b6b" })
-
--- hlslens (search result counter)
-vim.api.nvim_set_hl(0, "HlSearchNear", { fg = "#1a1214", bg = "#f4b58a", bold = true })
-vim.api.nvim_set_hl(0, "HlSearchLens", { fg = "#5a6270" })
-vim.api.nvim_set_hl(0, "HlSearchLensNear", { fg = "#1a1214", bg = "#f4b58a" })
-
--- Avante
-vim.api.nvim_set_hl(0, "AvanteTitle", { fg = "#1a1214", bg = "#f4b58a", bold = true })
-vim.api.nvim_set_hl(0, "AvanteReversedTitle", { fg = "#f4b58a", bg = "#150f0f" })
-vim.api.nvim_set_hl(0, "AvanteSubtitle", { fg = "#1a1214", bg = "#89dceb", bold = true })
-vim.api.nvim_set_hl(0, "AvanteReversedSubtitle", { fg = "#89dceb", bg = "#150f0f" })
-vim.api.nvim_set_hl(0, "AvanteThirdTitle", { fg = "#c4b6a8", bg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "AvanteReversedThirdTitle", { fg = "#2d1f27", bg = "#150f0f" })
-vim.api.nvim_set_hl(0, "AvanteSidebarNormal", { bg = "#150f0f" })
-vim.api.nvim_set_hl(0, "AvanteSidebarWinSeparator", { fg = "#2d1f27", bg = "#150f0f" })
-vim.api.nvim_set_hl(0, "AvanteSidebarWinHorizontalSeparator", { fg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "AvantePromptInput", { bg = "#1a1214" })
-vim.api.nvim_set_hl(0, "AvantePromptInputBorder", { fg = "#f4b58a", bg = "#150f0f" })
-vim.api.nvim_set_hl(0, "AvanteInlineHint", { fg = "#f5a9b8", italic = true })
-vim.api.nvim_set_hl(0, "AvantePopupHint", { fg = "#5a6270", bg = "#150f0f" })
-vim.api.nvim_set_hl(0, "AvanteConfirmTitle", { fg = "#1a1214", bg = "#ff6b6b", bold = true })
-vim.api.nvim_set_hl(0, "AvanteButtonDefault", { fg = "#1a1214", bg = "#5a6270" })
-vim.api.nvim_set_hl(0, "AvanteButtonDefaultHover", { fg = "#1a1214", bg = "#8bd5a2" })
-vim.api.nvim_set_hl(0, "AvanteButtonPrimary", { fg = "#1a1214", bg = "#c4b6a8" })
-vim.api.nvim_set_hl(0, "AvanteButtonPrimaryHover", { fg = "#1a1214", bg = "#89dceb" })
-vim.api.nvim_set_hl(0, "AvanteButtonDanger", { fg = "#1a1214", bg = "#c4b6a8" })
-vim.api.nvim_set_hl(0, "AvanteButtonDangerHover", { fg = "#1a1214", bg = "#ff6b6b" })
-vim.api.nvim_set_hl(0, "AvanteToBeDeleted", { bg = "#3d1f23", strikethrough = true })
-vim.api.nvim_set_hl(0, "AvanteToBeDeletedWOStrikethrough", { bg = "#3d1f23" })
-vim.api.nvim_set_hl(0, "AvanteConflictCurrent", { bg = "#3d1f23", bold = true })
-vim.api.nvim_set_hl(0, "AvanteConflictCurrentLabel", { bg = "#4d2529" })
-vim.api.nvim_set_hl(0, "AvanteConflictIncoming", { bg = "#1a3328", bold = true })
-vim.api.nvim_set_hl(0, "AvanteConflictIncomingLabel", { bg = "#1f3d2e" })
-vim.api.nvim_set_hl(0, "AvanteStateSpinnerGenerating", { fg = "#1a1214", bg = "#f5a9b8" })
-vim.api.nvim_set_hl(0, "AvanteStateSpinnerToolCalling", { fg = "#1a1214", bg = "#89dceb" })
-vim.api.nvim_set_hl(0, "AvanteStateSpinnerFailed", { fg = "#1a1214", bg = "#ff6b6b" })
-vim.api.nvim_set_hl(0, "AvanteStateSpinnerSucceeded", { fg = "#1a1214", bg = "#8bd5a2" })
-vim.api.nvim_set_hl(0, "AvanteStateSpinnerSearching", { fg = "#1a1214", bg = "#f9e2af" })
-vim.api.nvim_set_hl(0, "AvanteStateSpinnerThinking", { fg = "#1a1214", bg = "#f5a9b8" })
-vim.api.nvim_set_hl(0, "AvanteStateSpinnerCompacting", { fg = "#1a1214", bg = "#f9e2af" })
-vim.api.nvim_set_hl(0, "AvanteTaskRunning", { fg = "#f5a9b8" })
-vim.api.nvim_set_hl(0, "AvanteTaskCompleted", { fg = "#8bd5a2" })
-vim.api.nvim_set_hl(0, "AvanteTaskFailed", { fg = "#ff6b6b" })
-vim.api.nvim_set_hl(0, "AvanteThinking", { fg = "#f5a9b8", italic = true })
-
--- nvim-cmp item kinds
-vim.api.nvim_set_hl(0, "CmpItemAbbrMatch", { fg = "#f4b58a", bold = true })
-vim.api.nvim_set_hl(0, "CmpItemAbbrMatchFuzzy", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "CmpItemAbbrDeprecated", { fg = "#3a414b", strikethrough = true })
-vim.api.nvim_set_hl(0, "CmpItemKindFunction", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "CmpItemKindMethod", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "CmpItemKindVariable", { fg = "#f5f5f7" })
-vim.api.nvim_set_hl(0, "CmpItemKindKeyword", { fg = "#f5a9b8" })
-vim.api.nvim_set_hl(0, "CmpItemKindClass", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "CmpItemKindStruct", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "CmpItemKindInterface", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "CmpItemKindModule", { fg = "#f5a9b8" })
-vim.api.nvim_set_hl(0, "CmpItemKindProperty", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "CmpItemKindField", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "CmpItemKindEnum", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "CmpItemKindEnumMember", { fg = "#89dceb" })
-vim.api.nvim_set_hl(0, "CmpItemKindConstant", { fg = "#f9e2af" })
-vim.api.nvim_set_hl(0, "CmpItemKindSnippet", { fg = "#8bd5a2" })
-vim.api.nvim_set_hl(0, "CmpItemKindText", { fg = "#5a6270" })
-vim.api.nvim_set_hl(0, "CmpItemKindFile", { fg = "#f5f5f7" })
-vim.api.nvim_set_hl(0, "CmpItemKindFolder", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "CmpItemMenu", { fg = "#5a6270", italic = true })
-
 --
 -- Lualine theme sync (noice integration removed)
 require("lualine").setup({
   options = {
     theme = {
-      normal   = { a = { fg = "#1a1214", bg = "#f4b58a", gui = "bold" }, b = { fg = "#f4b58a", bg = "#2d1f27" }, c = { fg = "#5a6270", bg = "#150f0f" } },
-      insert   = { a = { fg = "#1a1214", bg = "#8bd5a2", gui = "bold" }, b = { fg = "#8bd5a2", bg = "#2d1f27" } },
-      visual   = { a = { fg = "#1a1214", bg = "#f5a9b8", gui = "bold" }, b = { fg = "#f5a9b8", bg = "#2d1f27" } },
-      replace  = { a = { fg = "#1a1214", bg = "#ff6b6b", gui = "bold" }, b = { fg = "#ff6b6b", bg = "#2d1f27" } },
-      command  = { a = { fg = "#1a1214", bg = "#f9e2af", gui = "bold" }, b = { fg = "#f9e2af", bg = "#2d1f27" } },
-      inactive = { a = { fg = "#5a6270", bg = "#150f0f" }, b = { fg = "#3a414b", bg = "#150f0f" }, c = { fg = "#3a414b", bg = "#150f0f" } },
+      normal   = { a = { fg = P.bg, bg = P.peach, gui = "bold" }, b = { fg = P.peach, bg = P.bg_hl }, c = { fg = P.comment, bg = P.bg_deep } },
+      insert   = { a = { fg = P.bg, bg = P.green, gui = "bold" }, b = { fg = P.green, bg = P.bg_hl } },
+      visual   = { a = { fg = P.bg, bg = P.pink, gui = "bold" }, b = { fg = P.pink, bg = P.bg_hl } },
+      replace  = { a = { fg = P.bg, bg = P.red, gui = "bold" }, b = { fg = P.red, bg = P.bg_hl } },
+      command  = { a = { fg = P.bg, bg = P.yellow, gui = "bold" }, b = { fg = P.yellow, bg = P.bg_hl } },
+      inactive = { a = { fg = P.comment, bg = P.bg_deep }, b = { fg = P.surface, bg = P.bg_deep }, c = { fg = P.surface, bg = P.bg_deep } },
     },
     section_separators = { left = "", right = "" },
     component_separators = { left = "", right = "" },
@@ -1256,11 +1414,11 @@ require("lualine").setup({
         end,
         color = function()
           local ok, api = pcall(require, "copilot.api")
-          if not ok then return { fg = "#5a6270" } end
+          if not ok then return { fg = P.comment } end
           local status = api.status.data.status
-          if status == "InProgress" then return { fg = "#f9e2af" } end
-          if status == "Warning" then return { fg = "#ff6b6b" } end
-          return { fg = "#8bd5a2" }
+          if status == "InProgress" then return { fg = P.yellow } end
+          if status == "Warning" then return { fg = P.red } end
+          return { fg = P.green }
         end,
       },
       {
@@ -1269,7 +1427,7 @@ require("lualine").setup({
           if #clients == 0 then return "" end
           return " " .. clients[1].name
         end,
-        color = { fg = "#f4b58a" },
+        color = { fg = P.peach },
       },
       "filetype",
     },

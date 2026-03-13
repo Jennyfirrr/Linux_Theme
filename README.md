@@ -26,6 +26,8 @@ Dark theme with peach and lavender accents, neon glows, glassmorphic panels.
 
 ![Neovim](shared/screenshots/nvim.png)
 
+![Neovim + Avante](shared/screenshots/nvim_avante.png)
+
 ## Quick Start
 
 ```bash
