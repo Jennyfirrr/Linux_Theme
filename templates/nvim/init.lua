@@ -88,6 +88,7 @@ local plugins = {
         hl["@keyword"]       = { fg = "#f5a9b8", bold = true }
         hl["@string"]        = { fg = "#8bd5a2" }
         hl["@number"]        = { fg = "#f9e2af" }
+        hl["@number.hex"]    = { fg = "#f9e2af" }
         hl["@type"]          = { fg = "#f4b58a" }
         hl["@variable"]      = { fg = "#f5f5f7" }
         hl["@parameter"]     = { fg = "#f5f5f7" }
@@ -684,12 +685,12 @@ local plugins = {
     },
   },
 
-  -- Colorizer (show hex colors inline)
+  -- Colorizer (show hex colors inline — skip C/C++ where 0x constants aren't colors)
   {
     "NvChad/nvim-colorizer.lua",
     event = "BufReadPost",
     opts = {
-      filetypes = { "*" },
+      filetypes = { "*", "!c", "!cpp", "!h" },
       user_default_options = {
         RGB = true,
         RRGGBB = true,
