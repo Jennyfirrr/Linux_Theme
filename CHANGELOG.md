@@ -6,6 +6,15 @@ All notable changes to the Fox ML theme.
 
 ## 2026-03-13
 
+### Neovim — Struct Field Color Variation & LSP Token Fix
+- Added color variation for struct member access chains (e.g. `pool->slots[index].price.price`)
+- Fields/properties (`@variable.member`, `@property`) now use `green` (#6b9a7a) instead of blending with foreground
+- Punctuation delimiters (`.`, `;`) now use `peach` (#c4956e) for visible structure
+- Brackets (`[]`, `()`) now use `sand` (#a89a7a) for subtle differentiation
+- Added `@lsp.typemod.variable.member` highlight (+ `.c`/`.cpp` variants) — fixes clangd semantic tokens overriding treesitter colors after ~2s
+- LSP property/member groups now `link` to treesitter groups so only one color change is needed
+- Added `sand` (#a89a7a) to palette
+
 ### Cohesive Earthy Theme — Full System Sync
 - Removed all remaining neon pink/pastel references from shared configs, READMEs, and comments
 - Fixed Hyprland `general.conf` — hardcoded neon pink borders updated to earthy peach/wheat gradient
