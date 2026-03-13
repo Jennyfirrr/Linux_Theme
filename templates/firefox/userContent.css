@@ -1,0 +1,226 @@
+/* Fox ML Theme for Firefox Content */
+
+/* New Tab & Home Page */
+@-moz-document url("about:newtab"), url("about:home") {
+  :root,
+  body {
+    --newtab-background-color: #{{BG}} !important;
+    --newtab-background-color-secondary: #{{BG_ALT}} !important;
+    --newtab-element-hover-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.1) !important;
+    --newtab-element-active-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.2) !important;
+    --newtab-text-primary-color: #{{FG}} !important;
+    --newtab-text-secondary-color: #{{FG_DIM}} !important;
+    --newtab-primary-action-background: #{{PRIMARY}} !important;
+    --newtab-card-background-color: #{{BG_ALT}} !important;
+    --newtab-card-placeholder-color: #{{SURFACE}} !important;
+    --newtab-link-primary-color: #{{PRIMARY}} !important;
+    --newtab-link-secondary-color: #{{ACCENT}} !important;
+    --newtab-contextmenu-background-color: #{{BG}} !important;
+    --newtab-contextmenu-button-color: #{{FG}} !important;
+    --newtab-button-secondary-color: #{{BG_ALT}} !important;
+    --newtab-wordmark-color: #{{FG}} !important;
+    --newtab-status-success: #{{OK}} !important;
+    --newtab-status-warning: #{{WARN}} !important;
+    --newtab-status-error: #{{SECONDARY}} !important;
+    --newtab-inner-box-shadow-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.1) !important;
+    --newtab-overlay-color: rgba({{BG_SPICETIFY_R}},{{BG_SPICETIFY_G}},{{BG_SPICETIFY_B}},0.8) !important;
+
+    /* Additional overrides */
+    --newtab-topsites-background-color: #{{BG_ALT}} !important;
+    --newtab-topsites-label-color: #{{FG}} !important;
+    --newtab-section-header-text-color: #{{PRIMARY}} !important;
+    --newtab-card-active-outline-color: #{{PRIMARY}} !important;
+    --newtab-card-hairline-color: #{{SURFACE}} !important;
+
+    background-color: #{{BG}} !important;
+    scrollbar-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.4) #{{BG}} !important;
+    scrollbar-width: thin !important;
+  }
+
+  body,
+  .outer-wrapper,
+  .body-wrapper,
+  main {
+    background-color: #{{BG}} !important;
+    color: #{{FG}} !important;
+  }
+
+  /* Activity Stream outer wrapper */
+  .activity-stream {
+    background-color: #{{BG}} !important;
+  }
+
+  /* Search box */
+  .search-wrapper,
+  .search-inner-wrapper {
+    background-color: transparent !important;
+  }
+
+  .search-wrapper input,
+  .search-wrapper .search-handoff-button,
+  .fake-editable,
+  .search-handoff-button {
+    background-color: #{{BG_ALT}} !important;
+    color: #{{FG}} !important;
+    border: 2px solid #{{PRIMARY}} !important;
+    border-radius: 0 !important;
+  }
+
+  .search-wrapper .search-handoff-button .fake-caret {
+    background-color: #{{PRIMARY}} !important;
+  }
+
+  .search-wrapper input::placeholder,
+  .search-handoff-button .fake-textbox {
+    color: #{{FG_DIM}} !important;
+  }
+
+  /* Top sites */
+  .top-sites-list {
+    background-color: transparent !important;
+  }
+
+  .top-site-outer,
+  .top-site-inner,
+  .tile,
+  .top-site-button {
+    background-color: #{{BG_ALT}} !important;
+    border-radius: 0 !important;
+  }
+
+  .top-site-outer:hover .tile,
+  .top-site-outer:focus .tile {
+    background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.15) !important;
+  }
+
+  .top-site-outer .title,
+  .top-site-outer .title span {
+    color: #{{FG}} !important;
+  }
+
+  .top-site-outer .sponsored-label {
+    color: #{{FG_DIM}} !important;
+  }
+
+  /* Cards */
+  .ds-card,
+  .ds-card-grid .ds-card,
+  .card-outer,
+  .card {
+    background-color: #{{BG_ALT}} !important;
+    border-radius: 0 !important;
+    color: #{{FG}} !important;
+  }
+
+  .ds-card:hover,
+  .card-outer:hover {
+    box-shadow: 0 0 8px rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.3) !important;
+  }
+
+  .ds-card .meta,
+  .ds-card .title,
+  .ds-card .excerpt,
+  .card-details {
+    color: #{{FG}} !important;
+  }
+
+  .ds-card .source,
+  .ds-card .story-sponsored-label,
+  .card-host-name {
+    color: #{{FG_DIM}} !important;
+  }
+
+  /* Card images */
+  .ds-card .img-wrapper,
+  .card-preview-image-outer {
+    border-radius: 0 !important;
+  }
+
+  /* Section headers */
+  .section-title,
+  .section-title span,
+  .ds-section-title,
+  .section-top-bar .section-title span {
+    color: #{{PRIMARY}} !important;
+  }
+
+  /* Buttons */
+  button,
+  .actions button {
+    background-color: #{{BG_ALT}} !important;
+    color: #{{FG}} !important;
+    border: 1px solid #{{PRIMARY}} !important;
+    border-radius: 0 !important;
+  }
+
+  button:hover {
+    background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.2) !important;
+  }
+
+  /* Context menus */
+  .context-menu,
+  .context-menu-list,
+  .context-menu-item {
+    background-color: #{{BG}} !important;
+    color: #{{FG}} !important;
+    border-radius: 0 !important;
+  }
+
+  .context-menu {
+    border: 2px solid #{{PRIMARY}} !important;
+  }
+
+  .context-menu-item:hover,
+  .context-menu-item:focus {
+    background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.25) !important;
+  }
+
+  /* Collapsible sections */
+  .collapsible-section {
+    background-color: transparent !important;
+  }
+
+  /* Personalize button and panel */
+  .personalize-button {
+    background-color: #{{BG_ALT}} !important;
+    color: #{{FG}} !important;
+    border-radius: 0 !important;
+  }
+
+  .customize-menu,
+  .home-section,
+  .home-section-title {
+    background-color: #{{BG}} !important;
+    color: #{{FG}} !important;
+  }
+
+  /* Weather widget */
+  .weather {
+    color: #{{FG}} !important;
+  }
+
+  /* Selection */
+  ::selection {
+    background: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.35) !important;
+    color: #{{BG}} !important;
+  }
+
+  /* Force all backgrounds */
+  * {
+    --newtab-background-color: #{{BG}} !important;
+    --newtab-card-background-color: #{{BG_ALT}} !important;
+  }
+}
+
+/* General web content scrollbars and selection */
+@-moz-document url-prefix("http"), url-prefix("https"), url-prefix("about:reader") {
+  :root {
+    scrollbar-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.4) #{{BG}} !important;
+    scrollbar-width: thin !important;
+  }
+
+  ::selection {
+    background: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.35) !important;
+    color: #{{BG}} !important;
+  }
+}

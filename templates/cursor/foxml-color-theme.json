@@ -1,0 +1,269 @@
+{
+  "name": "Fox ML",
+  "type": "{{THEME_TYPE}}",
+  "colors": {
+    "editor.background": "#{{BG}}",
+    "editor.foreground": "#{{FG}}",
+    "editorLineNumber.foreground": "#{{SURFACE}}",
+    "editorLineNumber.activeForeground": "#{{PRIMARY}}",
+    "editorCursor.foreground": "#{{PRIMARY}}",
+    "editor.selectionBackground": "rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.25)",
+    "editor.inactiveSelectionBackground": "rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.15)",
+    "editor.lineHighlightBackground": "#{{BG_ALT}}",
+    "editor.lineHighlightBorder": "#00000000",
+    "editorIndentGuide.background1": "#{{SURFACE}}",
+    "editorIndentGuide.activeBackground1": "#{{PRIMARY}}",
+    "editorWhitespace.foreground": "#{{SURFACE}}",
+    "editorBracketMatch.background": "rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.2)",
+    "editorBracketMatch.border": "#{{PRIMARY}}",
+
+    "activityBar.background": "#{{BG}}",
+    "activityBar.foreground": "#{{PRIMARY}}",
+    "activityBar.inactiveForeground": "#{{FG_DIM}}",
+    "activityBar.border": "#{{SURFACE}}",
+    "activityBarBadge.background": "#{{PRIMARY}}",
+    "activityBarBadge.foreground": "#{{BG}}",
+
+    "sideBar.background": "#{{BG}}",
+    "sideBar.foreground": "#{{FG}}",
+    "sideBar.border": "#{{SURFACE}}",
+    "sideBarTitle.foreground": "#{{PRIMARY}}",
+    "sideBarSectionHeader.background": "#{{BG_ALT}}",
+    "sideBarSectionHeader.foreground": "#{{FG}}",
+    "sideBarSectionHeader.border": "#{{SURFACE}}",
+
+    "list.activeSelectionBackground": "rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.25)",
+    "list.activeSelectionForeground": "#{{FG}}",
+    "list.inactiveSelectionBackground": "rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.15)",
+    "list.hoverBackground": "rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.1)",
+    "list.highlightForeground": "#{{PRIMARY}}",
+
+    "statusBar.background": "#{{BG}}",
+    "statusBar.foreground": "#{{FG}}",
+    "statusBar.border": "#{{PRIMARY}}",
+    "statusBar.noFolderBackground": "#{{BG}}",
+    "statusBarItem.activeBackground": "rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.25)",
+    "statusBarItem.hoverBackground": "rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.15)",
+    "statusBarItem.prominentBackground": "#{{PRIMARY}}",
+    "statusBarItem.prominentForeground": "#{{BG}}",
+
+    "titleBar.activeBackground": "#{{BG}}",
+    "titleBar.activeForeground": "#{{FG}}",
+    "titleBar.inactiveBackground": "#{{BG}}",
+    "titleBar.inactiveForeground": "#{{FG_DIM}}",
+    "titleBar.border": "#{{SURFACE}}",
+
+    "tab.activeBackground": "#{{BG_ALT}}",
+    "tab.activeForeground": "#{{FG}}",
+    "tab.activeBorder": "#{{PRIMARY}}",
+    "tab.activeBorderTop": "#00000000",
+    "tab.inactiveBackground": "#{{BG}}",
+    "tab.inactiveForeground": "#{{FG_DIM}}",
+    "tab.border": "#{{SURFACE}}",
+    "tab.hoverBackground": "rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.1)",
+
+    "editorGroupHeader.tabsBackground": "#{{BG}}",
+    "editorGroupHeader.tabsBorder": "#{{SURFACE}}",
+    "editorGroup.border": "#{{SURFACE}}",
+
+    "panel.background": "#{{BG}}",
+    "panel.border": "#{{PRIMARY}}",
+    "panelTitle.activeBorder": "#{{PRIMARY}}",
+    "panelTitle.activeForeground": "#{{PRIMARY}}",
+    "panelTitle.inactiveForeground": "#{{FG_DIM}}",
+
+    "terminal.background": "#{{BG}}",
+    "terminal.foreground": "#{{FG}}",
+    "terminal.ansiBlack": "#{{BG}}",
+    "terminal.ansiRed": "#{{RED}}",
+    "terminal.ansiGreen": "#{{GREEN}}",
+    "terminal.ansiYellow": "#{{YELLOW}}",
+    "terminal.ansiBlue": "#{{BLUE}}",
+    "terminal.ansiMagenta": "#{{SECONDARY}}",
+    "terminal.ansiCyan": "#{{CYAN}}",
+    "terminal.ansiWhite": "#{{FG}}",
+    "terminal.ansiBrightBlack": "#{{SURFACE}}",
+    "terminal.ansiBrightRed": "#{{RED_BRIGHT}}",
+    "terminal.ansiBrightGreen": "#{{GREEN_BRIGHT}}",
+    "terminal.ansiBrightYellow": "#{{YELLOW_BRIGHT}}",
+    "terminal.ansiBrightBlue": "#{{BLUE_BRIGHT}}",
+    "terminal.ansiBrightMagenta": "#{{PRIMARY}}",
+    "terminal.ansiBrightCyan": "#{{CYAN_BRIGHT}}",
+    "terminal.ansiBrightWhite": "#{{WHITE}}",
+    "terminalCursor.foreground": "#{{PRIMARY}}",
+
+    "input.background": "#{{BG_ALT}}",
+    "input.foreground": "#{{FG}}",
+    "input.border": "#{{PRIMARY}}",
+    "input.placeholderForeground": "#{{FG_DIM}}",
+    "inputOption.activeBackground": "rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.25)",
+    "inputOption.activeBorder": "#{{PRIMARY}}",
+
+    "dropdown.background": "#{{BG_ALT}}",
+    "dropdown.foreground": "#{{FG}}",
+    "dropdown.border": "#{{PRIMARY}}",
+
+    "button.background": "#{{PRIMARY}}",
+    "button.foreground": "#{{BG}}",
+    "button.hoverBackground": "#{{SECONDARY}}",
+    "button.secondaryBackground": "#{{SURFACE}}",
+    "button.secondaryForeground": "#{{FG}}",
+
+    "scrollbar.shadow": "#00000000",
+    "scrollbarSlider.background": "rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.3)",
+    "scrollbarSlider.hoverBackground": "rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.5)",
+    "scrollbarSlider.activeBackground": "rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.6)",
+
+    "editorWidget.background": "#{{BG}}",
+    "editorWidget.border": "#{{PRIMARY}}",
+    "editorSuggestWidget.background": "#{{BG}}",
+    "editorSuggestWidget.border": "#{{PRIMARY}}",
+    "editorSuggestWidget.selectedBackground": "rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.25)",
+    "editorSuggestWidget.highlightForeground": "#{{PRIMARY}}",
+
+    "peekView.border": "#{{PRIMARY}}",
+    "peekViewEditor.background": "#{{BG}}",
+    "peekViewResult.background": "#{{BG}}",
+    "peekViewTitle.background": "#{{BG_ALT}}",
+    "peekViewTitleLabel.foreground": "#{{FG}}",
+
+    "gitDecoration.addedResourceForeground": "#{{GREEN}}",
+    "gitDecoration.modifiedResourceForeground": "#{{YELLOW}}",
+    "gitDecoration.deletedResourceForeground": "#{{RED}}",
+    "gitDecoration.untrackedResourceForeground": "#{{ACCENT}}",
+    "gitDecoration.ignoredResourceForeground": "#{{FG_DIM}}",
+    "gitDecoration.conflictingResourceForeground": "#{{SECONDARY}}",
+
+    "editorError.foreground": "#{{RED}}",
+    "editorWarning.foreground": "#{{YELLOW}}",
+    "editorInfo.foreground": "#{{BLUE}}",
+
+    "minimap.background": "#{{BG}}",
+    "minimap.selectionHighlight": "rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.3)",
+
+    "focusBorder": "#{{PRIMARY}}",
+    "foreground": "#{{FG}}",
+    "selection.background": "rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.3)",
+    "widget.shadow": "#00000050"
+  },
+  "tokenColors": [
+    {
+      "scope": ["comment", "punctuation.definition.comment"],
+      "settings": {
+        "foreground": "#{{FG_DIM}}",
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "scope": ["keyword", "storage.type", "storage.modifier"],
+      "settings": {
+        "foreground": "#{{ACCENT}}",
+        "fontStyle": "bold"
+      }
+    },
+    {
+      "scope": ["keyword.control", "keyword.operator"],
+      "settings": {
+        "foreground": "#{{ACCENT}}"
+      }
+    },
+    {
+      "scope": ["variable", "meta.definition.variable"],
+      "settings": {
+        "foreground": "#{{FG}}"
+      }
+    },
+    {
+      "scope": ["variable.parameter"],
+      "settings": {
+        "foreground": "#{{SECONDARY}}"
+      }
+    },
+    {
+      "scope": ["entity.name.function", "support.function", "meta.function-call"],
+      "settings": {
+        "foreground": "#{{PRIMARY}}"
+      }
+    },
+    {
+      "scope": ["string", "string.quoted"],
+      "settings": {
+        "foreground": "#{{GREEN}}"
+      }
+    },
+    {
+      "scope": ["constant.numeric"],
+      "settings": {
+        "foreground": "#{{YELLOW}}"
+      }
+    },
+    {
+      "scope": ["constant.language", "variable.language"],
+      "settings": {
+        "foreground": "#{{BLUE}}"
+      }
+    },
+    {
+      "scope": ["entity.name.type", "support.type", "entity.name.class", "support.class"],
+      "settings": {
+        "foreground": "#{{BLUE}}"
+      }
+    },
+    {
+      "scope": ["entity.name.tag"],
+      "settings": {
+        "foreground": "#{{SECONDARY}}"
+      }
+    },
+    {
+      "scope": ["entity.other.attribute-name"],
+      "settings": {
+        "foreground": "#{{PRIMARY}}"
+      }
+    },
+    {
+      "scope": ["punctuation"],
+      "settings": {
+        "foreground": "#{{FG_DIM}}"
+      }
+    },
+    {
+      "scope": ["meta.brace"],
+      "settings": {
+        "foreground": "#{{FG}}"
+      }
+    },
+    {
+      "scope": ["invalid", "invalid.illegal"],
+      "settings": {
+        "foreground": "#{{WHITE}}",
+        "background": "#{{RED}}"
+      }
+    },
+    {
+      "scope": ["markup.heading"],
+      "settings": {
+        "foreground": "#{{PRIMARY}}",
+        "fontStyle": "bold"
+      }
+    },
+    {
+      "scope": ["markup.bold"],
+      "settings": {
+        "fontStyle": "bold"
+      }
+    },
+    {
+      "scope": ["markup.italic"],
+      "settings": {
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "scope": ["markup.inline.raw"],
+      "settings": {
+        "foreground": "#{{GREEN}}"
+      }
+    }
+  ]
+}

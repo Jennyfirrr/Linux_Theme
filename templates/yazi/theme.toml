@@ -1,0 +1,153 @@
+# Fox ML Theme for Yazi
+# Matches waybar, hyprland, tmux, kitty, and spicetify
+
+# Color Palette:
+# bg:       #{{BG}}
+# fg:       #{{FG}}
+# slate:    #{{SURFACE}}
+# peach:    #{{PRIMARY}}
+# lavender: #{{ACCENT}}
+# pink:     #{{SECONDARY}}
+
+[manager]
+cwd = { fg = "#{{PRIMARY}}", bold = true }
+
+# Hovered
+hovered         = { fg = "#{{BG}}", bg = "#{{PRIMARY}}" }
+preview_hovered = { underline = true }
+
+# Find
+find_keyword  = { fg = "#{{YELLOW}}", bold = true, italic = true, underline = true }
+find_position = { fg = "#{{ACCENT}}", bg = "reset", italic = true }
+
+# Marker
+marker_copied   = { fg = "#{{GREEN}}", bg = "#{{GREEN}}" }
+marker_cut      = { fg = "#{{RED}}", bg = "#{{RED}}" }
+marker_marked   = { fg = "#{{ACCENT}}", bg = "#{{ACCENT}}" }
+marker_selected = { fg = "#{{SECONDARY}}", bg = "#{{SECONDARY}}" }
+
+# Tab
+tab_active   = { fg = "#{{BG}}", bg = "#{{PRIMARY}}" }
+tab_inactive = { fg = "#{{FG_DIM}}", bg = "#{{SURFACE}}" }
+tab_width    = 1
+
+# Count
+count_copied   = { fg = "#{{BG}}", bg = "#{{GREEN}}" }
+count_cut      = { fg = "#{{BG}}", bg = "#{{RED}}" }
+count_selected = { fg = "#{{BG}}", bg = "#{{SECONDARY}}" }
+
+# Border
+border_symbol = "│"
+border_style  = { fg = "#{{SURFACE}}" }
+
+[status]
+separator_open  = ""
+separator_close = ""
+separator_style = { fg = "#{{SURFACE}}", bg = "#{{SURFACE}}" }
+
+# Mode
+mode_normal = { fg = "#{{BG}}", bg = "#{{PRIMARY}}", bold = true }
+mode_select = { fg = "#{{BG}}", bg = "#{{SECONDARY}}", bold = true }
+mode_unset  = { fg = "#{{BG}}", bg = "#{{ACCENT}}", bold = true }
+
+# Progress
+progress_label  = { fg = "#{{FG}}", bold = true }
+progress_normal = { fg = "#{{PRIMARY}}", bg = "#{{SURFACE}}" }
+progress_error  = { fg = "#{{RED}}", bg = "#{{SURFACE}}" }
+
+# Permissions
+permissions_t = { fg = "#{{PRIMARY}}" }
+permissions_r = { fg = "#{{GREEN}}" }
+permissions_w = { fg = "#{{RED}}" }
+permissions_x = { fg = "#{{ACCENT}}" }
+permissions_s = { fg = "#{{FG_DIM}}" }
+
+[input]
+border   = { fg = "#{{PRIMARY}}" }
+title    = {}
+value    = {}
+selected = { reversed = true }
+
+[pick]
+border   = { fg = "#{{PRIMARY}}" }
+active   = { fg = "#{{SECONDARY}}", bold = true }
+inactive = {}
+
+[confirm]
+border     = { fg = "#{{PRIMARY}}" }
+title      = { fg = "#{{PRIMARY}}", bold = true }
+content    = {}
+list       = {}
+btn_yes    = { bg = "#{{PRIMARY}}", fg = "#{{BG}}" }
+btn_no     = { bg = "#{{SURFACE}}", fg = "#{{FG}}" }
+btn_labels = [ "  Yes  ", "  No  " ]
+
+[spot]
+border = { fg = "#{{PRIMARY}}" }
+title  = { fg = "#{{PRIMARY}}", bold = true }
+
+[completion]
+border   = { fg = "#{{PRIMARY}}" }
+active   = { fg = "#{{SECONDARY}}", bold = true }
+inactive = {}
+icon_file    = ""
+icon_folder  = ""
+icon_command = ""
+
+[tasks]
+border  = { fg = "#{{PRIMARY}}" }
+title   = {}
+hovered = { fg = "#{{SECONDARY}}", underline = true }
+
+[which]
+cols            = 3
+mask            = { bg = "#{{BG}}" }
+cand            = { fg = "#{{ACCENT}}" }
+rest            = { fg = "#{{FG_DIM}}" }
+desc            = { fg = "#{{SECONDARY}}" }
+separator       = "  "
+separator_style = { fg = "#{{SURFACE}}" }
+
+[help]
+on      = { fg = "#{{ACCENT}}" }
+run     = { fg = "#{{SECONDARY}}" }
+desc    = {}
+hovered = { reversed = true, bold = true }
+footer  = { fg = "#{{FG_DIM}}", bg = "#{{BG}}" }
+
+[notify]
+title_info  = { fg = "#{{GREEN}}" }
+title_warn  = { fg = "#{{YELLOW}}" }
+title_error = { fg = "#{{RED}}" }
+icon_info  = ""
+icon_warn  = ""
+icon_error = ""
+
+[filetype]
+rules = [
+    # Images
+    { mime = "image/*", fg = "#{{SECONDARY}}" },
+
+    # Media
+    { mime = "{audio,video}/*", fg = "#{{ACCENT}}" },
+
+    # Archives
+    { mime = "application/*zip*", fg = "#{{YELLOW}}" },
+    { mime = "application/x-{tar,bzip*,7z-compressed,xz,rar}", fg = "#{{YELLOW}}" },
+
+    # Documents
+    { mime = "application/{pdf,doc,rtf}", fg = "#{{BLUE}}" },
+    { mime = "application/vnd.*", fg = "#{{BLUE}}" },
+
+    # Fallback
+    { name = "*", fg = "#{{FG}}" },
+    { name = "*/", fg = "#{{PRIMARY}}" },
+]
+
+[icon]
+# Default icons
+globs = []
+dirs = []
+files = []
+exts = []
+conds = []

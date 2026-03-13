@@ -6,6 +6,18 @@ All notable changes to the Fox ML theme.
 
 ## 2026-03-12
 
+### Multi-Theme Hub Restructure
+- Converted from single-theme repo to **multi-theme hub** with template-based rendering
+- All 23+ app configs are now **templates** with `{{COLOR}}` placeholders — one set of configs, any number of themes
+- Each theme is just a `palette.sh` file defining ~60 color variables; adding a new theme = writing one file
+- New render engine (`render.sh`) handles hex, RGB decomposition, ANSI codes, and metadata substitution
+- New `mappings.sh` with source→destination mappings and special handlers (Firefox, Cursor, Spicetify, Bat, Hyprland)
+- New `swap.sh` — theme swapper with 24-bit truecolor color swatches in terminal
+- Shared (non-color) files split into `shared/` directory
+- Created **FoxML Paper** light theme — warm parchment, coffee brown, terracotta, sage green
+- Updated install.sh and update.sh to work with the template system
+- Reverse rendering: `update.sh` pulls system configs back into templates by replacing colors with placeholders
+
 ### Docs
 - Friendly note added to README for fellow CS students
 

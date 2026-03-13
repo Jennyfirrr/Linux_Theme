@@ -1,0 +1,60 @@
+# Fox ML Theme for btop
+# Matches waybar, hyprland, kitty, tmux, etc.
+
+# Main backgrounds
+theme[main_bg]="#{{BG}}"
+theme[main_fg]="#{{FG}}"
+theme[title]="#{{PRIMARY}}"
+theme[hi_fg]="#{{PRIMARY}}"
+theme[selected_bg]="#{{BG_HIGHLIGHT}}"
+theme[selected_fg]="#{{FG}}"
+theme[inactive_fg]="#{{FG_DIM}}"
+
+# Process box
+theme[proc_misc]="#{{ACCENT}}"
+
+# Box outlines
+theme[cpu_box]="#{{PRIMARY}}"
+theme[mem_box]="#{{SECONDARY}}"
+theme[net_box]="#{{ACCENT}}"
+theme[proc_box]="#{{SURFACE}}"
+
+# Divider line
+theme[div_line]="#{{SURFACE}}"
+
+# Temperature graph
+theme[temp_start]="#{{GREEN}}"
+theme[temp_mid]="#{{YELLOW}}"
+theme[temp_end]="#{{RED}}"
+
+# CPU graph
+theme[cpu_start]="#{{PRIMARY}}"
+theme[cpu_mid]="#{{SECONDARY}}"
+theme[cpu_end]="#{{ACCENT}}"
+
+# Memory/Disk graph
+theme[free_start]="#{{SURFACE}}"
+theme[free_mid]="#{{SURFACE}}"
+theme[free_end]="#{{SURFACE}}"
+theme[cached_start]="#{{ACCENT}}"
+theme[cached_mid]="#{{ACCENT}}"
+theme[cached_end]="#{{ACCENT}}"
+theme[available_start]="#{{GREEN}}"
+theme[available_mid]="#{{GREEN}}"
+theme[available_end]="#{{GREEN}}"
+theme[used_start]="#{{PRIMARY}}"
+theme[used_mid]="#{{SECONDARY}}"
+theme[used_end]="#{{RED}}"
+
+# Network graph
+theme[download_start]="#{{PRIMARY}}"
+theme[download_mid]="#{{PRIMARY}}"
+theme[download_end]="#{{SECONDARY}}"
+theme[upload_start]="#{{ACCENT}}"
+theme[upload_mid]="#{{ACCENT}}"
+theme[upload_end]="#{{BLUE}}"
+
+# Process colors
+theme[process_start]="#{{PRIMARY}}"
+theme[process_mid]="#{{SECONDARY}}"
+theme[process_end]="#{{ACCENT}}"

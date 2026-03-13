@@ -1,0 +1,82 @@
+configuration {
+  modi: "drun,run,window";
+  show-icons: true;
+}
+
+* {
+  font: "JetBrainsMono Nerd Font 12";
+  background-color: transparent;
+  text-color: #{{FG}};
+  padding: 0;
+  margin: 0;
+}
+
+window {
+  location: center;
+  width: 480px;
+  border-radius: 0;
+  border: 2px;
+  border-color: #{{PRIMARY}};
+  background-color: #{{BG}};
+  padding: 12px;
+}
+
+mainbox {
+  children: [ inputbar, listview ];
+  spacing: 12px;
+}
+
+inputbar {
+  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.85);
+  text-color: #{{FG}};
+  border-radius: 0;
+  border: 1px;
+  border-color: #{{PRIMARY}};
+  padding: 10px;
+}
+
+entry {
+  placeholder: "Search...";
+  placeholder-color: rgba({{FG_R}},{{FG_G}},{{FG_B}},0.5);
+}
+
+/* === bubble cloud layout === */
+listview {
+  background-color: transparent;
+  lines: 8;
+  columns: 1;
+  spacing: 4px;
+  scrollbar: false;
+  fixed-height: false;
+}
+
+/* base element */
+element {
+  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.85);
+  text-color: #{{FG}};
+  border-radius: 0;
+  padding: 8px 12px;
+  border: 1px;
+  border-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.3);
+}
+
+/* selected bubble (ring-ish look) */
+element selected {
+  background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.25);
+  text-color: #{{FG}};
+  border-color: #{{PRIMARY}};
+}
+
+/* icon + text */
+element-icon {
+  size: 24px;
+  padding: 0 8px 0 0;
+}
+
+element-text {
+  highlight: bold #{{PRIMARY}};
+  vertical-align: 0.5;
+}
+
+/* subtle separators */
+separator { color: rgba({{WHITE_R}},{{WHITE_G}},{{WHITE_B}},0.12); }

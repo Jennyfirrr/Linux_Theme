@@ -1,0 +1,162 @@
+/* ╭──────────────────────────────────────────────────────────────────╮ */
+/* │                    Fox ML Waybar Theme                          │ */
+/* ╰──────────────────────────────────────────────────────────────────╯ */
+
+/* ─────────────────────────────────────────
+   Color Palette
+   ─────────────────────────────────────────
+   bg:       #{{BG}}
+   fg:       #{{FG}}
+   slate:    #{{SURFACE}}
+   peach:    #{{PRIMARY}}
+   lavender: #{{ACCENT}}
+*/
+
+@define-color bg        #{{BG}};
+@define-color fg        #{{FG}};
+@define-color slate     #{{SURFACE}};
+@define-color peach     #{{PRIMARY}};
+@define-color lavender  #{{ACCENT}};
+@define-color dim       #{{FG_DIM}};
+
+@define-color bubble       rgba({{BG_R}}, {{BG_G}}, {{BG_B}}, 0.85);
+@define-color bubble_hover rgba({{SURFACE_R}}, {{SURFACE_G}}, {{SURFACE_B}}, 0.6);
+@define-color border       rgba({{PRIMARY_R}}, {{PRIMARY_G}}, {{PRIMARY_B}}, 0.4);
+
+* {
+    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-size: 12.5pt;
+    color: @fg;
+}
+
+/* ─────────────────────────────────────────
+   Bar Window
+   ───────────────────────────────────────── */
+window#waybar {
+    background-color: transparent;
+}
+
+window#waybar > box {
+    background-color: @bubble;
+    border: 4px solid transparent;
+    border-image: linear-gradient(45deg, #{{PRIMARY}}, #{{SECONDARY}}) 1;
+    border-radius: 0;
+    padding: 4px 10px;
+    margin: 0;
+}
+
+/* ─────────────────────────────────────────
+   Module Base Style
+   ───────────────────────────────────────── */
+#workspaces button,
+#network,
+#pulseaudio,
+#backlight,
+#battery,
+#clock,
+#tray,
+#custom-media,
+#custom-weather,
+#custom-system_health,
+#custom-logo {
+    background-color: transparent;
+    padding: 4px 14px;
+    margin: 2px 6px;
+    border-radius: 0;
+    border: 1px solid transparent;
+}
+
+/* ─────────────────────────────────────────
+   Workspaces
+   ───────────────────────────────────────── */
+#workspaces button {
+    color: @dim;
+}
+
+#workspaces button.active {
+    background-color: rgba({{PRIMARY_R}}, {{PRIMARY_G}}, {{PRIMARY_B}}, 0.25);
+    color: @peach;
+    border: 1px solid @peach;
+    text-shadow: 0 0 8px rgba({{PRIMARY_R}}, {{PRIMARY_G}}, {{PRIMARY_B}}, 0.5);
+}
+
+#workspaces button:hover {
+    background-color: @bubble_hover;
+    color: @fg;
+    text-shadow: 0 0 6px rgba({{FG_R}}, {{FG_G}}, {{FG_B}}, 0.3);
+}
+
+/* ─────────────────────────────────────────
+   Info Modules
+   ───────────────────────────────────────── */
+#custom-media {
+    background-color: rgba({{ACCENT_R}}, {{ACCENT_G}}, {{ACCENT_B}}, 0.15);
+    border: 1px solid rgba({{ACCENT_R}}, {{ACCENT_G}}, {{ACCENT_B}}, 0.3);
+    color: @lavender;
+}
+
+#custom-system_health {
+    background-color: rgba({{SURFACE_R}}, {{SURFACE_G}}, {{SURFACE_B}}, 0.5);
+    border: 1px solid @slate;
+}
+
+#custom-weather {
+    color: @peach;
+}
+
+#clock {
+    color: @peach;
+    font-weight: bold;
+    text-shadow: 0 0 8px rgba({{PRIMARY_R}}, {{PRIMARY_G}}, {{PRIMARY_B}}, 0.4);
+}
+
+#pulseaudio {
+    color: @lavender;
+    text-shadow: 0 0 6px rgba({{ACCENT_R}}, {{ACCENT_G}}, {{ACCENT_B}}, 0.35);
+}
+
+#network {
+    color: @fg;
+}
+
+#backlight {
+    color: @dim;
+}
+
+#battery {
+    color: @fg;
+}
+
+#battery.charging {
+    color: @peach;
+}
+
+#battery.warning:not(.charging) {
+    color: #{{WARN}};
+}
+
+#battery.critical:not(.charging) {
+    color: #{{RED}};
+}
+
+/* ─────────────────────────────────────────
+   Logo
+   ───────────────────────────────────────── */
+#custom-logo {
+    color: @peach;
+    font-size: 14pt;
+    padding: 4px 14px;
+    text-shadow: 0 0 10px rgba({{PRIMARY_R}}, {{PRIMARY_G}}, {{PRIMARY_B}}, 0.5);
+}
+
+#custom-logo:hover {
+    background-color: rgba({{PRIMARY_R}}, {{PRIMARY_G}}, {{PRIMARY_B}}, 0.2);
+    text-shadow: 0 0 14px rgba({{PRIMARY_R}}, {{PRIMARY_G}}, {{PRIMARY_B}}, 0.7);
+}
+
+/* ─────────────────────────────────────────
+   Tray
+   ───────────────────────────────────────── */
+#tray > * {
+    margin: 0 4px;
+}
