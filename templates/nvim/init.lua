@@ -1213,7 +1213,7 @@ map("n", "<leader>q", function()
     vim.cmd("close")
   end
 end, { desc = "Close window" })
-map("n", "<leader>wo", "<cmd>only<cr>", { desc = "Close all other windows (unsplit)" })
+map("n", "<leader>o", "<cmd>only<cr>", { desc = "Unsplit (keep only this window)" })
 
 -- Esc clears search highlights
 map("n", "<Esc>", "<cmd>nohlsearch<cr>", { desc = "Clear search highlight" })
