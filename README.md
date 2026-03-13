@@ -20,11 +20,11 @@ Dark theme with earthy, muted tones — warm peach, dusty rose, sage, and wheat 
 
 ## Screenshots
 
-![Terminal](shared/screenshots/terminal.png)
+![Terminal](shared/screenshots/terminal.png?v=2)
 
-![Neovim](shared/screenshots/nvim.png)
+![Neovim](shared/screenshots/nvim.png?v=2)
 
-![Neovim + Avante](shared/screenshots/nvim_avante.png)
+![Neovim + Avante](shared/screenshots/nvim_avante.png?v=2)
 
 ## Quick Start
 
