@@ -6,6 +6,40 @@ All notable changes to the Fox ML theme.
 
 ## 2026-03-13
 
+### Palette Overhaul — Neon → Earthy
+- Reworked entire FoxML Classic palette from neon pastels to muted earthy tones
+- Primary: `#f4b58a` → `#c4956e` (peach), Secondary: `#f5a9b8` → `#b8967a` (warm pink → dusty rose), Accent: `#9a8ac4` → `#8a9a7a` (lavender → sage)
+- FG: `#f5f5f7` → `#d5c4b0` (cold white → warm cream), all ANSI colors shifted to lower-saturation earthy variants
+- ANSI 256-color codes updated for zsh prompts/gradients (pink rainbow → clay/wheat/sage gradient)
+- FZF, ZSH command highlight, OK/WARN semantic colors all updated to match
+- Kitty opacity raised from 0.45 → 0.6 for readability with new palette
+
+### Tmux — Pane Visibility Rework
+- Active border now uses PRIMARY peach (`#c4956e`) with bold (thicker border)
+- Removed solid background on active pane — all panes fully transparent (`bg=default`)
+- Dimmed inactive pane text from `#555555` → `#3a3a3a` for stronger active/inactive contrast
+- Hyprland active window border updated: peach → wheat gradient
+
+### Nvim — Transparency & Separator Fixes
+- Fixed `colorful-winsep.nvim` config: plugin API changed from `hi = { fg = ... }` table to `highlight = "..."` string — was silently falling back to default lavender `#957CC6`
+- Active window separator now renders earthy wheat (`#b8a87e`)
+- Visual selection background warmed from `#2d1f27` → `#3d2a1e` (muted plum → warm brown)
+- `NormalNC` (inactive windows) set to transparent instead of solid bg
+- `StatusLine`/`StatusLineNC` backgrounds set to transparent
+- `VertSplit`/`WinSeparator` changed from solid `bg_deep` to wheat fg on transparent bg
+- Variables (`@variable`) changed from lavender to default fg for cleaner code readability
+
+### Zsh — Simplified Welcome Splash
+- Condensed welcome screen: removed system info block (kernel, shell, WM, terminal, battery)
+- Cleaner date/time format, compact FoxML ASCII banner
+- Updated color comments to match earthy palette names
+
+### Misc
+- Wallpaper changed to `foxml_earthy.jpg`
+- Removed packages line from fastfetch config
+- Updated README screenshots (terminal, nvim, nvim+avante) — removed outdated desktop screenshot
+- Updated README to remove old desktop screenshot reference
+
 ### Neovim - Syntax Color Refinement & Window Fixes
 - Improved syntax color differentiation: types (peach italic), functions (peach), variables (lavender), parameters (cyan), members (soft pink), operators (pink), keywords (pink bold)
 - Updated LSP semantic token highlights to match treesitter palette — fixes colors shifting 1-2 seconds after file open when clangd attaches

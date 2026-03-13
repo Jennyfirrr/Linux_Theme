@@ -7,22 +7,20 @@ A template-based multi-theme hub for 23+ apps. Sharp corners, no rounded anythin
 ## Theme
 
 ### [FoxML Classic](themes/FoxML_Classic/) (dark)
-Dark theme with peach and lavender accents, neon glows, glassmorphic panels.
+Dark theme with earthy, muted tones — warm peach, dusty rose, sage, and wheat on a deep plum background.
 
 | Role | Color | |
 |------|-------|-|
 | Background | `#1a1214` | Warm dark |
-| Foreground | `#f5f5f7` | Off-white |
-| Primary | `#f4b58a` | Peach |
-| Active | `#f5a9b8` | Pink |
-| Accent | `#9a8ac4` | Lavender |
+| Foreground | `#d5c4b0` | Warm cream |
+| Primary | `#c4956e` | Peach |
+| Secondary | `#b8967a` | Dusty rose |
+| Accent | `#8a9a7a` | Sage |
 | Surface | `#3a414b` | Slate |
 
 ## Screenshots
 
 ![Terminal](shared/screenshots/terminal.png)
-
-![Desktop](shared/screenshots/desktop.png)
 
 ![Neovim](shared/screenshots/nvim.png)
 

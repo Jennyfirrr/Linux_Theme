@@ -37,28 +37,28 @@ local P = {
   bg_deep   = "#150f0f",
   bg        = "#1a1214",
   bg_alt    = "#2d1a2d",
-  bg_hl     = "#2d1f27",
-  sel       = "#4d2f34",
+  bg_hl     = "#1f1519",
+  sel       = "#3d2a1e",
   fg        = "#d5c4b0",
-  fg_pastel = "#f5c2d0",
-  fg_dim    = "#888888",
+  fg_pastel = "#c4b4a0",
+  fg_dim    = "#7a7a7a",
   comment   = "#5a6270",
-  peach     = "#f4b58a",
-  pink      = "#f5a9b8",
-  lavender  = "#9a8ac4",
+  peach     = "#c4956e",
+  pink      = "#b8967a",
+  lavender  = "#8a9a7a",
   surface   = "#3a414b",
-  red       = "#ff6b6b",
-  red_br    = "#ff8787",
-  green     = "#8bd5a2",
-  green_br  = "#a6e3a1",
-  yellow    = "#f9e2af",
-  yellow_br = "#f5e0b8",
-  blue      = "#89b4fa",
-  blue_br   = "#b4beff",
-  cyan      = "#89dceb",
-  cyan_br   = "#94e2d5",
-  white     = "#ffffff",
-  warm      = "#c4b6a8",
+  red       = "#b05555",
+  red_br    = "#c06868",
+  green     = "#6b9a7a",
+  green_br  = "#7aab88",
+  yellow    = "#c4b48a",
+  yellow_br = "#b8a87e",
+  blue      = "#7a9ab4",
+  blue_br   = "#8a8aab",
+  cyan      = "#7a9aab",
+  cyan_br   = "#7aab9a",
+  white     = "#d5d5d5",
+  warm      = "#b0a498",
   diff_add  = "#1a2e1a",
   diff_chg  = "#2d2a1a",
   diff_del  = "#2e1a1a",
@@ -714,10 +714,8 @@ local plugins = {
     "nvim-zh/colorful-winsep.nvim",
     event = "WinNew",
     opts = {
-      hi = {
-        fg = P.peach,
-      },
-      symbols = { "─", "│", "╭", "╮", "╰", "╯" },
+      highlight = P.yellow_br,
+      border = "rounded",
     },
   },
 
@@ -802,7 +800,7 @@ local function apply_foxml_theme()
   -- ── Editor UI ──
   hl("Normal",        { fg = P.fg, bg = P.none })
   hl("NormalSidebar", { fg = P.fg, bg = P.bg_deep })
-  hl("NormalNC",     { fg = P.fg, bg = P.bg })
+  hl("NormalNC",     { fg = P.fg, bg = P.none })
   hl("NormalFloat",  { fg = P.fg, bg = P.bg })
   hl("FloatBorder",  { fg = P.peach, bg = P.none })
   hl("FloatTitle",   { fg = P.peach, bg = P.none, bold = true })
@@ -815,15 +813,15 @@ local function apply_foxml_theme()
   hl("CursorLineNr", { fg = P.peach, bold = true })
   hl("SignColumn",   { fg = P.surface, bg = P.none })
   hl("EndOfBuffer",  { fg = P.bg })
-  hl("VertSplit",    { fg = P.bg_deep, bg = P.bg_deep })
-  hl("WinSeparator", { fg = P.bg_deep, bg = P.bg_deep })
+  hl("VertSplit",    { fg = P.yellow_br, bg = P.none })
+  hl("WinSeparator", { fg = P.yellow_br, bg = P.none })
   hl("Pmenu",        { fg = P.fg, bg = P.bg })
   hl("PmenuSel",     { bg = P.surface })
   hl("PmenuSbar",    { bg = P.bg_hl })
   hl("PmenuThumb",   { bg = P.comment })
   hl("WildMenu",     { fg = P.bg, bg = P.peach, bold = true })
-  hl("StatusLine",   { fg = P.warm, bg = P.bg_deep })
-  hl("StatusLineNC", { fg = P.surface, bg = P.bg_deep })
+  hl("StatusLine",   { fg = P.warm, bg = P.none })
+  hl("StatusLineNC", { fg = P.surface, bg = P.none })
   hl("TabLine",      { fg = P.comment, bg = P.bg_deep })
   hl("TabLineSel",   { fg = P.peach, bg = P.bg_hl, bold = true })
   hl("TabLineFill",  { bg = P.bg_deep })
@@ -917,10 +915,10 @@ local function apply_foxml_theme()
   hl("DiagnosticSignHint",        { fg = P.green })
 
   -- ── Treesitter ──
-  hl("@variable",            { fg = P.lavender })
+  hl("@variable",            { fg = P.fg })
   hl("@variable.builtin",    { fg = P.pink })
-  hl("@variable.parameter",  { fg = P.cyan })
-  hl("@variable.member",     { fg = P.fg_pastel })
+  hl("@variable.parameter",  { fg = P.yellow_br })
+  hl("@variable.member",     { fg = P.cyan_br })
   hl("@constant",            { fg = P.yellow })
   hl("@constant.builtin",    { fg = P.yellow, bold = true })
   hl("@constant.macro",      { fg = P.yellow })
@@ -934,12 +932,12 @@ local function apply_foxml_theme()
   hl("@number.float",        { fg = P.yellow, bold = true })
   hl("@number.hex",          { fg = P.yellow, bold = true })
   hl("@boolean",             { fg = P.peach, bold = true })
-  hl("@type",                { fg = P.peach, italic = true })
-  hl("@type.builtin",        { fg = P.peach, italic = true })
-  hl("@type.definition",     { fg = P.peach, italic = true })
+  hl("@type",                { fg = P.cyan })
+  hl("@type.builtin",        { fg = P.cyan })
+  hl("@type.definition",     { fg = P.cyan })
   hl("@type.qualifier",      { fg = P.pink })
   hl("@attribute",           { fg = P.peach })
-  hl("@property",            { fg = P.fg_pastel })
+  hl("@property",            { fg = P.cyan_br })
   hl("@function",            { fg = P.peach })
   hl("@function.call",       { fg = P.peach })
   hl("@function.builtin",    { fg = P.peach })
@@ -947,7 +945,7 @@ local function apply_foxml_theme()
   hl("@function.method",     { fg = P.peach })
   hl("@function.method.call", { fg = P.peach })
   hl("@constructor",         { fg = P.peach })
-  hl("@operator",            { fg = P.pink })
+  hl("@operator",            { fg = P.lavender })
   hl("@keyword",             { fg = P.pink, bold = true })
   hl("@keyword.function",    { fg = P.pink, bold = true })
   hl("@keyword.operator",    { fg = P.pink })
@@ -979,22 +977,22 @@ local function apply_foxml_theme()
   hl("@markup.list",         { fg = P.pink })
 
   -- ── LSP semantic tokens ──
-  hl("@lsp.type.class",         { fg = P.peach, italic = true })
-  hl("@lsp.type.struct",        { fg = P.peach, italic = true })
-  hl("@lsp.type.enum",          { fg = P.peach, italic = true })
+  hl("@lsp.type.class",         { fg = P.cyan })
+  hl("@lsp.type.struct",        { fg = P.cyan })
+  hl("@lsp.type.enum",          { fg = P.cyan })
   hl("@lsp.type.enumMember",    { fg = P.cyan })
-  hl("@lsp.type.interface",     { fg = P.peach, italic = true })
+  hl("@lsp.type.interface",     { fg = P.cyan })
   hl("@lsp.type.function",      { fg = P.peach })
   hl("@lsp.type.method",        { fg = P.peach })
   hl("@lsp.type.macro",         { fg = P.pink })
   hl("@lsp.type.decorator",     { fg = P.pink })
-  hl("@lsp.type.variable",      { fg = P.lavender })
-  hl("@lsp.type.parameter",     { fg = P.cyan })
-  hl("@lsp.type.property",      { fg = P.fg_pastel })
+  hl("@lsp.type.variable",      { fg = P.fg })
+  hl("@lsp.type.parameter",     { fg = P.peach })
+  hl("@lsp.type.property",      { fg = P.warm })
   hl("@lsp.type.namespace",     { fg = P.pink })
   hl("@lsp.type.keyword",       { fg = P.pink, bold = true })
-  hl("@lsp.type.type",          { fg = P.peach, italic = true })
-  hl("@lsp.type.typeParameter", { fg = P.peach, italic = true })
+  hl("@lsp.type.type",          { fg = P.cyan })
+  hl("@lsp.type.typeParameter", { fg = P.cyan })
   hl("@lsp.type.comment",       { fg = P.comment, italic = true })
   hl("@lsp.mod.deprecated",     { strikethrough = true })
   hl("@lsp.mod.readonly",       { bold = true })
@@ -1076,10 +1074,10 @@ local function apply_foxml_theme()
   hl("NeoTreeRootName",      { fg = P.pink, bold = true })
   hl("NeoTreeFileName",      { fg = P.fg })
   hl("NeoTreeFileIcon",      { fg = P.fg })
-  hl("NeoTreeGitAdded",      { fg = P.green })
-  hl("NeoTreeGitModified",   { fg = P.yellow })
-  hl("NeoTreeGitDeleted",    { fg = P.red })
-  hl("NeoTreeGitUntracked",  { fg = P.cyan })
+  hl("NeoTreeGitAdded",      { fg = "#6b9a7a" })
+  hl("NeoTreeGitModified",   { fg = "#b8a47a" })
+  hl("NeoTreeGitDeleted",    { fg = "#a06060" })
+  hl("NeoTreeGitUntracked",  { fg = "#a06060" })
   hl("NeoTreeGitConflict",   { fg = P.red, bold = true })
   hl("NeoTreeIndentMarker",  { fg = P.bg_hl })
   hl("NeoTreeWinSeparator",  { fg = P.bg_deep, bg = P.bg_deep })
@@ -1270,8 +1268,8 @@ local function apply_foxml_theme()
   -- Avante
   hl("AvanteTitle",                        { fg = P.bg, bg = P.peach, bold = true })
   hl("AvanteReversedTitle",                { fg = P.peach, bg = P.bg_deep })
-  hl("AvanteSubtitle",                     { fg = P.bg, bg = P.cyan, bold = true })
-  hl("AvanteReversedSubtitle",             { fg = P.cyan, bg = P.bg_deep })
+  hl("AvanteSubtitle",                     { fg = P.bg, bg = P.peach, bold = true })
+  hl("AvanteReversedSubtitle",             { fg = P.peach, bg = P.bg_deep })
   hl("AvanteThirdTitle",                   { fg = P.warm, bg = P.bg_hl })
   hl("AvanteReversedThirdTitle",           { fg = P.bg_hl, bg = P.bg_deep })
   hl("AvanteSidebarNormal",                { bg = P.bg_deep })
@@ -1285,7 +1283,7 @@ local function apply_foxml_theme()
   hl("AvanteButtonDefault",               { fg = P.bg, bg = P.comment })
   hl("AvanteButtonDefaultHover",          { fg = P.bg, bg = P.green })
   hl("AvanteButtonPrimary",               { fg = P.bg, bg = P.warm })
-  hl("AvanteButtonPrimaryHover",          { fg = P.bg, bg = P.cyan })
+  hl("AvanteButtonPrimaryHover",          { fg = P.bg, bg = P.peach })
   hl("AvanteButtonDanger",                { fg = P.bg, bg = P.warm })
   hl("AvanteButtonDangerHover",           { fg = P.bg, bg = P.red })
   hl("AvanteToBeDeleted",                 { bg = "#3d1f23", strikethrough = true })
@@ -1295,7 +1293,7 @@ local function apply_foxml_theme()
   hl("AvanteConflictIncoming",            { bg = "#1a3328", bold = true })
   hl("AvanteConflictIncomingLabel",       { bg = "#1f3d2e" })
   hl("AvanteStateSpinnerGenerating",      { fg = P.bg, bg = P.pink })
-  hl("AvanteStateSpinnerToolCalling",     { fg = P.bg, bg = P.cyan })
+  hl("AvanteStateSpinnerToolCalling",     { fg = P.bg, bg = P.peach })
   hl("AvanteStateSpinnerFailed",          { fg = P.bg, bg = P.red })
   hl("AvanteStateSpinnerSucceeded",       { fg = P.bg, bg = P.green })
   hl("AvanteStateSpinnerSearching",       { fg = P.bg, bg = P.yellow })
@@ -1336,6 +1334,20 @@ apply_foxml_theme()
 vim.api.nvim_create_autocmd("ColorScheme", {
   callback = function() apply_foxml_theme() end,
 })
+
+-- Override devicon colors to match FoxML palette (peach only in file tree)
+vim.defer_fn(function()
+  local ok, devicons = pcall(require, "nvim-web-devicons")
+  if ok then
+    local icons = devicons.get_icons()
+    local overrides = {}
+    for name, icon in pairs(icons) do
+      overrides[name] = { icon = icon.icon, color = P.peach, name = icon.name }
+    end
+    devicons.set_icon(overrides)
+    devicons.set_default_icon("", P.peach)
+  end
+end, 100)
 
 -- Force solid background on sidebar/panel filetypes
 -- (uses vim.schedule so it runs AFTER plugins set their own winhighlight)
