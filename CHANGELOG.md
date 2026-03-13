@@ -6,6 +6,18 @@ All notable changes to the Fox ML theme.
 
 ## 2026-03-12
 
+### Neovim - Visual Polish
+- Custom FoxML lualine theme — peach normal, mint insert, pink visual, red replace, yellow command
+- Replaced encoding/fileformat statusline clutter with active LSP server name
+- Enabled native smooth scrolling (`smoothscroll`)
+- Enabled cursorline highlight and guicursor (block/beam/blink)
+- Added warm-tinted window separator using `bg_highlight`
+- Fixed deprecated `vim.loop` → `vim.uv` calls
+
+### Removed FoxML Paper Theme
+- Removed WIP light theme (FoxML Paper) — keeping only FoxML Classic
+- Cleaned up README references to Paper
+
 ### Neovim - Window & Buffer Keybind Fixes
 - `Space q` is now smart — won't leave neo-tree filling the whole screen when closing the last file window
 - `Space bd` no longer silently fails on empty/unnamed buffers
@@ -19,7 +31,6 @@ All notable changes to the Fox ML theme.
 - New `mappings.sh` with source→destination mappings and special handlers (Firefox, Cursor, Spicetify, Bat, Hyprland)
 - New `swap.sh` — theme swapper with 24-bit truecolor color swatches in terminal
 - Shared (non-color) files split into `shared/` directory
-- Created **FoxML Paper** light theme — warm parchment, coffee brown, terracotta, sage green
 - Updated install.sh and update.sh to work with the template system
 - Reverse rendering: `update.sh` pulls system configs back into templates by replacing colors with placeholders
 

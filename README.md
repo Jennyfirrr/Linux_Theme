@@ -4,9 +4,7 @@
 
 A template-based multi-theme hub for 23+ apps. Sharp corners, no rounded anything. One set of configs, any number of color schemes.
 
-> **Note:** The multi-theme template system and additional themes (Paper, etc.) are WIP. FoxML Classic is the active, fully working theme.
-
-## Themes
+## Theme
 
 ### [FoxML Classic](themes/FoxML_Classic/) (dark)
 Dark theme with peach and lavender accents, neon glows, glassmorphic panels.
@@ -19,18 +17,6 @@ Dark theme with peach and lavender accents, neon glows, glassmorphic panels.
 | Active | `#f5a9b8` | Pink |
 | Accent | `#9a8ac4` | Lavender |
 | Surface | `#3a414b` | Slate |
-
-### [FoxML Paper](themes/FoxML_Paper/) (light) — *WIP*
-Warm light theme — parchment, coffee, and sage. **This theme is a work in progress and may not be fully functional yet.**
-
-| Role | Color | |
-|------|-------|-|
-| Background | `#f5efe6` | Warm parchment |
-| Foreground | `#3b3330` | Warm charcoal |
-| Primary | `#8b6d5c` | Coffee brown |
-| Active | `#b5704f` | Terracotta |
-| Accent | `#7a8b6d` | Sage green |
-| Surface | `#d6cdc4` | Warm linen |
 
 ## Screenshots
 
@@ -50,10 +36,7 @@ Warm light theme — parchment, coffee, and sage. **This theme is a work in prog
 ./install.sh FoxML_Classic
 
 # Install with system dependencies (Arch packages, Oh My Zsh, zsh plugins)
-./install.sh FoxML_Paper --deps
-
-# Swap themes (shows 24-bit color previews in terminal)
-./swap.sh
+./install.sh FoxML_Classic --deps
 
 # Pull system config changes back into templates
 ./update.sh
@@ -76,10 +59,6 @@ themes/
   FoxML_Classic/
     palette.sh              <- defines all colors for Classic
     theme.conf              <- name, type=dark, description
-  FoxML_Paper/
-    palette.sh              <- defines all colors for Paper
-    theme.conf              <- name, type=light, description
-
 shared/                     <- non-color files copied as-is (keybinds, scripts, etc.)
 
 render.sh                   <- template engine (hex, RGB, ANSI, metadata substitution)
@@ -180,7 +159,7 @@ The palette defines ~60 variables across several categories:
 - **App overrides** — per-app background tweaks (dunst, spicetify, vencord)
 - **Metadata** — NVIM_STYLE, KITTY_BG_OPACITY, VSCODE_UI_THEME, etc.
 
-See either theme's `palette.sh` for the full variable list.
+See `themes/FoxML_Classic/palette.sh` for the full variable list.
 
 ## Post-Install
 

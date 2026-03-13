@@ -20,11 +20,14 @@ vim.opt.splitbelow = true
 vim.opt.splitright = true
 vim.opt.updatetime = 250
 vim.opt.scrolloff = 8
+vim.opt.smoothscroll = true
+vim.opt.cursorline = true
+vim.opt.guicursor = "n-v-c:block,i-ci-ve:ver25,r-cr:hor20,o:hor50,a:blinkwait400-blinkoff400-blinkon250"
 vim.opt.clipboard = "unnamedplus"
 
 -- Bootstrap lazy.nvim
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-if not vim.loop.fs_stat(lazypath) then
+if not vim.uv.fs_stat(lazypath) then
   vim.fn.system({
     "git", "clone", "--filter=blob:none",
     "https://github.com/folke/lazy.nvim.git", "--branch=stable", lazypath,
@@ -296,7 +299,7 @@ local plugins = {
       cmake_use_preset = true,
       cmake_regenerate_on_save = true,
       cmake_generate_options = { "-DCMAKE_EXPORT_COMPILE_COMMANDS=1" },
-      cmake_compile_commands_options = { action = "soft_link", target = vim.loop.cwd() },
+      cmake_compile_commands_options = { action = "soft_link", target = vim.uv.cwd() },
       -- preset DAP integration (we'll install codelldb via Mason)
       cmake_dap_configuration = { name = "cpp", type = "codelldb", request = "launch", runInTerminal = true },
     },
@@ -627,7 +630,7 @@ require("lazy").setup(plugins, {
 
 -- setup optional
 vim.opt.signcolumn = "yes:1"
-vim.opt.fillchars:append({ eob = " " })
+vim.opt.fillchars:append({ eob = " ", vert = "│" })
 
 -- Semi-transparent windows (2B aesthetic)
 vim.opt.winblend = 15
@@ -698,6 +701,9 @@ vim.api.nvim_set_hl(0, "SnacksDashboardFooter", { fg = "#5a6270", italic = true 
 -- Cursorline subtle glow
 vim.api.nvim_set_hl(0, "CursorLine", { bg = "#2d1f27" })
 vim.api.nvim_set_hl(0, "ColorColumn", { bg = "#2d1f27" })
+
+-- Window separator accent
+vim.api.nvim_set_hl(0, "WinSeparator", { fg = "#2d1f27" })
 
 -- Git signs neon colors
 vim.api.nvim_set_hl(0, "GitSignsAdd", { fg = "#8bd5a2" })
@@ -896,7 +902,14 @@ vim.api.nvim_set_hl(0, "CmpItemMenu", { fg = "#5a6270", italic = true })
 -- Lualine theme sync (noice integration removed)
 require("lualine").setup({
   options = {
-    theme = "tokyonight",
+    theme = {
+      normal   = { a = { fg = "#1a1214", bg = "#f4b58a", gui = "bold" }, b = { fg = "#f4b58a", bg = "#2d1f27" }, c = { fg = "#5a6270", bg = "#150f0f" } },
+      insert   = { a = { fg = "#1a1214", bg = "#8bd5a2", gui = "bold" }, b = { fg = "#8bd5a2", bg = "#2d1f27" } },
+      visual   = { a = { fg = "#1a1214", bg = "#f5a9b8", gui = "bold" }, b = { fg = "#f5a9b8", bg = "#2d1f27" } },
+      replace  = { a = { fg = "#1a1214", bg = "#ff6b6b", gui = "bold" }, b = { fg = "#ff6b6b", bg = "#2d1f27" } },
+      command  = { a = { fg = "#1a1214", bg = "#f9e2af", gui = "bold" }, b = { fg = "#f9e2af", bg = "#2d1f27" } },
+      inactive = { a = { fg = "#5a6270", bg = "#150f0f" }, b = { fg = "#3a414b", bg = "#150f0f" }, c = { fg = "#3a414b", bg = "#150f0f" } },
+    },
     section_separators = { left = "", right = "" },
     component_separators = { left = "", right = "" },
   },
@@ -904,7 +917,17 @@ require("lualine").setup({
     lualine_a = { "mode" },
     lualine_b = { "branch", "diff", "diagnostics" },
     lualine_c = { { "filename", path = 1 } },
-    lualine_x = { "encoding", "fileformat", "filetype" },
+    lualine_x = {
+      {
+        function()
+          local clients = vim.lsp.get_clients({ bufnr = 0 })
+          if #clients == 0 then return "" end
+          return " " .. clients[1].name
+        end,
+        color = { fg = "#f4b58a" },
+      },
+      "filetype",
+    },
     lualine_y = { "progress" },
     lualine_z = { "location" },
   },
