@@ -421,7 +421,7 @@ toolbarbutton:hover {
   fill: var(--fox-pastel) !important;
 }
 
-/* All toolbar icons pastel pink */
+/* All toolbar icons tinted */
 #nav-bar toolbarbutton .toolbarbutton-icon,
 #TabsToolbar toolbarbutton .toolbarbutton-icon,
 #navigator-toolbox toolbarbutton .toolbarbutton-icon {

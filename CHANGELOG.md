@@ -6,6 +6,17 @@ All notable changes to the Fox ML theme.
 
 ## 2026-03-13
 
+### Cohesive Earthy Theme — Full System Sync
+- Removed all remaining neon pink/pastel references from shared configs, READMEs, and comments
+- Fixed Hyprland `general.conf` — hardcoded neon pink borders updated to earthy peach/wheat gradient
+- Fixed Hyprland `theme.conf` — updated color palette comment block and active border to earthy tones
+- Migrated all `windowrulev2` → `windowrule` across scratchpads, workspace_layout, and rules configs (deprecated in Hyprland 0.54+)
+- GTK-4 settings: switched from `Catppuccin-Mocha-Pink-Standard` to `Adwaita` dark (lets custom `gtk.css` apply)
+- Icon theme: switched from `Papirus-Dark-Pink` to `Papirus-Dark` with palebrown folder color
+- Firefox: enabled `toolkit.legacyUserProfileCustomizations.stylesheets` on active profile, deployed earthy `userChrome.css` and `userContent.css`
+- Updated FoxML Classic theme README with current earthy palette values
+- Cleaned up firefox template comments (pastel pink → tinted)
+
 ### Palette Overhaul — Neon → Earthy
 - Reworked entire FoxML Classic palette from neon pastels to muted earthy tones
 - Primary: `#f4b58a` → `#c4956e` (peach), Secondary: `#f5a9b8` → `#b8967a` (warm pink → dusty rose), Accent: `#9a8ac4` → `#8a9a7a` (lavender → sage)
