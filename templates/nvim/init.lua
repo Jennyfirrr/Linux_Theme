@@ -455,6 +455,7 @@ local plugins = {
       suggestion = {
         enabled = true,
         auto_trigger = true,
+        debounce = 150,
         keymap = {
           accept = "<C-l>",       -- Ctrl+l to accept
           accept_word = "<C-;>",  -- Ctrl+; to accept word
@@ -466,7 +467,9 @@ local plugins = {
       },
       panel = { enabled = false },
       filetypes = {
-        markdown = true,
+        ["*"] = true,
+        ["AvanteInput"] = false,
+        ["Avante"] = false,
         ["."] = false,
       },
     },
@@ -496,11 +499,16 @@ local plugins = {
         auto_suggestions = false,
         auto_set_keymaps = true,
         auto_add_current_file = false,
+        auto_apply_diff_after_generation = true,
+      },
+      history = {
+        max_tokens = 8192,
       },
       windows = {
         width = 30,
         sidebar_header = {
           rounded = true,
+          include_model = true,
         },
       },
     },
@@ -1159,6 +1167,25 @@ require("lualine").setup({
     lualine_x = {
       {
         function()
+          local ok, api = pcall(require, "copilot.api")
+          if not ok then return "" end
+          local status = api.status.data.status
+          if status == "InProgress" then return " " end
+          if status == "Warning" then return " " end
+          if status == "Normal" then return " " end
+          return ""
+        end,
+        color = function()
+          local ok, api = pcall(require, "copilot.api")
+          if not ok then return { fg = "#5a6270" } end
+          local status = api.status.data.status
+          if status == "InProgress" then return { fg = "#f9e2af" } end
+          if status == "Warning" then return { fg = "#ff6b6b" } end
+          return { fg = "#8bd5a2" }
+        end,
+      },
+      {
+        function()
           local clients = vim.lsp.get_clients({ bufnr = 0 })
           if #clients == 0 then return "" end
           return " " .. clients[1].name
@@ -1413,9 +1440,9 @@ map("n", "H", "<cmd>BufferLineCyclePrev<cr>", { desc = "Prev buffer" })
 map("n", "L", "<cmd>BufferLineCycleNext<cr>", { desc = "Next buffer" })
 map("n", "<leader>bd", function()
   local cur = vim.api.nvim_get_current_buf()
-  local bufs = vim.tbl_filter(function(b)
+  local bufs = vim.iter(vim.api.nvim_list_bufs()):filter(function(b)
     return vim.api.nvim_buf_is_valid(b) and vim.bo[b].buflisted
-  end, vim.api.nvim_list_bufs())
+  end):totable()
   if #bufs <= 1 then
     vim.cmd("enew")
     if vim.api.nvim_buf_is_valid(cur) and cur ~= vim.api.nvim_get_current_buf() then
@@ -1467,10 +1494,10 @@ map("n", "<C-l>", "<C-w>l", { desc = "Focus right split" })
 
 -- Quick close window
 map("n", "<leader>q", function()
-  local wins = vim.tbl_filter(function(w)
+  local wins = vim.iter(vim.api.nvim_tabpage_list_wins(0)):filter(function(w)
     local buf = vim.api.nvim_win_get_buf(w)
     return vim.bo[buf].filetype ~= "neo-tree"
-  end, vim.api.nvim_tabpage_list_wins(0))
+  end):totable()
   if #wins <= 1 then
     -- last file window: close the buffer instead of the window
     vim.cmd("enew")

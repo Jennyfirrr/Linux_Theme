@@ -6,11 +6,18 @@ All notable changes to the Fox ML theme.
 
 ## 2026-03-13
 
-### Neovim - Avante AI Keybinds & Config
+### Neovim - Avante & Copilot QoL
 - Set `auto_add_current_file = false` — visual selections now send only the selected code to Copilot, not the entire file
 - Added `<leader>ae` — edit selection in-place with Avante (visual mode)
 - Added `<leader>ar` — refresh Avante response
 - Added `<leader>aS` — stop Avante generation
+- Enabled `auto_apply_diff_after_generation` — diffs apply automatically after Avante responds
+- Show model name in Avante sidebar header
+- Bumped Avante history token limit to 8192 for longer conversations
+- Added 150ms debounce to Copilot suggestions to reduce keystroke lag
+- Disabled Copilot ghost text in Avante input/sidebar buffers
+- Added Copilot status indicator in lualine (green = ready, yellow = thinking, red = error)
+- Fixed `vim.tbl_filter` deprecation warnings → `vim.iter():filter():totable()` (nvim 0.11+)
 
 ---
 
