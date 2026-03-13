@@ -1150,11 +1150,15 @@ map("n", "<leader>gq", "<cmd>DiffviewClose<cr>", { desc = "Close diff view" })
 map("n", "H", "<cmd>BufferLineCyclePrev<cr>", { desc = "Prev buffer" })
 map("n", "L", "<cmd>BufferLineCycleNext<cr>", { desc = "Next buffer" })
 map("n", "<leader>bd", function()
+  local cur = vim.api.nvim_get_current_buf()
   local bufs = vim.tbl_filter(function(b)
     return vim.api.nvim_buf_is_valid(b) and vim.bo[b].buflisted
   end, vim.api.nvim_list_bufs())
   if #bufs <= 1 then
-    vim.cmd("enew | bdelete #")
+    vim.cmd("enew")
+    if vim.api.nvim_buf_is_valid(cur) and cur ~= vim.api.nvim_get_current_buf() then
+      vim.cmd("bdelete " .. cur)
+    end
   else
     vim.cmd("bprevious | bdelete #")
   end
@@ -1197,7 +1201,19 @@ map("n", "<C-k>", "<C-w>k", { desc = "Focus above split" })
 map("n", "<C-l>", "<C-w>l", { desc = "Focus right split" })
 
 -- Quick close window
-map("n", "<leader>q", "<cmd>close<cr>", { desc = "Close window" })
+map("n", "<leader>q", function()
+  local wins = vim.tbl_filter(function(w)
+    local buf = vim.api.nvim_win_get_buf(w)
+    return vim.bo[buf].filetype ~= "neo-tree"
+  end, vim.api.nvim_tabpage_list_wins(0))
+  if #wins <= 1 then
+    -- last file window: close the buffer instead of the window
+    vim.cmd("enew")
+  else
+    vim.cmd("close")
+  end
+end, { desc = "Close window" })
+map("n", "<leader>wo", "<cmd>only<cr>", { desc = "Close all other windows (unsplit)" })
 
 -- Esc clears search highlights
 map("n", "<Esc>", "<cmd>nohlsearch<cr>", { desc = "Clear search highlight" })
