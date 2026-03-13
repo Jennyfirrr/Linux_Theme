@@ -495,6 +495,7 @@ local plugins = {
       behaviour = {
         auto_suggestions = false,
         auto_set_keymaps = true,
+        auto_add_current_file = false,
       },
       windows = {
         width = 30,
@@ -1441,6 +1442,9 @@ map("n", "<leader>aa", "<cmd>AvanteAsk<cr>", { desc = "Avante ask" })
 map("v", "<leader>aa", "<cmd>AvanteAsk<cr>", { desc = "Avante ask (selection)" })
 map("n", "<leader>at", "<cmd>AvanteToggle<cr>", { desc = "Avante toggle" })
 map("n", "<leader>ac", "<cmd>AvanteChat<cr>", { desc = "Avante chat" })
+map("v", "<leader>ae", "<cmd>AvanteEdit<cr>", { desc = "Avante edit (selection)" })
+map("n", "<leader>ar", "<cmd>AvanteRefresh<cr>", { desc = "Avante refresh" })
+map("n", "<leader>aS", "<cmd>AvanteStop<cr>", { desc = "Avante stop" })
 
 -- Lazygit
 map("n", "<leader>gg", "<cmd>LazyGit<cr>", { desc = "LazyGit" })

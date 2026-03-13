@@ -4,6 +4,16 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-03-13
+
+### Neovim - Avante AI Keybinds & Config
+- Set `auto_add_current_file = false` — visual selections now send only the selected code to Copilot, not the entire file
+- Added `<leader>ae` — edit selection in-place with Avante (visual mode)
+- Added `<leader>ar` — refresh Avante response
+- Added `<leader>aS` — stop Avante generation
+
+---
+
 ## 2026-03-12
 
 ### Neovim - Visual Polish (Round 2)
