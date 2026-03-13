@@ -6,6 +6,17 @@ All notable changes to the Fox ML theme.
 
 ## 2026-03-12
 
+### Neovim - Visual Polish (Round 2)
+- Added **noice.nvim** — floating cmdline popup, search popup, and message routing (replaces bottom cmdline)
+- Added **nvim-notify** — animated notification popups with FoxML-themed borders
+- Added **nvim-colorizer** — renders hex colors inline with their actual color
+- Added **rainbow-delimiters.nvim** — colors nested brackets/parens in rotating FoxML palette (peach → pink → mint → yellow → cyan → red)
+- Added **colorful-winsep.nvim** — highlights active window border in peach when using splits
+- Added **nvim-scrollbar** + **nvim-hlslens** — scrollbar showing diagnostics, git changes, and search hits; search match counter overlay
+- Added **tint.nvim** — subtly dims inactive splits so focused window stands out
+- Full FoxML palette highlights for all new plugins (noice, notify, rainbow delimiters, scrollbar, hlslens)
+- Backed up pre-polish config as `init.lua.bak`
+
 ### Neovim - Visual Polish
 - Custom FoxML lualine theme — peach normal, mint insert, pink visual, red replace, yellow command
 - Replaced encoding/fileformat statusline clutter with active LSP server name

@@ -428,13 +428,8 @@ local plugins = {
   -- Undotree (visual undo history)
   { "mbbill/undotree", cmd = "UndotreeToggle" },
 
-  -- Fidget (LSP progress spinner — route through noice instead)
-  {
-    "j-hui/fidget.nvim",
-    opts = {
-      notification = { override_vim_notify = false },
-    },
-  },
+  -- Fidget (LSP progress spinner)
+  { "j-hui/fidget.nvim", opts = {} },
 
   -- Diffview (full git diff/merge viewer)
   {
@@ -512,7 +507,7 @@ local plugins = {
     opts = { n_lines = 500 },
   },
 
-  -- Snacks (dashboard)
+  -- Snacks (dashboard only — notifier disabled)
   {
     "folke/snacks.nvim",
     priority = 1000,
@@ -539,7 +534,9 @@ local plugins = {
           },
         },
       },
-      notifier = { enabled = false },
+      notifier = {
+        enabled = false,
+      },
       indent = { enabled = false },
     },
   },
@@ -624,172 +621,6 @@ local plugins = {
     },
   },
 
-  -- === Visual Polish ===
-
-  -- Noice (floating cmdline, messages, search popup)
-  {
-    "folke/noice.nvim",
-    event = "VeryLazy",
-    dependencies = { "MunifTanjim/nui.nvim", "rcarriga/nvim-notify" },
-    opts = {
-      cmdline = {
-        enabled = true,
-        view = "cmdline_popup",
-        format = {
-          cmdline = { pattern = "^:", icon = " ", lang = "vim" },
-          search_down = { kind = "search", pattern = "^/", icon = " ", lang = "regex" },
-          search_up = { kind = "search", pattern = "^%?", icon = " ", lang = "regex" },
-          filter = { pattern = "^:%s*!", icon = " ", lang = "bash" },
-          lua = { pattern = { "^:%s*lua%s+", "^:%s*lua%s*=%s*", "^:%s*=%s*" }, icon = " ", lang = "lua" },
-        },
-      },
-      messages = { enabled = true, view_search = "virtualtext" },
-      popupmenu = { enabled = true, backend = "nui" },
-      lsp = {
-        override = {
-          ["vim.lsp.util.convert_input_to_markdown_lines"] = true,
-          ["vim.lsp.util.stylize_markdown"] = true,
-          ["cmp.entry.get_documentation"] = true,
-        },
-        hover = { enabled = true },
-        signature = { enabled = true },
-        progress = { enabled = false }, -- fidget handles this
-      },
-      presets = {
-        bottom_search = false,
-        command_palette = true,
-        long_message_to_split = true,
-        lsp_doc_border = true,
-      },
-    },
-  },
-
-  -- Notify (pretty notification popups, used by noice)
-  {
-    "rcarriga/nvim-notify",
-    opts = {
-      background_colour = "#1a1214",
-      fps = 60,
-      render = "wrapped-compact",
-      stages = "fade",
-      timeout = 2500,
-      max_width = 60,
-      icons = {
-        ERROR = " ",
-        WARN = " ",
-        INFO = " ",
-        DEBUG = " ",
-        TRACE = " ",
-      },
-    },
-  },
-
-  -- Colorizer (show hex colors inline)
-  {
-    "NvChad/nvim-colorizer.lua",
-    event = "BufReadPost",
-    opts = {
-      filetypes = { "*" },
-      user_default_options = {
-        RGB = true,
-        RRGGBB = true,
-        names = false,
-        RRGGBBAA = true,
-        css = true,
-        css_fn = true,
-        mode = "background",
-        virtualtext = "  ",
-      },
-    },
-  },
-
-  -- Rainbow delimiters (colored nested brackets)
-  {
-    "HiPhish/rainbow-delimiters.nvim",
-    event = "BufReadPost",
-    config = function()
-      local rd = require("rainbow-delimiters")
-      require("rainbow-delimiters.setup").setup({
-        strategy = { [""] = rd.strategy["global"] },
-        query = { [""] = "rainbow-delimiters" },
-        highlight = {
-          "RainbowDelimiterPeach",
-          "RainbowDelimiterPink",
-          "RainbowDelimiterMint",
-          "RainbowDelimiterYellow",
-          "RainbowDelimiterCyan",
-          "RainbowDelimiterRed",
-        },
-      })
-    end,
-  },
-
-  -- Colorful window separator (highlight active window border)
-  {
-    "nvim-zh/colorful-winsep.nvim",
-    event = "WinNew",
-    opts = {
-      hi = {
-        fg = "#f4b58a",
-      },
-      symbols = { "─", "│", "╭", "╮", "╰", "╯" },
-    },
-  },
-
-  -- Scrollbar (diagnostics, search, git marks)
-  {
-    "petertriho/nvim-scrollbar",
-    event = "BufReadPost",
-    opts = {
-      handle = {
-        color = "#2d1f27",
-        highlight = "ScrollbarHandle",
-      },
-      marks = {
-        Search = { color = "#f4b58a" },
-        Error = { color = "#ff6b6b" },
-        Warn = { color = "#f9e2af" },
-        Info = { color = "#89dceb" },
-        Hint = { color = "#8bd5a2" },
-        Misc = { color = "#f5a9b8" },
-        GitAdd = { color = "#8bd5a2" },
-        GitChange = { color = "#f9e2af" },
-        GitDelete = { color = "#ff6b6b" },
-      },
-      excluded_filetypes = { "neo-tree", "dashboard", "lazy", "mason", "notify" },
-    },
-    config = function(_, opts)
-      require("scrollbar").setup(opts)
-      require("scrollbar.handlers.gitsigns").setup()
-      require("scrollbar.handlers.search").setup()
-    end,
-    dependencies = { "lewis6991/gitsigns.nvim", "kevinhwang91/nvim-hlslens" },
-  },
-
-  -- hlslens (search result count/index, used by scrollbar)
-  {
-    "kevinhwang91/nvim-hlslens",
-    event = "BufReadPost",
-    opts = { calm_down = true, nearest_only = true },
-  },
-
-  -- Tint (dim inactive windows)
-  {
-    "levouh/tint.nvim",
-    event = "WinNew",
-    opts = {
-      tint = -30,
-      saturation = 0.7,
-      tint_background_colors = true,
-      highlight_ignore_patterns = { "WinSeparator", "Status.*", "EndOfBuffer" },
-      window_ignore_function = function(winid)
-        local buf = vim.api.nvim_win_get_buf(winid)
-        local ft = vim.bo[buf].filetype
-        return ft == "neo-tree" or ft == "aerial" or ft == "Trouble"
-      end,
-    },
-  },
-
 }
 
 -- lazy.nvim setup
@@ -817,7 +648,7 @@ vim.diagnostic.config({
   float = { border = border },
 })
 
--- Patch the common float helper used by LSP UIs (fallback when noice isn't active)
+-- Patch the common float helper used by LSP UIs
 do
   local _open = vim.lsp.util.open_floating_preview
   function vim.lsp.util.open_floating_preview(contents, syntax, opts, ...)
@@ -1039,74 +870,6 @@ vim.api.nvim_set_hl(0, "LazyReasonCmd", { fg = "#8bd5a2" })
 -- Copilot ghost text
 vim.api.nvim_set_hl(0, "CopilotSuggestion", { fg = "#5a6270", italic = true })
 vim.api.nvim_set_hl(0, "CopilotAnnotation", { fg = "#3a414b" })
-
--- Rainbow delimiters (FoxML palette)
-vim.api.nvim_set_hl(0, "RainbowDelimiterPeach", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "RainbowDelimiterPink", { fg = "#f5a9b8" })
-vim.api.nvim_set_hl(0, "RainbowDelimiterMint", { fg = "#8bd5a2" })
-vim.api.nvim_set_hl(0, "RainbowDelimiterYellow", { fg = "#f9e2af" })
-vim.api.nvim_set_hl(0, "RainbowDelimiterCyan", { fg = "#89dceb" })
-vim.api.nvim_set_hl(0, "RainbowDelimiterRed", { fg = "#ff6b6b" })
-
--- Noice cmdline & popups
-vim.api.nvim_set_hl(0, "NoiceCmdlinePopup", { bg = "#150f0f" })
-vim.api.nvim_set_hl(0, "NoiceCmdlinePopupBorder", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "NoiceCmdlinePopupTitle", { fg = "#f4b58a", bold = true })
-vim.api.nvim_set_hl(0, "NoiceCmdlinePopupBorderSearch", { fg = "#f9e2af" })
-vim.api.nvim_set_hl(0, "NoiceCmdlineIcon", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "NoiceCmdlineIconSearch", { fg = "#f9e2af" })
-vim.api.nvim_set_hl(0, "NoicePopupmenu", { bg = "#150f0f" })
-vim.api.nvim_set_hl(0, "NoicePopupmenuBorder", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "NoicePopupmenuSelected", { bg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "NoicePopupmenuMatch", { fg = "#f4b58a", bold = true })
-vim.api.nvim_set_hl(0, "NoiceMini", { bg = "#150f0f" })
-vim.api.nvim_set_hl(0, "NoiceFormatProgressDone", { fg = "#1a1214", bg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "NoiceFormatProgressTodo", { fg = "#5a6270", bg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "NoiceLspProgressTitle", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "NoiceConfirm", { bg = "#150f0f" })
-vim.api.nvim_set_hl(0, "NoiceConfirmBorder", { fg = "#f5a9b8" })
-
--- Notify
-vim.api.nvim_set_hl(0, "NotifyERRORBorder", { fg = "#ff6b6b" })
-vim.api.nvim_set_hl(0, "NotifyWARNBorder", { fg = "#f9e2af" })
-vim.api.nvim_set_hl(0, "NotifyINFOBorder", { fg = "#89dceb" })
-vim.api.nvim_set_hl(0, "NotifyDEBUGBorder", { fg = "#5a6270" })
-vim.api.nvim_set_hl(0, "NotifyTRACEBorder", { fg = "#f5a9b8" })
-vim.api.nvim_set_hl(0, "NotifyERRORIcon", { fg = "#ff6b6b" })
-vim.api.nvim_set_hl(0, "NotifyWARNIcon", { fg = "#f9e2af" })
-vim.api.nvim_set_hl(0, "NotifyINFOIcon", { fg = "#89dceb" })
-vim.api.nvim_set_hl(0, "NotifyDEBUGIcon", { fg = "#5a6270" })
-vim.api.nvim_set_hl(0, "NotifyTRACEIcon", { fg = "#f5a9b8" })
-vim.api.nvim_set_hl(0, "NotifyERRORTitle", { fg = "#ff6b6b" })
-vim.api.nvim_set_hl(0, "NotifyWARNTitle", { fg = "#f9e2af" })
-vim.api.nvim_set_hl(0, "NotifyINFOTitle", { fg = "#89dceb" })
-vim.api.nvim_set_hl(0, "NotifyDEBUGTitle", { fg = "#5a6270" })
-vim.api.nvim_set_hl(0, "NotifyTRACETitle", { fg = "#f5a9b8" })
-vim.api.nvim_set_hl(0, "NotifyBackground", { bg = "#1a1214" })
-
--- Scrollbar
-vim.api.nvim_set_hl(0, "ScrollbarHandle", { bg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "ScrollbarSearchHandle", { fg = "#f4b58a", bg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "ScrollbarSearch", { fg = "#f4b58a" })
-vim.api.nvim_set_hl(0, "ScrollbarErrorHandle", { fg = "#ff6b6b", bg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "ScrollbarError", { fg = "#ff6b6b" })
-vim.api.nvim_set_hl(0, "ScrollbarWarnHandle", { fg = "#f9e2af", bg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "ScrollbarWarn", { fg = "#f9e2af" })
-vim.api.nvim_set_hl(0, "ScrollbarInfoHandle", { fg = "#89dceb", bg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "ScrollbarInfo", { fg = "#89dceb" })
-vim.api.nvim_set_hl(0, "ScrollbarHintHandle", { fg = "#8bd5a2", bg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "ScrollbarHint", { fg = "#8bd5a2" })
-vim.api.nvim_set_hl(0, "ScrollbarGitAddHandle", { fg = "#8bd5a2", bg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "ScrollbarGitAdd", { fg = "#8bd5a2" })
-vim.api.nvim_set_hl(0, "ScrollbarGitChangeHandle", { fg = "#f9e2af", bg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "ScrollbarGitChange", { fg = "#f9e2af" })
-vim.api.nvim_set_hl(0, "ScrollbarGitDeleteHandle", { fg = "#ff6b6b", bg = "#2d1f27" })
-vim.api.nvim_set_hl(0, "ScrollbarGitDelete", { fg = "#ff6b6b" })
-
--- hlslens (search result counter)
-vim.api.nvim_set_hl(0, "HlSearchNear", { fg = "#1a1214", bg = "#f4b58a", bold = true })
-vim.api.nvim_set_hl(0, "HlSearchLens", { fg = "#5a6270" })
-vim.api.nvim_set_hl(0, "HlSearchLensNear", { fg = "#1a1214", bg = "#f4b58a" })
 
 -- Avante
 vim.api.nvim_set_hl(0, "AvanteTitle", { fg = "#f4b58a", bold = true })
