@@ -15,6 +15,8 @@ All notable changes to the Fox ML theme.
 - Added **nvim-scrollbar** + **nvim-hlslens** — scrollbar showing diagnostics, git changes, and search hits; search match counter overlay
 - Added **tint.nvim** — subtly dims inactive splits so focused window stands out
 - Full FoxML palette highlights for all new plugins (noice, notify, rainbow delimiters, scrollbar, hlslens)
+- Disabled colorizer for C/C++/H files — hex constants like `0xFFFFFFFF` no longer get painted as literal colors
+- Made number/hex literals bold warm yellow for better glow against dark background
 - Backed up pre-polish config as `init.lua.bak`
 
 ### Neovim - Visual Polish
