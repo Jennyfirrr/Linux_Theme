@@ -4,6 +4,8 @@
 
 A template-based multi-theme hub for 23+ apps. Sharp corners, no rounded anything. One set of configs, any number of color schemes.
 
+> **Note:** The multi-theme template system and additional themes (Paper, etc.) are WIP. FoxML Classic is the active, fully working theme.
+
 ## Themes
 
 ### [FoxML Classic](themes/FoxML_Classic/) (dark)
@@ -18,8 +20,8 @@ Dark theme with peach and lavender accents, neon glows, glassmorphic panels.
 | Accent | `#9a8ac4` | Lavender |
 | Surface | `#3a414b` | Slate |
 
-### [FoxML Paper](themes/FoxML_Paper/) (light)
-Warm light theme — parchment, coffee, and sage.
+### [FoxML Paper](themes/FoxML_Paper/) (light) — *WIP*
+Warm light theme — parchment, coffee, and sage. **This theme is a work in progress and may not be fully functional yet.**
 
 | Role | Color | |
 |------|-------|-|
