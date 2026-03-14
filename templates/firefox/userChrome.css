@@ -421,7 +421,7 @@ toolbarbutton:hover {
   fill: var(--fox-pastel) !important;
 }
 
-/* All toolbar icons tinted */
+/* All toolbar icons pastel pink */
 #nav-bar toolbarbutton .toolbarbutton-icon,
 #TabsToolbar toolbarbutton .toolbarbutton-icon,
 #navigator-toolbox toolbarbutton .toolbarbutton-icon {
@@ -479,7 +479,7 @@ scrollbar thumb {
 }
 
 scrollbar thumb:hover {
-  background: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.6) !important;
+  background: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},{{KITTY_BG_OPACITY}}) !important;
 }
 
 /* ===== Notifications ===== */

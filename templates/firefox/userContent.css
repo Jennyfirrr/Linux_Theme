@@ -19,8 +19,8 @@
     --newtab-contextmenu-button-color: #{{FG}} !important;
     --newtab-button-secondary-color: #{{BG_ALT}} !important;
     --newtab-wordmark-color: #{{FG}} !important;
-    --newtab-status-success: #{{OK}} !important;
-    --newtab-status-warning: #{{WARN}} !important;
+    --newtab-status-success: #{{GREEN_BRIGHT}} !important;
+    --newtab-status-warning: #{{YELLOW}} !important;
     --newtab-status-error: #{{SECONDARY}} !important;
     --newtab-inner-box-shadow-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.1) !important;
     --newtab-overlay-color: rgba({{BG_SPICETIFY_R}},{{BG_SPICETIFY_G}},{{BG_SPICETIFY_B}},0.8) !important;

@@ -17,21 +17,21 @@ set -g status off
 # ================= Pane footer as our "status bar" =================
 # Pane footer as status
 set -g pane-border-status bottom
-set -g pane-border-style "fg=colour{{ANSI_MUTED}}"
-set -g pane-active-border-style "fg=#{{PRIMARY}},bold"
+set -g pane-border-style "fg={{TMUX_INACTIVE}}"
+set -g pane-active-border-style "fg={{TMUX_ACTIVE}}"
 
 # ================= Pane Visibility - Active pane emphasis =================
 # Active pane solid plum, inactive pane transparent (inherits kitty opacity)
 set -g window-style 'fg=#{{TMUX_INACTIVE_FG}},bg=default'
-set -g window-active-style 'fg=#{{FG_PASTEL}},bg=default'
+set -g window-active-style 'fg=#{{TMUX_ACTIVE_FG}},bg=#{{TMUX_ACTIVE_BG}}'
 
 # Longer display time for pane numbers (prefix + q)
 set -g display-panes-time 3000
-set -g display-panes-active-colour colour{{ANSI_ACCENT2}}
-set -g display-panes-colour colour{{ANSI_MUTED}}
+set -g display-panes-active-colour {{TMUX_ACTIVE}}
+set -g display-panes-colour {{TMUX_INACTIVE}}
 
 # Pretty clock mode (Ctrl+a t)
-set -g clock-mode-colour colour{{ANSI_ACCENT2}}
+set -g clock-mode-colour {{TMUX_ACTIVE}}
 set -g clock-mode-style 24
 
 # Message styling
@@ -42,7 +42,7 @@ set -g message-command-style 'fg=#{{WHITE}},bg=#{{ACCENT}}'
 set -g mode-style 'fg=#{{BG}},bg=#{{PRIMARY}}'
 
 # Pane border format — active pane gets peach bar, inactive stays muted
-set -g pane-border-format '#{?pane_active,#[fg=#{{BG}}#,bg=#{{PRIMARY}}] ◆ #S:#I │ #(~/.local/bin/tmux-git-pane-label "#{pane_current_path}") #[default],#[fg=colour{{ANSI_MUTED}}] ◇ #S:#I │ #(~/.local/bin/tmux-git-pane-label "#{pane_current_path}") }'
+set -g pane-border-format '#{?pane_active,#[fg=#{{BG}}#,bg=#{{PRIMARY}}] ◆ #S:#I │ #(~/.local/bin/tmux-git-pane-label "#{pane_current_path}") #[default],#[fg={{TMUX_INACTIVE}}] ◇ #S:#I │ #(~/.local/bin/tmux-git-pane-label "#{pane_current_path}") }'
 
 # ================= Keys / panes =================
 set -g prefix C-a

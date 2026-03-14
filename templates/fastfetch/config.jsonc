@@ -10,7 +10,7 @@
     "display": {
         "separator": "  ",
         "color": {
-            "keys": "38;5;{{ANSI_PROMPT}}",
+            "keys": "38;5;{{ANSI_ACCENT1}}",
             "output": "38;5;{{ANSI_ACCENT4}}"
         }
     },

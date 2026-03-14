@@ -19,9 +19,9 @@
 @define-color lavender  #{{ACCENT}};
 @define-color dim       #{{FG_DIM}};
 
-@define-color bubble       rgba({{BG_R}}, {{BG_G}}, {{BG_B}}, 0.85);
-@define-color bubble_hover rgba({{SURFACE_R}}, {{SURFACE_G}}, {{SURFACE_B}}, 0.6);
-@define-color border       rgba({{PRIMARY_R}}, {{PRIMARY_G}}, {{PRIMARY_B}}, 0.4);
+@define-color bubble       rgba({{BG_R}},{{BG_G}},{{BG_B}}, 0.85);
+@define-color bubble_hover rgba({{SURFACE_R}},{{SURFACE_G}},{{SURFACE_B}}, {{KITTY_BG_OPACITY}});
+@define-color border       rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.4);
 
 * {
     font-family: "JetBrainsMono Nerd Font", monospace;
@@ -74,29 +74,29 @@ window#waybar > box {
 }
 
 #workspaces button.active {
-    background-color: rgba({{PRIMARY_R}}, {{PRIMARY_G}}, {{PRIMARY_B}}, 0.25);
+    background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.25);
     color: @peach;
     border: 1px solid @peach;
-    text-shadow: 0 0 8px rgba({{PRIMARY_R}}, {{PRIMARY_G}}, {{PRIMARY_B}}, 0.5);
+    text-shadow: 0 0 8px rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.5);
 }
 
 #workspaces button:hover {
     background-color: @bubble_hover;
     color: @fg;
-    text-shadow: 0 0 6px rgba({{FG_R}}, {{FG_G}}, {{FG_B}}, 0.3);
+    text-shadow: 0 0 6px rgba({{FG_R}},{{FG_G}},{{FG_B}}, 0.3);
 }
 
 /* ─────────────────────────────────────────
    Info Modules
    ───────────────────────────────────────── */
 #custom-media {
-    background-color: rgba({{ACCENT_R}}, {{ACCENT_G}}, {{ACCENT_B}}, 0.15);
-    border: 1px solid rgba({{ACCENT_R}}, {{ACCENT_G}}, {{ACCENT_B}}, 0.3);
+    background-color: rgba({{ACCENT_R}},{{ACCENT_G}},{{ACCENT_B}}, 0.15);
+    border: 1px solid rgba({{ACCENT_R}},{{ACCENT_G}},{{ACCENT_B}}, 0.3);
     color: @lavender;
 }
 
 #custom-system_health {
-    background-color: rgba({{SURFACE_R}}, {{SURFACE_G}}, {{SURFACE_B}}, 0.5);
+    background-color: rgba({{SURFACE_R}},{{SURFACE_G}},{{SURFACE_B}}, 0.5);
     border: 1px solid @slate;
 }
 
@@ -107,12 +107,12 @@ window#waybar > box {
 #clock {
     color: @peach;
     font-weight: bold;
-    text-shadow: 0 0 8px rgba({{PRIMARY_R}}, {{PRIMARY_G}}, {{PRIMARY_B}}, 0.4);
+    text-shadow: 0 0 8px rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.4);
 }
 
 #pulseaudio {
     color: @lavender;
-    text-shadow: 0 0 6px rgba({{ACCENT_R}}, {{ACCENT_G}}, {{ACCENT_B}}, 0.35);
+    text-shadow: 0 0 6px rgba({{ACCENT_R}},{{ACCENT_G}},{{ACCENT_B}}, 0.35);
 }
 
 #network {
@@ -146,12 +146,12 @@ window#waybar > box {
     color: @peach;
     font-size: 14pt;
     padding: 4px 14px;
-    text-shadow: 0 0 10px rgba({{PRIMARY_R}}, {{PRIMARY_G}}, {{PRIMARY_B}}, 0.5);
+    text-shadow: 0 0 10px rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.5);
 }
 
 #custom-logo:hover {
-    background-color: rgba({{PRIMARY_R}}, {{PRIMARY_G}}, {{PRIMARY_B}}, 0.2);
-    text-shadow: 0 0 14px rgba({{PRIMARY_R}}, {{PRIMARY_G}}, {{PRIMARY_B}}, 0.7);
+    background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.2);
+    text-shadow: 0 0 14px rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.7);
 }
 
 /* ─────────────────────────────────────────

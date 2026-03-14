@@ -48,8 +48,8 @@ source /usr/share/fzf/key-bindings.zsh
 source /usr/share/fzf/completion.zsh
 export FZF_DEFAULT_OPTS="
   --color=bg+:#{{SURFACE}},bg:#{{BG_DUNST}},fg:#{{FG}},fg+:#{{FG}}
-  --color=hl:#{{FZF_ACCENT1}},hl+:#{{FZF_ACCENT2}},info:#{{FZF_ACCENT1}},marker:#{{FZF_ACCENT2}}
-  --color=prompt:#{{FZF_ACCENT2}},spinner:#{{FZF_ACCENT1}},pointer:#{{FZF_ACCENT2}},header:#{{FZF_ACCENT1}}
+  --color=hl:#{{FZF_ACCENT1}},hl+:#{{PRIMARY}},info:#{{FZF_ACCENT1}},marker:#{{PRIMARY}}
+  --color=prompt:#{{PRIMARY}},spinner:#{{FZF_ACCENT1}},pointer:#{{PRIMARY}},header:#{{FZF_ACCENT1}}
   --color=border:#{{SURFACE}}
   --border=sharp --prompt='❯ ' --pointer='▸' --marker='●'
 "

@@ -13,5 +13,5 @@ function precmd_async() {
 
 function load_time_prompt() {
   [[ -n "$async_worker_load_time_worker_result" ]] &&
-    echo "%F{{{ANSI_LOAD}}}⏳${async_worker_load_time_worker_result:.2f}s%f"
+    echo "%F{{{ANSI_ACCENT2}}}⏳${async_worker_load_time_worker_result:.2f}s%f"
 }

@@ -289,5 +289,5 @@
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.6) !important;
+  background: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},{{KITTY_BG_OPACITY}}) !important;
 }

@@ -166,7 +166,10 @@ build_reverse_sed_expr() {
     for var in "${str_vars[@]}"; do
         local val="${!var}"
         [[ -z "$val" ]] && continue
+        # Escape sed special chars: / . * [ ] ^
         local escaped="${val//\//\\/}"
+        escaped="${escaped//./\\.}"
+        escaped="${escaped//\*/\\*}"
         sed_expr+="s/${escaped}/{{${var}}}/g;"
     done
 

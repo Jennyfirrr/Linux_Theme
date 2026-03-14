@@ -112,7 +112,7 @@
     "scrollbar.shadow": "#00000000",
     "scrollbarSlider.background": "rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.3)",
     "scrollbarSlider.hoverBackground": "rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.5)",
-    "scrollbarSlider.activeBackground": "rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.6)",
+    "scrollbarSlider.activeBackground": "rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},{{KITTY_BG_OPACITY}})",
 
     "editorWidget.background": "#{{BG}}",
     "editorWidget.border": "#{{PRIMARY}}",
