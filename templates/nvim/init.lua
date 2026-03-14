@@ -533,6 +533,29 @@ local plugins = {
     },
   },
 
+  -- Claude Code (AI terminal integration)
+  {
+    "coder/claudecode.nvim",
+    dependencies = { "folke/snacks.nvim" },
+    event = "VeryLazy",
+    keys = {
+      { "<leader>Ct", "<cmd>ClaudeCode<cr>", desc = "Claude toggle" },
+      { "<leader>Cs", "<cmd>ClaudeCodeSend<cr>", mode = "v", desc = "Claude send selection" },
+      { "<leader>Co", function()
+        require("claudecode").toggle({ position = "right", width = 0.4 })
+      end, desc = "Claude open vsplit" },
+    },
+    opts = {
+      terminal = {
+        snacks_win_opts = {
+          position = "right",
+          width = 0.4,
+          border = "rounded",
+        },
+      },
+    },
+  },
+
   -- Dropbar (breadcrumb navigation)
   {
     "Bekaboo/dropbar.nvim",
@@ -1323,6 +1346,12 @@ local function apply_foxml_theme()
   hl("AvanteTaskCompleted",               { fg = P.green })
   hl("AvanteTaskFailed",                  { fg = P.red })
   hl("AvanteThinking",                    { fg = P.pink, italic = true })
+
+  -- Claude Code
+  hl("ClaudeCodeNormal",    { fg = P.fg, bg = P.bg_deep })
+  hl("ClaudeCodeBorder",    { fg = P.peach, bg = P.bg_deep })
+  hl("ClaudeCodeTitle",     { fg = P.bg, bg = P.peach, bold = true })
+  hl("ClaudeCodeSeparator", { fg = P.bg_deep, bg = P.bg_deep })
 
   -- nvim-cmp
   hl("CmpItemAbbrMatch",      { fg = P.peach, bold = true })

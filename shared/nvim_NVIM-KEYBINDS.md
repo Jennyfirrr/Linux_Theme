@@ -452,6 +452,13 @@ Ghost-text suggestions appear automatically as you type. Use `Ctrl+l` to accept 
 
 **Note:** If you want Copilot suggestions in the nvim-cmp completion menu (alongside LSP results) instead of or in addition to ghost text, add `zbirenbaum/copilot-cmp`. This lets you see Copilot as a ranked source in the popup menu rather than separate inline text.
 
+### Claude Code (AI Terminal)
+| Key | Action |
+|-----|--------|
+| `Space Ct` | Toggle Claude Code terminal |
+| `Space Cs` | Send selection to Claude (visual) |
+| `Space Co` | Open Claude in vertical split |
+
 ### Avante (AI Chat Panel)
 | Key | Action |
 |-----|--------|
@@ -542,6 +549,9 @@ Quick reference of all `Space` binds:
 | `g d` | Git diff view |
 | `g h` | Git file history |
 | `g q` | Close diff view |
+| `C t` | Claude toggle terminal |
+| `C s` | Claude send selection |
+| `C o` | Claude open vsplit |
 | `a a` | AI ask |
 | `a t` | AI toggle sidebar |
 | `a c` | AI chat |

@@ -399,6 +399,13 @@ Inside terminal:
 |-----|--------|
 | `Ctrl+\ Ctrl+n` | Exit terminal mode (back to normal) |
 
+### Claude Code (AI Terminal)
+| Key | Action |
+|-----|--------|
+| `Space Ct` | Toggle Claude Code terminal |
+| `Space Cs` | Send selection to Claude (visual) |
+| `Space Co` | Open Claude in vertical split |
+
 ### VimTeX (LaTeX)
 | Key | Action |
 |-----|--------|
