@@ -116,7 +116,7 @@
       <key>settings</key>
       <dict>
         <key>foreground</key>
-        <string>#{{PRIMARY}}</string>
+        <string>#{{CYAN}}</string>
       </dict>
     </dict>
     <dict>
@@ -138,7 +138,7 @@
       <key>settings</key>
       <dict>
         <key>foreground</key>
-        <string>#{{PRIMARY}}</string>
+        <string>#{{GREEN}}</string>
       </dict>
     </dict>
     <dict>
