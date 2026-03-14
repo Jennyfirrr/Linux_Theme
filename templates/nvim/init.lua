@@ -60,6 +60,8 @@ local P = {
   white     = "#d5d5d5",
   warm      = "#b0a498",
   sand      = "#a89a7a",
+  wheat     = "#d4b483",
+  clay      = "#b0603a",
   diff_add  = "#1a2e1a",
   diff_chg  = "#2d2a1a",
   diff_del  = "#2e1a1a",
@@ -851,8 +853,8 @@ local function apply_foxml_theme()
 
   -- ── Messages ──
   hl("MsgArea",      { fg = P.warm, bg = P.bg_deep })
-  hl("WarningMsg",   { fg = P.yellow, bold = true })
-  hl("ErrorMsg",     { fg = P.red, bold = true })
+  hl("WarningMsg",   { fg = P.wheat, bold = true })
+  hl("ErrorMsg",     { fg = P.clay, bold = true })
   hl("ModeMsg",      { fg = P.peach, bold = true })
   hl("MoreMsg",      { fg = P.green })
 
@@ -896,26 +898,26 @@ local function apply_foxml_theme()
   hl("Todo",         { fg = P.bg, bg = P.yellow, bold = true })
 
   -- ── Diagnostics ──
-  hl("DiagnosticError",          { fg = P.red })
-  hl("DiagnosticWarn",           { fg = P.yellow })
-  hl("DiagnosticInfo",           { fg = P.cyan })
+  hl("DiagnosticError",          { fg = P.clay })
+  hl("DiagnosticWarn",           { fg = P.wheat })
+  hl("DiagnosticInfo",           { fg = P.peach })
   hl("DiagnosticHint",           { fg = P.green })
   hl("DiagnosticOk",             { fg = P.green })
-  hl("DiagnosticUnderlineError", { undercurl = true, sp = P.red })
-  hl("DiagnosticUnderlineWarn",  { undercurl = true, sp = P.yellow })
-  hl("DiagnosticUnderlineInfo",  { undercurl = true, sp = P.cyan })
+  hl("DiagnosticUnderlineError", { undercurl = true, sp = P.clay })
+  hl("DiagnosticUnderlineWarn",  { undercurl = true, sp = P.wheat })
+  hl("DiagnosticUnderlineInfo",  { undercurl = true, sp = P.peach })
   hl("DiagnosticUnderlineHint",  { undercurl = true, sp = P.green })
   hl("DiagnosticUnderlineOk",    { undercurl = true, sp = P.green })
-  hl("DiagnosticVirtualTextError", { fg = P.red_br, bg = P.diff_del, bold = true })
-  hl("DiagnosticVirtualTextWarn",  { fg = P.yellow, bg = P.diff_chg })
+  hl("DiagnosticVirtualTextError", { fg = P.clay, bg = P.diff_del, bold = true })
+  hl("DiagnosticVirtualTextWarn",  { fg = P.wheat, bg = P.diff_chg })
   hl("DiagnosticVirtualTextInfo",  { fg = P.peach })
   hl("DiagnosticVirtualTextHint",  { fg = P.green })
-  hl("DiagnosticSignError",       { fg = P.red_br })
-  hl("DiagnosticSignWarn",        { fg = P.yellow })
+  hl("DiagnosticSignError",       { fg = P.clay })
+  hl("DiagnosticSignWarn",        { fg = P.wheat })
   hl("DiagnosticSignInfo",        { fg = P.peach })
   hl("DiagnosticSignHint",        { fg = P.green })
-  hl("DiagnosticLineNrError",    { fg = P.red_br, bold = true })
-  hl("DiagnosticLineNrWarn",     { fg = P.yellow, bold = true })
+  hl("DiagnosticLineNrError",    { fg = P.clay, bold = true })
+  hl("DiagnosticLineNrWarn",     { fg = P.wheat, bold = true })
   hl("DiagnosticLineNrInfo",     { fg = P.peach, bold = true })
   hl("DiagnosticLineNrHint",     { fg = P.green, bold = true })
   hl("DiagnosticLineError",     { bg = P.diff_del })
@@ -1241,18 +1243,18 @@ local function apply_foxml_theme()
   hl("NoiceSplitBorder",             { fg = P.peach, bg = P.bg_deep })
 
   -- Notify
-  hl("NotifyERRORBorder", { fg = P.red_br })
-  hl("NotifyWARNBorder",  { fg = P.yellow })
+  hl("NotifyERRORBorder", { fg = P.clay })
+  hl("NotifyWARNBorder",  { fg = P.wheat })
   hl("NotifyINFOBorder",  { fg = P.peach })
   hl("NotifyDEBUGBorder", { fg = P.comment })
   hl("NotifyTRACEBorder", { fg = P.pink })
-  hl("NotifyERRORIcon",   { fg = P.red_br })
-  hl("NotifyWARNIcon",    { fg = P.yellow })
+  hl("NotifyERRORIcon",   { fg = P.clay })
+  hl("NotifyWARNIcon",    { fg = P.wheat })
   hl("NotifyINFOIcon",    { fg = P.peach })
   hl("NotifyDEBUGIcon",   { fg = P.comment })
   hl("NotifyTRACEIcon",   { fg = P.pink })
-  hl("NotifyERRORTitle",  { fg = P.red_br })
-  hl("NotifyWARNTitle",   { fg = P.yellow })
+  hl("NotifyERRORTitle",  { fg = P.clay })
+  hl("NotifyWARNTitle",   { fg = P.wheat })
   hl("NotifyINFOTitle",   { fg = P.peach })
   hl("NotifyDEBUGTitle",  { fg = P.comment })
   hl("NotifyTRACETitle",  { fg = P.pink })
