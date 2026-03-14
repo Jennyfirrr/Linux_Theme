@@ -1605,6 +1605,7 @@ lsp.config.pyright = { capabilities = caps, on_attach = on_attach }
 lsp.config.clangd  = {
   capabilities = caps,
   on_attach = on_attach,
+  root_markers = { "compile_commands.json", "CMakeLists.txt", "Makefile", ".clangd" },
 }
 lsp.config.bashls  = { capabilities = caps, on_attach = on_attach }
 lsp.config.jsonls  = { capabilities = caps, on_attach = on_attach }
