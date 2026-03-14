@@ -82,7 +82,8 @@ vim.opt.rtp:prepend(lazypath)
 
 local plugins = {
   { "nvim-lualine/lualine.nvim",           dependencies = { "nvim-tree/nvim-web-devicons" } },
-  { "lukas-reineke/indent-blankline.nvim", main = "ibl",                                    opts = {} },
+  { "lukas-reineke/indent-blankline.nvim", main = "ibl",
+    opts = { scope = { enabled = true, show_start = false, show_end = false } } },
 
   -- Core editing
   { "numToStr/Comment.nvim",               config = true },
@@ -1082,7 +1083,7 @@ local function apply_foxml_theme()
 
   -- Indent blankline
   hl("IblIndent", { fg = P.bg_hl })
-  hl("IblScope",  { fg = P.peach })
+  hl("IblScope",  { fg = "#e0b878" })
 
   -- Neo-tree
   hl("NeoTreeNormal",        { bg = P.bg_deep })
