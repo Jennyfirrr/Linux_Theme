@@ -1773,6 +1773,12 @@ map("n", "<C-Right>", "<cmd>vertical resize +5<cr>", { desc = "Grow window" })
 map("n", "<C-Up>", "<cmd>resize +3<cr>", { desc = "Grow window height" })
 map("n", "<C-Down>", "<cmd>resize -3<cr>", { desc = "Grow window height" })
 
+-- Terminal mode navigation (escape terminal capture to move between splits)
+map("t", "<C-h>", "<C-\\><C-n><C-w>h", { desc = "Move to left split" })
+map("t", "<C-l>", "<C-\\><C-n><C-w>l", { desc = "Move to right split" })
+map("t", "<C-j>", "<C-\\><C-n><C-w>j", { desc = "Move to lower split" })
+map("t", "<C-k>", "<C-\\><C-n><C-w>k", { desc = "Move to upper split" })
+
 -- AI (Avante)
 map("n", "<leader>aa", "<cmd>AvanteAsk<cr>", { desc = "Avante ask" })
 map("v", "<leader>aa", "<cmd>AvanteAsk<cr>", { desc = "Avante ask (selection)" })
