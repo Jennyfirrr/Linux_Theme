@@ -539,11 +539,9 @@ local plugins = {
     dependencies = { "folke/snacks.nvim" },
     event = "VeryLazy",
     keys = {
-      { "<leader>Ct", "<cmd>ClaudeCode<cr>", desc = "Claude toggle" },
+      { "<leader>Ct", "<cmd>ClaudeCodeFocus<cr>", desc = "Claude toggle" },
       { "<leader>Cs", "<cmd>ClaudeCodeSend<cr>", mode = "v", desc = "Claude send selection" },
-      { "<leader>Co", function()
-        require("claudecode").toggle({ position = "right", width = 0.4 })
-      end, desc = "Claude open vsplit" },
+      { "<leader>Co", "<cmd>ClaudeCodeOpen<cr>", desc = "Claude open vsplit" },
     },
     opts = {
       terminal = {

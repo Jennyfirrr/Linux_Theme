@@ -402,9 +402,21 @@ Inside terminal:
 ### Claude Code (AI Terminal)
 | Key | Action |
 |-----|--------|
-| `Space Ct` | Toggle Claude Code terminal |
+| `Space Ct` | Toggle / focus Claude terminal (smart: focuses if in code, hides if in terminal) |
 | `Space Cs` | Send selection to Claude (visual) |
-| `Space Co` | Open Claude in vertical split |
+| `Space Co` | Open Claude terminal (without toggling) |
+
+Claude Code sees all open buffers (the ones you cycle with `H`/`L`) automatically via WebSocket — file contents, paths, and diagnostics are shared without pasting. Use `Space Cs` in visual mode to explicitly point Claude at a specific code block.
+
+Commands:
+| Command | Action |
+|---------|--------|
+| `:ClaudeCode` | Simple show/hide toggle |
+| `:ClaudeCodeFocus` | Smart focus toggle (swap between code and terminal) |
+| `:ClaudeCodeOpen` | Open terminal (no toggle) |
+| `:ClaudeCodeSend` | Send visual selection |
+| `:ClaudeCodeAdd` | Add file to context |
+| `:ClaudeCodeStatus` | Check WebSocket server status |
 
 ### VimTeX (LaTeX)
 | Key | Action |
