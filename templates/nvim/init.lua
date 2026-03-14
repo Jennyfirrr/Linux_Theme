@@ -906,14 +906,22 @@ local function apply_foxml_theme()
   hl("DiagnosticUnderlineInfo",  { undercurl = true, sp = P.cyan })
   hl("DiagnosticUnderlineHint",  { undercurl = true, sp = P.green })
   hl("DiagnosticUnderlineOk",    { undercurl = true, sp = P.green })
-  hl("DiagnosticVirtualTextError", { fg = P.red, bg = P.diff_del })
+  hl("DiagnosticVirtualTextError", { fg = P.red_br, bg = P.diff_del, bold = true })
   hl("DiagnosticVirtualTextWarn",  { fg = P.yellow, bg = P.diff_chg })
-  hl("DiagnosticVirtualTextInfo",  { fg = P.cyan })
+  hl("DiagnosticVirtualTextInfo",  { fg = P.peach })
   hl("DiagnosticVirtualTextHint",  { fg = P.green })
-  hl("DiagnosticSignError",       { fg = P.red })
+  hl("DiagnosticSignError",       { fg = P.red_br })
   hl("DiagnosticSignWarn",        { fg = P.yellow })
-  hl("DiagnosticSignInfo",        { fg = P.cyan })
+  hl("DiagnosticSignInfo",        { fg = P.peach })
   hl("DiagnosticSignHint",        { fg = P.green })
+  hl("DiagnosticLineNrError",    { fg = P.red_br, bold = true })
+  hl("DiagnosticLineNrWarn",     { fg = P.yellow, bold = true })
+  hl("DiagnosticLineNrInfo",     { fg = P.peach, bold = true })
+  hl("DiagnosticLineNrHint",     { fg = P.green, bold = true })
+  hl("DiagnosticLineError",     { bg = P.diff_del })
+  hl("DiagnosticLineWarn",      { bg = P.diff_chg })
+  hl("DiagnosticLineInfo",      { bg = P.bg_hl })
+  hl("DiagnosticLineHint",      { bg = P.bg_hl })
 
   -- ── Treesitter ──
   hl("@variable",            { fg = P.fg })
@@ -1389,6 +1397,18 @@ vim.diagnostic.config({
       [vim.diagnostic.severity.WARN]  = " ",
       [vim.diagnostic.severity.INFO]  = " ",
       [vim.diagnostic.severity.HINT]  = " ",
+    },
+    numhl = {
+      [vim.diagnostic.severity.ERROR] = "DiagnosticLineNrError",
+      [vim.diagnostic.severity.WARN]  = "DiagnosticLineNrWarn",
+      [vim.diagnostic.severity.INFO]  = "DiagnosticLineNrInfo",
+      [vim.diagnostic.severity.HINT]  = "DiagnosticLineNrHint",
+    },
+    linehl = {
+      [vim.diagnostic.severity.ERROR] = "DiagnosticLineError",
+      [vim.diagnostic.severity.WARN]  = "DiagnosticLineWarn",
+      [vim.diagnostic.severity.INFO]  = "DiagnosticLineInfo",
+      [vim.diagnostic.severity.HINT]  = "DiagnosticLineHint",
     },
   },
 })
