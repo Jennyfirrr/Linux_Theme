@@ -6,6 +6,24 @@ All notable changes to the Fox ML theme.
 
 ## 2026-03-14
 
+### Firefox — Earthy Theme Overhaul
+- Rewrote `userContent.css` for Firefox 140+ (new CSS variable names, modern card selectors)
+- Forced `border-radius: 0` globally on new tab page — kills rounded cards/buttons
+- Swapped plum `BG_ALT` (#2d1a2d) for warm dark brown (#2a2018) in both `userChrome.css` and `userContent.css`
+- Added theming for `about:preferences` and `about:addons` pages
+- Added follow/topic button, weather widget, and link color overrides
+
+### Thunar — Transparency & Earthy Styling
+- Added GTK CSS transparency for Thunar (`rgba` bg at 85% opacity, no compositor opacity — avoids rubberband trail artifacts)
+- Filenames use peach (`PRIMARY`) for readability on transparent background
+- Sidebar labels use `FG_PASTEL`, selected sidebar items use peach
+- Icon view cells: removed bordered boxes, selection highlight uses warm clay (`rgba(176,96,58,0.35)`)
+- Rubberband (drag selection) uses wheat fill (`rgba(212,180,131,0.20)`) with wheat border
+
+### Hyprland — Window Rule Syntax Fix
+- Migrated Thunar opacity rule to Hyprland 0.54 `match:class` syntax (old `class:` field caused parse errors)
+- Removed compositor opacity rule for Thunar (caused rubberband rendering artifacts on some GPUs)
+
 ### Nvim — External Edit QOL (Claude Code / git)
 - Added `autoread`, `undofile`, `swapfile=false`, `writebackup=false`, `autowriteall` options
 - Added `checktime` autocmds on `FocusGained`, `BufEnter`, `CursorHold`, `CursorHoldI` — buffers now auto-reload when changed on disk (e.g. by Claude Code or `git checkout`)

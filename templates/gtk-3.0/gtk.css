@@ -19,6 +19,33 @@ window, dialog, .background {
   background-color: @bg;
   color: @fg;
 }
+
+/* ====== Thunar transparency + readability ====== */
+/* Transparency via GTK rgba (not compositor opacity — that causes rubberband trail artifacts) */
+window.thunar,
+window.thunar .background {
+  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.85);
+}
+window.thunar .standard-view,
+window.thunar notebook,
+window.thunar notebook > stack,
+window.thunar .view {
+  background-color: transparent;
+}
+window.thunar .view,
+window.thunar iconview,
+window.thunar treeview,
+window.thunar .content-view,
+window.thunar label {
+  color: #{{PRIMARY}};
+}
+window.thunar .sidebar label,
+window.thunar .sidebar .view {
+  color: #{{FG_PASTEL}};
+}
+window.thunar .sidebar .view:selected label {
+  color: #{{PRIMARY}};
+}
 .view, textview, treeview, iconview {
   background-color: transparent;
   color: @fg;
@@ -171,23 +198,23 @@ menu menuitem:hover {
   color: @sel_fg;
 }
 
-/* === Thunar icon/label readability (rofi bubble style) === */
+/* === Thunar icon/label readability === */
 iconview cell {
-  background-color: rgba({{SURFACE_R}},{{SURFACE_G}},{{SURFACE_B}},0.3);
-  border: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.4);
+  background-color: transparent;
+  border: none;
   border-radius: 0;
   padding: 6px 10px;
   color: @fg;
   text-shadow: 0 1px 3px rgba(0,0,0,0.85);
 }
 iconview cell:hover {
-  background-color: rgba({{SURFACE_R}},{{SURFACE_G}},{{SURFACE_B}},0.5);
-  border-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.6);
+  background-color: rgba(176,96,58,0.15);
+  border: none;
 }
 iconview cell:selected,
 iconview cell:focus {
-  background-color: @sel_bg;
-  border-color: @accent;
+  background-color: rgba(176,96,58,0.35);
+  border: none;
   color: #{{FG}};
 }
 
@@ -236,11 +263,32 @@ iconview.view:selected:focus {
   border-radius: 0;                     /* match your rounded vibe */
 }
 
-/* selection rubberband (drag box) */
+/* selection rubberband (drag box) — wheat filled */
 ThunarIconView .rubberband,
-iconview .rubberband {
-  background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.30);
-  border: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.65);
+iconview .rubberband,
+.rubberband,
+rubberband {
+  background-color: rgba(212,180,131,0.20);
+  border: 2px solid rgba(212,180,131,0.65);
+  background-image: none;
+  box-shadow: none;
+  outline: none;
+}
+
+/* Selected items — warm clay highlight */
+iconview:selected,
+iconview *:selected,
+iconview cell:drop(active),
+iconview.view:selected,
+ThunarIconView.view:selected,
+ThunarIconView.view:selected:focus,
+iconview.view:selected:focus {
+  background-color: rgba(176,96,58,0.35);
+  background-image: none;
+  border: 1px solid rgba(176,96,58,0.6);
+  box-shadow: none;
+  outline: none;
+  color: #{{FG}};
 }
 /* === LibreOffice Fox ML Theme === */
 
