@@ -455,9 +455,9 @@ Ghost-text suggestions appear automatically as you type. Use `Ctrl+l` to accept 
 ### Claude Code (AI Terminal)
 | Key | Action |
 |-----|--------|
-| `Space Ct` | Toggle / focus Claude terminal (smart: focuses if in code, hides if in terminal) |
+| `Space Ct` | Toggle Claude terminal (show/hide) |
 | `Space Cs` | Send selection to Claude (visual) |
-| `Space Co` | Open Claude terminal (without toggling) |
+| `Space Cc` | Close Claude terminal |
 
 Claude Code sees all open buffers (the ones you cycle with `H`/`L`) automatically via WebSocket — file contents, paths, and diagnostics are shared without pasting. Use `Space Cs` in visual mode to explicitly point Claude at a specific code block.
 
@@ -563,7 +563,7 @@ Quick reference of all `Space` binds:
 | `g q` | Close diff view |
 | `C t` | Claude toggle terminal |
 | `C s` | Claude send selection |
-| `C o` | Claude open vsplit |
+| `C c` | Claude close |
 | `a a` | AI ask |
 | `a t` | AI toggle sidebar |
 | `a c` | AI chat |
