@@ -24,7 +24,7 @@ window, dialog, .background {
 /* Transparency via GTK rgba (not compositor opacity — that causes rubberband trail artifacts) */
 window.thunar,
 window.thunar .background {
-  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.85);
+  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.65);
 }
 window.thunar .standard-view,
 window.thunar notebook,
