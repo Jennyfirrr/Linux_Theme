@@ -1,8 +1,8 @@
 # FoxML Theme Hub
 
-> If you're trying to use this and you messed up your computer and you're in the same CS course as me, it would bring me great enjoyment if instead of asking me for help, you make it the UAB CS faculty's problem.
-
 A template-based multi-theme hub for 23+ apps. Sharp corners, no rounded anything. One set of configs, any number of color schemes.
+
+> If you're trying to use this and you messed up your computer and you're in the same CS course as me, it would bring me great enjoyment if instead of asking me for help, you make it the UAB CS faculty's problem.
 
 ## Theme
 
@@ -26,9 +26,18 @@ Dark theme with earthy, muted tones — warm peach, dusty rose, sage, and wheat 
 
 ![Neovim + Avante](shared/screenshots/nvim_avante.png?v=2)
 
+## Prerequisites
+
+- **Arch Linux** (the installer uses `pacman` for dependencies)
+- `bash`, `git`, `sed`
+- Apps you want themed should already be installed, or use `--deps` to install them
+
 ## Quick Start
 
 ```bash
+git clone https://github.com/Jennyfirrr/Linux_Theme.git
+cd Linux_Theme
+
 # Install a theme (interactive — shows available themes)
 ./install.sh
 
@@ -38,7 +47,11 @@ Dark theme with earthy, muted tones — warm peach, dusty rose, sage, and wheat 
 # Install with system dependencies (Arch packages, Oh My Zsh, zsh plugins)
 ./install.sh FoxML_Classic --deps
 
-# Pull system config changes back into templates
+# Switch between themes (shows color previews)
+./swap.sh
+
+# Pull live system config edits back into templates
+# (replaces rendered colors with {{PLACEHOLDER}} tokens so your changes are preserved across themes)
 ./update.sh
 ```
 
@@ -165,7 +178,7 @@ See `themes/FoxML_Classic/palette.sh` for the full variable list.
 
 1. `hyprctl reload`
 2. Restart terminals/apps
-3. `spicetify backup apply`
+3. `spicetify apply`
 4. Firefox: enable `toolkit.legacyUserProfileCustomizations.stylesheets` in `about:config`
 5. Cursor: Select "Fox ML" in color theme picker
 6. Discord: Enable theme in Settings > Vencord > Themes
