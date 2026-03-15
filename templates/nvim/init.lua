@@ -31,6 +31,11 @@ vim.opt.smoothscroll = true
 vim.opt.cursorline = true
 vim.opt.guicursor = "n-v-c:block,i-ci-ve:ver25,r-cr:hor20,o:hor50,a:blinkwait400-blinkoff400-blinkon250"
 vim.opt.clipboard = "unnamedplus"
+vim.opt.autoread = true           -- reload files changed outside nvim
+vim.opt.swapfile = false          -- no .swp clutter (git is the safety net)
+vim.opt.undofile = true           -- persistent undo across sessions
+vim.opt.writebackup = false       -- avoid "file changed" prompts from backup writes
+vim.opt.autowriteall = true       -- auto-save when switching buffers / leaving
 
 -- FoxML palette (single source of truth)
 local P = {
@@ -1864,4 +1869,13 @@ vim.api.nvim_create_autocmd("BufWritePre", {
     vim.cmd([[%s/\s\+$//e]])
     pcall(vim.api.nvim_win_set_cursor, 0, pos)
   end,
+})
+
+-- Auto-reload buffers changed on disk (Claude Code, git checkout, etc.)
+vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "CursorHold", "CursorHoldI" }, {
+  command = "if mode() != 'c' | checktime | endif",
+})
+-- Notify when a file reloads so it's not silent/confusing
+vim.api.nvim_create_autocmd("FileChangedShellPost", {
+  callback = function() vim.notify("File reloaded (changed on disk)", vim.log.levels.INFO) end,
 })

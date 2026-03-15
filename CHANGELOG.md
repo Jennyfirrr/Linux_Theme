@@ -4,6 +4,16 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-03-14
+
+### Nvim — External Edit QOL (Claude Code / git)
+- Added `autoread`, `undofile`, `swapfile=false`, `writebackup=false`, `autowriteall` options
+- Added `checktime` autocmds on `FocusGained`, `BufEnter`, `CursorHold`, `CursorHoldI` — buffers now auto-reload when changed on disk (e.g. by Claude Code or `git checkout`)
+- Added `FileChangedShellPost` notification so reloads aren't silent
+- Disabled swap files (git is the safety net) and enabled persistent undo across sessions
+
+---
+
 ## 2026-03-13
 
 ### Neovim — Struct Field Color Variation & LSP Token Fix
