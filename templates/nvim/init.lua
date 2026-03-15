@@ -541,7 +541,6 @@ local plugins = {
     keys = {
       { "<leader>Ct", "<cmd>ClaudeCode<cr>", desc = "Claude toggle" },
       { "<leader>Cs", "<cmd>ClaudeCodeSend<cr>", mode = "v", desc = "Claude send selection" },
-      { "<leader>Cc", "<cmd>ClaudeCodeClose<cr>", desc = "Claude close" },
     },
     opts = {
       terminal = {
