@@ -6,6 +6,24 @@ All notable changes to the Fox ML theme.
 
 ## 2026-03-16
 
+### Nvim — Gitsigns Blame, Beacon, Notifications Cleanup
+- Added inline git blame on current line (author, relative time, summary) via gitsigns `current_line_blame`
+- Added beacon.nvim — cursor flashes peach on large jumps for visual tracking
+- Replaced nvim-notify with snacks.nvim minimal notifier (single-line, bottom-right, less screen clutter)
+- Removed nvim-notify plugin dependency from noice
+- Synced cursor blink: removed `guicursor` blink to match kitty's `cursor_blink_interval 0`
+- Added `BeaconDefault` and `GitSignsCurrentLineBlame` highlight groups to FoxML colorscheme
+
+### Tmux — Pane Border Shows Running Command
+- Pane border format now includes `#{pane_current_command}` (shows `nvim`, `python`, `zsh`, etc.)
+
+### Cursor — Peach Theme + Size Fix
+- Hyprland cursor theme: `catppuccin-latte-pink-cursors` → `catppuccin-mocha-peach-cursors`
+- Kitty terminal cursor color: `SECONDARY` (dusty rose) → `PRIMARY` (peach)
+- GTK 3/4: added `gtk-cursor-theme-name=catppuccin-mocha-peach-cursors` and `gtk-cursor-theme-size=30`
+- Fixed cursor size mismatch (GTK apps were 30, Hyprland was defaulting smaller) — set `XCURSOR_SIZE=30` in `env-init.sh` for early session export
+- Added Hyprland `cursor {}` section to `general.conf`
+
 ### Zsh — Hardening, Cleanup & Dead Code Removal
 - Removed `async.zsh` (never sourced, callback never registered, output unused)
 - Removed `gradient.zsh` (`gradient_text()` defined but never called anywhere)

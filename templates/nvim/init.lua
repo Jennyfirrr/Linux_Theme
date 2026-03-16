@@ -29,7 +29,7 @@ vim.opt.updatetime = 250
 vim.opt.scrolloff = 8
 vim.opt.smoothscroll = true
 vim.opt.cursorline = true
-vim.opt.guicursor = "n-v-c:block,i-ci-ve:ver25,r-cr:hor20,o:hor50,a:blinkwait400-blinkoff400-blinkon250"
+vim.opt.guicursor = "n-v-c:block,i-ci-ve:ver25,r-cr:hor20,o:hor50"
 vim.opt.clipboard = "unnamedplus"
 vim.opt.autoread = true           -- reload files changed outside nvim
 vim.opt.swapfile = false          -- no .swp clutter (git is the safety net)
@@ -217,7 +217,14 @@ local plugins = {
   },
 
   -- Git
-  { "lewis6991/gitsigns.nvim",          config = true },
+  {
+    "lewis6991/gitsigns.nvim",
+    opts = {
+      current_line_blame = true,
+      current_line_blame_opts = { delay = 300, virt_text_pos = "eol" },
+      current_line_blame_formatter = "  <author>, <author_time:%R> · <summary>",
+    },
+  },
 
   -- Syntax / Treesitter
   { "nvim-treesitter/nvim-treesitter",  build = ":TSUpdate" },
@@ -411,6 +418,18 @@ local plugins = {
   -- Surround (ysiw" to wrap word in quotes, cs"' to change, ds" to delete)
   { "kylechui/nvim-surround", version = "*", event = "VeryLazy", opts = {} },
 
+  -- Beacon (flash cursor on jump for visual tracking)
+  {
+    "danilamihailov/beacon.nvim",
+    event = "BufReadPost",
+    config = function()
+      vim.g.beacon_size = 30
+      vim.g.beacon_fade = true
+      vim.g.beacon_shrink = true
+      vim.g.beacon_minimal_jump = 5
+    end,
+  },
+
   -- Illuminate (highlight other occurrences of word under cursor)
   {
     "RRethy/vim-illuminate",
@@ -558,7 +577,7 @@ local plugins = {
           },
         },
       },
-      notifier = { enabled = false },
+      notifier = { enabled = true, style = "minimal" },
       indent = { enabled = false },
     },
   },
@@ -669,7 +688,7 @@ local plugins = {
   {
     "folke/noice.nvim",
     event = "VeryLazy",
-    dependencies = { "MunifTanjim/nui.nvim", "rcarriga/nvim-notify" },
+    dependencies = { "MunifTanjim/nui.nvim" },
     opts = {
       cmdline = {
         enabled = true,
@@ -682,7 +701,7 @@ local plugins = {
           lua = { pattern = { "^:%s*lua%s+", "^:%s*lua%s*=%s*", "^:%s*=%s*" }, icon = " ", lang = "lua" },
         },
       },
-      messages = { enabled = true, view_search = "virtualtext" },
+      messages = { enabled = true, view = "mini", view_search = "virtualtext" },
       popupmenu = { enabled = true, backend = "nui" },
       lsp = {
         override = {
@@ -703,25 +722,6 @@ local plugins = {
     },
   },
 
-  -- Notify (pretty notification popups, used by noice)
-  {
-    "rcarriga/nvim-notify",
-    opts = {
-      background_colour = P.bg,
-      fps = 60,
-      render = "wrapped-compact",
-      stages = "fade",
-      timeout = 2500,
-      max_width = 60,
-      icons = {
-        ERROR = " ",
-        WARN = " ",
-        INFO = " ",
-        DEBUG = " ",
-        TRACE = " ",
-      },
-    },
-  },
 
   -- Colorizer (show hex colors inline — skip C/C++ where 0x constants aren't colors)
   {
@@ -1263,6 +1263,12 @@ local function apply_foxml_theme()
   -- Copilot
   hl("CopilotSuggestion", { fg = P.comment, italic = true })
   hl("CopilotAnnotation", { fg = P.surface })
+
+  -- Beacon (cursor flash on jump)
+  hl("BeaconDefault", { bg = P.peach })
+
+  -- Gitsigns blame
+  hl("GitSignsCurrentLineBlame", { fg = P.surface, italic = true })
 
   -- Rainbow delimiters
   hl("RainbowDelimiterPeach",  { fg = P.peach })
