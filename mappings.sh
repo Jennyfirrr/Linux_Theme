@@ -29,9 +29,6 @@ TEMPLATE_MAPPINGS=(
     "zsh/colors.zsh|~/.config/zsh/colors.zsh"
     "zsh/welcome.zsh|~/.config/zsh/welcome.zsh"
     "zsh/caramel.zsh-theme|~/.oh-my-zsh/themes/caramel.zsh-theme"
-    "zsh/prompt.zsh|~/.config/zsh/prompt.zsh"
-    "zsh/gradient.zsh|~/.config/zsh/gradient.zsh"
-    "zsh/async.zsh|~/.config/zsh/async.zsh"
 
     # Mako
     "mako/config|~/.config/mako/config"

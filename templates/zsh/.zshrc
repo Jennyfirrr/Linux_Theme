@@ -2,6 +2,18 @@
 
 # ─── Shell options ────────────────────────────
 setopt correct
+setopt NO_CLOBBER
+setopt HIST_IGNORE_DUPS
+setopt HIST_IGNORE_SPACE
+setopt EXTENDED_HISTORY
+setopt SHARE_HISTORY
+setopt HIST_REDUCE_BLANKS
+typeset -U path PATH
+
+# ─── History ─────────────────────────────────
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=50000
+SAVEHIST=50000
 
 # ─── Environment ──────────────────────────────
 export QT_QPA_PLATFORMTHEME=qt5ct
@@ -9,7 +21,7 @@ export QT_QPA_PLATFORMTHEME=qt5ct
 # ─── Oh My Zsh ────────────────────────────────
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="caramel"
-plugins=(git zsh-syntax-highlighting zsh-autosuggestions)
+plugins=(git zsh-completions zsh-syntax-highlighting zsh-autosuggestions)
 source "$ZSH/oh-my-zsh.sh"
 
 # ─── Autosuggestions style ────────────────────
@@ -46,15 +58,20 @@ export LESS_TERMCAP_us=$'\e[4;38;5;{{ANSI_ACCENT3}}m'
 # ─── fzf ──────────────────────────────────────
 source /usr/share/fzf/key-bindings.zsh
 source /usr/share/fzf/completion.zsh
+export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+export FZF_ALT_C_COMMAND='fd --type d --hidden --follow --exclude .git'
 export FZF_DEFAULT_OPTS="
   --color=bg+:#{{SURFACE}},bg:#{{BG_DUNST}},fg:#{{FG}},fg+:#{{FG}}
   --color=hl:#{{FZF_ACCENT1}},hl+:#{{PRIMARY}},info:#{{FZF_ACCENT1}},marker:#{{PRIMARY}}
   --color=prompt:#{{PRIMARY}},spinner:#{{FZF_ACCENT1}},pointer:#{{PRIMARY}},header:#{{FZF_ACCENT1}}
   --color=border:#{{SURFACE}}
   --border=sharp --prompt='❯ ' --pointer='▸' --marker='●'
+  --preview='bat --color=always --style=numbers --line-range=:200 {} 2>/dev/null || eza --icons --color=always {}'
+  --preview-window=right:50%:hidden --bind='ctrl-/:toggle-preview'
 "
 
 # ─── Auto-attach tmux ─────────────────────────
-if [ -z "$TMUX" ]; then
+if [[ -z "$TMUX" && -z "$VSCODE_TERMINAL" && -z "$INTELLIJ_ENVIRONMENT_READER" && $- == *i* ]]; then
   tmux attach -t main || tmux new -s main
 fi

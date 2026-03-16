@@ -4,6 +4,39 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-03-16
+
+### Zsh — Hardening, Cleanup & Dead Code Removal
+- Removed `async.zsh` (never sourced, callback never registered, output unused)
+- Removed `gradient.zsh` (`gradient_text()` defined but never called anywhere)
+- Removed `prompt.zsh` (bash-style PS1 fallback that doesn't work in zsh — caramel handles everything)
+- Removed `welcome.zsh.bak` (identical to `welcome.zsh`)
+- Removed duplicate `list-colors` zstyle from `colors.zsh` (already set in `.zshrc`)
+- Cleaned up `mappings.sh` to remove references to deleted files
+- Template dir reduced from 8 files to 3 focused ones: caramel theme, colors, welcome
+
+### Zsh — Shell Options & History
+- Added `NO_CLOBBER` (prevents accidental file overwrites with `>`, use `>|` to force)
+- Added `HIST_IGNORE_DUPS`, `HIST_IGNORE_SPACE`, `EXTENDED_HISTORY`, `SHARE_HISTORY`, `HIST_REDUCE_BLANKS`
+- Added explicit `HISTFILE`, `HISTSIZE=50000`, `SAVEHIST=50000`
+- Added `typeset -U path PATH` to deduplicate PATH in nested shells/tmux
+
+### Zsh — fzf & Completions
+- Added `zsh-completions` plugin (extended completions for docker, systemctl, etc.)
+- Added `zsh-completions` to `--deps` installer in `install.sh`
+- fzf now uses `fd` as default command (faster, respects `.gitignore`)
+- Added hidden preview panel to fzf (`ctrl-/` to toggle — bat for files, eza for dirs)
+
+### Zsh — Robustness
+- Tmux auto-attach now skips IDE terminals (VS Code, IntelliJ) to prevent hijacking embedded terminals
+- `todo()` now checks for duplicates before adding
+- Welcome splash now shows active theme name next to the fox (e.g. `▸ FoxML Classic`)
+
+### Caramel Theme — Configurable Timer
+- Elapsed time threshold is now configurable via `CARAMEL_CMD_THRESHOLD` (defaults to 3s)
+
+---
+
 ## 2026-03-14
 
 ### Firefox — Earthy Theme Overhaul

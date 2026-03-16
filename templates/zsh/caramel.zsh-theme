@@ -3,6 +3,9 @@
 # ╰──────────────────────────────────────────────╯
 # Palette: peach({{ANSI_PROMPT}}) pink({{ANSI_ACCENT1}},{{GRAD1}}) mauve({{GRAD2}}) lavender({{ANSI_PROMPT2}},141)
 
+# ─── Config ──────────────────────────────────────
+CARAMEL_CMD_THRESHOLD=${CARAMEL_CMD_THRESHOLD:-3}
+
 # ─── Timer (tracks command execution time) ─────
 
 _caramel_timer_start=0
@@ -129,7 +132,7 @@ function caramel_precmd() {
     zmodload -F zsh/datetime p:EPOCHREALTIME
     local elapsed=$(( ${EPOCHREALTIME} - ${_caramel_timer_start} ))
     local elapsed_int=${elapsed%.*}
-    if (( elapsed_int >= 3 )); then
+    if (( elapsed_int >= CARAMEL_CMD_THRESHOLD )); then
       ELAPSED_PROMPT=" %{%F{{{ANSI_ACCENT1}}}%} $(fmt_elapsed $elapsed_int)%{%f%}"
     fi
     _caramel_timer_start=0

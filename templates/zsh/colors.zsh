@@ -86,6 +86,3 @@ ZSH_HIGHLIGHT_STYLES[assign]='fg={{ANSI_TEXT}}'
 ZSH_HIGHLIGHT_STYLES[redirection]='fg={{ANSI_ACCENT3}}'
 ZSH_HIGHLIGHT_STYLES[comment]='fg={{ANSI_MUTED}},italic'
 ZSH_HIGHLIGHT_STYLES[arg0]='fg=#{{GREEN_BRIGHT}}'
-
-# ─── Tab completion uses LS_COLORS ─────────────
-zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
