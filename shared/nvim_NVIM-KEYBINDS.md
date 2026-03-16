@@ -36,7 +36,8 @@ Leader: **Space** | Local leader: **Space**
 | `x` | Delete char under cursor |
 | `dd` / `D` | Delete line / to end of line |
 | `cc` / `C` | Change line / to end of line |
-| `yy` / `Y` | Yank line |
+| `yy` | Yank line |
+| `Y` | Yank to end of line (like D/C) |
 | `p` / `P` | Paste after / before |
 | `u` / `Ctrl+r` | Undo / Redo |
 | `.` | Repeat last change |
@@ -98,6 +99,7 @@ Examples:
 | `V` | Line-wise visual |
 | `Ctrl+v` | Block visual |
 | `gv` | Reselect last visual |
+| `gp` | Select last paste |
 | `o` | Jump to other end of selection |
 
 ### Marks & Jumps
@@ -181,25 +183,19 @@ Inside Telescope:
 | `Esc` / `Ctrl+c` | Close |
 | `Tab` | Toggle selection + move down |
 
-### Oil (File Explorer)
+### Neo-tree (File Explorer)
 | Key | Action |
 |-----|--------|
-| `-` | Open parent directory |
+| `Space e` | Toggle file explorer |
+| `-` | Reveal current file in tree |
 
-Inside Oil buffer:
+Inside Neo-tree:
 | Key | Action |
 |-----|--------|
-| `Enter` | Open file / Enter directory |
-| `-` | Go up one directory |
-| `Ctrl+p` | Preview file |
-| `g.` | Toggle hidden files |
-| `g?` | Show help / all keybinds |
-| `gs` | Change sort |
-| `gx` | Open with system app |
-| `Ctrl+l` | Refresh |
-| `Ctrl+s` | Save changes (commit renames/moves/deletes) |
-
-How to use: Oil opens directories as editable buffers. Type a new filename on a blank line to create a file. Rename by editing the name. Delete by removing the line. Press `Ctrl+s` or `:w` to apply. Oil confirms before deleting.
+| `Enter` / `l` | Open file / Expand directory |
+| `h` | Collapse node |
+| `s` | Open in horizontal split |
+| `v` | Open in vertical split |
 
 ### Harpoon (File Bookmarks)
 | Key | Action |
@@ -392,6 +388,14 @@ Inside Spectre:
 
 Project-wide find and replace with live preview. Supports regex.
 
+### Quality of Life
+| Key | Action |
+|-----|--------|
+| `Space w` | Save file |
+| `Space X` | Make file executable (chmod +x) |
+| `Space td` | Toggle diagnostic virtual text on/off |
+| `Alt+j` / `Alt+k` | Move line up/down (normal + visual) |
+
 ### Which-Key
 Press **Space** and wait — which-key pops up showing all leader binds and their descriptions.
 
@@ -509,6 +513,7 @@ Uses **Copilot provider** (routes through your GitHub Copilot subscription — n
 | **conform** | Formats C/C++ with clang-format on save |
 | **nvim-lint** | Runs clang-tidy on save / insert leave |
 | **todo-comments** | Highlights TODO, FIXME, HACK, etc. in comments |
+| **vim-illuminate** | Highlights other occurrences of the word under cursor |
 
 ---
 
@@ -575,3 +580,6 @@ Quick reference of all `Space` binds:
 | `x q` | Quickfix |
 | `f` | Format |
 | `/` | Toggle comment |
+| `w` | Save file |
+| `X` | Make file executable |
+| `t d` | Toggle diagnostic virtual text |
