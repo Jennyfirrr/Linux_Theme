@@ -30,8 +30,8 @@ TEMPLATE_MAPPINGS=(
     "zsh/welcome.zsh|~/.config/zsh/welcome.zsh"
     "zsh/caramel.zsh-theme|~/.oh-my-zsh/themes/caramel.zsh-theme"
 
-    # ReGreet (login screen)
-    "regreet/regreet.css|~/.config/regreet/regreet.css"
+    # ReGreet (login screen — needs sudo to install to /etc/greetd/)
+    # "regreet/regreet.css|/etc/greetd/regreet.css"
 
     # Mako
     "mako/config|~/.config/mako/config"
@@ -104,8 +104,8 @@ SHARED_MAPPINGS=(
     # Waybar config
     "waybar_config|~/.config/waybar/config"
 
-    # ReGreet (login screen)
-    "regreet.toml|~/.config/regreet/regreet.toml"
+    # ReGreet (login screen — needs sudo to install to /etc/greetd/)
+    # "regreet.toml|/etc/greetd/regreet.toml"
 )
 
 # ─────────────────────────────────────────
@@ -191,6 +191,17 @@ PKGJSON
             cp "$mod" "$HOME/.config/hypr/modules/$basename"
             echo "  ✓ modules/$basename"
         done
+    fi
+
+    # ReGreet (login screen — requires sudo)
+    if [[ -f "$rendered_dir/regreet/regreet.css" ]]; then
+        # Stage files where user can review them
+        mkdir -p ~/.config/regreet
+        cp "$rendered_dir/regreet/regreet.css" ~/.config/regreet/regreet.css
+        cp "$SCRIPT_DIR/shared/regreet.toml" ~/.config/regreet/regreet.toml
+        echo "  ✓ ReGreet staged to ~/.config/regreet/"
+        echo "  To activate: sudo cp ~/.config/regreet/regreet.{css,toml} /etc/greetd/"
+        echo "  Wallpaper:   sudo cp ~/.wallpapers/foxml_earthy.jpg /usr/share/wallpapers/"
     fi
 
     # Wallpapers

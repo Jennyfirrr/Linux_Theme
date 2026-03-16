@@ -15,6 +15,10 @@ alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
 
+# ─── Editors (preserve theme for sudo) ───────
+alias svim='sudoedit'
+alias snvim='sudo -E nvim'
+
 # ─── Utilities ────────────────────────────────
 alias myip='curl ifconfig.me'
 alias sizeof='du -sh'

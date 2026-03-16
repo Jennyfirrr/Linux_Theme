@@ -3,7 +3,7 @@
 /* Background */
 window {
   background-color: #{{BG}};
-  background-image: url("file:///home/jennifer/.wallpapers/foxml_earthy.jpg");
+  background-image: url("file:///usr/share/wallpapers/foxml_earthy.jpg");
   background-size: cover;
   background-position: center;
 }

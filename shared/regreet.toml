@@ -1,5 +1,5 @@
 [background]
-path = "/home/jennifer/.wallpapers/foxml_earthy.jpg"
+path = "/usr/share/wallpapers/foxml_earthy.jpg"
 fit = "Cover"
 
 [GTK]
@@ -10,5 +10,8 @@ icon_theme_name = "Papirus-Dark"
 theme_name = "Adwaita"
 
 [commands]
-reboot = [ "systemctl", "reboot" ]
-poweroff = [ "systemctl", "poweroff" ]
+reboot = ["systemctl", "reboot"]
+poweroff = ["systemctl", "poweroff"]
+
+[appearance]
+greeting_msg = "Welcome back!"
