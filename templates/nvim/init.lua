@@ -399,6 +399,19 @@ local plugins = {
   -- Surround (ysiw" to wrap word in quotes, cs"' to change, ds" to delete)
   { "kylechui/nvim-surround", version = "*", event = "VeryLazy", opts = {} },
 
+  -- Illuminate (highlight other occurrences of word under cursor)
+  {
+    "RRethy/vim-illuminate",
+    event = "BufReadPost",
+    opts = {
+      delay = 200,
+      filetypes_denylist = { "neo-tree", "Trouble", "aerial", "toggleterm", "lazy", "mason" },
+    },
+    config = function(_, opts)
+      require("illuminate").configure(opts)
+    end,
+  },
+
   -- Harpoon (bookmark files, jump with Ctrl+1-4)
   {
     "ThePrimeagen/harpoon",
@@ -1355,6 +1368,11 @@ local function apply_foxml_theme()
   hl("ClaudeCodeTitle",     { fg = P.bg, bg = P.peach, bold = true })
   hl("ClaudeCodeSeparator", { fg = P.bg_deep, bg = P.bg_deep })
 
+  -- vim-illuminate (subtle earthy underline, not distracting)
+  hl("IlluminatedWordText",  { bg = P.bg_hl })
+  hl("IlluminatedWordRead",  { bg = P.bg_hl })
+  hl("IlluminatedWordWrite", { bg = P.bg_hl, underline = true })
+
   -- nvim-cmp
   hl("CmpItemAbbrMatch",      { fg = P.peach, bold = true })
   hl("CmpItemAbbrMatchFuzzy", { fg = P.peach })
@@ -1845,6 +1863,30 @@ map("n", "<C-d>", "<C-d>zz", { desc = "Scroll down (centered)" })
 map("n", "<C-u>", "<C-u>zz", { desc = "Scroll up (centered)" })
 map("n", "n", "nzzzv", { desc = "Next search result (centered)" })
 map("n", "N", "Nzzzv", { desc = "Prev search result (centered)" })
+
+-- Quick save
+map("n", "<leader>w", "<cmd>w<cr>", { desc = "Save file" })
+
+-- Yank to end of line (consistent with D and C)
+map("n", "Y", "y$", { desc = "Yank to end of line" })
+
+-- Select last paste
+map("n", "gp", "`[v`]", { desc = "Select last paste" })
+
+-- Move line up/down in normal mode
+map("n", "<A-j>", "<cmd>m .+1<cr>==", { desc = "Move line down" })
+map("n", "<A-k>", "<cmd>m .-2<cr>==", { desc = "Move line up" })
+
+-- Make file executable
+map("n", "<leader>X", "<cmd>!chmod +x %<cr>", { silent = true, desc = "Make file executable" })
+
+-- Toggle diagnostic virtual text
+local diag_vt_enabled = true
+map("n", "<leader>td", function()
+  diag_vt_enabled = not diag_vt_enabled
+  vim.diagnostic.config({ virtual_text = diag_vt_enabled })
+  vim.notify("Diagnostic virtual text: " .. (diag_vt_enabled and "ON" or "OFF"))
+end, { desc = "Toggle diagnostic virtual text" })
 
 -- Highlight on yank (brief flash)
 vim.api.nvim_create_autocmd("TextYankPost", {
