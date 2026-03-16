@@ -241,6 +241,18 @@ local plugins = {
     dependencies = { "nvim-tree/nvim-web-devicons" },
     opts = {},
   },
+  -- Diagnostic lines (multi-line diagnostics below error, toggled with keybind)
+  {
+    "https://git.sr.ht/~whynothugo/lsp_lines.nvim",
+    event = "LspAttach",
+    config = function()
+      local lsp_lines = require("lsp_lines")
+      lsp_lines.setup()
+      -- Start disabled — toggle with <leader>tl
+      vim.diagnostic.config({ virtual_lines = false })
+    end,
+  },
+
   -- TODO highlights
   { "folke/todo-comments.nvim",         dependencies = { "nvim-lua/plenary.nvim" },       opts = {} },
 
@@ -806,7 +818,7 @@ require("lazy").setup(plugins, {
 })
 
 -- setup optional
-vim.opt.signcolumn = "yes:1"
+vim.opt.signcolumn = "yes:2"
 vim.opt.fillchars:append({ eob = " ", vert = " " })
 
 -- Popup menu transparency only (winblend left at 0 so splits stay solid)
@@ -959,8 +971,8 @@ local function apply_foxml_theme()
   hl("DiagnosticLineNrWarn",     { fg = P.wheat, bold = true })
   hl("DiagnosticLineNrInfo",     { fg = P.peach, bold = true })
   hl("DiagnosticLineNrHint",     { fg = P.green, bold = true })
-  hl("DiagnosticLineError",     { bg = P.diff_del })
-  hl("DiagnosticLineWarn",      { bg = P.diff_chg })
+  hl("DiagnosticLineError",     { bg = "#3d1a1a" })
+  hl("DiagnosticLineWarn",      { bg = "#3d2e1a" })
   hl("DiagnosticLineInfo",      { bg = P.bg_hl })
   hl("DiagnosticLineHint",      { bg = P.bg_hl })
 
@@ -1450,6 +1462,12 @@ vim.diagnostic.config({
       [vim.diagnostic.severity.INFO]  = " ",
       [vim.diagnostic.severity.HINT]  = " ",
     },
+    texthl = {
+      [vim.diagnostic.severity.ERROR] = "DiagnosticSignError",
+      [vim.diagnostic.severity.WARN]  = "DiagnosticSignWarn",
+      [vim.diagnostic.severity.INFO]  = "DiagnosticSignInfo",
+      [vim.diagnostic.severity.HINT]  = "DiagnosticSignHint",
+    },
     numhl = {
       [vim.diagnostic.severity.ERROR] = "DiagnosticLineNrError",
       [vim.diagnostic.severity.WARN]  = "DiagnosticLineNrWarn",
@@ -1887,6 +1905,17 @@ map("n", "<leader>td", function()
   vim.diagnostic.config({ virtual_text = diag_vt_enabled })
   vim.notify("Diagnostic virtual text: " .. (diag_vt_enabled and "ON" or "OFF"))
 end, { desc = "Toggle diagnostic virtual text" })
+
+-- Toggle lsp_lines (multi-line diagnostics below error lines)
+local lsp_lines_enabled = false
+map("n", "<leader>tl", function()
+  lsp_lines_enabled = not lsp_lines_enabled
+  vim.diagnostic.config({
+    virtual_lines = lsp_lines_enabled,
+    virtual_text = not lsp_lines_enabled,
+  })
+  vim.notify("Diagnostic lines: " .. (lsp_lines_enabled and "ON" or "OFF"))
+end, { desc = "Toggle diagnostic lines" })
 
 -- Highlight on yank (brief flash)
 vim.api.nvim_create_autocmd("TextYankPost", {
