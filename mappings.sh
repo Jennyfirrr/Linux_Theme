@@ -30,6 +30,9 @@ TEMPLATE_MAPPINGS=(
     "zsh/welcome.zsh|~/.config/zsh/welcome.zsh"
     "zsh/caramel.zsh-theme|~/.oh-my-zsh/themes/caramel.zsh-theme"
 
+    # ReGreet (login screen)
+    "regreet/regreet.css|~/.config/regreet/regreet.css"
+
     # Mako
     "mako/config|~/.config/mako/config"
 
@@ -100,6 +103,9 @@ SHARED_MAPPINGS=(
 
     # Waybar config
     "waybar_config|~/.config/waybar/config"
+
+    # ReGreet (login screen)
+    "regreet.toml|~/.config/regreet/regreet.toml"
 )
 
 # ─────────────────────────────────────────

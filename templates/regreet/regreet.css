@@ -1,0 +1,107 @@
+/* ====== Fox ML — ReGreet Login Theme ====== */
+
+/* Background */
+window {
+  background-color: #{{BG}};
+  background-image: url("file:///home/jennifer/.wallpapers/foxml_earthy.jpg");
+  background-size: cover;
+  background-position: center;
+}
+
+/* Center box (login container) */
+#body > box {
+  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.85);
+  border: 2px solid #{{PRIMARY}};
+  border-radius: 0;
+  padding: 40px 50px;
+  margin: 0;
+}
+
+/* Greeting / header text */
+#greeting-label {
+  color: #{{PRIMARY}};
+  font-family: "JetBrainsMono Nerd Font";
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 16px;
+}
+
+/* Clock / date */
+#clock-label {
+  color: #{{FG}};
+  font-family: "JetBrainsMono Nerd Font";
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+/* Labels (Username, Password, Session) */
+label {
+  color: #{{FG_PASTEL}};
+  font-family: "JetBrainsMono Nerd Font";
+  font-size: 14px;
+}
+
+/* Text entries (username, password) */
+entry {
+  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.9);
+  color: #{{FG}};
+  border: 2px solid #{{SURFACE}};
+  border-radius: 0;
+  padding: 10px 14px;
+  font-family: "JetBrainsMono Nerd Font";
+  font-size: 14px;
+  caret-color: #{{PRIMARY}};
+  min-width: 280px;
+}
+
+entry:focus {
+  border-color: #{{PRIMARY}};
+  box-shadow: 0 0 0 1px rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.3);
+}
+
+/* Buttons */
+button {
+  background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.2);
+  color: #{{FG}};
+  border: 2px solid #{{PRIMARY}};
+  border-radius: 0;
+  padding: 8px 24px;
+  font-family: "JetBrainsMono Nerd Font";
+  font-size: 14px;
+  font-weight: bold;
+}
+
+button:hover {
+  background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.35);
+}
+
+button:active {
+  background-color: #{{PRIMARY}};
+  color: #{{BG}};
+}
+
+/* Dropdown (session selector) */
+combobox, dropdown {
+  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.9);
+  color: #{{FG}};
+  border: 2px solid #{{SURFACE}};
+  border-radius: 0;
+  padding: 6px 10px;
+  font-family: "JetBrainsMono Nerd Font";
+}
+
+combobox:focus, dropdown:focus {
+  border-color: #{{PRIMARY}};
+}
+
+/* Error messages */
+#error-label {
+  color: #{{RED}};
+  font-weight: bold;
+}
+
+/* Scrollbar (if user list overflows) */
+scrollbar slider {
+  background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.3);
+  border-radius: 0;
+}

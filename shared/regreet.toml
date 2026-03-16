@@ -1,0 +1,14 @@
+[background]
+path = "/home/jennifer/.wallpapers/foxml_earthy.jpg"
+fit = "Cover"
+
+[GTK]
+application_prefer_dark_theme = true
+cursor_theme_name = "catppuccin-mocha-peach-cursors"
+font_name = "JetBrainsMono Nerd Font 12"
+icon_theme_name = "Papirus-Dark"
+theme_name = "Adwaita"
+
+[commands]
+reboot = [ "systemctl", "reboot" ]
+poweroff = [ "systemctl", "poweroff" ]

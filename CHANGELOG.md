@@ -6,6 +6,16 @@ All notable changes to the Fox ML theme.
 
 ## 2026-03-16
 
+### Nvim — Dashboard Fox Art
+- Replaced plain ASCII `FoxML` logo with the fox character from zsh welcome splash in snacks dashboard
+
+### ReGreet — FoxML Login Screen
+- Added ReGreet (GTK4 greetd greeter) template with full FoxML theming
+- CSS theme: dark background with wallpaper, peach borders/accents, sharp corners, frosted login box
+- Config: wallpaper background, dark theme, peach cursor, Papirus-Dark icons, JetBrains Mono font
+- Added template and shared mappings for install/sync support
+- To switch from tuigreet: `sudo pacman -S greetd-regreet` then update `/etc/greetd/config.toml`
+
 ### Nvim — Gitsigns Blame, Beacon, Notifications Cleanup
 - Added inline git blame on current line (author, relative time, summary) via gitsigns `current_line_blame`
 - Added beacon.nvim — cursor flashes peach on large jumps for visual tracking

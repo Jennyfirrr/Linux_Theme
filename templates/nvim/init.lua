@@ -560,11 +560,11 @@ local plugins = {
         enabled = true,
         preset = {
           header = [[
-   ____            __  __ _
-  |  __| _____  _|  \/  | |
-  | |__ / _ \ \/ / |\/| | |
-  |  __| (_) >  <| |  | | |___
-  |_|   \___/_/\_\_|  |_|_____|
+
+        ╱|、
+      (˚ˎ 。7      ┌─────────────┐
+       |、˜〵       │   F o x M L  │
+       じしˍ,)ノ    └─────────────┘
           ]],
           keys = {
             { icon = " ", key = "f", desc = "Find File", action = ":Telescope find_files" },
