@@ -452,9 +452,11 @@ Press **Space** and wait — which-key pops up showing all leader binds and thei
 | `:Copilot auth` | Log in to GitHub |
 | `:Copilot status` | Check connection status |
 
-Ghost-text suggestions appear automatically as you type. Use `Ctrl+l` to accept the full suggestion, or `Ctrl+;` / `Ctrl+'` to accept partially.
+Ghost-text suggestions appear automatically when inline mode is active. Use `Ctrl+l` to accept the full suggestion, or `Ctrl+;` / `Ctrl+'` to accept partially.
 
-**Note:** If you want Copilot suggestions in the nvim-cmp completion menu (alongside LSP results) instead of or in addition to ghost text, add `zbirenbaum/copilot-cmp`. This lets you see Copilot as a ranked source in the popup menu rather than separate inline text.
+| `Space Ci` | Toggle between inline ghost-text and cmp menu mode |
+
+**Modes:** Copilot can run in two modes — **inline** (ghost-text ahead of cursor, accept with `Ctrl+l`) or **cmp menu** (suggestions appear in the autocomplete popup alongside LSP). Toggle with `Space Ci`.
 
 ### Claude Code (AI Terminal)
 | Key | Action |
@@ -565,6 +567,7 @@ Quick reference of all `Space` binds:
 | `g d` | Git diff view |
 | `g h` | Git file history |
 | `g q` | Close diff view |
+| `C i` | Copilot toggle inline/cmp |
 | `C t` | Claude toggle terminal |
 | `C s` | Claude send selection |
 | `a a` | AI ask |

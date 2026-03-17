@@ -567,10 +567,10 @@ local plugins = {
         preset = {
           header = [[
 
-          ╱|、
-        (˚ˎ 。7
-         |、˜〵
-            じしˍ,)ノ
+         ╱|、
+       (˚ˎ 。7
+        |、˜〵
+           じしˍ,)ノ
 
     ~ F o x M L ~
           ]],
@@ -1789,6 +1789,21 @@ map("n", "<C-1>", function() harpoon:list():select(1) end, { desc = "Harpoon 1" 
 map("n", "<C-2>", function() harpoon:list():select(2) end, { desc = "Harpoon 2" })
 map("n", "<C-3>", function() harpoon:list():select(3) end, { desc = "Harpoon 3" })
 map("n", "<C-4>", function() harpoon:list():select(4) end, { desc = "Harpoon 4" })
+
+-- Copilot: toggle inline ghost-text vs cmp-menu suggestions
+map("n", "<leader>Ci", function()
+  local cfg = require("copilot.config").get().suggestion
+  if cfg.enabled then
+    cfg.enabled = false
+    cfg.auto_trigger = false
+    require("copilot.suggestion").dismiss()
+    vim.notify("Copilot: cmp menu mode", vim.log.levels.INFO)
+  else
+    cfg.enabled = true
+    cfg.auto_trigger = true
+    vim.notify("Copilot: inline suggestions mode", vim.log.levels.INFO)
+  end
+end, { desc = "Copilot toggle inline/cmp" })
 
 -- Undotree
 map("n", "<leader>u", "<cmd>UndotreeToggle<cr>", { desc = "Undotree" })
