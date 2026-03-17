@@ -1,6 +1,6 @@
 /* ====== Fox ML — ReGreet Login Theme ====== */
 
-/* Background */
+/* ─── Background ─────────────────────────────── */
 window {
   background-color: #{{BG}};
   background-image: url("file:///usr/share/wallpapers/foxml_earthy.jpg");
@@ -8,100 +8,175 @@ window {
   background-position: center;
 }
 
-/* Center box (login container) */
-#body > box {
-  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.85);
-  border: 2px solid #{{PRIMARY}};
+/* ─── Global ─────────────────────────────────── */
+* {
+  font-family: "JetBrainsMono Nerd Font";
   border-radius: 0;
-  padding: 40px 50px;
+}
+
+/* ─── Login container ────────────────────────── */
+#body > box {
+  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.88);
+  border: none;
+  border-left: 4px solid #{{PRIMARY}};
+  padding: 52px 64px 40px 64px;
+  min-width: 400px;
+  box-shadow:
+    0 0 80px rgba(0,0,0,0.6),
+    0 0 20px rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.08);
+}
+
+/* ─── Greeting ───────────────────────────────── */
+#greeting-label {
+  color: #{{PRIMARY}};
+  font-size: 36px;
+  font-weight: bold;
+  letter-spacing: 4px;
+  margin-bottom: 32px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.25);
+}
+
+/* ─── Clock ──────────────────────────────────── */
+#clock-label {
+  color: rgba({{FG_R}},{{FG_G}},{{FG_B}},0.55);
+  font-size: 12px;
+  letter-spacing: 2px;
+  padding: 8px 20px;
+  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.7);
+  border: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.2);
+}
+
+/* ─── Labels ─────────────────────────────────── */
+label {
+  color: rgba({{FG_R}},{{FG_G}},{{FG_B}},0.5);
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+/* ─── Hide session row + edit buttons ────────── */
+/* Session selector — hide completely (single session = Hyprland) */
+#session-box,
+combobox#session-combo,
+#session-row,
+box:nth-child(3) {
+  opacity: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+}
+
+/* Hide edit/pencil toggle buttons */
+button.circular {
+  opacity: 0;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
   margin: 0;
 }
 
-/* Greeting / header text */
-#greeting-label {
-  color: #{{PRIMARY}};
-  font-family: "JetBrainsMono Nerd Font";
-  font-size: 28px;
-  font-weight: bold;
-  margin-bottom: 16px;
-}
-
-/* Clock / date */
-#clock-label {
+/* ─── User dropdown ──────────────────────────── */
+combobox,
+dropdown {
+  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.5);
   color: #{{FG}};
-  font-family: "JetBrainsMono Nerd Font";
-  font-size: 14px;
-  margin-bottom: 24px;
+  border: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.3);
+  padding: 12px 16px;
+  font-size: 15px;
+  min-width: 280px;
 }
 
-/* Labels (Username, Password, Session) */
-label {
-  color: #{{FG_PASTEL}};
-  font-family: "JetBrainsMono Nerd Font";
-  font-size: 14px;
+combobox:focus,
+dropdown:focus {
+  border-color: #{{PRIMARY}};
+  box-shadow: 0 0 0 1px rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.2);
 }
 
-/* Text entries (username, password) */
+/* ─── Text entries ───────────────────────────── */
 entry {
-  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.9);
+  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.5);
   color: #{{FG}};
-  border: 2px solid #{{SURFACE}};
-  border-radius: 0;
-  padding: 10px 14px;
-  font-family: "JetBrainsMono Nerd Font";
-  font-size: 14px;
+  border: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.3);
+  padding: 12px 16px;
+  font-size: 15px;
   caret-color: #{{PRIMARY}};
   min-width: 280px;
 }
 
 entry:focus {
   border-color: #{{PRIMARY}};
-  box-shadow: 0 0 0 1px rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.3);
+  box-shadow: 0 0 0 1px rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.2);
 }
 
-/* Buttons */
-button {
-  background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.2);
-  color: #{{FG}};
-  border: 2px solid #{{PRIMARY}};
-  border-radius: 0;
-  padding: 8px 24px;
-  font-family: "JetBrainsMono Nerd Font";
-  font-size: 14px;
+entry placeholder {
+  color: rgba({{FG_R}},{{FG_G}},{{FG_B}},0.25);
+}
+
+/* ─── Login button ───────────────────────────── */
+button#login-button,
+#body > box > box:last-child button {
+  background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.15);
+  color: #{{PRIMARY}};
+  border: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.4);
+  padding: 12px 48px;
+  font-size: 13px;
   font-weight: bold;
+  letter-spacing: 3px;
+  margin-top: 12px;
 }
 
-button:hover {
-  background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.35);
+button#login-button:hover,
+#body > box > box:last-child button:hover {
+  background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.3);
+  border-color: #{{PRIMARY}};
+  color: #{{FG}};
 }
 
-button:active {
+button#login-button:active,
+#body > box > box:last-child button:active {
   background-color: #{{PRIMARY}};
   color: #{{BG}};
 }
 
-/* Dropdown (session selector) */
-combobox, dropdown {
-  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.9);
+/* ─── Bottom power bar ───────────────────────── */
+#bottom-bar,
+window > box > box:last-child {
+  background-color: transparent;
+}
+
+#bottom-bar button,
+window > box > box:last-child button {
+  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.55);
+  border: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.15);
+  color: rgba({{FG_R}},{{FG_G}},{{FG_B}},0.4);
+  padding: 8px 24px;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+#bottom-bar button:hover,
+window > box > box:last-child button:hover {
+  background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.2);
+  border-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.4);
   color: #{{FG}};
-  border: 2px solid #{{SURFACE}};
-  border-radius: 0;
-  padding: 6px 10px;
-  font-family: "JetBrainsMono Nerd Font";
 }
 
-combobox:focus, dropdown:focus {
-  border-color: #{{PRIMARY}};
-}
-
-/* Error messages */
+/* ─── Error ──────────────────────────────────── */
 #error-label {
   color: #{{RED}};
   font-weight: bold;
+  font-size: 12px;
+  margin-top: 8px;
 }
 
-/* Scrollbar (if user list overflows) */
+/* ─── Tooltips ───────────────────────────────── */
+tooltip {
+  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.95);
+  color: #{{FG}};
+  border: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.3);
+}
+
+/* ─── Scrollbar ──────────────────────────────── */
 scrollbar slider {
-  background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.3);
-  border-radius: 0;
+  background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.25);
 }

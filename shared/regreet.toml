@@ -5,6 +5,7 @@ fit = "Cover"
 [GTK]
 application_prefer_dark_theme = true
 cursor_theme_name = "catppuccin-mocha-peach-cursors"
+cursor_theme_size = 30
 font_name = "JetBrainsMono Nerd Font 12"
 icon_theme_name = "Papirus-Dark"
 theme_name = "Adwaita"
@@ -14,4 +15,9 @@ reboot = ["systemctl", "reboot"]
 poweroff = ["systemctl", "poweroff"]
 
 [appearance]
-greeting_msg = "Welcome back!"
+greeting_msg = "F O X M L"
+
+[widget.clock]
+format = "%A · %I:%M %p"
+resolution = "30000ms"
+label_width = 200

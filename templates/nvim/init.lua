@@ -239,6 +239,12 @@ local plugins = {
   { "hrsh7th/cmp-path" },
   { "L3MON4D3/LuaSnip",                 build = "make install_jsregexp" },
   { "saadparwaiz1/cmp_luasnip" },
+  {
+    "zbirenbaum/copilot-cmp",
+    dependencies = { "zbirenbaum/copilot.lua" },
+    event = { "InsertEnter", "LspAttach" },
+    config = function() require("copilot_cmp").setup() end,
+  },
   { "echasnovski/mini.icons",           version = false },
 
   -- Diagnostics UI
@@ -421,12 +427,12 @@ local plugins = {
   -- Beacon (flash cursor on jump for visual tracking)
   {
     "danilamihailov/beacon.nvim",
-    event = "BufReadPost",
+    event = { "BufReadPost", "BufWinEnter" },
     config = function()
       vim.g.beacon_size = 30
       vim.g.beacon_fade = true
       vim.g.beacon_shrink = true
-      vim.g.beacon_minimal_jump = 5
+      vim.g.beacon_minimal_jump = 1
     end,
   },
 
@@ -481,8 +487,8 @@ local plugins = {
     event = "InsertEnter",
     opts = {
       suggestion = {
-        enabled = true,
-        auto_trigger = true,
+        enabled = false,
+        auto_trigger = false,
         debounce = 150,
         keymap = {
           accept = "<C-l>",       -- Ctrl+l to accept
@@ -561,10 +567,12 @@ local plugins = {
         preset = {
           header = [[
 
-        ╱|、
-      (˚ˎ 。7      ┌─────────────┐
-       |、˜〵       │   F o x M L  │
-       じしˍ,)ノ    └─────────────┘
+          ╱|、
+        (˚ˎ 。7
+         |、˜〵
+            じしˍ,)ノ
+
+    ~ F o x M L ~
           ]],
           keys = {
             { icon = " ", key = "f", desc = "Find File", action = ":Telescope find_files" },
@@ -1636,7 +1644,7 @@ cmp.setup({
       end
     end, { "i", "s" }),
   }),
-  sources = cmp.config.sources({ { name = "nvim_lsp" }, { name = "luasnip" } },
+  sources = cmp.config.sources({ { name = "copilot" }, { name = "nvim_lsp" }, { name = "luasnip" } },
     { { name = "buffer" }, { name = "path" } }),
 })
 
