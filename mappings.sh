@@ -199,9 +199,14 @@ PKGJSON
         mkdir -p ~/.config/regreet
         cp "$rendered_dir/regreet/regreet.css" ~/.config/regreet/regreet.css
         cp "$SCRIPT_DIR/shared/regreet.toml" ~/.config/regreet/regreet.toml
+        cp "$SCRIPT_DIR/shared/greetd_hyprland.conf" ~/.config/regreet/hyprland.conf
         echo "  ✓ ReGreet staged to ~/.config/regreet/"
-        echo "  To activate: sudo cp ~/.config/regreet/regreet.{css,toml} /etc/greetd/"
-        echo "  Wallpaper:   sudo cp ~/.wallpapers/foxml_earthy.jpg /usr/share/wallpapers/"
+        echo "  To activate:"
+        echo "    sudo cp ~/.config/regreet/regreet.{css,toml} /etc/greetd/"
+        echo "    sudo cp ~/.config/regreet/hyprland.conf /etc/greetd/hyprland.conf"
+        echo "    sudo cp ~/.wallpapers/foxml_earthy.jpg /usr/share/wallpapers/"
+        echo "  Then set greetd config.toml to:"
+        echo "    command = \"Hyprland -c /etc/greetd/hyprland.conf\""
     fi
 
     # Wallpapers
