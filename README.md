@@ -1,8 +1,8 @@
 # FoxML Theme Hub
 
-A template-based multi-theme hub for 23+ apps. Sharp corners, no rounded anything. One set of configs, any number of color schemes.
+A template-based multi-theme hub for 24+ apps. Sharp corners, no rounded anything. One set of configs, any number of color schemes. Includes a themed login screen (greetd + regreet) that boots straight into Hyprland.
 
-> If you're trying to use this and you messed up your computer and you're in the same CS course as me, it would bring me great enjoyment if instead of asking me for help, you make it the UAB CS faculty's problem.
+New to Linux? This runs on [Arch Linux](https://archlinux.org/) with the [Hyprland](https://hyprland.org/) Wayland compositor. If you're coming from Windows or macOS, [archinstall](https://wiki.archlinux.org/title/Archinstall) makes getting started much easier than the manual install process.
 
 ## Theme
 
@@ -29,8 +29,27 @@ Dark theme with earthy, muted tones — warm peach, dusty rose, sage, and wheat 
 ## Prerequisites
 
 - **Arch Linux** (the installer uses `pacman` for dependencies)
+- **Hyprland** (Wayland compositor)
+- **greetd + regreet** (login screen — optional but included)
 - `bash`, `git`, `sed`
 - Apps you want themed should already be installed, or use `--deps` to install them
+
+### Key Dependencies
+
+| Package | Purpose |
+|---------|---------|
+| `hyprland` | Wayland compositor |
+| `greetd`, `greetd-regreet` | Login manager + graphical greeter |
+| `kitty` | Terminal emulator |
+| `waybar` | Status bar |
+| `rofi-wayland` | App launcher |
+| `hyprpaper` | Wallpaper manager |
+| `hypridle`, `hyprlock` | Idle/lock screen |
+| `mako` or `dunst` | Notifications |
+| `zsh`, `oh-my-zsh` | Shell |
+| `neovim` | Editor (with 30+ plugins) |
+
+Run `./install.sh --deps` to install most of these automatically.
 
 ## Quick Start
 
@@ -66,7 +85,8 @@ templates/                  <- config files with {{PLACEHOLDER}} tokens
   waybar/style.css            @define-color bg #{{BG}}, rgba({{PRIMARY_R}}, ...), ...
   zsh/.zshrc                  %F{{{ANSI_ACCENT1}}}, fg=#{{ZSH_SUGGEST}}, ...
   hyprlock/hyprlock.conf      rgb({{PRIMARY_R}}, {{PRIMARY_G}}, {{PRIMARY_B}}), ...
-  ... (29 files across 21 app directories)
+  regreet/regreet.css           background rgba({{BG_R}}, ...), color #{{PRIMARY}}, ...
+  ... (30+ files across 22+ app directories)
 
 themes/
   FoxML_Classic/
@@ -112,6 +132,7 @@ Every one of these gets its colors from the active theme's `palette.sh`:
 | Cursor/VS Code | `templates/cursor/` | `~/.cursor/extensions/foxml-theme/` |
 | Discord (Vencord) | `templates/vencord/foxml.css` | `~/.config/Vencord/themes/foxml.css` |
 | Bat | `templates/bat/foxml.tmTheme` | `~/.config/bat/themes/Fox ML.tmTheme` |
+| ReGreet (login) | `templates/regreet/regreet.css` | `/etc/greetd/regreet.css` (via sudo) |
 
 ## Shared (Non-Color) Files
 
@@ -132,6 +153,8 @@ These are copied as-is regardless of theme — keybinds, scripts, layout configs
 | `shared/zsh_aliases.zsh` | Shell aliases |
 | `shared/zsh_paths.zsh` | PATH setup |
 | `shared/zsh_conda.zsh` | Conda/mamba init |
+| `shared/regreet.toml` | ReGreet greeter config (font, cursor, clock, env vars) |
+| `shared/greetd_hyprland.conf` | Minimal Hyprland config for the greeter session |
 
 ## Zsh / Shell
 
@@ -153,9 +176,39 @@ Requires: [Oh My Zsh](https://ohmyz.sh/), [zsh-syntax-highlighting](https://gith
 
 See [`shared/nvim_NVIM-KEYBINDS.md`](shared/nvim_NVIM-KEYBINDS.md) for the complete keybind reference.
 
-**AI:** copilot.lua (ghost-text) + avante.nvim (Cursor-style chat panel)
+**AI integration:**
+- **copilot.lua** — inline ghost-text completions + copilot-cmp source (toggle with `<Space>Ci`)
+- **avante.nvim** — Cursor-style AI chat panel using Copilot provider (Claude Sonnet 4)
+- **claudecode.nvim** — Claude Code terminal integration (`<Space>Ct` toggle, `<Space>Cs` send selection)
 
 **Highlights:** LSP via mason, DAP debugging, cmake-tools, neotest, lazygit, telescope, harpoon, neo-tree, treesitter, zen-mode
+
+## Login Screen (greetd + regreet)
+
+The login screen is themed via regreet (a GTK4 greeter for greetd) running inside a minimal Hyprland session — no cage, no TTY flash.
+
+After running `./install.sh`, deploy the login theme:
+
+```bash
+# Copy themed files to greetd
+sudo cp ~/.config/regreet/regreet.{css,toml} /etc/greetd/
+sudo cp ~/.config/regreet/hyprland.conf /etc/greetd/hyprland.conf
+sudo cp ~/.wallpapers/foxml_earthy.jpg /usr/share/wallpapers/
+
+# Set greetd to use Hyprland as the greeter compositor
+sudo tee /etc/greetd/config.toml << 'EOF'
+[terminal]
+vt = 1
+[default_session]
+command = "Hyprland -c /etc/greetd/hyprland.conf"
+user = "greeter"
+EOF
+
+# Enable greetd
+sudo systemctl enable greetd
+```
+
+On first login, select your Hyprland session from the Session dropdown — regreet remembers it for next time.
 
 ## Creating a New Theme
 
@@ -182,6 +235,7 @@ See `themes/FoxML_Classic/palette.sh` for the full variable list.
 4. Firefox: enable `toolkit.legacyUserProfileCustomizations.stylesheets` in `about:config`
 5. Cursor: Select "Fox ML" in color theme picker
 6. Discord: Enable theme in Settings > Vencord > Themes
+7. Login screen: `sudo cp ~/.config/regreet/regreet.{css,toml} /etc/greetd/`
 
 ## License
 
