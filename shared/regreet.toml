@@ -2,11 +2,18 @@
 path = "/usr/share/wallpapers/foxml_earthy.jpg"
 fit = "Cover"
 
+[env]
+XDG_SESSION_TYPE = "wayland"
+XDG_CURRENT_DESKTOP = "Hyprland"
+XDG_SESSION_DESKTOP = "Hyprland"
+QT_QPA_PLATFORM = "wayland"
+MOZ_ENABLE_WAYLAND = "1"
+
 [GTK]
 application_prefer_dark_theme = true
 cursor_theme_name = "catppuccin-mocha-peach-cursors"
 cursor_theme_size = 30
-font_name = "JetBrainsMono Nerd Font 12"
+font_name = "JetBrainsMono Nerd Font 11"
 icon_theme_name = "Papirus-Dark"
 theme_name = "Adwaita"
 
@@ -19,5 +26,5 @@ greeting_msg = "F O X M L"
 
 [widget.clock]
 format = "%A · %I:%M %p"
-resolution = "30000ms"
-label_width = 200
+resolution = "1000ms"
+label_width = 220

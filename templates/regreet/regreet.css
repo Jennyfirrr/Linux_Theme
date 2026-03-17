@@ -12,171 +12,209 @@ window {
 * {
   font-family: "JetBrainsMono Nerd Font";
   border-radius: 0;
+  transition: 200ms ease;
 }
 
 /* ─── Login container ────────────────────────── */
 #body > box {
-  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.88);
+  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.82);
   border: none;
-  border-left: 4px solid #{{PRIMARY}};
-  padding: 52px 64px 40px 64px;
-  min-width: 400px;
+  border-left: 3px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.7);
+  padding: 64px 72px 48px 72px;
+  min-width: 380px;
   box-shadow:
-    0 0 80px rgba(0,0,0,0.6),
-    0 0 20px rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.08);
+    0 8px 64px rgba(0,0,0,0.55),
+    0 0 1px rgba({{FG_R}},{{FG_G}},{{FG_B}},0.05);
 }
 
 /* ─── Greeting ───────────────────────────────── */
 #greeting-label {
   color: #{{PRIMARY}};
-  font-size: 36px;
+  font-size: 28px;
   font-weight: bold;
-  letter-spacing: 4px;
-  margin-bottom: 32px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.25);
+  letter-spacing: 6px;
+  margin-bottom: 4px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.18);
 }
 
 /* ─── Clock ──────────────────────────────────── */
 #clock-label {
-  color: rgba({{FG_R}},{{FG_G}},{{FG_B}},0.55);
-  font-size: 12px;
-  letter-spacing: 2px;
-  padding: 8px 20px;
-  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.7);
-  border: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.2);
+  color: rgba({{FG_R}},{{FG_G}},{{FG_B}},0.35);
+  font-size: 10px;
+  letter-spacing: 3px;
+  padding: 8px 4px 32px 4px;
 }
 
-/* ─── Labels ─────────────────────────────────── */
-label {
-  color: rgba({{FG_R}},{{FG_G}},{{FG_B}},0.5);
-  font-size: 11px;
-  letter-spacing: 1px;
-}
-
-/* ─── Hide session row + edit buttons ────────── */
-/* Session selector — hide completely (single session = Hyprland) */
-#session-box,
-combobox#session-combo,
-#session-row,
-box:nth-child(3) {
+/* ─── Labels — hide field labels for clean look ─ */
+label:not(#greeting-label):not(#clock-label):not(#error-label) {
   opacity: 0;
   min-height: 0;
+  max-height: 0;
   margin: 0;
   padding: 0;
 }
 
-/* Hide edit/pencil toggle buttons */
-button.circular {
+/* ─── Session selector — hidden (all sessions are Hyprland) ── */
+#session-box,
+#session-row {
+  opacity: 0;
+  min-height: 0;
+  max-height: 0;
+  margin: 0;
+  padding: 0;
+}
+
+combobox#session-combo {
+  opacity: 0;
+  min-height: 0;
+  max-height: 0;
+  margin: 0;
+  padding: 0;
+}
+
+/* ─── Hide combobox dropdown arrows ──────────── */
+combobox arrow,
+combobox indicator,
+combobox cellview {
+  min-width: 0;
+}
+
+/* ─── Hide all toggle/edit buttons ───────────── */
+button.circular,
+button.toggle,
+button.text-button:not(#login-button) {
   opacity: 0;
   min-width: 0;
   min-height: 0;
   padding: 0;
   margin: 0;
+  border: none;
+  background: none;
 }
 
 /* ─── User dropdown ──────────────────────────── */
-combobox,
+combobox:not(#session-combo),
 dropdown {
-  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.5);
+  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.4);
   color: #{{FG}};
-  border: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.3);
-  padding: 12px 16px;
-  font-size: 15px;
+  border: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.2);
+  padding: 14px 18px;
+  font-size: 14px;
   min-width: 280px;
+  margin-bottom: 6px;
 }
 
-combobox:focus,
+combobox:not(#session-combo):focus,
 dropdown:focus {
-  border-color: #{{PRIMARY}};
-  box-shadow: 0 0 0 1px rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.2);
+  border-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.5);
+  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.5);
 }
 
-/* ─── Text entries ───────────────────────────── */
+/* ─── Text entries (password) ────────────────── */
 entry {
-  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.5);
+  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.4);
   color: #{{FG}};
-  border: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.3);
-  padding: 12px 16px;
-  font-size: 15px;
+  border: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.2);
+  padding: 14px 18px;
+  font-size: 14px;
   caret-color: #{{PRIMARY}};
   min-width: 280px;
 }
 
 entry:focus {
-  border-color: #{{PRIMARY}};
-  box-shadow: 0 0 0 1px rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.2);
+  border-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.6);
+  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.5);
 }
 
 entry placeholder {
-  color: rgba({{FG_R}},{{FG_G}},{{FG_B}},0.25);
+  color: rgba({{FG_R}},{{FG_G}},{{FG_B}},0.2);
+  font-size: 12px;
+  letter-spacing: 1px;
 }
 
 /* ─── Login button ───────────────────────────── */
 button#login-button,
 #body > box > box:last-child button {
-  background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.15);
-  color: #{{PRIMARY}};
-  border: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.4);
-  padding: 12px 48px;
-  font-size: 13px;
+  background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.1);
+  color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.8);
+  border: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.25);
+  padding: 14px 64px;
+  font-size: 11px;
   font-weight: bold;
-  letter-spacing: 3px;
-  margin-top: 12px;
+  letter-spacing: 5px;
+  margin-top: 28px;
 }
 
 button#login-button:hover,
 #body > box > box:last-child button:hover {
-  background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.3);
-  border-color: #{{PRIMARY}};
+  background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.2);
+  border-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.5);
   color: #{{FG}};
 }
 
 button#login-button:active,
 #body > box > box:last-child button:active {
-  background-color: #{{PRIMARY}};
-  color: #{{BG}};
+  background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.35);
+  color: #{{FG}};
 }
 
 /* ─── Bottom power bar ───────────────────────── */
 #bottom-bar,
 window > box > box:last-child {
   background-color: transparent;
+  padding: 16px;
 }
 
 #bottom-bar button,
 window > box > box:last-child button {
-  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.55);
-  border: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.15);
-  color: rgba({{FG_R}},{{FG_G}},{{FG_B}},0.4);
-  padding: 8px 24px;
-  font-size: 11px;
-  letter-spacing: 1px;
+  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.35);
+  border: 1px solid rgba({{FG_R}},{{FG_G}},{{FG_B}},0.06);
+  color: rgba({{FG_R}},{{FG_G}},{{FG_B}},0.25);
+  padding: 10px 32px;
+  font-size: 9px;
+  letter-spacing: 3px;
+  margin: 0 6px;
 }
 
 #bottom-bar button:hover,
 window > box > box:last-child button:hover {
-  background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.2);
-  border-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.4);
-  color: #{{FG}};
+  background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.12);
+  border-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.25);
+  color: rgba({{FG_R}},{{FG_G}},{{FG_B}},0.6);
 }
 
 /* ─── Error ──────────────────────────────────── */
 #error-label {
   color: #{{RED}};
   font-weight: bold;
-  font-size: 12px;
-  margin-top: 8px;
+  font-size: 11px;
+  letter-spacing: 1px;
+  margin-top: 12px;
 }
 
 /* ─── Tooltips ───────────────────────────────── */
 tooltip {
   background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.95);
   color: #{{FG}};
-  border: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.3);
+  border: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.2);
+  padding: 6px 10px;
 }
 
 /* ─── Scrollbar ──────────────────────────────── */
 scrollbar slider {
-  background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.25);
+  background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.15);
+}
+
+/* ─── Popup/dropdown menus ───────────────────── */
+popover,
+popover > contents {
+  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.92);
+  border: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.15);
+  color: #{{FG}};
+}
+
+popover modelbutton:hover,
+popover row:hover {
+  background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.12);
 }
