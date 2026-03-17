@@ -4,7 +4,7 @@ configuration {
 }
 
 * {
-  font: "JetBrainsMono Nerd Font 12";
+  font: "{{FONT_FAMILY}} 12";
   background-color: transparent;
   text-color: #{{FG}};
   padding: 0;

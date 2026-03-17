@@ -4,6 +4,18 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-03-17
+
+### Font — Templated FONT_FAMILY + Switch to Hack Nerd Font
+- Added `FONT_FAMILY` variable to `palette.sh` — font is now configurable per-theme
+- Added `FONT_FAMILY` to render engine (`render.sh`) for forward and reverse rendering
+- Replaced hardcoded `JetBrainsMono Nerd Font` with `{{FONT_FAMILY}}` in all templates: kitty, waybar, rofi, dunst, mako, regreet CSS, spicetify, zathura, hyprlock
+- Updated shared configs (GTK 3/4 settings, regreet.toml, hyprland general/hyprlock) to Hack Nerd Font
+- Default font changed from JetBrainsMono Nerd Font → Hack Nerd Font (blockier, sturdier)
+- Documented font customization in README
+
+---
+
 ## 2026-03-16
 
 ### Nvim — Dashboard Fox Art

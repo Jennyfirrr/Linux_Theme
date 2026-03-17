@@ -15,7 +15,7 @@
   text-shadow: none;
   -gtk-icon-shadow: none;
   border-radius: 0;
-  font-family: "JetBrainsMono Nerd Font";
+  font-family: "{{FONT_FAMILY}}";
   transition: 200ms ease;
 }
 

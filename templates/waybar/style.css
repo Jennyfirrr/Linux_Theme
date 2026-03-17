@@ -24,7 +24,7 @@
 @define-color border       rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.4);
 
 * {
-    font-family: "JetBrainsMono Nerd Font", monospace;
+    font-family: "{{FONT_FAMILY}}", monospace;
     font-size: 12.5pt;
     color: @fg;
 }

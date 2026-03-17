@@ -9,6 +9,7 @@ NVIM_BG=dark
 KITTY_BG_OPACITY=0.6
 MAKO_ICON_THEME=Papirus-Dark
 VSCODE_UI_THEME=vs-dark
+FONT_FAMILY="Hack Nerd Font"
 
 # ─── Core palette ───
 BG=1a1214

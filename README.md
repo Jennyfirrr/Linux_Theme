@@ -223,7 +223,20 @@ The palette defines ~60 variables across several categories:
 - **ANSI 256 codes** — terminal color indices for zsh prompts
 - **Tmux colors** — `colour216`-style tmux palette
 - **App overrides** — per-app background tweaks (dunst, spicetify, vencord)
+- **Font** — `FONT_FAMILY` sets the font across all templated apps (default: `Hack Nerd Font`)
 - **Metadata** — NVIM_STYLE, KITTY_BG_OPACITY, VSCODE_UI_THEME, etc.
+
+### Changing the Font
+
+Set `FONT_FAMILY` in your theme's `palette.sh` to any installed Nerd Font:
+
+```bash
+FONT_FAMILY="Hack Nerd Font"          # default — blocky, sturdy
+FONT_FAMILY="JetBrainsMono Nerd Font"  # clean, rounded
+FONT_FAMILY="IBM Plex Mono Nerd Font"  # industrial, wide
+```
+
+This updates all templated configs (kitty, waybar, rofi, dunst, mako, hyprlock, regreet CSS, spicetify, zathura). Shared configs (GTK settings, regreet.toml, hyprland general) use the font directly — update those manually if switching fonts.
 
 See `themes/FoxML_Classic/palette.sh` for the full variable list.
 

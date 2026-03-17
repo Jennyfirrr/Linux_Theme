@@ -4,7 +4,7 @@
 */
 
 :root {
-    --font-family: 'JetBrainsMono Nerd Font', 'JetBrains Mono', monospace;
+    --font-family: '{{FONT_FAMILY}}', monospace;
     --fox-bg: #{{BG}};
     --fox-card: #{{BG_ALT}};
     --fox-peach: #{{PRIMARY}};
