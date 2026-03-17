@@ -26,7 +26,7 @@ window {
 
 /* ─── Login frame — can't make transparent, so embrace it ── */
 frame.background {
-  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.82);
+  background-color: #{{BG}};
   border: none;
   box-shadow: none;
   padding: 0;
