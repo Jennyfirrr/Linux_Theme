@@ -1,14 +1,14 @@
 /* ====== Fox ML — ReGreet Login Theme ====== */
-/* Nuclear approach: reset Adwaita defaults, rebuild from scratch */
 
-/* ─── Strip all Adwaita defaults ─────────────── */
+/* ─── Strip Adwaita defaults ─────────────────── */
 *,
 *:hover,
 *:focus,
 *:active,
 *:checked,
 *:disabled {
-  background: none;
+  background-color: transparent;
+  background-image: none;
   border: none;
   box-shadow: none;
   outline: none;
@@ -24,51 +24,46 @@ window {
   background-color: #{{BG}};
 }
 
-/* ─── All frames → transparent ───────────────── */
+/* ─── Login frame — can't make transparent, so embrace it ── */
 frame.background {
-  background: none;
+  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.82);
   border: none;
   box-shadow: none;
   padding: 0;
 }
 
-/* ─── Login container → on the grid itself ───── */
+/* ─── Grid layout ────────────────────────────── */
 grid {
-  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.88);
-  border-left: 3px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.45);
-  padding: 20px 24px 16px 24px;
-  box-shadow: 0 12px 60px rgba(0,0,0,0.5);
+  padding: 28px 28px 20px 28px;
   row-spacing: 4px;
-  column-spacing: 6px;
+  column-spacing: 0;
 }
 
 /* ─── Greeting ───────────────────────────────── */
 #message_label {
-  color: #{{PRIMARY}};
-  font-size: 16px;
+  color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.85);
+  font-size: 18px;
   font-weight: bold;
-  letter-spacing: 5px;
-  margin-bottom: 4px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.12);
+  letter-spacing: 8px;
+  margin-bottom: 12px;
 }
 
-/* ─── Clock — just floating text ─────────────── */
+/* ─── Clock ──────────────────────────────────── */
 frame.background label {
-  color: rgba({{FG_R}},{{FG_G}},{{FG_B}},0.35);
-  font-size: 10px;
+  color: rgba({{FG_R}},{{FG_G}},{{FG_B}},0.4);
+  font-size: 11px;
   letter-spacing: 3px;
 }
 
-/* ─── ALL labels → quiet ─────────────────────── */
+/* ─── Field labels ───────────────────────────── */
 label {
-  color: rgba({{FG_R}},{{FG_G}},{{FG_B}},0.22);
-  font-size: 9px;
+  color: rgba({{FG_R}},{{FG_G}},{{FG_B}},0.25);
+  font-size: 10px;
   letter-spacing: 2px;
+  padding-right: 10px;
 }
 
 /* ─── ALL standalone buttons → invisible ─────── */
-/* This hides the toggle/edit pencil buttons      */
 button {
   color: transparent;
   padding: 0;
@@ -84,108 +79,108 @@ button image {
   -gtk-icon-size: 0;
 }
 
-/* ─── Combobox (dropdowns) — bring back ──────── */
+/* ─── Combobox ───────────────────────────────── */
 combobox {
-  min-width: 180px;
+  min-width: 220px;
 }
 
 combobox button {
-  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.45);
+  background-color: rgba({{FG_R}},{{FG_G}},{{FG_B}},0.04);
   color: #{{FG}};
-  border: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.15);
-  padding: 4px 8px;
-  font-size: 11px;
-  min-width: 140px;
-  min-height: 10px;
+  border: 1px solid rgba({{FG_R}},{{FG_G}},{{FG_B}},0.08);
+  padding: 8px 12px;
+  font-size: 14px;
+  min-width: 200px;
+  min-height: 18px;
 }
 
 combobox button:hover {
-  border-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.3);
-  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.55);
+  background-color: rgba({{FG_R}},{{FG_G}},{{FG_B}},0.07);
+  border-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.2);
 }
 
 combobox button:focus {
-  border-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.4);
-  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.55);
+  border-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.35);
+  background-color: rgba({{FG_R}},{{FG_G}},{{FG_B}},0.06);
 }
 
 combobox cellview {
   color: #{{FG}};
-  font-size: 11px;
+  font-size: 14px;
 }
 
 combobox arrow {
-  color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.3);
-  min-width: 14px;
-  min-height: 14px;
-  -gtk-icon-size: 14px;
+  color: rgba({{FG_R}},{{FG_G}},{{FG_B}},0.15);
+  min-width: 12px;
+  min-height: 12px;
+  -gtk-icon-size: 12px;
   opacity: 1;
 }
 
 combobox image {
   opacity: 1;
+  min-width: 12px;
+  min-height: 12px;
+  -gtk-icon-size: 12px;
+}
+
+/* ─── Text entries ───────────────────────────── */
+entry {
+  background-color: rgba({{FG_R}},{{FG_G}},{{FG_B}},0.04);
+  color: #{{FG}};
+  border: 1px solid rgba({{FG_R}},{{FG_G}},{{FG_B}},0.08);
+  padding: 8px 12px;
+  font-size: 14px;
+  caret-color: #{{PRIMARY}};
+  min-width: 200px;
+  min-height: 18px;
+}
+
+entry:focus {
+  border-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.35);
+  background-color: rgba({{FG_R}},{{FG_G}},{{FG_B}},0.06);
+}
+
+entry placeholder {
+  color: rgba({{FG_R}},{{FG_G}},{{FG_B}},0.12);
+}
+
+/* ─── Password entry ─────────────────────────── */
+passwordentry {
+  background-color: rgba({{FG_R}},{{FG_G}},{{FG_B}},0.04);
+  color: #{{FG}};
+  border: 1px solid rgba({{FG_R}},{{FG_G}},{{FG_B}},0.08);
+  padding: 8px 12px;
+  font-size: 14px;
+  min-width: 200px;
+  min-height: 18px;
+}
+
+passwordentry:focus {
+  border-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.35);
+  background-color: rgba({{FG_R}},{{FG_G}},{{FG_B}},0.06);
+}
+
+passwordentry image {
+  color: rgba({{FG_R}},{{FG_G}},{{FG_B}},0.15);
+  opacity: 1;
   min-width: 14px;
   min-height: 14px;
   -gtk-icon-size: 14px;
 }
 
-/* ─── Text entries ───────────────────────────── */
-entry {
-  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.45);
-  color: #{{FG}};
-  border: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.15);
-  padding: 4px 8px;
-  font-size: 11px;
-  caret-color: #{{PRIMARY}};
-  min-width: 140px;
-  min-height: 10px;
-}
-
-entry:focus {
-  border-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.45);
-  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.55);
-}
-
-entry placeholder {
-  color: rgba({{FG_R}},{{FG_G}},{{FG_B}},0.15);
-}
-
-/* ─── Password entry ─────────────────────────── */
-passwordentry {
-  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.45);
-  color: #{{FG}};
-  border: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.15);
-  padding: 4px 8px;
-  font-size: 11px;
-  min-width: 140px;
-  min-height: 10px;
-}
-
-passwordentry:focus {
-  border-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.45);
-  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.55);
-}
-
-/* Peek icon in password entry */
-passwordentry image {
-  color: rgba({{FG_R}},{{FG_G}},{{FG_B}},0.15);
-  opacity: 1;
-  min-width: 16px;
-  min-height: 16px;
-  -gtk-icon-size: 16px;
-}
-
-/* ─── Login button — bring back ──────────────── */
+/* ─── Login button ───────────────────────────── */
 button.suggested-action {
   background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.08);
-  color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.7);
-  border: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.2);
-  padding: 6px 32px;
-  min-width: 60px;
-  min-height: 14px;
-  font-size: 9px;
+  color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.75);
+  border: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.15);
+  padding: 10px 48px;
+  min-width: 100px;
+  min-height: 18px;
+  font-size: 11px;
   font-weight: bold;
-  letter-spacing: 4px;
+  letter-spacing: 5px;
+  margin-top: 8px;
 }
 
 button.suggested-action image {
@@ -193,17 +188,17 @@ button.suggested-action image {
 }
 
 button.suggested-action:hover {
-  background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.18);
-  border-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.4);
+  background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.15);
+  border-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.35);
   color: #{{FG}};
 }
 
 button.suggested-action:active {
-  background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.28);
+  background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.22);
   color: #{{FG}};
 }
 
-/* ─── Power buttons — bring back ─────────────── */
+/* ─── Power buttons ──────────────────────────── */
 button.destructive-action {
   background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.3);
   border: 1px solid rgba({{FG_R}},{{FG_G}},{{FG_B}},0.05);
@@ -261,7 +256,7 @@ popover > contents {
 popover label,
 popover cellview {
   color: #{{FG}};
-  font-size: 12px;
+  font-size: 13px;
 }
 
 popover modelbutton {
