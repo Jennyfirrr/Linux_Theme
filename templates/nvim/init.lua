@@ -490,6 +490,7 @@ local plugins = {
       suggestion = {
         enabled = true,
         auto_trigger = true,
+        hide_during_completion = false,
         debounce = 150,
         keymap = {
           accept = "<C-l>",       -- Ctrl+l to accept
