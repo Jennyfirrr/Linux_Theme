@@ -1,0 +1,30 @@
+# FoxML Theme for Lazygit
+gui:
+  nerdFontsVersion: "3"
+  theme:
+    activeBorderColor:
+      - "#{{PRIMARY}}"
+      - bold
+    inactiveBorderColor:
+      - "#{{SURFACE}}"
+    searchingActiveBorderColor:
+      - "#{{ACCENT}}"
+      - bold
+    optionsTextColor:
+      - "#{{FG_DIM}}"
+    selectedLineBgColor:
+      - "#{{SELECTION}}"
+    inactiveViewSelectedLineBgColor:
+      - "#{{BG_HIGHLIGHT}}"
+    cherryPickedCommitFgColor:
+      - "#{{ACCENT}}"
+    cherryPickedCommitBgColor:
+      - "#{{BG_ALT}}"
+    markedBaseCommitFgColor:
+      - "#{{SECONDARY}}"
+    markedBaseCommitBgColor:
+      - "#{{BG_ALT}}"
+    unstagedChangesColor:
+      - "#{{RED}}"
+    defaultFgColor:
+      - "#{{FG}}"

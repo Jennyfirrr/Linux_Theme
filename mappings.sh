@@ -55,6 +55,9 @@ TEMPLATE_MAPPINGS=(
     # Yazi
     "yazi/theme.toml|~/.config/yazi/theme.toml"
 
+    # Lazygit
+    "lazygit/config.yml|~/.config/lazygit/config.yml"
+
     # Zathura
     "zathura/zathurarc|~/.config/zathura/zathurarc"
 

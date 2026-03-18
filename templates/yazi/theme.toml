@@ -13,7 +13,7 @@
 cwd = { fg = "#{{PRIMARY}}", bold = true }
 
 # Hovered
-hovered         = { fg = "#{{BG}}", bg = "#{{PRIMARY}}" }
+hovered         = { fg = "#{{BG}}", bg = "#{{PRIMARY}}", bold = true }
 preview_hovered = { underline = true }
 
 # Find
@@ -27,7 +27,7 @@ marker_marked   = { fg = "#{{ACCENT}}", bg = "#{{ACCENT}}" }
 marker_selected = { fg = "#{{SECONDARY}}", bg = "#{{SECONDARY}}" }
 
 # Tab
-tab_active   = { fg = "#{{BG}}", bg = "#{{PRIMARY}}" }
+tab_active   = { fg = "#{{BG}}", bg = "#{{PRIMARY}}", bold = true }
 tab_inactive = { fg = "#{{FG_DIM}}", bg = "#{{SURFACE}}" }
 tab_width    = 1
 
@@ -38,29 +38,32 @@ count_selected = { fg = "#{{BG}}", bg = "#{{SECONDARY}}" }
 
 # Border
 border_symbol = "│"
-border_style  = { fg = "#{{SURFACE}}" }
+border_style  = { fg = "#{{TMUX_ACTIVE_BG}}" }
+
+[mode]
+normal_main = { fg = "#{{BG}}", bg = "#{{PRIMARY}}", bold = true }
+normal_alt  = { fg = "#{{BG}}", bg = "#{{SECONDARY}}" }
+select_main = { fg = "#{{BG}}", bg = "#{{SECONDARY}}", bold = true }
+select_alt  = { fg = "#{{BG}}", bg = "#{{ACCENT}}" }
+unset_main  = { fg = "#{{BG}}", bg = "#{{ACCENT}}", bold = true }
+unset_alt   = { fg = "#{{BG}}", bg = "#{{SURFACE}}" }
 
 [status]
-separator_open  = ""
-separator_close = ""
-separator_style = { fg = "#{{SURFACE}}", bg = "#{{SURFACE}}" }
-
-# Mode
-mode_normal = { fg = "#{{BG}}", bg = "#{{PRIMARY}}", bold = true }
-mode_select = { fg = "#{{BG}}", bg = "#{{SECONDARY}}", bold = true }
-mode_unset  = { fg = "#{{BG}}", bg = "#{{ACCENT}}", bold = true }
+overall  = { fg = "#{{PRIMARY}}" }
+sep_left  = { open = "", close = "" }
+sep_right = { open = "", close = "" }
 
 # Progress
-progress_label  = { fg = "#{{FG}}", bold = true }
+progress_label  = { fg = "#{{FG_PASTEL}}", bold = true }
 progress_normal = { fg = "#{{PRIMARY}}", bg = "#{{SURFACE}}" }
 progress_error  = { fg = "#{{RED}}", bg = "#{{SURFACE}}" }
 
 # Permissions
-permissions_t = { fg = "#{{PRIMARY}}" }
-permissions_r = { fg = "#{{GREEN}}" }
-permissions_w = { fg = "#{{RED}}" }
-permissions_x = { fg = "#{{ACCENT}}" }
-permissions_s = { fg = "#{{FG_DIM}}" }
+perm_type = { fg = "#{{PRIMARY}}" }
+perm_read = { fg = "#{{ACCENT}}" }
+perm_write = { fg = "#{{SECONDARY}}" }
+perm_exec = { fg = "#{{GREEN}}" }
+perm_sep  = { fg = "#{{FG_DIM}}" }
 
 [input]
 border   = { fg = "#{{PRIMARY}}" }
@@ -125,6 +128,13 @@ icon_error = ""
 
 [filetype]
 rules = [
+    # Symlinks
+    { is = "link", fg = "#{{CYAN}}", italic = true },
+    { is = "orphan", fg = "#{{RED}}", italic = true },
+
+    # Executables
+    { is = "exec", fg = "#{{GREEN_BRIGHT}}" },
+
     # Images
     { mime = "image/*", fg = "#{{SECONDARY}}" },
 
@@ -139,9 +149,11 @@ rules = [
     { mime = "application/{pdf,doc,rtf}", fg = "#{{BLUE}}" },
     { mime = "application/vnd.*", fg = "#{{BLUE}}" },
 
-    # Fallback
-    { name = "*", fg = "#{{FG}}" },
-    { name = "*/", fg = "#{{PRIMARY}}" },
+    # Directories — bold peach like neo-tree
+    { url = "*/", fg = "#{{PRIMARY}}", bold = true },
+
+    # Fallback — peach to match tmux/statusbar
+    { url = "*", fg = "#{{PRIMARY}}" },
 ]
 
 [icon]
