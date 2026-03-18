@@ -10,7 +10,7 @@ THEMES_DIR="$SCRIPT_DIR/themes"
 TEMPLATES_DIR="$SCRIPT_DIR/templates"
 SHARED_DIR="$SCRIPT_DIR/shared"
 ACTIVE_FILE="$SCRIPT_DIR/.active-theme"
-BACKUP_DIR="$HOME/.foxml-backup-$(date +%Y%m%d-%H%M%S)"
+BACKUP_DIR="$HOME/.theme_backups/foxml-backup-$(date +%Y%m%d-%H%M%S)"
 
 source "$SCRIPT_DIR/mappings.sh"
 source "$SCRIPT_DIR/render.sh"
