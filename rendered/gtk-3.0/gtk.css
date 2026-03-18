@@ -1,0 +1,334 @@
+/* ====== Fox ML Theme Palette ====== */
+@define-color bg        #1a1214;                     /* FoML slate bg */
+@define-color fg        #d5c4b0;                     /* off-white text */
+@define-color accent    #d4985a;                     /* peach accent */
+@define-color accent2   #b8967a;                     /* pink accent */
+@define-color sel_bg    rgba(212,152,90,0.25);      /* selection bg */
+@define-color sel_fg    #d5c4b0;                     /* selection text */
+@define-color panel     rgba(26,18,20,0.95);         /* FoML panel */
+@define-color panel2    rgba(58,65,75,0.5);          /* slate glass */
+@define-color border    @accent;
+
+@define-color ok        #7aab88;
+@define-color warn      #c4b48a;
+@define-color info      #8a9a7a;                     /* lavender */
+@define-color danger    #b8967a;                     /* pink */
+
+/* ====== Global ====== */
+window, dialog, .background {
+  background-color: @bg;
+  color: @fg;
+}
+
+/* ====== Thunar transparency + readability ====== */
+/* Transparency via GTK rgba (not compositor opacity — that causes rubberband trail artifacts) */
+window.thunar,
+window.thunar .background {
+  background-color: rgba(26,18,20,0.65);
+}
+window.thunar .standard-view,
+window.thunar notebook,
+window.thunar notebook > stack,
+window.thunar .view {
+  background-color: transparent;
+}
+window.thunar .view,
+window.thunar iconview,
+window.thunar treeview,
+window.thunar .content-view,
+window.thunar label {
+  color: #d4985a;
+}
+window.thunar .sidebar label,
+window.thunar .sidebar .view {
+  color: #c4b4a0;
+}
+window.thunar .sidebar .view:selected label {
+  color: #d4985a;
+}
+.view, textview, treeview, iconview {
+  background-color: transparent;
+  color: @fg;
+}
+
+/* links */
+*:link, *:visited { color: @info; }
+
+/* caret */
+entry, textview { caret-color: @accent; }
+
+/* ====== Headerbars / Titlebars ====== */
+headerbar, .titlebar {
+  background: @panel;
+  color: @fg;
+  border-bottom: 1px solid @accent;
+}
+headerbar .title, headerbar .subtitle { color: @fg; }
+headerbar button {
+  background: transparent;
+  border: 1px solid rgba(212,152,90,0.4);
+}
+headerbar button:hover {
+  background: rgba(212,152,90,0.15);
+  border-color: @accent;
+}
+
+/* ====== Sidebars ====== */
+.sidebar, .side-bar, .sidebar .view, .places-treeview, .source-list {
+  background-color: rgba(26,18,20,0.85);
+  color: @fg;
+  border-right: 1px solid rgba(212,152,90,0.4);
+}
+.sidebar row {
+  border-radius: 0;
+  margin: 2px 4px;
+}
+.sidebar row:selected, .sidebar row:selected label {
+  background-color: @sel_bg;
+  color: @fg;
+  border-left: 2px solid @accent;
+}
+
+/* ====== Lists / Trees / Icon views ====== */
+.view:selected, treeview:selected, iconview:selected, textview text:selected {
+  background-color: @sel_bg;
+  color: @sel_fg;
+}
+.view:hover:not(:selected) { background-color: alpha(@panel2, 0.35); }
+
+/* ====== Buttons ====== */
+button {
+  background: alpha(@panel, 0.85);
+  color: @fg;
+  border: 1px solid @border;
+  border-radius: 0;
+}
+button:hover { background: alpha(@panel2, 0.85); }
+button:active { background: alpha(@accent, 0.25); border-color: @accent; }
+button.suggested-action, button.default {
+  background: alpha(@accent, 0.25);
+  border-color: @accent;
+}
+
+/* ====== Entries / Search fields ====== */
+entry {
+  background: alpha(@panel2, 0.6);
+  color: @fg;
+  border: 1px solid @border;
+  border-radius: 0;
+}
+
+/* Thunar search/location bar — matches rofi inputbar */
+searchbar, .search-bar, toolbar { background-color: transparent; }
+searchbar entry, .search-bar entry, entry.search, search entry, GtkSearchEntry {
+  background: rgba(26,18,20,0.85);
+  color: #d5c4b0;
+  border: 1px solid @accent;
+  border-radius: 0;
+  caret-color: @accent;
+  padding: 6px 8px;
+}
+entry:focus {
+  border-color: @accent;
+  box-shadow: 0 0 0 2px rgba(212,152,90,0.25);
+}
+/* placeholder text softer */
+entry placeholder, entry > text placeholder, GtkSearchEntry text placeholder {
+  color: rgba(213,196,176,0.5);
+}
+
+/* ====== Check / Radio ====== */
+checkbutton check, radiobutton radio { border-color: @border; }
+checkbutton check:checked, radiobutton radio:checked {
+  background-color: @accent;
+  border-color: @accent;
+}
+
+/* ====== Notebook tabs ====== */
+notebook > header, notebook > header tabs {
+  background: @panel;
+  border-bottom: 1px solid @border;
+}
+notebook tab { background: alpha(@panel, 0.8); color: @fg; }
+notebook tab:checked { background: alpha(@panel2, 0.9); border-bottom: 2px solid @accent; }
+
+/* ====== Scrollbars ====== */
+scrollbar { background-color: alpha(@panel, 0.5); }
+scrollbar slider { background-color: rgba(212,152,90,0.3); border-radius: 0; }
+scrollbar slider:hover { background-color: rgba(212,152,90,0.5); }
+
+/* ====== Tooltips ====== */
+tooltip { background: @panel2; color: @fg; border: 1px solid @border; }
+
+/* ====== Infobars ====== */
+.info    { background: alpha(@info, 0.15);   border: 1px solid alpha(@info, 0.6); }
+.warning { background: alpha(@warn, 0.15);   border: 1px solid alpha(@warn, 0.6); }
+.error,.danger { background: alpha(@danger, 0.15); border: 1px solid alpha(@danger, 0.6); }
+.success { background: alpha(@ok, 0.15);     border: 1px solid alpha(@ok, 0.6); }
+
+/* ====== Menubar & Menus ====== */
+menubar {
+  background-color: @panel;
+  color: @fg;
+  border-bottom: 1px solid @accent;
+}
+menubar > menuitem {
+  background-color: transparent;
+  color: @fg;
+  padding: 4px 8px;
+}
+menubar > menuitem:hover {
+  background-color: rgba(212,152,90,0.15);
+  color: @fg;
+}
+menu {
+  background-color: #1a1214;
+  color: @fg;
+  border: 1px solid @accent;
+  padding: 4px;
+}
+menu menuitem {
+  background-color: transparent;
+  color: @fg;
+  padding: 6px 12px;
+  border-radius: 0;
+}
+menu menuitem:hover {
+  background-color: rgba(212,152,90,0.25);
+  color: @sel_fg;
+}
+
+/* === Thunar icon/label readability === */
+iconview cell {
+  background-color: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 6px 10px;
+  color: @fg;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.85);
+}
+iconview cell:hover {
+  background-color: rgba(176,96,58,0.15);
+  border: none;
+}
+iconview cell:selected,
+iconview cell:focus {
+  background-color: rgba(176,96,58,0.35);
+  border: none;
+  color: #d5c4b0;
+}
+
+/* List view rows */
+treeview.view { background-color: transparent; color: @fg; }
+treeview.view:selected, treeview.view:focus {
+  background-color: @sel_bg;
+  color: #d5c4b0;
+}
+
+/* Sidebar accents */
+.sidebar .view { background-color: transparent; color: @fg; }
+.sidebar .view:selected { background-color: @sel_bg; color: @accent; }
+.sidebar image { color: @accent; }
+
+/* Pathbar / toolbar buttons */
+pathbar button {
+  background-color: transparent;
+  border: 1px solid @accent;
+  color: @accent;
+  border-radius: 0;
+}
+
+/* Subtle separators */
+separator { background-color: @border; }
+
+/* === make selection Fox ML peach everywhere (helps stubborn GTK rules) === */
+@define-color theme_selected_bg_color rgba(212,152,90,0.25);
+@define-color theme_unfocused_selected_bg_color rgba(212,152,90,0.15);
+@define-color theme_selected_fg_color #d5c4b0;
+
+/* === Thunar icon view selection (GTK3) === */
+ThunarIconView.view,                       /* Thunar's custom widget */
+iconview.view {                            /* generic fallback */
+  background-color: transparent;
+  color: @fg;
+}
+
+/* selected tiles (the bright blue you see) -> Fox ML peach */
+ThunarIconView.view:selected,
+ThunarIconView.view:selected:focus,
+iconview.view:selected,
+iconview.view:selected:focus {
+  background-color: @theme_selected_bg_color;
+  color: @theme_selected_fg_color;
+  border-radius: 0;                     /* match your rounded vibe */
+}
+
+/* selection rubberband (drag box) — wheat filled */
+ThunarIconView .rubberband,
+iconview .rubberband,
+.rubberband,
+rubberband {
+  background-color: rgba(212,180,131,0.20);
+  border: 2px solid rgba(212,180,131,0.65);
+  background-image: none;
+  box-shadow: none;
+  outline: none;
+}
+
+/* Selected items — warm clay highlight */
+iconview:selected,
+iconview *:selected,
+iconview cell:drop(active),
+iconview.view:selected,
+ThunarIconView.view:selected,
+ThunarIconView.view:selected:focus,
+iconview.view:selected:focus {
+  background-color: rgba(176,96,58,0.35);
+  background-image: none;
+  border: 1px solid rgba(176,96,58,0.6);
+  box-shadow: none;
+  outline: none;
+  color: #d5c4b0;
+}
+/* === LibreOffice Fox ML Theme === */
+
+/* Main background for non-document areas */
+window.soffice {
+    background-color: #1a1214;
+}
+
+/* Toolbars & menubars */
+window.soffice toolbar,
+window.soffice menubar {
+    background-color: rgba(26,18,20,0.95);
+    color: #d5c4b0;
+    border-bottom: 1px solid rgba(212,152,90,0.4);
+}
+
+/* Sidebar background */
+window.soffice box.right {
+    background-color: rgba(26,18,20,0.85);
+}
+
+/* Status bar at the bottom */
+window.soffice statusbar {
+    background-color: rgba(26,18,20,0.95);
+    color: #d5c4b0;
+}
+
+/* Prevent black fill on nested boxes */
+window.soffice box {
+    background-color: #1a1214;
+}
+
+/* Buttons in LibreOffice */
+window.soffice button {
+    background-color: rgba(58,65,75,0.5);
+    color: #d5c4b0;
+    border: 1px solid rgba(212,152,90,0.4);
+}
+
+window.soffice button:hover {
+    background-color: rgba(212,152,90,0.15);
+    border-color: #d4985a;
+}

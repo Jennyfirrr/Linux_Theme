@@ -1,0 +1,82 @@
+configuration {
+  modi: "drun,run,window";
+  show-icons: true;
+}
+
+* {
+  font: "Hack Nerd Font 12";
+  background-color: transparent;
+  text-color: #d5c4b0;
+  padding: 0;
+  margin: 0;
+}
+
+window {
+  location: center;
+  width: 480px;
+  border-radius: 0;
+  border: 2px;
+  border-color: #d4985a;
+  background-color: #1a1214;
+  padding: 12px;
+}
+
+mainbox {
+  children: [ inputbar, listview ];
+  spacing: 12px;
+}
+
+inputbar {
+  background-color: rgba(26,18,20,0.85);
+  text-color: #d5c4b0;
+  border-radius: 0;
+  border: 1px;
+  border-color: #d4985a;
+  padding: 10px;
+}
+
+entry {
+  placeholder: "Search...";
+  placeholder-color: rgba(213,196,176,0.5);
+}
+
+/* === bubble cloud layout === */
+listview {
+  background-color: transparent;
+  lines: 8;
+  columns: 1;
+  spacing: 4px;
+  scrollbar: false;
+  fixed-height: false;
+}
+
+/* base element */
+element {
+  background-color: rgba(26,18,20,0.85);
+  text-color: #d5c4b0;
+  border-radius: 0;
+  padding: 8px 12px;
+  border: 1px;
+  border-color: rgba(212,152,90,0.3);
+}
+
+/* selected bubble (ring-ish look) */
+element selected {
+  background-color: rgba(212,152,90,0.25);
+  text-color: #d5c4b0;
+  border-color: #d4985a;
+}
+
+/* icon + text */
+element-icon {
+  size: 24px;
+  padding: 0 8px 0 0;
+}
+
+element-text {
+  highlight: bold #d4985a;
+  vertical-align: 0.5;
+}
+
+/* subtle separators */
+separator { color: rgba(213,213,213,0.12); }

@@ -1,0 +1,60 @@
+# Fox ML Theme for btop
+# Matches waybar, hyprland, kitty, tmux, etc.
+
+# Main backgrounds
+theme[main_bg]="#1a1214"
+theme[main_fg]="#d5c4b0"
+theme[title]="#d4985a"
+theme[hi_fg]="#d4985a"
+theme[selected_bg]="#2d1f27"
+theme[selected_fg]="#d5c4b0"
+theme[inactive_fg]="#7a7a7a"
+
+# Process box
+theme[proc_misc]="#8a9a7a"
+
+# Box outlines
+theme[cpu_box]="#d4985a"
+theme[mem_box]="#b8967a"
+theme[net_box]="#8a9a7a"
+theme[proc_box]="#3a414b"
+
+# Divider line
+theme[div_line]="#3a414b"
+
+# Temperature graph
+theme[temp_start]="#6b9a7a"
+theme[temp_mid]="#c4b48a"
+theme[temp_end]="#b05555"
+
+# CPU graph
+theme[cpu_start]="#d4985a"
+theme[cpu_mid]="#b8967a"
+theme[cpu_end]="#8a9a7a"
+
+# Memory/Disk graph
+theme[free_start]="#3a414b"
+theme[free_mid]="#3a414b"
+theme[free_end]="#3a414b"
+theme[cached_start]="#8a9a7a"
+theme[cached_mid]="#8a9a7a"
+theme[cached_end]="#8a9a7a"
+theme[available_start]="#6b9a7a"
+theme[available_mid]="#6b9a7a"
+theme[available_end]="#6b9a7a"
+theme[used_start]="#d4985a"
+theme[used_mid]="#b8967a"
+theme[used_end]="#b05555"
+
+# Network graph
+theme[download_start]="#d4985a"
+theme[download_mid]="#d4985a"
+theme[download_end]="#b8967a"
+theme[upload_start]="#8a9a7a"
+theme[upload_mid]="#8a9a7a"
+theme[upload_end]="#7a9ab4"
+
+# Process colors
+theme[process_start]="#d4985a"
+theme[process_mid]="#b8967a"
+theme[process_end]="#8a9a7a"

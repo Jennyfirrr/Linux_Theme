@@ -1,0 +1,270 @@
+/* ====== Fox ML — ReGreet Login Theme ====== */
+
+/* ─── Strip Adwaita defaults ─────────────────── */
+*,
+*:hover,
+*:focus,
+*:active,
+*:checked,
+*:disabled {
+  background-color: transparent;
+  background-image: none;
+  border: none;
+  box-shadow: none;
+  outline: none;
+  text-shadow: none;
+  -gtk-icon-shadow: none;
+  border-radius: 0;
+  font-family: "Hack Nerd Font";
+  transition: 200ms ease;
+}
+
+/* ─── Window ─────────────────────────────────── */
+window {
+  background-color: #1a1214;
+}
+
+/* ─── Login frame — can't make transparent, so embrace it ── */
+frame.background {
+  background-color: #1a1214;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+/* ─── Grid layout ────────────────────────────── */
+grid {
+  padding: 28px 28px 20px 28px;
+  row-spacing: 4px;
+  column-spacing: 0;
+}
+
+/* ─── Greeting ───────────────────────────────── */
+#message_label {
+  color: rgba(212,152,90,0.85);
+  font-size: 18px;
+  font-weight: bold;
+  letter-spacing: 8px;
+  margin-bottom: 12px;
+}
+
+/* ─── Clock ──────────────────────────────────── */
+frame.background label {
+  color: rgba(213,196,176,0.4);
+  font-size: 11px;
+  letter-spacing: 3px;
+}
+
+/* ─── Field labels ───────────────────────────── */
+label {
+  color: rgba(213,196,176,0.25);
+  font-size: 10px;
+  letter-spacing: 2px;
+  padding-right: 10px;
+}
+
+/* ─── ALL standalone buttons → invisible ─────── */
+button {
+  color: transparent;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+  min-height: 0;
+}
+
+button image {
+  opacity: 0;
+  min-width: 0;
+  min-height: 0;
+  -gtk-icon-size: 0;
+}
+
+/* ─── Combobox ───────────────────────────────── */
+combobox {
+  min-width: 220px;
+}
+
+combobox button {
+  background-color: rgba(213,196,176,0.04);
+  color: #d5c4b0;
+  border: 1px solid rgba(213,196,176,0.08);
+  padding: 8px 12px;
+  font-size: 14px;
+  min-width: 200px;
+  min-height: 18px;
+}
+
+combobox button:hover {
+  background-color: rgba(213,196,176,0.07);
+  border-color: rgba(212,152,90,0.2);
+}
+
+combobox button:focus {
+  border-color: rgba(212,152,90,0.35);
+  background-color: rgba(213,196,176,0.06);
+}
+
+combobox cellview {
+  color: #d5c4b0;
+  font-size: 14px;
+}
+
+combobox arrow {
+  color: rgba(213,196,176,0.15);
+  min-width: 12px;
+  min-height: 12px;
+  -gtk-icon-size: 12px;
+  opacity: 1;
+}
+
+combobox image {
+  opacity: 1;
+  min-width: 12px;
+  min-height: 12px;
+  -gtk-icon-size: 12px;
+}
+
+/* ─── Text entries ───────────────────────────── */
+entry {
+  background-color: rgba(213,196,176,0.04);
+  color: #d5c4b0;
+  border: 1px solid rgba(213,196,176,0.08);
+  padding: 8px 12px;
+  font-size: 14px;
+  caret-color: #d4985a;
+  min-width: 200px;
+  min-height: 18px;
+}
+
+entry:focus {
+  border-color: rgba(212,152,90,0.35);
+  background-color: rgba(213,196,176,0.06);
+}
+
+entry placeholder {
+  color: rgba(213,196,176,0.12);
+}
+
+/* ─── Password entry ─────────────────────────── */
+passwordentry {
+  background-color: rgba(213,196,176,0.04);
+  color: #d5c4b0;
+  border: 1px solid rgba(213,196,176,0.08);
+  padding: 8px 12px;
+  font-size: 14px;
+  min-width: 200px;
+  min-height: 18px;
+}
+
+passwordentry:focus {
+  border-color: rgba(212,152,90,0.35);
+  background-color: rgba(213,196,176,0.06);
+}
+
+passwordentry image {
+  color: rgba(213,196,176,0.15);
+  opacity: 1;
+  min-width: 14px;
+  min-height: 14px;
+  -gtk-icon-size: 14px;
+}
+
+/* ─── Login button ───────────────────────────── */
+button.suggested-action {
+  background-color: rgba(212,152,90,0.08);
+  color: rgba(212,152,90,0.75);
+  border: 1px solid rgba(212,152,90,0.15);
+  padding: 10px 48px;
+  min-width: 100px;
+  min-height: 18px;
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 5px;
+  margin-top: 8px;
+}
+
+button.suggested-action image {
+  opacity: 0;
+}
+
+button.suggested-action:hover {
+  background-color: rgba(212,152,90,0.15);
+  border-color: rgba(212,152,90,0.35);
+  color: #d5c4b0;
+}
+
+button.suggested-action:active {
+  background-color: rgba(212,152,90,0.22);
+  color: #d5c4b0;
+}
+
+/* ─── Power buttons ──────────────────────────── */
+button.destructive-action {
+  background-color: rgba(26,18,20,0.3);
+  border: 1px solid rgba(213,196,176,0.05);
+  color: rgba(213,196,176,0.2);
+  padding: 8px 26px;
+  min-width: 60px;
+  min-height: 16px;
+  font-size: 9px;
+  letter-spacing: 2px;
+  margin: 0 4px;
+}
+
+button.destructive-action:hover {
+  background-color: rgba(212,152,90,0.08);
+  border-color: rgba(212,152,90,0.18);
+  color: rgba(213,196,176,0.45);
+}
+
+/* ─── Error ──────────────────────────────────── */
+infobar {
+  background-color: rgba(26,18,20,0.9);
+  border: 1px solid rgba(176,85,85,0.2);
+  padding: 8px;
+}
+
+infobar label {
+  color: #b05555;
+  font-weight: bold;
+  font-size: 11px;
+}
+
+/* ─── Tooltips ───────────────────────────────── */
+tooltip {
+  background-color: rgba(26,18,20,0.95);
+  color: #d5c4b0;
+  border: 1px solid rgba(212,152,90,0.12);
+  padding: 4px 8px;
+}
+
+/* ─── Scrollbar ──────────────────────────────── */
+scrollbar slider {
+  background-color: rgba(212,152,90,0.12);
+  min-width: 6px;
+  min-height: 6px;
+}
+
+/* ─── Popover / dropdown menus ───────────────── */
+popover,
+popover > contents {
+  background-color: rgba(26,18,20,0.92);
+  border: 1px solid rgba(212,152,90,0.1);
+  padding: 4px;
+}
+
+popover label,
+popover cellview {
+  color: #d5c4b0;
+  font-size: 13px;
+}
+
+popover modelbutton {
+  padding: 6px 12px;
+  min-height: 20px;
+}
+
+popover modelbutton:hover,
+popover row:hover {
+  background-color: rgba(212,152,90,0.1);
+}

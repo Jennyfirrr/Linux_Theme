@@ -1,0 +1,327 @@
+/* Fox ML Theme for Firefox Content
+   bg: #1a1214 | fg: #d5c4b0 | peach: #d4985a | sage: #8a9a7a | rose: #b8967a
+   Updated for Firefox 140+
+*/
+
+/* New Tab & Home Page */
+@-moz-document url("about:newtab"), url("about:home") {
+  /* ===== Global variables ===== */
+  :root,
+  body {
+    --newtab-background-color: #1a1214 !important;
+    --newtab-background-color-secondary: #2a2018 !important;
+    --newtab-element-hover-color: rgba(212,152,90,0.1) !important;
+    --newtab-element-active-color: rgba(212,152,90,0.2) !important;
+    --newtab-text-primary-color: #d5c4b0 !important;
+    --newtab-text-secondary-color: #7a7a7a !important;
+    --newtab-primary-action-background: #d4985a !important;
+    --newtab-card-background-color: #2a2018 !important;
+    --newtab-card-placeholder-color: #3a414b !important;
+    --newtab-link-primary-color: #d4985a !important;
+    --newtab-link-secondary-color: #8a9a7a !important;
+    --newtab-contextmenu-background-color: #1a1214 !important;
+    --newtab-contextmenu-button-color: #d5c4b0 !important;
+    --newtab-button-secondary-color: #2a2018 !important;
+    --newtab-wordmark-color: #d5c4b0 !important;
+    --newtab-status-success: #7aab88 !important;
+    --newtab-status-warning: #c4b48a !important;
+    --newtab-status-error: #b8967a !important;
+    --newtab-inner-box-shadow-color: rgba(212,152,90,0.1) !important;
+    --newtab-overlay-color: rgba(26,13,26,0.8) !important;
+
+    /* Additional overrides */
+    --newtab-topsites-background-color: #2a2018 !important;
+    --newtab-topsites-label-color: #d5c4b0 !important;
+    --newtab-section-header-text-color: #d4985a !important;
+    --newtab-card-active-outline-color: #d4985a !important;
+    --newtab-card-hairline-color: #3a414b !important;
+
+    /* Firefox 140+ variables */
+    --newtab-background-color-1: #1a1214 !important;
+    --newtab-background-color-2: #1a1214 !important;
+    --newtab-weather-background-color: #2a2018 !important;
+    --newtab-card-first-shadow: 0 1px 4px rgba(0,0,0,0.3) !important;
+    --newtab-card-second-shadow: none !important;
+    --color-background: #1a1214 !important;
+    --color-surface: #2a2018 !important;
+    --color-surface-variant: #3a414b !important;
+    --color-text-primary: #d5c4b0 !important;
+    --color-text-secondary: #7a7a7a !important;
+    --color-action-primary: #d4985a !important;
+    --color-border: #3a414b !important;
+    --border-radius-small: 0px !important;
+    --border-radius-medium: 0px !important;
+    --border-radius-large: 0px !important;
+    --border-radius-extra-large: 0px !important;
+
+    background-color: #1a1214 !important;
+    scrollbar-color: rgba(212,152,90,0.4) #1a1214 !important;
+    scrollbar-width: thin !important;
+  }
+
+  /* ===== Kill all rounded corners ===== */
+  * {
+    border-radius: 0 !important;
+    --newtab-background-color: #1a1214 !important;
+    --newtab-card-background-color: #2a2018 !important;
+  }
+
+  /* ===== Page background ===== */
+  body,
+  .outer-wrapper,
+  .body-wrapper,
+  main {
+    background-color: #1a1214 !important;
+    color: #d5c4b0 !important;
+  }
+
+  .activity-stream {
+    background-color: #1a1214 !important;
+  }
+
+  /* ===== Search box ===== */
+  .search-wrapper,
+  .search-inner-wrapper {
+    background-color: transparent !important;
+  }
+
+  .search-wrapper input,
+  .search-wrapper .search-handoff-button,
+  .fake-editable,
+  .search-handoff-button {
+    background-color: #2a2018 !important;
+    color: #d5c4b0 !important;
+    border: 2px solid #d4985a !important;
+    border-radius: 0 !important;
+  }
+
+  .search-wrapper .search-handoff-button .fake-caret {
+    background-color: #d4985a !important;
+  }
+
+  .search-wrapper input::placeholder,
+  .search-handoff-button .fake-textbox {
+    color: #7a7a7a !important;
+  }
+
+  /* ===== Top sites ===== */
+  .top-sites-list {
+    background-color: transparent !important;
+  }
+
+  .top-site-outer,
+  .top-site-inner,
+  .tile,
+  .top-site-button {
+    background-color: #2a2018 !important;
+    border-radius: 0 !important;
+  }
+
+  .top-site-outer:hover .tile,
+  .top-site-outer:focus .tile {
+    background-color: rgba(212,152,90,0.15) !important;
+  }
+
+  .top-site-outer .title,
+  .top-site-outer .title span {
+    color: #d5c4b0 !important;
+  }
+
+  .top-site-outer .sponsored-label {
+    color: #7a7a7a !important;
+  }
+
+  /* Top site icons/favicons container */
+  .top-site-outer .icon-wrapper,
+  .top-site-outer .icon-pin-small,
+  .top-site-outer .top-site-icon {
+    border-radius: 0 !important;
+  }
+
+  /* ===== Cards (Pocket / recommendations) ===== */
+  .ds-card,
+  .ds-card-grid .ds-card,
+  .card-outer,
+  .card,
+  [data-section-id] .card-outer,
+  .story-card,
+  .ds-card-grid-include-descriptions .ds-card {
+    background-color: #2a2018 !important;
+    border-radius: 0 !important;
+    color: #d5c4b0 !important;
+    overflow: hidden !important;
+  }
+
+  .ds-card:hover,
+  .card-outer:hover {
+    box-shadow: 0 0 8px rgba(212,152,90,0.3) !important;
+  }
+
+  .ds-card .meta,
+  .ds-card .title,
+  .ds-card .excerpt,
+  .card-details,
+  .ds-card-grid .title,
+  .ds-card-grid .excerpt {
+    color: #d5c4b0 !important;
+  }
+
+  .ds-card .source,
+  .ds-card .story-sponsored-label,
+  .card-host-name,
+  .ds-card .publisher,
+  .ds-card .story-footer {
+    color: #7a7a7a !important;
+  }
+
+  /* Card images */
+  .ds-card .img-wrapper,
+  .ds-card .img,
+  .card-preview-image-outer,
+  .ds-card img,
+  .ds-image {
+    border-radius: 0 !important;
+  }
+
+  /* ===== Section headers ===== */
+  .section-title,
+  .section-title span,
+  .ds-section-title,
+  .section-top-bar .section-title span,
+  .ds-header .title,
+  [class*="SectionTitle"],
+  [class*="section-title"] {
+    color: #d4985a !important;
+  }
+
+  /* ===== Buttons ===== */
+  button,
+  .actions button {
+    background-color: #2a2018 !important;
+    color: #d5c4b0 !important;
+    border: 1px solid #3a414b !important;
+    border-radius: 0 !important;
+  }
+
+  button:hover {
+    background-color: rgba(212,152,90,0.2) !important;
+    border-color: #d4985a !important;
+  }
+
+  /* Follow / topic buttons */
+  .topic button,
+  .ds-card .context-menu-button,
+  .section-top-bar button,
+  [class*="FollowButton"],
+  [class*="follow-button"] {
+    background-color: #2a2018 !important;
+    color: #d4985a !important;
+    border: 1px solid #d4985a !important;
+    border-radius: 0 !important;
+  }
+
+  /* ===== Context menus ===== */
+  .context-menu,
+  .context-menu-list,
+  .context-menu-item {
+    background-color: #1a1214 !important;
+    color: #d5c4b0 !important;
+    border-radius: 0 !important;
+  }
+
+  .context-menu {
+    border: 2px solid #d4985a !important;
+  }
+
+  .context-menu-item:hover,
+  .context-menu-item:focus {
+    background-color: rgba(212,152,90,0.25) !important;
+  }
+
+  /* ===== Collapsible sections ===== */
+  .collapsible-section {
+    background-color: transparent !important;
+  }
+
+  /* ===== Personalize / customize ===== */
+  .personalize-button {
+    background-color: #2a2018 !important;
+    color: #d5c4b0 !important;
+    border-radius: 0 !important;
+  }
+
+  .customize-menu,
+  .home-section,
+  .home-section-title {
+    background-color: #1a1214 !important;
+    color: #d5c4b0 !important;
+  }
+
+  /* ===== Weather widget ===== */
+  .weather,
+  .weather-card,
+  [class*="Weather"],
+  [class*="weather"] {
+    background-color: #2a2018 !important;
+    color: #d5c4b0 !important;
+    border-radius: 0 !important;
+  }
+
+  /* ===== Selection ===== */
+  ::selection {
+    background: rgba(212,152,90,0.35) !important;
+    color: #1a1214 !important;
+  }
+
+  /* ===== Links ===== */
+  a {
+    color: #d4985a !important;
+  }
+  a:hover {
+    color: #8a9a7a !important;
+  }
+}
+
+/* ===== about:preferences / settings ===== */
+@-moz-document url-prefix("about:preferences") {
+  :root {
+    --in-content-page-background: #1a1214 !important;
+    --in-content-box-background: #2a2018 !important;
+    --in-content-text-color: #d5c4b0 !important;
+    --in-content-primary-button-background: #d4985a !important;
+    --in-content-primary-button-text-color: #1a1214 !important;
+    --in-content-focus-outline-color: #d4985a !important;
+    --in-content-border-color: #3a414b !important;
+    --in-content-accent-color: #d4985a !important;
+    --in-content-link-color: #d4985a !important;
+  }
+
+  * { border-radius: 0 !important; }
+}
+
+/* ===== about:addons ===== */
+@-moz-document url-prefix("about:addons") {
+  :root {
+    --in-content-page-background: #1a1214 !important;
+    --in-content-box-background: #2a2018 !important;
+    --in-content-text-color: #d5c4b0 !important;
+    --in-content-primary-button-background: #d4985a !important;
+    --in-content-border-color: #3a414b !important;
+    --in-content-accent-color: #d4985a !important;
+  }
+
+  * { border-radius: 0 !important; }
+}
+
+/* ===== General web content scrollbars and selection ===== */
+@-moz-document url-prefix("http"), url-prefix("https"), url-prefix("about:reader") {
+  :root {
+    scrollbar-color: rgba(212,152,90,0.4) #1a1214 !important;
+    scrollbar-width: thin !important;
+  }
+
+  ::selection {
+    background: rgba(212,152,90,0.35) !important;
+    color: #1a1214 !important;
+  }
+}
