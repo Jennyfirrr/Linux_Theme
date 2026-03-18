@@ -239,13 +239,6 @@ local plugins = {
   { "hrsh7th/cmp-path" },
   { "L3MON4D3/LuaSnip",                 build = "make install_jsregexp" },
   { "saadparwaiz1/cmp_luasnip" },
-  -- copilot-cmp disabled — using inline ghost-text suggestions instead
-  -- {
-  --   "zbirenbaum/copilot-cmp",
-  --   dependencies = { "zbirenbaum/copilot.lua" },
-  --   event = { "InsertEnter", "LspAttach" },
-  --   config = function() require("copilot_cmp").setup() end,
-  -- },
   { "echasnovski/mini.icons",           version = false },
 
   -- Diagnostics UI
@@ -485,12 +478,11 @@ local plugins = {
   {
     "zbirenbaum/copilot.lua",
     cmd = "Copilot",
-    event = "InsertEnter",
+    event = "VeryLazy",
     opts = {
       suggestion = {
         enabled = true,
         auto_trigger = true,
-        hide_during_completion = false,
         debounce = 150,
         keymap = {
           accept = "<C-l>",       -- Ctrl+l to accept
@@ -1794,15 +1786,18 @@ map("n", "<C-4>", function() harpoon:list():select(4) end, { desc = "Harpoon 4" 
 
 -- Copilot: toggle inline ghost-text vs cmp-menu suggestions
 map("n", "<leader>Ci", function()
-  local cfg = require("copilot.config").get().suggestion
+  local suggestion = require("copilot.suggestion")
+  local cfg = require("copilot.config").suggestion
   if cfg.enabled then
     cfg.enabled = false
     cfg.auto_trigger = false
-    require("copilot.suggestion").dismiss()
+    suggestion.dismiss()
+    suggestion.teardown()
     vim.notify("Copilot: cmp menu mode", vim.log.levels.INFO)
   else
     cfg.enabled = true
     cfg.auto_trigger = true
+    suggestion.setup()
     vim.notify("Copilot: inline suggestions mode", vim.log.levels.INFO)
   end
 end, { desc = "Copilot toggle inline/cmp" })
