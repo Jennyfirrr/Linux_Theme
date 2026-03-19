@@ -22,7 +22,7 @@ vim.opt.expandtab = true
 vim.opt.shiftwidth = 2
 vim.opt.tabstop = 2
 vim.opt.termguicolors = true
-vim.opt.signcolumn = "yes"
+vim.opt.signcolumn = "yes:2"
 vim.opt.splitbelow = true
 vim.opt.splitright = true
 vim.opt.updatetime = 250
@@ -39,39 +39,39 @@ vim.opt.autowriteall = true       -- auto-save when switching buffers / leaving
 
 -- FoxML palette (single source of truth)
 local P = {
-  bg_deep   = "#{{BG_DARK}}",
-  bg        = "#{{BG}}",
-  bg_alt    = "#{{BG_ALT}}",
-  bg_hl     = "#{{TMUX_ACTIVE_BG}}",
+  bg_deep   = "#150f0f",
+  bg        = "#1a1214",
+  bg_alt    = "#2d1a2d",
+  bg_hl     = "#1f1519",
   sel       = "#3d2a1e",
-  fg        = "#{{FG}}",
-  fg_pastel = "#{{FG_PASTEL}}",
-  fg_dim    = "#{{FG_DIM}}",
-  comment   = "#{{COMMENT}}",
-  peach     = "#{{PRIMARY}}",
-  pink      = "#{{SECONDARY}}",
-  lavender  = "#{{ACCENT}}",
-  surface   = "#{{SURFACE}}",
-  red       = "#{{RED}}",
-  red_br    = "#{{RED_BRIGHT}}",
-  green     = "#{{GREEN}}",
-  green_br  = "#{{GREEN_BRIGHT}}",
-  yellow    = "#{{YELLOW}}",
-  yellow_br = "#{{YELLOW_BRIGHT}}",
-  blue      = "#{{BLUE}}",
-  blue_br   = "#{{BLUE_BRIGHT}}",
-  cyan      = "#{{CYAN}}",
-  cyan_br   = "#{{CYAN_BRIGHT}}",
-  white     = "#{{WHITE}}",
+  fg        = "#d5c4b0",
+  fg_pastel = "#c4b4a0",
+  fg_dim    = "#7a7a7a",
+  comment   = "#5a6270",
+  peach     = "#d4985a",
+  pink      = "#b8967a",
+  lavender  = "#8a9a7a",
+  surface   = "#3a414b",
+  red       = "#b05555",
+  red_br    = "#c06868",
+  green     = "#6b9a7a",
+  green_br  = "#7aab88",
+  yellow    = "#c4b48a",
+  yellow_br = "#b8a87e",
+  blue      = "#7a9ab4",
+  blue_br   = "#8a8aab",
+  cyan      = "#7a9aab",
+  cyan_br   = "#7aab9a",
+  white     = "#d5d5d5",
   warm      = "#b0a498",
   sand      = "#a89a7a",
   wheat     = "#d4b483",
   clay      = "#b0603a",
-  diff_add  = "#{{DIFF_ADD}}",
-  diff_chg  = "#{{DIFF_CHANGE}}",
-  diff_del  = "#{{DIFF_DELETE}}",
-  diff_txt  = "#{{DIFF_TEXT}}",
-  ts_ctx    = "#{{TMUX_ACTIVE_BG}}",
+  diff_add  = "#1a2e1a",
+  diff_chg  = "#2d2a1a",
+  diff_del  = "#2e1a1a",
+  diff_txt  = "#3d3a1a",
+  ts_ctx    = "#1f1519",
   none      = "none",
 }
 
@@ -88,15 +88,25 @@ vim.opt.rtp:prepend(lazypath)
 local plugins = {
   { "nvim-lualine/lualine.nvim",           dependencies = { "nvim-tree/nvim-web-devicons" } },
   { "lukas-reineke/indent-blankline.nvim", main = "ibl",
-    opts = {
-      indent = {
-        highlight = {
-          "RainbowIndent1", "RainbowIndent2", "RainbowIndent3",
-          "RainbowIndent4", "RainbowIndent5", "RainbowIndent6",
+    config = function()
+      -- Define highlight groups before ibl.setup so they exist at init time
+      local hl = vim.api.nvim_set_hl
+      hl(0, "RainbowIndent1", { fg = "#4d3a2e" })
+      hl(0, "RainbowIndent2", { fg = "#4a3040" })
+      hl(0, "RainbowIndent3", { fg = "#2e3d2e" })
+      hl(0, "RainbowIndent4", { fg = "#3d3a24" })
+      hl(0, "RainbowIndent5", { fg = "#2a3540" })
+      hl(0, "RainbowIndent6", { fg = "#402a2a" })
+      require("ibl").setup({
+        indent = {
+          highlight = {
+            "RainbowIndent1", "RainbowIndent2", "RainbowIndent3",
+            "RainbowIndent4", "RainbowIndent5", "RainbowIndent6",
+          },
         },
-      },
-      scope = { enabled = true, show_start = false, show_end = false },
-    } },
+        scope = { enabled = true, show_start = false, show_end = false },
+      })
+    end },
 
   -- Core editing
   { "numToStr/Comment.nvim",               config = true },
@@ -357,7 +367,7 @@ local plugins = {
   {
     "stevearc/conform.nvim",
     opts = {
-      format_on_save = { lsp_fallback = true, timeout_ms = 500 },
+      format_on_save = { lsp_format = "fallback", timeout_ms = 500 },
       formatters_by_ft = { c = { "clang-format" }, cpp = { "clang-format" } },
     },
   },
@@ -828,7 +838,6 @@ require("lazy").setup(plugins, {
 })
 
 -- setup optional
-vim.opt.signcolumn = "yes:2"
 vim.opt.fillchars:append({ eob = " ", vert = " " })
 
 -- Popup menu transparency only (winblend left at 0 so splits stay solid)
@@ -838,7 +847,7 @@ vim.opt.pumblend = 15
 -- FoxML custom colorscheme (no external theme dependency)
 -- ═══════════════════════════════════════════════════════════════
 local function apply_foxml_theme()
-  vim.o.background = "{{THEME_TYPE}}"
+  vim.o.background = "dark"
   vim.g.colors_name = "foxml"
 
   local hl = function(name, opts) vim.api.nvim_set_hl(0, name, opts) end
@@ -1162,7 +1171,7 @@ local function apply_foxml_theme()
   hl("NeoTreeRootName",      { fg = P.pink, bold = true })
   hl("NeoTreeFileName",      { fg = P.fg })
   hl("NeoTreeFileIcon",      { fg = P.fg })
-  hl("NeoTreeGitAdded",      { fg = "#{{GREEN}}" })
+  hl("NeoTreeGitAdded",      { fg = "#6b9a7a" })
   hl("NeoTreeGitModified",   { fg = "#b8a47a" })
   hl("NeoTreeGitDeleted",    { fg = "#a06060" })
   hl("NeoTreeGitUntracked",  { fg = "#a06060" })
@@ -1671,8 +1680,8 @@ local on_attach    = function(_, bufnr)
   map("n", "K", vim.lsp.buf.hover, "Hover")
   map("n", "<leader>rn", vim.lsp.buf.rename, "Rename")
   map("n", "<leader>ca", vim.lsp.buf.code_action, "Code Action")
-  map("n", "[d", vim.diagnostic.goto_prev, "Prev Diagnostic")
-  map("n", "]d", vim.diagnostic.goto_next, "Next Diagnostic")
+  map("n", "[d", function() vim.diagnostic.jump({ count = -1 }) end, "Prev Diagnostic")
+  map("n", "]d", function() vim.diagnostic.jump({ count = 1 }) end, "Next Diagnostic")
   map("n", "<leader>f", function() vim.lsp.buf.format({ async = true }) end, "Format")
 
   -- format on save (synchronous so it finishes before write)
