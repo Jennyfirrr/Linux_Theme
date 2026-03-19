@@ -1,0 +1,77 @@
+[[ -o interactive ]] || return
+
+# ─── Shell options ────────────────────────────
+setopt correct
+setopt NO_CLOBBER
+setopt HIST_IGNORE_DUPS
+setopt HIST_IGNORE_SPACE
+setopt EXTENDED_HISTORY
+setopt SHARE_HISTORY
+setopt HIST_REDUCE_BLANKS
+typeset -U path PATH
+
+# ─── History ─────────────────────────────────
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=50000
+SAVEHIST=50000
+
+# ─── Environment ──────────────────────────────
+export QT_QPA_PLATFORMTHEME=qt5ct
+
+# ─── Oh My Zsh ────────────────────────────────
+export ZSH="$HOME/.oh-my-zsh"
+ZSH_THEME="caramel"
+plugins=(git zsh-completions zsh-syntax-highlighting zsh-autosuggestions)
+source "$ZSH/oh-my-zsh.sh"
+
+# ─── Autosuggestions style ────────────────────
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#7d5e6b'
+ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+
+# ─── Config (sourced after omz so plugins are loaded) ─
+ZSHCONF="$HOME/.config/zsh"
+source "$ZSHCONF/colors.zsh"
+source "$ZSHCONF/aliases.zsh"
+source "$ZSHCONF/paths.zsh"
+source "$ZSHCONF/conda.zsh"
+source "$ZSHCONF/welcome.zsh"
+
+# ─── Completion styling ───────────────────────
+zstyle ':completion:*' menu select
+zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+zstyle ':completion:*' group-name ''
+zstyle ':completion:*:descriptions' format '%F{173}── %d ──%f'
+zstyle ':completion:*:warnings' format '%F{167}no matches%f'
+zstyle ':completion:*:default' list-prompt '%F{173}%l%f'
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' 'r:|[._-]=* r:|=*'
+zstyle ':completion:*' squeeze-slashes true
+
+# ─── Colored man pages ───────────────────────
+export LESS_TERMCAP_mb=$'\e[1;38;5;138m'
+export LESS_TERMCAP_md=$'\e[1;38;5;173m'
+export LESS_TERMCAP_me=$'\e[0m'
+export LESS_TERMCAP_se=$'\e[0m'
+export LESS_TERMCAP_so=$'\e[38;5;232;48;5;180m'
+export LESS_TERMCAP_ue=$'\e[0m'
+export LESS_TERMCAP_us=$'\e[4;38;5;138m'
+
+# ─── fzf ──────────────────────────────────────
+source /usr/share/fzf/key-bindings.zsh
+source /usr/share/fzf/completion.zsh
+export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+export FZF_ALT_C_COMMAND='fd --type d --hidden --follow --exclude .git'
+export FZF_DEFAULT_OPTS="
+  --color=bg+:#3a414b,bg:#1f242b,fg:#d5c4b0,fg+:#d5c4b0
+  --color=hl:#c49aab,hl+:#d4985a,info:#c49aab,marker:#d4985a
+  --color=prompt:#d4985a,spinner:#c49aab,pointer:#d4985a,header:#c49aab
+  --color=border:#3a414b
+  --border=sharp --prompt='❯ ' --pointer='▸' --marker='●'
+  --preview='bat --color=always --style=numbers --line-range=:200 {} 2>/dev/null || eza --icons --color=always {}'
+  --preview-window=right:50%:hidden --bind='ctrl-/:toggle-preview'
+"
+
+# ─── Auto-attach tmux ─────────────────────────
+if [[ -z "$TMUX" && -z "$VSCODE_TERMINAL" && -z "$INTELLIJ_ENVIRONMENT_READER" && $- == *i* ]]; then
+  tmux attach -t main || tmux new -s main
+fi

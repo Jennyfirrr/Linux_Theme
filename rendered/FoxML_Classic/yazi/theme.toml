@@ -1,0 +1,165 @@
+# Fox ML Theme for Yazi
+# Matches waybar, hyprland, tmux, kitty, and spicetify
+
+# Color Palette:
+# bg:       #1a1214
+# fg:       #d5c4b0
+# slate:    #3a414b
+# peach:    #d4985a
+# lavender: #8a9a7a
+# pink:     #b8967a
+
+[manager]
+cwd = { fg = "#d4985a", bold = true }
+
+# Hovered
+hovered         = { fg = "#1a1214", bg = "#d4985a", bold = true }
+preview_hovered = { underline = true }
+
+# Find
+find_keyword  = { fg = "#c4b48a", bold = true, italic = true, underline = true }
+find_position = { fg = "#8a9a7a", bg = "reset", italic = true }
+
+# Marker
+marker_copied   = { fg = "#6b9a7a", bg = "#6b9a7a" }
+marker_cut      = { fg = "#b05555", bg = "#b05555" }
+marker_marked   = { fg = "#8a9a7a", bg = "#8a9a7a" }
+marker_selected = { fg = "#b8967a", bg = "#b8967a" }
+
+# Tab
+tab_active   = { fg = "#1a1214", bg = "#d4985a", bold = true }
+tab_inactive = { fg = "#7a7a7a", bg = "#3a414b" }
+tab_width    = 1
+
+# Count
+count_copied   = { fg = "#1a1214", bg = "#6b9a7a" }
+count_cut      = { fg = "#1a1214", bg = "#b05555" }
+count_selected = { fg = "#1a1214", bg = "#b8967a" }
+
+# Border
+border_symbol = "│"
+border_style  = { fg = "#1f1519" }
+
+[mode]
+normal_main = { fg = "#1a1214", bg = "#d4985a", bold = true }
+normal_alt  = { fg = "#1a1214", bg = "#b8967a" }
+select_main = { fg = "#1a1214", bg = "#b8967a", bold = true }
+select_alt  = { fg = "#1a1214", bg = "#8a9a7a" }
+unset_main  = { fg = "#1a1214", bg = "#8a9a7a", bold = true }
+unset_alt   = { fg = "#1a1214", bg = "#3a414b" }
+
+[status]
+overall  = { fg = "#d4985a" }
+sep_left  = { open = "", close = "" }
+sep_right = { open = "", close = "" }
+
+# Progress
+progress_label  = { fg = "#c4b4a0", bold = true }
+progress_normal = { fg = "#d4985a", bg = "#3a414b" }
+progress_error  = { fg = "#b05555", bg = "#3a414b" }
+
+# Permissions
+perm_type = { fg = "#d4985a" }
+perm_read = { fg = "#8a9a7a" }
+perm_write = { fg = "#b8967a" }
+perm_exec = { fg = "#6b9a7a" }
+perm_sep  = { fg = "#7a7a7a" }
+
+[input]
+border   = { fg = "#d4985a" }
+title    = {}
+value    = {}
+selected = { reversed = true }
+
+[pick]
+border   = { fg = "#d4985a" }
+active   = { fg = "#b8967a", bold = true }
+inactive = {}
+
+[confirm]
+border     = { fg = "#d4985a" }
+title      = { fg = "#d4985a", bold = true }
+content    = {}
+list       = {}
+btn_yes    = { bg = "#d4985a", fg = "#1a1214" }
+btn_no     = { bg = "#3a414b", fg = "#d5c4b0" }
+btn_labels = [ "  Yes  ", "  No  " ]
+
+[spot]
+border = { fg = "#d4985a" }
+title  = { fg = "#d4985a", bold = true }
+
+[completion]
+border   = { fg = "#d4985a" }
+active   = { fg = "#b8967a", bold = true }
+inactive = {}
+icon_file    = ""
+icon_folder  = ""
+icon_command = ""
+
+[tasks]
+border  = { fg = "#d4985a" }
+title   = {}
+hovered = { fg = "#b8967a", underline = true }
+
+[which]
+cols            = 3
+mask            = { bg = "#1a1214" }
+cand            = { fg = "#8a9a7a" }
+rest            = { fg = "#7a7a7a" }
+desc            = { fg = "#b8967a" }
+separator       = "  "
+separator_style = { fg = "#3a414b" }
+
+[help]
+on      = { fg = "#8a9a7a" }
+run     = { fg = "#b8967a" }
+desc    = {}
+hovered = { reversed = true, bold = true }
+footer  = { fg = "#7a7a7a", bg = "#1a1214" }
+
+[notify]
+title_info  = { fg = "#6b9a7a" }
+title_warn  = { fg = "#c4b48a" }
+title_error = { fg = "#b05555" }
+icon_info  = ""
+icon_warn  = ""
+icon_error = ""
+
+[filetype]
+rules = [
+    # Symlinks
+    { is = "link", fg = "#7a9aab", italic = true },
+    { is = "orphan", fg = "#b05555", italic = true },
+
+    # Executables
+    { is = "exec", fg = "#7aab88" },
+
+    # Images
+    { mime = "image/*", fg = "#b8967a" },
+
+    # Media
+    { mime = "{audio,video}/*", fg = "#8a9a7a" },
+
+    # Archives
+    { mime = "application/*zip*", fg = "#c4b48a" },
+    { mime = "application/x-{tar,bzip*,7z-compressed,xz,rar}", fg = "#c4b48a" },
+
+    # Documents
+    { mime = "application/{pdf,doc,rtf}", fg = "#7a9ab4" },
+    { mime = "application/vnd.*", fg = "#7a9ab4" },
+
+    # Directories — bold peach like neo-tree
+    { url = "*/", fg = "#d4985a", bold = true },
+
+    # Fallback — peach to match tmux/statusbar
+    { url = "*", fg = "#d4985a" },
+]
+
+[icon]
+# Default icons
+globs = []
+dirs = []
+files = []
+exts = []
+conds = []
