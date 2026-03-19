@@ -6,6 +6,17 @@ All notable changes to the Fox ML theme.
 
 ## 2026-03-19
 
+### Bat — Expanded tmTheme for Richer Syntax Highlighting
+- Expanded bat theme from ~15 to ~40 TextMate scope rules to match Neovim's highlighting
+- Added distinct colors for: string escapes/regex/interpolation (cyan), preprocessor directives (cyan), define/macro keywords (pink), booleans (bold peach), return keyword (bold lavender), import keywords (cyan), operators (lavender), variable parameters (yellow_br), variable builtins/self/this (pink), namespaces/modules (pink), brackets (sand), punctuation separators/delimiters (peach), constructors, function macros, type qualifiers, inherited classes, decorators/annotations
+- Added language-specific scopes: JSON/YAML/TOML keys (green), CSS properties/selectors/values/units, shell variables
+- Added markup scopes: bold, italic, strikethrough, code/raw blocks (green), list markers (pink), diff changed (yellow), deprecated (italic yellow)
+- Updated template, rendered Classic, and installed theme; rebuilt bat cache
+
+---
+
+## 2026-03-19
+
 ### Nvim — Fix indent-blankline Startup Error & Deprecation Cleanup
 - Fixed indent-blankline crash on startup — `RainbowIndent` highlight groups are now defined before `ibl.setup()` runs (previously only existed in `apply_foxml_theme()` which runs later)
 - Replaced deprecated `lsp_fallback = true` with `lsp_format = "fallback"` in conform.nvim config

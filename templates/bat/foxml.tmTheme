@@ -6,6 +6,7 @@
   <string>Fox ML</string>
   <key>settings</key>
   <array>
+    <!-- ═══ Global settings ═══ -->
     <dict>
       <key>settings</key>
       <dict>
@@ -25,11 +26,13 @@
         <string>#{{SURFACE}}</string>
       </dict>
     </dict>
+
+    <!-- ═══ Comments ═══ -->
     <dict>
       <key>name</key>
       <string>Comment</string>
       <key>scope</key>
-      <string>comment</string>
+      <string>comment, punctuation.definition.comment</string>
       <key>settings</key>
       <dict>
         <key>foreground</key>
@@ -38,17 +41,65 @@
         <string>italic</string>
       </dict>
     </dict>
+
+    <!-- ═══ Strings ═══ -->
     <dict>
       <key>name</key>
       <string>String</string>
       <key>scope</key>
-      <string>string</string>
+      <string>string, string.quoted</string>
       <key>settings</key>
       <dict>
         <key>foreground</key>
         <string>#{{GREEN}}</string>
       </dict>
     </dict>
+    <dict>
+      <key>name</key>
+      <string>String Escape</string>
+      <key>scope</key>
+      <string>constant.character.escape, string.escape</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{CYAN}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>String Regex</string>
+      <key>scope</key>
+      <string>string.regexp</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{CYAN}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>String Interpolation</string>
+      <key>scope</key>
+      <string>string.interpolated, punctuation.section.embedded, punctuation.definition.template-expression</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{CYAN}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>Character</string>
+      <key>scope</key>
+      <string>constant.character</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{GREEN}}</string>
+      </dict>
+    </dict>
+
+    <!-- ═══ Numbers & Constants ═══ -->
     <dict>
       <key>name</key>
       <string>Number</string>
@@ -58,13 +109,28 @@
       <dict>
         <key>foreground</key>
         <string>#{{YELLOW}}</string>
+        <key>fontStyle</key>
+        <string>bold</string>
       </dict>
     </dict>
     <dict>
       <key>name</key>
-      <string>Constant</string>
+      <string>Boolean</string>
       <key>scope</key>
-      <string>constant, constant.language, constant.character</string>
+      <string>constant.language.boolean, constant.language.true, constant.language.false</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{PRIMARY}}</string>
+        <key>fontStyle</key>
+        <string>bold</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>Constant Language</string>
+      <key>scope</key>
+      <string>constant.language</string>
       <key>settings</key>
       <dict>
         <key>foreground</key>
@@ -73,15 +139,52 @@
     </dict>
     <dict>
       <key>name</key>
+      <string>Constant Other</string>
+      <key>scope</key>
+      <string>constant.other</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{YELLOW}}</string>
+      </dict>
+    </dict>
+
+    <!-- ═══ Keywords ═══ -->
+    <dict>
+      <key>name</key>
       <string>Keyword</string>
       <key>scope</key>
-      <string>keyword, storage.type, storage.modifier</string>
+      <string>keyword, keyword.control</string>
       <key>settings</key>
       <dict>
         <key>foreground</key>
         <string>#{{SECONDARY}}</string>
         <key>fontStyle</key>
         <string>bold</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>Keyword Return</string>
+      <key>scope</key>
+      <string>keyword.control.return, keyword.control.flow.return</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{ACCENT}}</string>
+        <key>fontStyle</key>
+        <string>bold</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>Keyword Import</string>
+      <key>scope</key>
+      <string>keyword.control.import, keyword.control.from, keyword.control.export</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{CYAN}}</string>
       </dict>
     </dict>
     <dict>
@@ -92,14 +195,55 @@
       <key>settings</key>
       <dict>
         <key>foreground</key>
-        <string>#{{SECONDARY}}</string>
+        <string>#{{ACCENT}}</string>
       </dict>
     </dict>
     <dict>
       <key>name</key>
-      <string>Function</string>
+      <string>Operator Assignment</string>
       <key>scope</key>
-      <string>entity.name.function, support.function</string>
+      <string>keyword.operator.assignment, keyword.operator.comparison, keyword.operator.relational, keyword.operator.logical</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{ACCENT}}</string>
+      </dict>
+    </dict>
+
+    <!-- ═══ Storage ═══ -->
+    <dict>
+      <key>name</key>
+      <string>Storage Type</string>
+      <key>scope</key>
+      <string>storage.type</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{SECONDARY}}</string>
+        <key>fontStyle</key>
+        <string>bold</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>Storage Modifier</string>
+      <key>scope</key>
+      <string>storage.modifier</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{SECONDARY}}</string>
+        <key>fontStyle</key>
+        <string>bold</string>
+      </dict>
+    </dict>
+
+    <!-- ═══ Functions ═══ -->
+    <dict>
+      <key>name</key>
+      <string>Function Definition</string>
+      <key>scope</key>
+      <string>entity.name.function</string>
       <key>settings</key>
       <dict>
         <key>foreground</key>
@@ -110,9 +254,44 @@
     </dict>
     <dict>
       <key>name</key>
+      <string>Function Call</string>
+      <key>scope</key>
+      <string>meta.function-call, support.function, variable.function</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{PRIMARY}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>Function Macro</string>
+      <key>scope</key>
+      <string>entity.name.function.preprocessor, support.function.macro</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{SECONDARY}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>Constructor</string>
+      <key>scope</key>
+      <string>entity.name.function.constructor, meta.function.constructor</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{PRIMARY}}</string>
+      </dict>
+    </dict>
+
+    <!-- ═══ Types & Classes ═══ -->
+    <dict>
+      <key>name</key>
       <string>Type</string>
       <key>scope</key>
-      <string>entity.name.type, entity.name.class, support.type, support.class</string>
+      <string>entity.name.type, support.type, entity.name.class, support.class</string>
       <key>settings</key>
       <dict>
         <key>foreground</key>
@@ -121,9 +300,68 @@
     </dict>
     <dict>
       <key>name</key>
+      <string>Type Builtin</string>
+      <key>scope</key>
+      <string>support.type.builtin, support.type.primitive</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{CYAN}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>Type Qualifier</string>
+      <key>scope</key>
+      <string>storage.type.qualifier, keyword.type.qualifier</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{SECONDARY}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>Inherited Class</string>
+      <key>scope</key>
+      <string>entity.other.inherited-class</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{CYAN}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>Interface</string>
+      <key>scope</key>
+      <string>entity.name.type.interface</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{CYAN}}</string>
+      </dict>
+    </dict>
+
+    <!-- ═══ Namespace / Module ═══ -->
+    <dict>
+      <key>name</key>
+      <string>Namespace</string>
+      <key>scope</key>
+      <string>entity.name.namespace, entity.name.module, entity.name.scope-resolution</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{SECONDARY}}</string>
+      </dict>
+    </dict>
+
+    <!-- ═══ Variables ═══ -->
+    <dict>
+      <key>name</key>
       <string>Variable</string>
       <key>scope</key>
-      <string>variable, variable.parameter</string>
+      <string>variable, variable.other</string>
       <key>settings</key>
       <dict>
         <key>foreground</key>
@@ -132,15 +370,74 @@
     </dict>
     <dict>
       <key>name</key>
+      <string>Variable Parameter</string>
+      <key>scope</key>
+      <string>variable.parameter, variable.parameter.function</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{YELLOW_BRIGHT}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>Variable Builtin</string>
+      <key>scope</key>
+      <string>variable.language, variable.language.this, variable.language.self, variable.language.super</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{SECONDARY}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
       <string>Property</string>
       <key>scope</key>
-      <string>variable.other.property, variable.other.member</string>
+      <string>variable.other.property, variable.other.member, variable.other.object.property, meta.object-literal.key</string>
       <key>settings</key>
       <dict>
         <key>foreground</key>
         <string>#{{GREEN}}</string>
       </dict>
     </dict>
+
+    <!-- ═══ Preprocessor ═══ -->
+    <dict>
+      <key>name</key>
+      <string>Preprocessor</string>
+      <key>scope</key>
+      <string>meta.preprocessor, keyword.control.directive, punctuation.definition.directive</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{CYAN}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>Include Path</string>
+      <key>scope</key>
+      <string>string.quoted.other.include, string.quoted.angle</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{GREEN}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>Define / Macro</string>
+      <key>scope</key>
+      <string>keyword.control.define, keyword.control.undef, keyword.control.ifdef, keyword.control.ifndef, keyword.control.endif, keyword.control.pragma</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{SECONDARY}}</string>
+      </dict>
+    </dict>
+
+    <!-- ═══ Punctuation ═══ -->
     <dict>
       <key>name</key>
       <string>Punctuation</string>
@@ -154,7 +451,31 @@
     </dict>
     <dict>
       <key>name</key>
-      <string>Tag</string>
+      <string>Punctuation Separator</string>
+      <key>scope</key>
+      <string>punctuation.separator, punctuation.terminator, punctuation.accessor</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{PRIMARY}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>Brackets</string>
+      <key>scope</key>
+      <string>punctuation.section, punctuation.definition.block, punctuation.definition.parameters, meta.brace, punctuation.definition.begin, punctuation.definition.end</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#a89a7a</string>
+      </dict>
+    </dict>
+
+    <!-- ═══ Tags (HTML/XML) ═══ -->
+    <dict>
+      <key>name</key>
+      <string>Tag Name</string>
       <key>scope</key>
       <string>entity.name.tag</string>
       <key>settings</key>
@@ -165,7 +486,7 @@
     </dict>
     <dict>
       <key>name</key>
-      <string>Attribute</string>
+      <string>Tag Attribute</string>
       <key>scope</key>
       <string>entity.other.attribute-name</string>
       <key>settings</key>
@@ -176,9 +497,22 @@
     </dict>
     <dict>
       <key>name</key>
+      <string>Tag Bracket</string>
+      <key>scope</key>
+      <string>punctuation.definition.tag</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{FG}}</string>
+      </dict>
+    </dict>
+
+    <!-- ═══ Markup ═══ -->
+    <dict>
+      <key>name</key>
       <string>Heading</string>
       <key>scope</key>
-      <string>markup.heading</string>
+      <string>markup.heading, punctuation.definition.heading</string>
       <key>settings</key>
       <dict>
         <key>foreground</key>
@@ -189,15 +523,70 @@
     </dict>
     <dict>
       <key>name</key>
+      <string>Bold</string>
+      <key>scope</key>
+      <string>markup.bold</string>
+      <key>settings</key>
+      <dict>
+        <key>fontStyle</key>
+        <string>bold</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>Italic</string>
+      <key>scope</key>
+      <string>markup.italic</string>
+      <key>settings</key>
+      <dict>
+        <key>fontStyle</key>
+        <string>italic</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>Strikethrough</string>
+      <key>scope</key>
+      <string>markup.strikethrough</string>
+      <key>settings</key>
+      <dict>
+        <key>fontStyle</key>
+        <string>strikethrough</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
       <string>Link</string>
       <key>scope</key>
-      <string>markup.underline.link</string>
+      <string>markup.underline.link, string.other.link</string>
       <key>settings</key>
       <dict>
         <key>foreground</key>
         <string>#{{CYAN}}</string>
         <key>fontStyle</key>
         <string>underline</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>Code / Raw</string>
+      <key>scope</key>
+      <string>markup.raw, markup.inline.raw, markup.fenced_code</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{GREEN}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>List Marker</string>
+      <key>scope</key>
+      <string>markup.list, punctuation.definition.list</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{SECONDARY}}</string>
       </dict>
     </dict>
     <dict>
@@ -224,6 +613,56 @@
     </dict>
     <dict>
       <key>name</key>
+      <string>Diff Changed</string>
+      <key>scope</key>
+      <string>markup.changed</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{YELLOW}}</string>
+      </dict>
+    </dict>
+
+    <!-- ═══ Decorators / Annotations ═══ -->
+    <dict>
+      <key>name</key>
+      <string>Decorator / Annotation</string>
+      <key>scope</key>
+      <string>meta.decorator, punctuation.decorator, meta.annotation</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{PRIMARY}}</string>
+      </dict>
+    </dict>
+
+    <!-- ═══ Special ═══ -->
+    <dict>
+      <key>name</key>
+      <string>Special</string>
+      <key>scope</key>
+      <string>support.other, support.constant</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{PRIMARY}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>Delimiter</string>
+      <key>scope</key>
+      <string>meta.delimiter</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{PRIMARY}}</string>
+      </dict>
+    </dict>
+
+    <!-- ═══ Errors ═══ -->
+    <dict>
+      <key>name</key>
       <string>Error</string>
       <key>scope</key>
       <string>invalid, invalid.illegal</string>
@@ -233,6 +672,114 @@
         <string>#{{RED}}</string>
       </dict>
     </dict>
+    <dict>
+      <key>name</key>
+      <string>Deprecated</string>
+      <key>scope</key>
+      <string>invalid.deprecated</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{YELLOW}}</string>
+        <key>fontStyle</key>
+        <string>italic</string>
+      </dict>
+    </dict>
+
+    <!-- ═══ JSON / YAML / TOML keys ═══ -->
+    <dict>
+      <key>name</key>
+      <string>JSON Key</string>
+      <key>scope</key>
+      <string>support.type.property-name, string.json, meta.structure.dictionary.key</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{GREEN}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>YAML Key</string>
+      <key>scope</key>
+      <string>entity.name.tag.yaml</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{GREEN}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>TOML Key</string>
+      <key>scope</key>
+      <string>keyword.key.toml, entity.name.tag.toml</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{GREEN}}</string>
+      </dict>
+    </dict>
+
+    <!-- ═══ CSS / SCSS ═══ -->
+    <dict>
+      <key>name</key>
+      <string>CSS Property</string>
+      <key>scope</key>
+      <string>support.type.property-name.css, support.type.vendored.property-name.css</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{GREEN}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>CSS Selector</string>
+      <key>scope</key>
+      <string>entity.other.attribute-name.class.css, entity.other.attribute-name.id.css</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{PRIMARY}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>CSS Value</string>
+      <key>scope</key>
+      <string>support.constant.property-value.css, support.constant.color.css</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{YELLOW}}</string>
+      </dict>
+    </dict>
+    <dict>
+      <key>name</key>
+      <string>CSS Unit</string>
+      <key>scope</key>
+      <string>keyword.other.unit.css</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{SECONDARY}}</string>
+      </dict>
+    </dict>
+
+    <!-- ═══ Shell ═══ -->
+    <dict>
+      <key>name</key>
+      <string>Shell Variable</string>
+      <key>scope</key>
+      <string>variable.other.normal.shell, punctuation.definition.variable.shell</string>
+      <key>settings</key>
+      <dict>
+        <key>foreground</key>
+        <string>#{{PRIMARY}}</string>
+      </dict>
+    </dict>
+
   </array>
 </dict>
 </plist>
