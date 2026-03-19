@@ -4,6 +4,16 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-03-19
+
+### Nvim — Fix indent-blankline Startup Error & Deprecation Cleanup
+- Fixed indent-blankline crash on startup — `RainbowIndent` highlight groups are now defined before `ibl.setup()` runs (previously only existed in `apply_foxml_theme()` which runs later)
+- Replaced deprecated `lsp_fallback = true` with `lsp_format = "fallback"` in conform.nvim config
+- Replaced deprecated `vim.diagnostic.goto_prev`/`goto_next` with `vim.diagnostic.jump()` (Neovim 0.11+)
+- Removed duplicate `signcolumn` setting (was set twice, consolidated to `"yes:2"`)
+
+---
+
 ## 2026-03-17
 
 ### Font — Templated FONT_FAMILY + Switch to Hack Nerd Font
