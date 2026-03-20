@@ -4,6 +4,13 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-03-20
+
+### Shell — New `trade` Alias
+- Added `trade` alias that disables screensaver/DPMS before running `./engine`, then re-enables it after
+
+---
+
 ## 2026-03-19
 
 ### Bat — Expanded tmTheme for Richer Syntax Highlighting
