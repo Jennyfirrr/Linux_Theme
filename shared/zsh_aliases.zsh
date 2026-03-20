@@ -29,6 +29,7 @@ alias dashboard="~/dashboard.sh"
 alias dtop='ssh desktop'
 alias lock='sudo systemctl restart greetd'
 alias stop='systemd-inhibit --what=idle:sleep:handle-lid-switch --why="Training models" tail -f /dev/null'
+alias trade='xset s off -dpms; ./engine; xset s on +dpms'
 
 # ─── LLM / AI ────────────────────────────────
 alias @recall='~/.contextai/src/recall_with_context.sh'
