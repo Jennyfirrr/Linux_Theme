@@ -11,6 +11,8 @@ MAKO_ICON_THEME=Papirus-Dark
 VSCODE_UI_THEME=vs-dark
 FONT_FAMILY="Hack Nerd Font"
 SHOW_WELCOME=true
+SHOW_BANNER=true
+WALLPAPER=foxml_earthy.jpg
 
 # ─── Core palette ───
 BG=1a1214
@@ -53,6 +55,8 @@ ZSH_CMD=7aab88
 BG_VENCORD_DEEP=150a15
 
 # ─── Nvim extra colors ───
+NVIM_BG_HL=1f1519
+NVIM_SEL=3d2a1e
 WARM=b0a498
 SAND=a89a7a
 WHEAT=d4b483

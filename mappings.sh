@@ -11,6 +11,7 @@ TEMPLATE_MAPPINGS=(
     # Hyprland
     "hyprland/theme.conf|~/.config/hypr/modules/theme.conf"
     "hyprlock/hyprlock.conf|~/.config/hypr/hyprlock.conf"
+    "hyprpaper/hyprpaper.conf|~/.config/hypr/hyprpaper.conf"
 
     # Neovim
     "nvim/init.lua|~/.config/nvim/init.lua"
@@ -86,7 +87,6 @@ TEMPLATE_MAPPINGS=(
 SHARED_MAPPINGS=(
     # Hyprland
     "hyprland_hypridle.conf|~/.config/hypr/hypridle.conf"
-    "hyprpaper.conf|~/.config/hypr/hyprpaper.conf"
 
     # Neovim
     "nvim_lazy-lock.json|~/.config/nvim/lazy-lock.json"

@@ -10,7 +10,9 @@ KITTY_BG_OPACITY=0.6
 MAKO_ICON_THEME=Papirus-Dark
 VSCODE_UI_THEME=vs-dark
 FONT_FAMILY="Hack Nerd Font"
-SHOW_WELCOME=false
+SHOW_WELCOME=true
+SHOW_BANNER=false
+WALLPAPER=cave_data_center.jpg
 
 # ─── Core palette ───
 BG=151526
@@ -50,6 +52,8 @@ WARN=ffb200
 ZSH_CMD=48b878
 
 # ─── Nvim extra colors ───
+NVIM_BG_HL=252540
+NVIM_SEL=4a3510
 WARM=8898b0
 SAND=7888a0
 WHEAT=e0a030
