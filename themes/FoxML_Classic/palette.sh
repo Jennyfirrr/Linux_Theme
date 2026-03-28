@@ -10,6 +10,7 @@ KITTY_BG_OPACITY=0.6
 MAKO_ICON_THEME=Papirus-Dark
 VSCODE_UI_THEME=vs-dark
 FONT_FAMILY="Hack Nerd Font"
+SHOW_WELCOME=true
 
 # ─── Core palette ───
 BG=1a1214
@@ -50,6 +51,12 @@ ZSH_CMD=7aab88
 
 # ─── Vencord deep background ───
 BG_VENCORD_DEEP=150a15
+
+# ─── Nvim extra colors ───
+WARM=b0a498
+SAND=a89a7a
+WHEAT=d4b483
+CLAY=b0603a
 
 # ─── Nvim diff colors ───
 DIFF_ADD=1a2e1a

@@ -79,4 +79,4 @@ todos() {
   [[ -s ~/.todo ]] && nl -ba ~/.todo || echo "nothing to do"
 }
 
-_caramel_welcome
+[[ "{{SHOW_WELCOME}}" == "true" ]] && _caramel_welcome
