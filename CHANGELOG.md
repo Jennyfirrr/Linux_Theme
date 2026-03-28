@@ -4,6 +4,26 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-03-28
+
+### Theme — New Cave Data Center Theme
+- Added second theme: Cave Data Center — dark navy palette with blue (`#2ea3f2`) and gold (`#ffb200`) accents, inspired by HRT's website colors
+- Themes can be hotswapped with `./swap.sh`, switching nvim, kitty, hyprland, waybar, tmux, zsh, wallpaper, and all other configs in one command
+
+### Theme — Templatize Nvim & Wallpaper
+- Nvim `init.lua` palette table now renders from `palette.sh` instead of hardcoded hex values — all themes share one template
+- Added `NVIM_BG_HL`, `NVIM_SEL`, `WARM`, `SAND`, `WHEAT`, `CLAY` palette variables for nvim-specific colors
+- Moved `hyprpaper.conf` from shared to templates with `{{WALLPAPER}}` variable so wallpaper swaps per-theme
+- Added `SHOW_BANNER` toggle to show/hide the FOXML block text in the zsh welcome (cat stays)
+- Added `SHOW_WELCOME` toggle to disable the entire welcome splash per-theme
+- Added 4K dark blue textured wallpaper for Cave Data Center
+
+### Theme — Render Engine
+- Added `WARM`, `SAND`, `WHEAT`, `CLAY`, `NVIM_BG_HL`, `NVIM_SEL` to `render.sh` hex variable lists (forward and reverse)
+- Added `SHOW_WELCOME`, `SHOW_BANNER`, `WALLPAPER` to `render.sh` string variable lists
+
+---
+
 ## 2026-03-20
 
 ### Shell — New `trade` Alias
