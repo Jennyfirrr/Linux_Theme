@@ -101,6 +101,7 @@ SHARED_MAPPINGS=(
 
     # Zsh non-color
     "zsh_aliases.zsh|~/.config/zsh/aliases.zsh"
+    "zsh_git.zsh|~/.config/zsh/git.zsh"
     "zsh_paths.zsh|~/.config/zsh/paths.zsh"
     "zsh_conda.zsh|~/.config/zsh/conda.zsh"
 

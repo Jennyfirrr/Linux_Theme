@@ -4,6 +4,23 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-04-12
+
+### Shell — Git Workflow Functions
+- Added `shared/zsh_git.zsh` with git workflow shortcuts that complement the Oh My Zsh `git` plugin
+- `gpush` — push current branch, auto-sets upstream on first push
+- `gnew` — create + switch to new branch (prompts for name if omitted)
+- `gsave` / `gquick` — stage all + commit in one shot / WIP checkpoint with timestamp
+- `gundo` / `gamend` — undo last commit (soft reset) / amend last commit with new changes
+- `gbr` / `grecent` — fzf branch switcher / list recent branches with relative dates
+- `gsync` / `gclean` — rebase on latest main / delete merged branches
+- `gstash` / `gpop` — named stash / fzf stash picker
+- `gtoday` / `gds` — today's commits / diff staged changes
+- Added mapping in `mappings.sh` and source line in `.zshrc` template
+- Removed stale `prompt.zsh`, `gradient.zsh`, `async.zsh` references from README (files were deleted in 2026-03-16)
+
+---
+
 ## 2026-03-28
 
 ### Theme — New Cave Data Center Theme

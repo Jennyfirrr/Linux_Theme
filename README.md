@@ -151,6 +151,7 @@ These are copied as-is regardless of theme — keybinds, scripts, layout configs
 | `shared/waybar_config` | Waybar module/layout config |
 | `shared/gtk-{3,4}.0_settings.ini` | GTK settings (font, icon theme) |
 | `shared/zsh_aliases.zsh` | Shell aliases |
+| `shared/zsh_git.zsh` | Git workflow functions (gpush, gnew, gsave, gbr, etc.) |
 | `shared/zsh_paths.zsh` | PATH setup |
 | `shared/zsh_conda.zsh` | Conda/mamba init |
 | `shared/regreet.toml` | ReGreet greeter config (font, cursor, clock, env vars) |
@@ -166,11 +167,29 @@ Templates in `templates/zsh/` include the full shell setup:
 | `caramel.zsh-theme` | Custom prompt with gradient path, git, conda/venv, elapsed time |
 | `colors.zsh` | LS_COLORS and zsh-syntax-highlighting |
 | `welcome.zsh` | Terminal splash with system info and todo list |
-| `prompt.zsh` | Fallback PS1 prompt |
-| `gradient.zsh` | Pastel rainbow text colorizer |
-| `async.zsh` | Async prompt helpers |
 
 Requires: [Oh My Zsh](https://ohmyz.sh/), [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting), [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions), [eza](https://github.com/eza-community/eza), [bat](https://github.com/sharkdp/bat)
+
+### Git Workflow Functions
+
+`git.zsh` adds workflow shortcuts that complement the Oh My Zsh `git` plugin (which provides simple aliases like `gst`, `ga`, `gd`, `gco`). These chain multiple git commands into common workflows:
+
+| Command | What it does |
+|---------|-------------|
+| `gpush` | Push current branch — auto-sets upstream on first push |
+| `gnew [name]` | Create + switch to new branch (prompts for name if omitted) |
+| `gsave <msg>` | Stage all + commit in one shot |
+| `gquick` | WIP checkpoint commit with timestamp |
+| `gundo` | Undo last commit, keep changes staged |
+| `gamend` | Fold new changes into last commit |
+| `gbr` | fzf branch switcher, sorted by most recent |
+| `grecent` | List recent branches with relative timestamps |
+| `gsync` | Fetch + rebase current branch onto latest main |
+| `gclean` | Delete local branches already merged into main |
+| `gstash [msg]` | Named stash (no args = list stashes) |
+| `gpop` | fzf picker for which stash to pop |
+| `gtoday` | Show your commits from today |
+| `gds` | Diff staged changes |
 
 ## Neovim
 

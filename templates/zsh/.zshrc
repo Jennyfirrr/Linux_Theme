@@ -32,6 +32,7 @@ ZSH_AUTOSUGGEST_STRATEGY=(history completion)
 ZSHCONF="$HOME/.config/zsh"
 source "$ZSHCONF/colors.zsh"
 source "$ZSHCONF/aliases.zsh"
+source "$ZSHCONF/git.zsh"
 source "$ZSHCONF/paths.zsh"
 source "$ZSHCONF/conda.zsh"
 source "$ZSHCONF/welcome.zsh"
