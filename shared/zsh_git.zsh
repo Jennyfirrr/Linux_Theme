@@ -54,6 +54,7 @@ gamend() {
 }
 
 # fzf branch switcher — sorted by most recent
+unalias gbr 2>/dev/null
 gbr() {
   local branch=$(git branch --sort=-committerdate \
     --format='%(refname:short)  %(color:dim)%(committerdate:relative)%(color:reset)' \
@@ -78,6 +79,7 @@ gsync() {
 }
 
 # Delete local branches that are merged into main
+unalias gclean 2>/dev/null
 gclean() {
   local merged=$(git branch --merged main 2>/dev/null | grep -vE '^\*|^\s*main$')
   if [[ -z "$merged" ]]; then
@@ -111,6 +113,7 @@ gtoday() {
 }
 
 # Diff what's staged (complements gd = git diff for unstaged)
+unalias gds 2>/dev/null
 gds() {
   git diff --staged "$@"
 }
