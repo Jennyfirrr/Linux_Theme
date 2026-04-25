@@ -6,6 +6,11 @@ All notable changes to the Fox ML theme.
 
 ## 2026-04-25
 
+### Icons — Papirus-Dark with Catppuccin Mocha Peach folders
+- The GTK ini referenced `Papirus-Dark` but the theme files weren't installed, so Thunar (and other GTK apps) silently fell back to Adwaita's default blue folder icons — clashing with the warm peach UI chrome
+- Added an install hook that runs the upstream Papirus `install.sh` with `DESTDIR=~/.local/share/icons` (no sudo), then clones `catppuccin/papirus-folders` shallowly to inject the Catppuccin folder SVGs into `Papirus/` (Papirus-Dark and Papirus-Light symlink to it for size dirs, so they inherit), then applies the `cat-mocha-peach` color via the `papirus-folders` helper. Sets `gsettings icon-theme` so GTK apps pick it up immediately
+- Folder hue now matches the cursor and the peach `#d4985a` primary
+
 ### Cursor — Catppuccin Mocha Peach
 - The Hyprland env and GTK settings already pointed at `catppuccin-mocha-peach-cursors` but the theme files were never installed, so everything was silently falling back to the default Adwaita cursor
 - Added an install hook in `mappings.sh::install_specials` that fetches the v2.0.0 release zip from `github.com/catppuccin/cursors` into `~/.local/share/icons/` if it's not already present, then sets `cursor-theme`/`cursor-size` via `gsettings` so GTK/Adwaita apps pick it up too

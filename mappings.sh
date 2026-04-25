@@ -256,6 +256,52 @@ PKGJSON
         gsettings set org.gnome.desktop.interface cursor-size 30 2>/dev/null || true
     fi
 
+    # Icon theme — Papirus-Dark with Catppuccin Mocha Peach folders. The
+    # GTK ini already references Papirus-Dark; this fetches the theme
+    # user-locally (no sudo) and recolors folders to match the cursor.
+    local icons_dir="$HOME/.local/share/icons"
+    if [[ ! -d "$icons_dir/Papirus" ]]; then
+        if curl -fsSL "https://raw.githubusercontent.com/PapirusDevelopmentTeam/papirus-icon-theme/master/install.sh" \
+                | DESTDIR="$icons_dir" sh &>/dev/null; then
+            echo "  ✓ Papirus icon theme"
+        else
+            echo "  ⚠ Papirus install failed; skipping folder recolor"
+        fi
+    else
+        echo "  ✓ Papirus already present"
+    fi
+
+    if [[ -d "$icons_dir/Papirus" ]]; then
+        # Inject Catppuccin folder SVGs (Papirus-Dark/Light symlink to Papirus)
+        local cat_tmp; cat_tmp="$(mktemp -d)"
+        if git clone --depth 1 --quiet \
+                https://github.com/catppuccin/papirus-folders.git "$cat_tmp/repo" 2>/dev/null; then
+            cp -r "$cat_tmp/repo/src/"* "$icons_dir/Papirus/" 2>/dev/null || true
+            echo "  ✓ Catppuccin folder palette injected"
+        fi
+        rm -rf "$cat_tmp"
+
+        # Fetch the papirus-folders helper if not on PATH and apply peach color
+        local pf_script
+        if command -v papirus-folders &>/dev/null; then
+            pf_script="papirus-folders"
+        else
+            pf_script="$(mktemp)"
+            curl -fsSL -o "$pf_script" \
+                "https://raw.githubusercontent.com/PapirusDevelopmentTeam/papirus-folders/master/papirus-folders" \
+                && chmod +x "$pf_script"
+        fi
+        if [[ -x "$pf_script" ]]; then
+            "$pf_script" -C cat-mocha-peach -t Papirus-Dark &>/dev/null || true
+            echo "  ✓ folders → cat-mocha-peach"
+            [[ "$pf_script" != "papirus-folders" ]] && rm -f "$pf_script"
+        fi
+
+        if command -v gsettings &>/dev/null; then
+            gsettings set org.gnome.desktop.interface icon-theme "Papirus-Dark" 2>/dev/null || true
+        fi
+    fi
+
     # bat — write a tiny config that selects the FoxML tmTheme by name
     local bat_dir="$HOME/.config/bat"
     if [[ -d "$bat_dir/themes" ]]; then
