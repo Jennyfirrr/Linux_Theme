@@ -32,6 +32,13 @@ pick="${pool[RANDOM % ${#pool[@]}]}"
 # Update the stable symlink so anything else (hyprlock, etc.) follows.
 ln -sfn "$(basename "$pick")" "$WALL_DIR/.current"
 
+# Rewrite hyprlock's wallpaper path. hyprlock's image loader dispatches on
+# file extension, so it can't load the .current symlink directly — point it
+# at the real file and it'll pick this up next time it launches.
+hyprlock_conf="${HOME}/.config/hypr/hyprlock.conf"
+[[ -f "$hyprlock_conf" ]] && \
+    sed -i -E "s|^(\s*path\s*=\s*).*|\1${pick}|" "$hyprlock_conf"
+
 # Try IPC first; fall back to restarting hyprpaper if the IPC route fails.
 if hyprctl hyprpaper preload "$pick" 2>/dev/null \
    && hyprctl hyprpaper wallpaper "${MONITOR},${pick}" 2>/dev/null; then
