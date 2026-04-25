@@ -87,7 +87,8 @@ TEMPLATE_MAPPINGS=(
 SHARED_MAPPINGS=(
     # Hyprland
     "hyprland.conf|~/.config/hypr/hyprland.conf"
-    "hyprland_hypridle.conf|~/.config/hypr/hypridle.conf"
+    "hyprland_hypridle_ac.conf|~/.config/hypr/hypridle-ac.conf"
+    "hyprland_hypridle_battery.conf|~/.config/hypr/hypridle-battery.conf"
 
     # Launcher toggle scripts (referenced by keybinds.conf)
     "launchers/toggle/toggle_btop.sh|~/.config/launchers/toggle/toggle_btop.sh"
@@ -229,6 +230,18 @@ PKGJSON
             echo "  ✓ $(basename "$wp")"
         done
         shopt -u nullglob nocaseglob
+    fi
+
+    # bat — write a tiny config that selects the FoxML tmTheme by name
+    local bat_dir="$HOME/.config/bat"
+    if [[ -d "$bat_dir/themes" ]]; then
+        if [[ -f "$bat_dir/config" ]] && grep -q '^--theme=' "$bat_dir/config"; then
+            sed -i -E 's|^--theme=.*|--theme="Fox ML"|' "$bat_dir/config"
+        else
+            mkdir -p "$bat_dir"
+            printf -- '--theme="Fox ML"\n' >> "$bat_dir/config"
+        fi
+        echo "  ✓ bat --theme=\"Fox ML\""
     fi
 
     # btop — flip user's btop.conf to the FoxML theme (file is owned by btop)

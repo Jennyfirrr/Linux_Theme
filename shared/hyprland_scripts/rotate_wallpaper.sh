@@ -17,17 +17,34 @@ shopt -u nullglob nocaseglob
 
 (( ${#pool[@]} == 0 )) && { echo "no wallpapers found in $WALL_DIR" >&2; exit 1; }
 
+# Drop the currently-active wallpaper from the pool so consecutive rotations
+# always change. .current is a relative symlink; resolve it before comparing.
+current=""
+[[ -L "$WALL_DIR/.current" ]] && current="$WALL_DIR/$(readlink "$WALL_DIR/.current")"
+if (( ${#pool[@]} > 1 )) && [[ -n "$current" ]]; then
+    filtered=()
+    for p in "${pool[@]}"; do [[ "$p" != "$current" ]] && filtered+=("$p"); done
+    pool=("${filtered[@]}")
+fi
+
 pick="${pool[RANDOM % ${#pool[@]}]}"
+
+# Update the stable symlink so anything else (hyprlock, etc.) follows.
+ln -sfn "$(basename "$pick")" "$WALL_DIR/.current"
 
 # Try IPC first; fall back to restarting hyprpaper if the IPC route fails.
 if hyprctl hyprpaper preload "$pick" 2>/dev/null \
    && hyprctl hyprpaper wallpaper "${MONITOR},${pick}" 2>/dev/null; then
-    echo "rotated to $(basename "$pick") via IPC"
+    method=IPC
 else
     sed -i -E "s|^(\s*path\s*=\s*).*|\1${pick}|" "${HOME}/.config/hypr/hyprpaper.conf"
     pkill -x hyprpaper 2>/dev/null || true
     sleep 0.3
     setsid hyprpaper >/dev/null 2>&1 < /dev/null &
     disown
-    echo "rotated to $(basename "$pick") via restart"
+    method=restart
 fi
+
+echo "rotated to $(basename "$pick") via $method"
+command -v notify-send &>/dev/null && \
+    notify-send -t 3000 -i "$pick" "Wallpaper" "$(basename "${pick%.*}")" || true

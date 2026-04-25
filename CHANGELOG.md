@@ -6,6 +6,28 @@ All notable changes to the Fox ML theme.
 
 ## 2026-04-25
 
+### Wallpapers — Active Wallpaper Tracking
+- `shared/hyprland_scripts/rotate_wallpaper.sh` now writes a `~/.wallpapers/.current` symlink each rotation, so anything pointing at it follows the active wallpaper instead of a fixed path
+- Pointed `templates/hyprlock/hyprlock.conf` at `~/.wallpapers/.current`. Previously the lock screen always showed `foxml_earthy.jpg` regardless of what the desktop wallpaper had rotated to
+- Rotation now drops the current wallpaper from the pool before picking, so consecutive rotations always change image (was hitting the same `RANDOM % N` slot too often with a 6-image pool)
+- Added a `notify-send` toast on rotation showing the new wallpaper name
+
+### Hyprland — Manual Rotation Keybind
+- `ALT+W` → run `rotate_wallpaper.sh` immediately. Pairs well with the 4h timer for when you just want a different image right now
+
+### Power — Battery-Aware Idle Timeouts
+- Split `shared/hyprland_hypridle.conf` into `shared/hyprland_hypridle_ac.conf` (lock 5min, DPMS off 6min) and `shared/hyprland_hypridle_battery.conf` (lock 3min, DPMS off 4min). On battery the panel goes dark sooner, saving juice and tightening burn-in protection
+- Added `shared/hyprland_scripts/power_state_watcher.sh`: polls `/sys/class/power_supply/A{C,DP}*/online` every 30s, and on AC↔battery transitions copies the right config into `~/.config/hypr/hypridle.conf` and restarts hypridle
+- Added `shared/systemd_user/power-state-watcher.service` (Type=simple, Restart=on-failure, WantedBy=graphical-session.target). The new install hook for `shared/systemd_user/` enables it automatically
+- Removed `exec-once = hypridle` from `shared/hyprland_modules/autostart.conf`. The watcher now owns hypridle's lifecycle — running both would race on startup
+- Updated `SHARED_MAPPINGS` to deploy the new AC/battery configs to `~/.config/hypr/hypridle-{ac,battery}.conf`
+
+### Installer — Bat Theme Activation
+- Added a hook in `mappings.sh::install_specials` that writes `--theme="Fox ML"` to `~/.config/bat/config`. Idempotent — updates the existing line if present, appends if not. `bat` was already getting the FoxML `tmTheme` deployed but had no config telling it to use it, so it was sitting on the default theme
+
+### Cleanup — Stale Backups
+- Deleted `themes/FoxML_Classic/palette.sh.bak` and `palette.sh.bak2` — leftovers from earlier palette edits, no longer referenced
+
 ### OLED — Burn-In Mitigations
 - Tightened `shared/hyprland_hypridle.conf` DPMS-off listener from `600` → `360` seconds, so the lock screen sits visible for at most ~1 minute before the panel goes dark (was 5 minutes of static lockscreen)
 - Dimmed `templates/hyprlock/hyprlock.conf` background: `brightness 0.75 → 0.10`, `vibrancy 0.25 → 0.10`, `contrast 1.15 → 1.05`, and bumped `blur_size 8 → 12` / `blur_passes 3 → 4`. The lock screen still shows the wallpaper but at near-black luminance during its short window before DPMS off

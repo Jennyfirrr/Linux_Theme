@@ -1,0 +1,13 @@
+[Unit]
+Description=Swap hypridle config based on AC/battery power state
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.config/hypr/scripts/power_state_watcher.sh
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=graphical-session.target
