@@ -86,7 +86,14 @@ TEMPLATE_MAPPINGS=(
 # ─────────────────────────────────────────
 SHARED_MAPPINGS=(
     # Hyprland
+    "hyprland.conf|~/.config/hypr/hyprland.conf"
     "hyprland_hypridle.conf|~/.config/hypr/hypridle.conf"
+
+    # Launcher toggle scripts (referenced by keybinds.conf)
+    "launchers/toggle/toggle_btop.sh|~/.config/launchers/toggle/toggle_btop.sh"
+    "launchers/toggle/toggle_yazi.sh|~/.config/launchers/toggle/toggle_yazi.sh"
+    "launchers/toggle/toggle_ncspot.sh|~/.config/launchers/toggle/toggle_ncspot.sh"
+    "launchers/toggle/toggle_spotify.sh|~/.config/launchers/toggle/toggle_spotify.sh"
 
     # Neovim
     "nvim_lazy-lock.json|~/.config/nvim/lazy-lock.json"
@@ -213,14 +220,15 @@ PKGJSON
         echo "    command = \"Hyprland -c /etc/greetd/hyprland.conf\""
     fi
 
-    # Wallpapers
+    # Wallpapers (image files only — skip README etc.)
     if [[ -d "$SCRIPT_DIR/shared/wallpapers" ]]; then
         mkdir -p ~/.wallpapers
-        for wp in "$SCRIPT_DIR/shared/wallpapers/"*; do
-            [[ -f "$wp" ]] || continue
+        shopt -s nullglob nocaseglob
+        for wp in "$SCRIPT_DIR/shared/wallpapers/"*.{jpg,jpeg,png,webp}; do
             cp "$wp" ~/.wallpapers/
             echo "  ✓ $(basename "$wp")"
         done
+        shopt -u nullglob nocaseglob
     fi
 }
 

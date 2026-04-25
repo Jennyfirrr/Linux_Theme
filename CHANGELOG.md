@@ -4,6 +4,43 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-04-24
+
+### Hyprland — Frictionless First-Boot
+- Added `shared/hyprland.conf` — the missing main config that sources every module under `~/.config/hypr/modules/` (skipping `main_mod.conf` and `hyprlock.conf`). Without this, fresh installs left Hyprland on its default example config and none of the FoxML modules ever loaded
+- Mapped `hyprland.conf` and the four `launchers/toggle/*.sh` scripts in `SHARED_MAPPINGS` so they actually install
+- Made `monitors.conf` portable: `monitor = , preferred, auto, 1` with per-machine overrides commented out, instead of hardcoding a Surface Pro `2736x1824@60` that broke on every other panel
+
+### Hyprland — Hyprland 0.54+ Syntax Migration
+- Converted `scratchpads.conf` and `workspace_layout.conf` to the new `windowrule { match:class = ...; float = yes; ... }` block syntax. The old `windowrule = float, class:^(yazi)$` form errors out on 0.54+
+- Removed deprecated `general:no_border_on_floating` from `general.conf`
+- Replaced `noborder` (no longer a valid field) with `border_size = 0` inside the yazi rule
+- Cleaned `workspace_layout.conf`: dropped duplicate `kitty --title Terminal1` exec-once (already in autostart) and the wrong `monitor:DP-1` workspace binding
+
+### Hyprland — Removed Conflicting/Orphan Files
+- Deleted `main_mod.conf` (a near-duplicate of `keybinds.conf` that registered every binding twice — `ALT+ENTER` was launching two terminals)
+- Deleted orphan `hyprland_modules/hyprlock.conf` (hyprlock-syntax sitting in the Hyprland modules dir; the real hyprlock config is rendered from `templates/hyprlock/hyprlock.conf`)
+- Commented out `pulseaudio --start` in `autostart.conf` — modern Arch defaults to pipewire via systemd-user
+
+### Scripts — Region Screenshot
+- Added `shared/hyprland_scripts/screenshot.sh` (grim + slurp + wl-copy + notify-send), saving to `~/Pictures/Screenshots`
+- Updated `keybinds.conf` so `ALT+SHIFT+O` points at the new script instead of the never-shipped `~/screenshot/screenshot.sh`
+
+### Installer — Dependencies & Plugin Install
+- Expanded `PACMAN_PKGS` with everything the configs actually reference: `ttf-hack-nerd` (default font), `mako`, `hypridle`, `grim`, `slurp`, `wl-clipboard`, `playerctl`, `brightnessctl`, `pavucontrol`
+- Moved zsh plugin clones (`zsh-syntax-highlighting`, `zsh-autosuggestions`, `zsh-completions`) out of the `--deps` block — they now install whenever oh-my-zsh is present, so a fresh install never opens to "[oh-my-zsh] plugin not found"
+- Filtered the wallpaper copy loop to image extensions (`*.{jpg,jpeg,png,webp}`) so `README.md` stops landing in `~/.wallpapers/`
+
+### Waybar — Strip Broken Modules
+- Removed `custom/system_health`, `custom/media`, `custom/weather` modules whose backing scripts were never shipped (they spammed `No such file or directory` in waybar's stderr)
+- Dropped hardcoded `"bat": "BAT1"` so the battery module auto-detects (`BAT0` / `BAT1` / etc.)
+
+### Cleanup
+- Deleted empty `shared/hyprland_scripts/set-theme.sh` (just a `#!/bin/bash` shebang)
+- Deleted empty `shared/hyprpaper.conf` stub (the real config is rendered from `templates/hyprpaper/hyprpaper.conf`)
+
+---
+
 ## 2026-04-12
 
 ### Shell — Git Workflow Functions

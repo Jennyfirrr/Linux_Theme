@@ -88,9 +88,20 @@ if $INSTALL_DEPS; then
     echo "Installing dependencies..."
 
     PACMAN_PKGS=(
-        ttf-jetbrains-mono-nerd hyprland hyprlock hyprpaper neovim waybar
-        kitty tmux zsh fzf eza bat yazi dunst rofi-wayland btop firefox
-        zathura zathura-pdf-mupdf
+        # Fonts
+        ttf-hack-nerd ttf-jetbrains-mono-nerd
+        # Compositor + lock + wallpaper + idle
+        hyprland hyprlock hyprpaper hypridle
+        # Editor + terminal + multiplexer
+        neovim kitty tmux
+        # Bar + launcher + notifications
+        waybar rofi-wayland mako dunst
+        # Shell + tooling
+        zsh fzf eza bat yazi btop
+        # Screenshots + clipboard + media keys
+        grim slurp wl-clipboard playerctl brightnessctl pavucontrol
+        # Apps + viewers
+        firefox zathura zathura-pdf-mupdf
     )
 
     TO_INSTALL=()
@@ -113,17 +124,18 @@ if $INSTALL_DEPS; then
         echo ""
         [[ $REPLY =~ ^[Yy]$ ]] && sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
     fi
+fi
 
-    # zsh plugins
-    ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
-    if [[ -d "$HOME/.oh-my-zsh" ]]; then
-        [[ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]] && \
-            git clone https://github.com/zsh-users/zsh-syntax-highlighting.git "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
-        [[ ! -d "$ZSH_CUSTOM/plugins/zsh-autosuggestions" ]] && \
-            git clone https://github.com/zsh-users/zsh-autosuggestions.git "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
-        [[ ! -d "$ZSH_CUSTOM/plugins/zsh-completions" ]] && \
-            git clone https://github.com/zsh-users/zsh-completions.git "$ZSH_CUSTOM/plugins/zsh-completions"
-    fi
+# zsh plugins — install whenever oh-my-zsh is present, regardless of --deps,
+# so the caramel theme + plugin list in .zshrc don't error out on first shell.
+ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
+if [[ -d "$HOME/.oh-my-zsh" ]]; then
+    for repo in zsh-syntax-highlighting zsh-autosuggestions zsh-completions; do
+        if [[ ! -d "$ZSH_CUSTOM/plugins/$repo" ]]; then
+            git clone --quiet --depth 1 "https://github.com/zsh-users/$repo.git" "$ZSH_CUSTOM/plugins/$repo" \
+                && echo "  ✓ zsh plugin: $repo"
+        fi
+    done
 fi
 
 # ─────────────────────────────────────────
