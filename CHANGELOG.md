@@ -6,6 +6,9 @@ All notable changes to the Fox ML theme.
 
 ## 2026-04-24
 
+### Installer — CJK + Emoji Font Fallback
+- Added `noto-fonts`, `noto-fonts-cjk`, `noto-fonts-emoji` to `PACMAN_PKGS` so the welcome-banner cat (じ し ノ kana) and other Unicode glyphs that Hack Nerd Font doesn't cover fall back to Noto instead of rendering as tofu boxes
+
 ### Installer — One-Command Bootstrap
 - Added `bootstrap.sh` for `curl | bash` install on a fresh Arch+Hyprland laptop. Caches sudo upfront, installs `git`/`curl` if missing, clones the repo to `~/Linux_Theme` (or `git pull`s if already there), then runs `install.sh THEME --deps --yes`
 - Added `-y` / `--yes` flag to `install.sh`. In yes-mode every `read -p` prompt is skipped, `pacman -S` runs with `--noconfirm`, oh-my-zsh installs unattended, and the theme defaults to `FoxML_Classic` if no name is given

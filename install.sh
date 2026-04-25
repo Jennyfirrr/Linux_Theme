@@ -106,8 +106,8 @@ if $INSTALL_DEPS; then
     echo "Installing dependencies..."
 
     PACMAN_PKGS=(
-        # Fonts
-        ttf-hack-nerd ttf-jetbrains-mono-nerd
+        # Fonts (nerd fonts for prompt glyphs, noto for CJK/emoji fallback in welcome banner)
+        ttf-hack-nerd ttf-jetbrains-mono-nerd noto-fonts noto-fonts-cjk noto-fonts-emoji
         # Compositor + lock + wallpaper + idle
         hyprland hyprlock hyprpaper hypridle
         # Editor + terminal + multiplexer
