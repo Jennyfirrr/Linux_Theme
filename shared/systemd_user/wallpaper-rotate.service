@@ -1,0 +1,7 @@
+[Unit]
+Description=Rotate Hyprland wallpaper
+After=graphical-session.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/.config/hypr/scripts/rotate_wallpaper.sh

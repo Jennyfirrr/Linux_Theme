@@ -230,6 +230,37 @@ PKGJSON
         done
         shopt -u nullglob nocaseglob
     fi
+
+    # btop — flip user's btop.conf to the FoxML theme (file is owned by btop)
+    local btop_conf="$HOME/.config/btop/btop.conf"
+    if [[ -f "$btop_conf" ]]; then
+        if grep -qE '^color_theme\s*=\s*"foxml"' "$btop_conf"; then
+            echo "  ✓ btop already on FoxML theme"
+        else
+            sed -i -E 's|^(color_theme\s*=\s*).*|\1"foxml"|' "$btop_conf"
+            echo "  ✓ btop color_theme → foxml"
+        fi
+    fi
+
+    # Systemd user units (wallpaper rotation timer, etc.)
+    if [[ -d "$SCRIPT_DIR/shared/systemd_user" ]]; then
+        mkdir -p ~/.config/systemd/user
+        local installed_any=0
+        for unit in "$SCRIPT_DIR/shared/systemd_user/"*.{service,timer}; do
+            [[ -f "$unit" ]] || continue
+            cp "$unit" "$HOME/.config/systemd/user/$(basename "$unit")"
+            echo "  ✓ systemd/$(basename "$unit")"
+            installed_any=1
+        done
+        if (( installed_any )); then
+            systemctl --user daemon-reload &>/dev/null || true
+            for timer in "$SCRIPT_DIR/shared/systemd_user/"*.timer; do
+                [[ -f "$timer" ]] || continue
+                systemctl --user enable --now "$(basename "$timer")" &>/dev/null || true
+            done
+            echo "  ✓ systemd user timers enabled"
+        fi
+    fi
 }
 
 # ─────────────────────────────────────────

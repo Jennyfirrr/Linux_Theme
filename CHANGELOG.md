@@ -4,6 +4,28 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-04-25
+
+### OLED — Burn-In Mitigations
+- Tightened `shared/hyprland_hypridle.conf` DPMS-off listener from `600` → `360` seconds, so the lock screen sits visible for at most ~1 minute before the panel goes dark (was 5 minutes of static lockscreen)
+- Dimmed `templates/hyprlock/hyprlock.conf` background: `brightness 0.75 → 0.10`, `vibrancy 0.25 → 0.10`, `contrast 1.15 → 1.05`, and bumped `blur_size 8 → 12` / `blur_passes 3 → 4`. The lock screen still shows the wallpaper but at near-black luminance during its short window before DPMS off
+- Added `ALT+B` waybar toggle (`killall -SIGUSR1 waybar`) in `shared/hyprland_modules/keybinds.conf` so the always-on top bar — the largest static-pixel surface on a tiling-WM setup — can be hidden on demand
+
+### Wallpapers — Rotation
+- Added `shared/hyprland_scripts/rotate_wallpaper.sh`: random pick from `~/.wallpapers/`, excluding dotfiles and `cave_data_center*` (other-theme image). Tries hyprpaper IPC first, falls back to a kill-and-relaunch when IPC returns "invalid hyprpaper request" on older versions
+- Added `shared/systemd_user/wallpaper-rotate.{service,timer}` — fires 10 min after boot, then every 4 hours
+- Extended `mappings.sh::install_specials` to copy any `shared/systemd_user/*.{service,timer}` units into `~/.config/systemd/user/`, run `daemon-reload`, and `enable --now` every `.timer`. Generic, so future user units drop in without editing the installer
+
+### Wallpapers — Curated Earthy 4K Set
+- Replaced `shared/wallpapers/foxml_earthy.jpg` with a 4K upscale (`1920x1280` → `3840x2560`) produced by `waifu2x-ncnn-vulkan` with the `models-upconv_7_photo` model. Native-res on a 4K eDP-1 panel; previous version was being bilinearly stretched by 2× at display time
+- Added 5 palette-matched 4K wallpapers from Unsplash: `foxml_misty_dawn`, `foxml_autumn_sunlit`, `foxml_redwood_mist`, `foxml_path_sunbeams`, `foxml_sunrise_sunbeams` — all warm-fog / golden-hour / autumn forest tones that match the FoxML earthy palette (peach `#d4985a`, sage `#8a9a7a`, dark `#1a1214`)
+- Removed `foxml.png`, `foxml-alt.jpg`, `foxml-alt-original.jpg`, `new2.jpg`, `new_tmp.png`. The first two were the OG vaporwave/Firewatch-purple FoxML wallpapers — they fit the original purple palette but clash with the current earthy one. The other three were duplicates (matching md5 of `foxml-alt.jpg`) or staging temp files
+
+### Installer — btop Theme Activation
+- Added a sed hook in `mappings.sh::install_specials` that flips `color_theme` in `~/.config/btop/btop.conf` to `"foxml"`. Idempotent (skips if already set). Previously `install.sh` deployed `templates/btop/foxml.theme` to `~/.config/btop/themes/` but never told btop to use it, so the theme file sat unused until manually selected. `btop.conf` itself stays user-owned (not templated) since btop rewrites it on every config change
+
+---
+
 ## 2026-04-24
 
 ### Installer — CJK + Emoji Font Fallback

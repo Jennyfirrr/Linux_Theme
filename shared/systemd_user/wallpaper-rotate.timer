@@ -1,0 +1,10 @@
+[Unit]
+Description=Rotate Hyprland wallpaper periodically
+
+[Timer]
+OnBootSec=10min
+OnUnitActiveSec=4h
+Persistent=true
+
+[Install]
+WantedBy=timers.target
