@@ -6,6 +6,11 @@ All notable changes to the Fox ML theme.
 
 ## 2026-04-25
 
+### Wallpapers — Curation Pass
+- Removed `foxml_redwood_mist.jpg` and `foxml_path_sunbeams.jpg` — both had a person in a brightly-colored jacket in frame; humans break the moody-landscape feel of the FoxML earthy palette
+- Removed `foxml_autumn_sunlit.jpg` — central sunburst was too white/washed-out for the muted earthy aesthetic
+- Final rotation pool is 3 atmospheric foggy-forest wallpapers (`foxml_earthy`, `foxml_misty_dawn`, `foxml_sunrise_sunbeams`) — all warm-toned mist over dark forest, no sunbursts, no humans
+
 ### Wallpapers — Active Wallpaper Tracking
 - `shared/hyprland_scripts/rotate_wallpaper.sh` now writes a `~/.wallpapers/.current` symlink each rotation, so anything pointing at it follows the active wallpaper instead of a fixed path
 - Pointed `templates/hyprlock/hyprlock.conf` at `~/.wallpapers/.current`. Previously the lock screen always showed `foxml_earthy.jpg` regardless of what the desktop wallpaper had rotated to
