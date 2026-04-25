@@ -6,6 +6,12 @@ All notable changes to the Fox ML theme.
 
 ## 2026-04-24
 
+### Installer — One-Command Bootstrap
+- Added `bootstrap.sh` for `curl | bash` install on a fresh Arch+Hyprland laptop. Caches sudo upfront, installs `git`/`curl` if missing, clones the repo to `~/Linux_Theme` (or `git pull`s if already there), then runs `install.sh THEME --deps --yes`
+- Added `-y` / `--yes` flag to `install.sh`. In yes-mode every `read -p` prompt is skipped, `pacman -S` runs with `--noconfirm`, oh-my-zsh installs unattended, and the theme defaults to `FoxML_Classic` if no name is given
+- `--yes` primes the sudo cache via `sudo -v` and keeps it alive in a background loop so dep install runs unattended end-to-end
+- Updated README Quick Start to lead with the one-liner; manual `git clone && ./install.sh` flow is documented as the read-before-running alternative
+
 ### Hyprland — Frictionless First-Boot
 - Added `shared/hyprland.conf` — the missing main config that sources every module under `~/.config/hypr/modules/` (skipping `main_mod.conf` and `hyprlock.conf`). Without this, fresh installs left Hyprland on its default example config and none of the FoxML modules ever loaded
 - Mapped `hyprland.conf` and the four `launchers/toggle/*.sh` scripts in `SHARED_MAPPINGS` so they actually install

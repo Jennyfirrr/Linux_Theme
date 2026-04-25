@@ -20,13 +20,29 @@ source "$SCRIPT_DIR/render.sh"
 # ─────────────────────────────────────────
 THEME_NAME=""
 INSTALL_DEPS=false
+ASSUME_YES=false
+DEFAULT_THEME="FoxML_Classic"
 
 for arg in "$@"; do
     case "$arg" in
         --deps) INSTALL_DEPS=true ;;
+        -y|--yes) ASSUME_YES=true ;;
         *) THEME_NAME="$arg" ;;
     esac
 done
+
+# Non-interactive mode: default theme + prime sudo cache so pacman doesn't pause
+if $ASSUME_YES; then
+    [[ -z "$THEME_NAME" ]] && THEME_NAME="$DEFAULT_THEME"
+    if $INSTALL_DEPS; then
+        echo "Caching sudo credentials for unattended pacman install..."
+        sudo -v || { echo "sudo required for --deps"; exit 1; }
+        # Keep sudo alive for the rest of the script
+        ( while true; do sudo -n true; sleep 50; done 2>/dev/null ) &
+        SUDO_KEEPALIVE_PID=$!
+        trap 'kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true' EXIT
+    fi
+fi
 
 # ─────────────────────────────────────────
 # Theme selection (interactive if not specified)
@@ -74,9 +90,11 @@ echo ""
 echo "Installing theme: $THEME_NAME"
 echo "Backups will be saved to: $BACKUP_DIR"
 echo ""
-read -p "Continue? [y/N] " -n 1 -r
-echo ""
-[[ ! $REPLY =~ ^[Yy]$ ]] && echo "Aborted." && exit 1
+if ! $ASSUME_YES; then
+    read -p "Continue? [y/N] " -n 1 -r
+    echo ""
+    [[ ! $REPLY =~ ^[Yy]$ ]] && echo "Aborted." && exit 1
+fi
 
 mkdir -p "$BACKUP_DIR"
 
@@ -111,18 +129,26 @@ if $INSTALL_DEPS; then
 
     if [[ ${#TO_INSTALL[@]} -gt 0 ]]; then
         echo "  Packages to install: ${TO_INSTALL[*]}"
-        read -p "  Install with pacman? [y/N] " -n 1 -r
-        echo ""
-        [[ $REPLY =~ ^[Yy]$ ]] && sudo pacman -S --needed "${TO_INSTALL[@]}"
+        if $ASSUME_YES; then
+            sudo pacman -S --needed --noconfirm "${TO_INSTALL[@]}"
+        else
+            read -p "  Install with pacman? [y/N] " -n 1 -r
+            echo ""
+            [[ $REPLY =~ ^[Yy]$ ]] && sudo pacman -S --needed "${TO_INSTALL[@]}"
+        fi
     else
         echo "  All packages already installed"
     fi
 
     # Oh My Zsh
     if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
-        read -p "  Install Oh My Zsh? [y/N] " -n 1 -r
-        echo ""
-        [[ $REPLY =~ ^[Yy]$ ]] && sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+        if $ASSUME_YES; then
+            sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+        else
+            read -p "  Install Oh My Zsh? [y/N] " -n 1 -r
+            echo ""
+            [[ $REPLY =~ ^[Yy]$ ]] && sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+        fi
     fi
 fi
 

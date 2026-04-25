@@ -53,18 +53,35 @@ Run `./install.sh --deps` to install most of these automatically.
 
 ## Quick Start
 
+**One-command install** (fresh Arch + Hyprland — installs deps, clones repo, applies FoxML Classic):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Jennyfirrr/Linux_Theme/main/bootstrap.sh | bash
+```
+
+Pick a different theme:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Jennyfirrr/Linux_Theme/main/bootstrap.sh | bash -s Cave_Data_Center
+```
+
+**Manual install** (clone first if you want to read the scripts before running them):
+
 ```bash
 git clone https://github.com/Jennyfirrr/Linux_Theme.git
 cd Linux_Theme
 
-# Install a theme (interactive — shows available themes)
+# Interactive — shows available themes and prompts before each step
 ./install.sh
 
-# Install a specific theme
+# Specific theme
 ./install.sh FoxML_Classic
 
-# Install with system dependencies (Arch packages, Oh My Zsh, zsh plugins)
+# With system dependencies (Arch packages, Oh My Zsh, zsh plugins)
 ./install.sh FoxML_Classic --deps
+
+# Fully unattended (auto-yes every prompt; same defaults bootstrap.sh uses)
+./install.sh FoxML_Classic --deps --yes
 
 # Switch between themes (shows color previews)
 ./swap.sh
