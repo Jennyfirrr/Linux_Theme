@@ -232,6 +232,30 @@ PKGJSON
         shopt -u nullglob nocaseglob
     fi
 
+    # Cursor theme — Catppuccin Mocha Peach matches the FoxML earthy palette.
+    # The Hyprland env + GTK ini both reference it; this fetches the theme
+    # files from the upstream GitHub release if they're not already present.
+    local cursor_name="catppuccin-mocha-peach-cursors"
+    local cursor_dir="$HOME/.local/share/icons/$cursor_name"
+    if [[ ! -d "$cursor_dir" ]]; then
+        local cursor_url="https://github.com/catppuccin/cursors/releases/download/v2.0.0/${cursor_name}.zip"
+        local tmp_zip; tmp_zip="$(mktemp --suffix=.zip)"
+        if curl -fsSL -o "$tmp_zip" "$cursor_url"; then
+            mkdir -p "$HOME/.local/share/icons"
+            unzip -o -q "$tmp_zip" -d "$HOME/.local/share/icons/"
+            rm -f "$tmp_zip"
+            echo "  ✓ cursor theme: $cursor_name"
+        else
+            echo "  ⚠ cursor download failed; install from AUR or skip"
+        fi
+    else
+        echo "  ✓ cursor theme already present"
+    fi
+    if command -v gsettings &>/dev/null; then
+        gsettings set org.gnome.desktop.interface cursor-theme "$cursor_name" 2>/dev/null || true
+        gsettings set org.gnome.desktop.interface cursor-size 30 2>/dev/null || true
+    fi
+
     # bat — write a tiny config that selects the FoxML tmTheme by name
     local bat_dir="$HOME/.config/bat"
     if [[ -d "$bat_dir/themes" ]]; then

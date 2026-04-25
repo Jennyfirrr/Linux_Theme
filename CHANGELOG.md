@@ -6,6 +6,11 @@ All notable changes to the Fox ML theme.
 
 ## 2026-04-25
 
+### Cursor — Catppuccin Mocha Peach
+- The Hyprland env and GTK settings already pointed at `catppuccin-mocha-peach-cursors` but the theme files were never installed, so everything was silently falling back to the default Adwaita cursor
+- Added an install hook in `mappings.sh::install_specials` that fetches the v2.0.0 release zip from `github.com/catppuccin/cursors` into `~/.local/share/icons/` if it's not already present, then sets `cursor-theme`/`cursor-size` via `gsettings` so GTK/Adwaita apps pick it up too
+- Catppuccin Mocha Peach (peach hue + dark base) lines up cleanly with the FoxML earthy palette's primary `#d4985a`
+
 ### Wallpapers — Curation Pass
 - Removed `foxml_redwood_mist.jpg` and `foxml_path_sunbeams.jpg` — both had a person in a brightly-colored jacket in frame; humans break the moody-landscape feel of the FoxML earthy palette
 - Removed `foxml_autumn_sunlit.jpg` — central sunburst was too white/washed-out for the muted earthy aesthetic
