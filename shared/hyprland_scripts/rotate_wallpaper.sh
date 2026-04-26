@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
-# Pick a random wallpaper from ~/.wallpapers/ and apply via hyprpaper.
-# Excludes the active-theme wallpaper-set marker, dotfiles, and other-theme images.
+# Pick a random wallpaper from ~/.wallpapers/ and apply via awww.
+# Excludes the .current marker, dotfiles, and other-theme images.
 set -euo pipefail
 
 WALL_DIR="${HOME}/.wallpapers"
-ACTIVE_THEME_FILE="${HOME}/Linux_Theme/.active-theme"
-MONITOR="${1:-eDP-1}"
 
 shopt -s nullglob nocaseglob
 mapfile -t pool < <(
@@ -39,19 +37,22 @@ hyprlock_conf="${HOME}/.config/hypr/hyprlock.conf"
 [[ -f "$hyprlock_conf" ]] && \
     sed -i -E "s|^(\s*path\s*=\s*).*|\1${pick}|" "$hyprlock_conf"
 
-# Try IPC first; fall back to restarting hyprpaper if the IPC route fails.
-if hyprctl hyprpaper preload "$pick" 2>/dev/null \
-   && hyprctl hyprpaper wallpaper "${MONITOR},${pick}" 2>/dev/null; then
-    method=IPC
-else
-    sed -i -E "s|^(\s*path\s*=\s*).*|\1${pick}|" "${HOME}/.config/hypr/hyprpaper.conf"
-    pkill -x hyprpaper 2>/dev/null || true
-    sleep 0.3
-    setsid hyprpaper >/dev/null 2>&1 < /dev/null &
+# Make sure awww-daemon is up; spawn detached if not. Wait for the socket
+# to become responsive before issuing img — daemon startup is async.
+if ! awww query &>/dev/null; then
+    setsid awww-daemon >/dev/null 2>&1 < /dev/null &
     disown
-    method=restart
+    for _ in {1..30}; do
+        awww query &>/dev/null && break
+        sleep 0.1
+    done
 fi
 
-echo "rotated to $(basename "$pick") via $method"
+awww img "$pick" \
+    --transition-type fade \
+    --transition-duration 1 \
+    --transition-fps 60
+
+echo "rotated to $(basename "$pick")"
 command -v notify-send &>/dev/null && \
     notify-send -t 3000 -i "$pick" "Wallpaper" "$(basename "${pick%.*}")" || true

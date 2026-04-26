@@ -109,7 +109,7 @@ if $INSTALL_DEPS; then
         # Fonts (nerd fonts for prompt glyphs, noto for CJK/emoji fallback in welcome banner)
         ttf-hack-nerd ttf-jetbrains-mono-nerd noto-fonts noto-fonts-cjk noto-fonts-emoji
         # Compositor + lock + wallpaper + idle
-        hyprland hyprlock hyprpaper hypridle
+        hyprland hyprlock awww hypridle
         # Editor + terminal + multiplexer
         neovim kitty tmux
         # Bar + launcher + notifications

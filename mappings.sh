@@ -11,7 +11,6 @@ TEMPLATE_MAPPINGS=(
     # Hyprland
     "hyprland/theme.conf|~/.config/hypr/modules/theme.conf"
     "hyprlock/hyprlock.conf|~/.config/hypr/hyprlock.conf"
-    "hyprpaper/hyprpaper.conf|~/.config/hypr/hyprpaper.conf"
 
     # Neovim
     "nvim/init.lua|~/.config/nvim/init.lua"
