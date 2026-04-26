@@ -127,7 +127,14 @@ SHARED_MAPPINGS=(
 # ─────────────────────────────────────────
 
 get_firefox_profile() {
-    find ~/.mozilla/firefox -maxdepth 1 -name "*.default-release*" -type d 2>/dev/null | head -1
+    # Firefox 150+ on Arch defaults to XDG paths (~/.config/mozilla/firefox);
+    # older versions and other distros still use the legacy ~/.mozilla path.
+    # Check both, preferring whichever has a *.default-release profile.
+    for base in "$HOME/.config/mozilla/firefox" "$HOME/.mozilla/firefox"; do
+        local hit
+        hit=$(find "$base" -maxdepth 1 -name "*.default-release*" -type d 2>/dev/null | head -1)
+        [[ -n "$hit" ]] && { echo "$hit"; return; }
+    done
 }
 
 install_specials() {
@@ -144,7 +151,15 @@ install_specials() {
                 echo "  ✓ Firefox $css"
             fi
         done
-        echo "  Note: Enable toolkit.legacyUserProfileCustomizations.stylesheets in about:config"
+        # Set the legacy stylesheet pref via user.js so userChrome/userContent
+        # actually load — user.js is read on every launch and overrides
+        # prefs.js, so this stays correct even if Firefox rewrites prefs.
+        local ff_userjs="$ff_profile/user.js"
+        local ff_pref='user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);'
+        if ! grep -qF 'toolkit.legacyUserProfileCustomizations.stylesheets' "$ff_userjs" 2>/dev/null; then
+            printf '// FoxML theming\n%s\n' "$ff_pref" >> "$ff_userjs"
+            echo "  ✓ Firefox user.js (legacy stylesheet pref)"
+        fi
     else
         echo "  ⚠ No Firefox profile found, skipping"
     fi
