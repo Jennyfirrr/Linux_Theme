@@ -120,6 +120,8 @@ if $INSTALL_DEPS; then
         grim slurp wl-clipboard playerctl brightnessctl pavucontrol
         # Apps + viewers
         firefox zathura zathura-pdf-mupdf
+        # GTK ssh-askpass (picks up the FoxML GTK theme automatically)
+        seahorse
     )
 
     TO_INSTALL=()

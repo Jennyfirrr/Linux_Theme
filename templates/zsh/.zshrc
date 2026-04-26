@@ -18,6 +18,16 @@ SAVEHIST=50000
 # ─── Environment ──────────────────────────────
 export QT_QPA_PLATFORMTHEME=qt5ct
 
+# Use seahorse's GTK ssh-askpass so the prompt picks up the FoxML GTK theme
+# instead of the bright-blue x11-ssh-askpass dialog. SSH_ASKPASS_REQUIRE=prefer
+# forces ssh to use the GUI even when a TTY is available.
+if [[ -x /usr/lib/seahorse/ssh-askpass ]]; then
+    export SSH_ASKPASS=/usr/lib/seahorse/ssh-askpass
+    export SSH_ASKPASS_REQUIRE=prefer
+fi
+# gnome-keyring-daemon SSH agent (started by Hyprland exec-once)
+[[ -S "$XDG_RUNTIME_DIR/keyring/ssh" ]] && export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/keyring/ssh"
+
 # ─── Oh My Zsh ────────────────────────────────
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="caramel"
