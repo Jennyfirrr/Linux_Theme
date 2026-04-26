@@ -1,9 +1,6 @@
-git/
-git
-
-.claude/*
-!.claude/commands/
-
 .git
 .git/
 .active-theme
+
+.claude/*
+!.claude/commands/

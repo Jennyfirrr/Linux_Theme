@@ -1,0 +1,17 @@
+#!/bin/bash
+# Print a short git label for a tmux pane border.
+# Usage: tmux-git-pane-label <path>
+# Output: "⎇ branch" (clean) or "⎇ branch ●" (dirty), empty if not a repo.
+
+path="${1:-$PWD}"
+[[ -d "$path" ]] || exit 0
+
+branch=$(git -C "$path" symbolic-ref --quiet --short HEAD 2>/dev/null) \
+    || branch=$(git -C "$path" rev-parse --short HEAD 2>/dev/null) \
+    || exit 0
+
+if [[ -n "$(git -C "$path" status --porcelain 2>/dev/null)" ]]; then
+    printf '⎇ %s ●' "$branch"
+else
+    printf '⎇ %s' "$branch"
+fi

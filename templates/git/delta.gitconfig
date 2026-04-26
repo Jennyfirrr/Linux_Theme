@@ -1,0 +1,36 @@
+; FoxML — delta pager + diff colors
+; Included from ~/.gitconfig via [include] path = …/delta-foxml.gitconfig
+; Re-rendered on every theme swap, so colors track the active palette.
+
+[core]
+	pager = delta
+
+[interactive]
+	diffFilter = delta --color-only
+
+[merge]
+	conflictStyle = zdiff3
+
+[delta]
+	navigate = true
+	line-numbers = true
+	side-by-side = false
+	syntax-theme = Fox ML
+
+	minus-style                   = syntax "#{{DIFF_DELETE}}"
+	minus-emph-style              = syntax "#{{SELECTION}}"
+	plus-style                    = syntax "#{{DIFF_ADD}}"
+	plus-emph-style               = syntax "#{{NVIM_SEL}}"
+
+	file-style                    = "#{{PRIMARY}}" bold
+	file-decoration-style         = "#{{SURFACE}}" ul
+	hunk-header-style             = "#{{ACCENT}}" bold
+	hunk-header-decoration-style  = "#{{SURFACE}}" box
+
+	line-numbers-minus-style      = "#{{RED}}"
+	line-numbers-plus-style       = "#{{GREEN}}"
+	line-numbers-zero-style       = "#{{COMMENT}}"
+	line-numbers-left-style       = "#{{SURFACE}}"
+	line-numbers-right-style      = "#{{SURFACE}}"
+
+	blame-palette = "#{{BG}}" "#{{BG_HIGHLIGHT}}" "#{{BG_ALT}}" "#{{SURFACE}}"

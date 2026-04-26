@@ -72,6 +72,9 @@ TEMPLATE_MAPPINGS=(
     # Bat
     "bat/foxml.tmTheme|~/.config/bat/themes/Fox ML.tmTheme"
 
+    # Git (delta pager — included from ~/.gitconfig, doesn't touch user identity)
+    "git/delta.gitconfig|~/.config/git/delta-foxml.gitconfig"
+
     # Cursor/VS Code
     "cursor/foxml-color-theme.json|~/.cursor/extensions/foxml-theme/themes/foxml-color-theme.json"
 
@@ -180,6 +183,18 @@ PKGJSON
     if command -v bat &>/dev/null; then
         bat cache --build &>/dev/null
         echo "  ✓ Bat cache rebuilt"
+    fi
+
+    # ~/.local/bin helpers (tmux pane-label, etc.) — referenced by configs but
+    # too small for their own subdir; kept executable on copy.
+    if [[ -d "$SCRIPT_DIR/shared/bin" ]]; then
+        mkdir -p "$HOME/.local/bin"
+        for bin in "$SCRIPT_DIR/shared/bin/"*; do
+            [[ -f "$bin" ]] || continue
+            cp "$bin" "$HOME/.local/bin/$(basename "$bin")"
+            chmod +x "$HOME/.local/bin/$(basename "$bin")"
+            echo "  ✓ bin/$(basename "$bin")"
+        done
     fi
 
     # Hyprland scripts
@@ -312,6 +327,17 @@ PKGJSON
             printf -- '--theme="Fox ML"\n' >> "$bat_dir/config"
         fi
         echo "  ✓ bat --theme=\"Fox ML\""
+    fi
+
+    # delta — wire the rendered FoxML gitconfig in via [include] so the user's
+    # ~/.gitconfig (identity, etc.) stays untouched. git-config -e replaces the
+    # same key on re-runs, and we only add the include if delta is installed.
+    if command -v delta &>/dev/null && [[ -f "$rendered_dir/git/delta.gitconfig" ]]; then
+        local delta_inc="$HOME/.config/git/delta-foxml.gitconfig"
+        if ! git config --global --get-all include.path 2>/dev/null | grep -qxF "$delta_inc"; then
+            git config --global --add include.path "$delta_inc"
+        fi
+        echo "  ✓ git delta include → $delta_inc"
     fi
 
     # btop — flip user's btop.conf to the FoxML theme (file is owned by btop)

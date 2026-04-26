@@ -72,6 +72,9 @@ export FZF_DEFAULT_OPTS="
   --preview-window=right:50%:hidden --bind='ctrl-/:toggle-preview'
 "
 
+# ─── zoxide (smarter cd) ──────────────────────
+command -v zoxide >/dev/null && eval "$(zoxide init zsh)"
+
 # ─── Auto-attach tmux ─────────────────────────
 if [[ -z "$TMUX" && -z "$VSCODE_TERMINAL" && -z "$INTELLIJ_ENVIRONMENT_READER" && $- == *i* ]]; then
   tmux attach -t main || tmux new -s main

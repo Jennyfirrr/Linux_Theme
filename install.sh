@@ -115,7 +115,7 @@ if $INSTALL_DEPS; then
         # Bar + launcher + notifications
         waybar rofi-wayland mako dunst
         # Shell + tooling
-        zsh fzf eza bat yazi btop
+        zsh fzf eza bat yazi btop fd zoxide jq git-delta github-cli
         # Screenshots + clipboard + media keys
         grim slurp wl-clipboard playerctl brightnessctl pavucontrol
         # Apps + viewers
