@@ -400,30 +400,43 @@ PKGJSON
 # ─────────────────────────────────────────
 
 install_nvidia() {
-    # Detect dGPU PCI address (vendor 0x10de, class 0x03* = display controller)
-    local pci_addr=""
+    # Detect dGPU and iGPU PCI addresses. Aquamarine needs BOTH because the
+    # eDP display is hardwired to the iGPU on Optimus laptops — nvidia
+    # renders, intel scans out via DMA-BUF.
+    local nvidia_addr="" intel_addr=""
     for dev in /sys/bus/pci/devices/*/; do
-        [[ "$(cat "$dev/vendor" 2>/dev/null)" == "0x10de" ]] || continue
-        [[ "$(cat "$dev/class" 2>/dev/null)" == 0x03* ]] || continue
-        pci_addr="$(basename "$dev")"
-        break
+        local vendor class
+        vendor="$(cat "$dev/vendor" 2>/dev/null)"
+        class="$(cat "$dev/class" 2>/dev/null)"
+        [[ "$class" == 0x03* ]] || continue   # display controllers only
+        case "$vendor" in
+            0x10de) [[ -z "$nvidia_addr" ]] && nvidia_addr="$(basename "$dev")" ;;
+            0x8086) [[ -z "$intel_addr" ]]  && intel_addr="$(basename "$dev")" ;;
+            0x1002) [[ -z "$intel_addr" ]]  && intel_addr="$(basename "$dev")" ;;  # AMD iGPU also fits the scanout role
+        esac
     done
 
-    if [[ -z "$pci_addr" ]]; then
+    if [[ -z "$nvidia_addr" ]]; then
         echo "  ⚠ No NVIDIA GPU found, skipping nvidia setup"
         return
     fi
 
-    local drm_dev="/dev/dri/by-path/pci-${pci_addr}-card"
-    echo "  Detected NVIDIA GPU at $pci_addr"
+    local nvidia_drm="/dev/dri/by-path/pci-${nvidia_addr}-card"
+    local aq_drm_devices="$nvidia_drm"
+    if [[ -n "$intel_addr" ]]; then
+        aq_drm_devices+=":/dev/dri/by-path/pci-${intel_addr}-card"
+        echo "  Detected NVIDIA at ${nvidia_addr}, iGPU at ${intel_addr}"
+    else
+        echo "  Detected NVIDIA at ${nvidia_addr} (no iGPU — single-GPU box)"
+    fi
 
     # Hyprland env-var module
     if [[ -f "$SCRIPT_DIR/shared/hyprland_modules/nvidia.conf" ]]; then
         mkdir -p ~/.config/hypr/modules
-        sed "s|AQ_DRM_DEVICES, /dev/dri/by-path/pci-[0-9a-f:.]*-card|AQ_DRM_DEVICES, ${drm_dev}|" \
+        sed "s|AQ_DRM_DEVICES,.*|AQ_DRM_DEVICES, ${aq_drm_devices}|" \
             "$SCRIPT_DIR/shared/hyprland_modules/nvidia.conf" \
             > ~/.config/hypr/modules/nvidia.conf
-        echo "  ✓ modules/nvidia.conf (AQ_DRM_DEVICES → ${drm_dev})"
+        echo "  ✓ modules/nvidia.conf (AQ_DRM_DEVICES → ${aq_drm_devices})"
 
         local hypr_main="$HOME/.config/hypr/hyprland.conf"
         if [[ -f "$hypr_main" ]] && ! grep -qF 'modules/nvidia.conf' "$hypr_main"; then
