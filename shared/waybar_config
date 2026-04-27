@@ -111,9 +111,8 @@
       "balanced": "BAL",
       "power-saver": "SAVE"
     },
-    "tooltip-format": "Power profile: {profile}\nDriver: {driver}",
-    "on-click": "powerprofilesctl set balanced",
-    "on-click-right": "powerprofilesctl set power-saver"
+    "tooltip-format": "Power profile: {profile}\nClick to cycle: balanced → performance → power-saver",
+    "on-click": "~/.config/waybar/scripts/ppd_cycle.sh"
   },
 
   "idle_inhibitor": {
