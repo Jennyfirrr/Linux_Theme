@@ -53,6 +53,10 @@ window#waybar > box {
 #pulseaudio,
 #backlight,
 #battery,
+#custom-cpu,
+#memory,
+#custom-disk,
+#custom-gpu,
 #clock,
 #tray,
 #custom-media,
@@ -121,6 +125,39 @@ window#waybar > box {
 
 #backlight {
     color: @dim;
+}
+
+/* ─────────────────────────────────────────
+   System Stats
+   ───────────────────────────────────────── */
+#custom-cpu,
+#memory,
+#custom-disk,
+#custom-gpu {
+    font-size: 11pt;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+
+#custom-cpu  { color: @peach; }
+#memory      { color: @lavender; }
+#custom-gpu  { color: #{{GREEN_BRIGHT}}; }
+#custom-disk { color: @fg; }
+
+#custom-gpu.idle {
+    color: @dim;
+}
+
+#custom-cpu.warning,
+#memory.warning,
+#custom-disk.warning {
+    color: #{{WARN}};
+}
+
+#custom-cpu.critical,
+#memory.critical,
+#custom-disk.critical {
+    color: #{{RED}};
 }
 
 #battery {

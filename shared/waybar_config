@@ -12,6 +12,10 @@
   "modules-center": [],
 
   "modules-right": [
+    "custom/cpu",
+    "memory",
+    "custom/gpu",
+    "custom/disk",
     "network",
     "pulseaudio",
     "backlight",
@@ -27,6 +31,36 @@
     "persistent-workspaces": {
         "*": [1, 2, 3, 4, 5, 6, 7, 8, 9]
     }
+  },
+
+  "custom/cpu": {
+    "exec": "~/.config/waybar/scripts/cpu.sh",
+    "return-type": "json",
+    "interval": 5,
+    "tooltip": false
+  },
+
+  "memory": {
+    "format": "RAM {used:0.1f}/{total:0.0f}g",
+    "interval": 5,
+    "states": {
+      "warning": 75,
+      "critical": 90
+    },
+    "tooltip-format": "RAM: {used:0.1f}g / {total:0.1f}g ({percentage}%)\nSwap: {swapUsed:0.1f}g / {swapTotal:0.1f}g"
+  },
+
+  "custom/gpu": {
+    "exec": "~/.config/waybar/scripts/gpu.sh",
+    "return-type": "json",
+    "interval": 5,
+    "tooltip": false
+  },
+
+  "custom/disk": {
+    "exec": "~/.config/waybar/scripts/disk.sh",
+    "return-type": "json",
+    "interval": 60
   },
 
   "network": {
