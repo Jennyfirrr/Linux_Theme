@@ -57,11 +57,23 @@ else
 fi
 
 # ─── Run installer non-interactively ────────────────────────────────
+# Auto-detect an NVIDIA discrete GPU and pass --nvidia so the dGPU
+# driver + Hyprland nvidia.conf get set up. No-ops on non-nvidia boxes,
+# so the same bootstrap line works everywhere.
+INSTALL_FLAGS=(--deps --yes)
+for dev in /sys/bus/pci/devices/*/; do
+    [[ "$(cat "$dev/vendor" 2>/dev/null)" == "0x10de" ]] || continue
+    [[ "$(cat "$dev/class" 2>/dev/null)" == 0x03* ]] || continue
+    INSTALL_FLAGS+=(--nvidia)
+    echo "NVIDIA GPU detected at $(basename "$dev") — adding --nvidia to install."
+    break
+done
+
 cd "$FOXML_DIR"
 echo ""
-echo "Running install.sh $THEME_NAME --deps --yes ..."
+echo "Running install.sh $THEME_NAME ${INSTALL_FLAGS[*]} ..."
 echo ""
-./install.sh "$THEME_NAME" --deps --yes
+./install.sh "$THEME_NAME" "${INSTALL_FLAGS[@]}"
 
 echo ""
 echo "╭──────────────────────────────────────────────────────────────────╮"
