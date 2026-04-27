@@ -22,7 +22,7 @@ vim.opt.expandtab = true
 vim.opt.shiftwidth = 2
 vim.opt.tabstop = 2
 vim.opt.termguicolors = true
-vim.opt.signcolumn = "yes"
+vim.opt.signcolumn = "yes:2"
 vim.opt.splitbelow = true
 vim.opt.splitright = true
 vim.opt.updatetime = 250
@@ -88,7 +88,25 @@ vim.opt.rtp:prepend(lazypath)
 local plugins = {
   { "nvim-lualine/lualine.nvim",           dependencies = { "nvim-tree/nvim-web-devicons" } },
   { "lukas-reineke/indent-blankline.nvim", main = "ibl",
-    opts = { scope = { enabled = true, show_start = false, show_end = false } } },
+    config = function()
+      -- Define highlight groups before ibl.setup so they exist at init time
+      local hl = vim.api.nvim_set_hl
+      hl(0, "RainbowIndent1", { fg = "#4d3a2e" })
+      hl(0, "RainbowIndent2", { fg = "#4a3040" })
+      hl(0, "RainbowIndent3", { fg = "#2e3d2e" })
+      hl(0, "RainbowIndent4", { fg = "#3d3a24" })
+      hl(0, "RainbowIndent5", { fg = "#2a3540" })
+      hl(0, "RainbowIndent6", { fg = "#402a2a" })
+      require("ibl").setup({
+        indent = {
+          highlight = {
+            "RainbowIndent1", "RainbowIndent2", "RainbowIndent3",
+            "RainbowIndent4", "RainbowIndent5", "RainbowIndent6",
+          },
+        },
+        scope = { enabled = true, show_start = false, show_end = false },
+      })
+    end },
 
   -- Core editing
   { "numToStr/Comment.nvim",               config = true },
@@ -349,7 +367,7 @@ local plugins = {
   {
     "stevearc/conform.nvim",
     opts = {
-      format_on_save = { lsp_fallback = true, timeout_ms = 500 },
+      format_on_save = { lsp_format = "fallback", timeout_ms = 500 },
       formatters_by_ft = { c = { "clang-format" }, cpp = { "clang-format" } },
     },
   },
@@ -820,7 +838,6 @@ require("lazy").setup(plugins, {
 })
 
 -- setup optional
-vim.opt.signcolumn = "yes:2"
 vim.opt.fillchars:append({ eob = " ", vert = " " })
 
 -- Popup menu transparency only (winblend left at 0 so splits stay solid)
@@ -1136,6 +1153,14 @@ local function apply_foxml_theme()
   -- Indent blankline
   hl("IblIndent", { fg = P.bg_hl })
   hl("IblScope",  { fg = "#e0b878" })
+
+  -- Rainbow indent guides (muted versions of rainbow delimiter colors)
+  hl("RainbowIndent1", { fg = "#4d3a2e" })  -- muted peach
+  hl("RainbowIndent2", { fg = "#4a3040" })  -- muted pink
+  hl("RainbowIndent3", { fg = "#2e3d2e" })  -- muted green
+  hl("RainbowIndent4", { fg = "#3d3a24" })  -- muted yellow
+  hl("RainbowIndent5", { fg = "#2a3540" })  -- muted cyan
+  hl("RainbowIndent6", { fg = "#402a2a" })  -- muted red
 
   -- Neo-tree
   hl("NeoTreeNormal",        { bg = P.bg_deep })
@@ -1655,8 +1680,8 @@ local on_attach    = function(_, bufnr)
   map("n", "K", vim.lsp.buf.hover, "Hover")
   map("n", "<leader>rn", vim.lsp.buf.rename, "Rename")
   map("n", "<leader>ca", vim.lsp.buf.code_action, "Code Action")
-  map("n", "[d", vim.diagnostic.goto_prev, "Prev Diagnostic")
-  map("n", "]d", vim.diagnostic.goto_next, "Next Diagnostic")
+  map("n", "[d", function() vim.diagnostic.jump({ count = -1 }) end, "Prev Diagnostic")
+  map("n", "]d", function() vim.diagnostic.jump({ count = 1 }) end, "Next Diagnostic")
   map("n", "<leader>f", function() vim.lsp.buf.format({ async = true }) end, "Format")
 
   -- format on save (synchronous so it finishes before write)
