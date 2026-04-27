@@ -24,9 +24,19 @@ if [[ "$state" != "active" ]]; then
     exit 0
 fi
 
-read -r util temp < <(nvidia-smi --query-gpu=utilization.gpu,temperature.gpu --format=csv,noheader,nounits 2>/dev/null | head -1 | tr -d ' ' | tr ',' ' ')
-if [[ -n "$util" && -n "$temp" ]]; then
+# dGPU is powered, but on hybrid setups (Steam waking the card via PCI runtime PM)
+# nvidia-smi can fail with "couldn't communicate with NVIDIA driver" — and prints
+# that error to stdout, not just stderr. Validate exit code AND that the values
+# are numeric before trusting them.
+output=$(nvidia-smi --query-gpu=utilization.gpu,temperature.gpu --format=csv,noheader,nounits 2>/dev/null)
+util=""
+temp=""
+if (( $? == 0 )); then
+    read -r util temp < <(printf '%s\n' "$output" | head -1 | tr -d ' ' | tr ',' ' ')
+fi
+
+if [[ "$util" =~ ^[0-9]+$ && "$temp" =~ ^[0-9]+$ ]]; then
     printf '{"text":"%s %s%% %s°"}\n' "$LABEL" "$util" "$temp"
 else
-    printf '{"text":"%s %s%%"}\n' "$LABEL" "${util:-—}"
+    printf '{"text":"%s on","class":"idle"}\n' "$LABEL"
 fi
