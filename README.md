@@ -83,6 +83,13 @@ cd Linux_Theme
 # Fully unattended (auto-yes every prompt; same defaults bootstrap.sh uses)
 ./install.sh FoxML_Classic --deps --yes
 
+# Run the whole Wayland session on the discrete NVIDIA GPU (Optimus laptops).
+# Installs nvidia-open-dkms + linux-headers, sets MODULES in mkinitcpio,
+# adds nvidia_drm.modeset=1 to the kernel cmdline, and points Hyprland's
+# Aquamarine backend at the dGPU. Reboot afterwards. Requires systemd-boot
+# (other bootloaders print manual instructions).
+./install.sh FoxML_Classic --deps --nvidia
+
 # Switch between themes (shows color previews)
 ./swap.sh
 

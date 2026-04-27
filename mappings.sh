@@ -233,7 +233,8 @@ PKGJSON
         for mod in "$SCRIPT_DIR/shared/hyprland_modules/"*.conf; do
             [[ -f "$mod" ]] || continue
             local basename="$(basename "$mod")"
-            [[ "$basename" == "theme.conf" ]] && continue  # theme.conf comes from templates
+            [[ "$basename" == "theme.conf" ]] && continue   # theme.conf comes from templates
+            [[ "$basename" == "nvidia.conf" ]] && continue  # opt-in, handled by install_nvidia()
             cp "$mod" "$HOME/.config/hypr/modules/$basename"
             echo "  ✓ modules/$basename"
         done
@@ -389,6 +390,88 @@ PKGJSON
             echo "  ✓ systemd user timers enabled"
         fi
     fi
+}
+
+# ─────────────────────────────────────────
+# Nvidia (full Wayland session on dGPU) — opt-in via install.sh --nvidia
+# Wires Hyprland env vars + mkinitcpio MODULES + kernel cmdline so the
+# nvidia driver loads at boot and Aquamarine targets the discrete card.
+# Idempotent: rerunning detects existing config and skips edits.
+# ─────────────────────────────────────────
+
+install_nvidia() {
+    # Detect dGPU PCI address (vendor 0x10de, class 0x03* = display controller)
+    local pci_addr=""
+    for dev in /sys/bus/pci/devices/*/; do
+        [[ "$(cat "$dev/vendor" 2>/dev/null)" == "0x10de" ]] || continue
+        [[ "$(cat "$dev/class" 2>/dev/null)" == 0x03* ]] || continue
+        pci_addr="$(basename "$dev")"
+        break
+    done
+
+    if [[ -z "$pci_addr" ]]; then
+        echo "  ⚠ No NVIDIA GPU found, skipping nvidia setup"
+        return
+    fi
+
+    local drm_dev="/dev/dri/by-path/pci-${pci_addr}-card"
+    echo "  Detected NVIDIA GPU at $pci_addr"
+
+    # Hyprland env-var module
+    if [[ -f "$SCRIPT_DIR/shared/hyprland_modules/nvidia.conf" ]]; then
+        mkdir -p ~/.config/hypr/modules
+        sed "s|AQ_DRM_DEVICES, /dev/dri/by-path/pci-[0-9a-f:.]*-card|AQ_DRM_DEVICES, ${drm_dev}|" \
+            "$SCRIPT_DIR/shared/hyprland_modules/nvidia.conf" \
+            > ~/.config/hypr/modules/nvidia.conf
+        echo "  ✓ modules/nvidia.conf (AQ_DRM_DEVICES → ${drm_dev})"
+
+        local hypr_main="$HOME/.config/hypr/hyprland.conf"
+        if [[ -f "$hypr_main" ]] && ! grep -qF 'modules/nvidia.conf' "$hypr_main"; then
+            printf '\n# Nvidia (added by install.sh --nvidia)\nsource = ~/.config/hypr/modules/nvidia.conf\n' \
+                >> "$hypr_main"
+            echo "  ✓ hyprland.conf sources nvidia.conf"
+        fi
+    fi
+
+    # /etc/mkinitcpio.conf — early-load nvidia modules so they claim the device
+    # before kms / nouveau can. Idempotent: skip if nvidia_drm already listed.
+    local mkinit="/etc/mkinitcpio.conf"
+    if [[ -f "$mkinit" ]] && ! grep -qE '^MODULES=.*nvidia_drm' "$mkinit"; then
+        sudo sed -i.foxml-bak \
+            's/^MODULES=([^)]*)/MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)/' \
+            "$mkinit"
+        echo "  ✓ mkinitcpio MODULES updated (backup: ${mkinit}.foxml-bak)"
+        sudo mkinitcpio -P 2>&1 | tail -3
+    else
+        echo "  • mkinitcpio already has nvidia modules"
+    fi
+
+    # systemd-boot loader entry — add kernel cmdline for DRM modeset.
+    # Other bootloaders (GRUB, refind) need manual editing; we warn here.
+    local boot_entry="/boot/loader/entries/arch.conf"
+    if [[ -f "$boot_entry" ]]; then
+        if ! grep -qF 'nvidia_drm.modeset=1' "$boot_entry"; then
+            sudo sed -i.foxml-bak \
+                -E 's/^(options .*)$/\1 nvidia_drm.modeset=1 nvidia_drm.fbdev=1/' \
+                "$boot_entry"
+            echo "  ✓ kernel cmdline updated (backup: ${boot_entry}.foxml-bak)"
+        else
+            echo "  • kernel cmdline already has nvidia_drm.modeset=1"
+        fi
+    elif [[ -f /etc/default/grub ]]; then
+        echo "  ⚠ GRUB detected — add 'nvidia_drm.modeset=1 nvidia_drm.fbdev=1'"
+        echo "    to GRUB_CMDLINE_LINUX_DEFAULT in /etc/default/grub, then"
+        echo "    run: sudo grub-mkconfig -o /boot/grub/grub.cfg"
+    else
+        echo "  ⚠ Unknown bootloader — add 'nvidia_drm.modeset=1 nvidia_drm.fbdev=1'"
+        echo "    to your kernel cmdline manually."
+    fi
+
+    echo ""
+    echo "  Reboot to load the nvidia driver."
+    echo "  Recovery: if Hyprland fails to start, switch to a TTY"
+    echo "  (Ctrl+Alt+F2), restore ${mkinit}.foxml-bak and"
+    echo "  ${boot_entry}.foxml-bak, run 'sudo mkinitcpio -P', reboot."
 }
 
 # ─────────────────────────────────────────

@@ -20,12 +20,14 @@ source "$SCRIPT_DIR/render.sh"
 # ─────────────────────────────────────────
 THEME_NAME=""
 INSTALL_DEPS=false
+INSTALL_NVIDIA=false
 ASSUME_YES=false
 DEFAULT_THEME="FoxML_Classic"
 
 for arg in "$@"; do
     case "$arg" in
         --deps) INSTALL_DEPS=true ;;
+        --nvidia) INSTALL_NVIDIA=true ;;
         -y|--yes) ASSUME_YES=true ;;
         *) THEME_NAME="$arg" ;;
     esac
@@ -34,9 +36,9 @@ done
 # Non-interactive mode: default theme + prime sudo cache so pacman doesn't pause
 if $ASSUME_YES; then
     [[ -z "$THEME_NAME" ]] && THEME_NAME="$DEFAULT_THEME"
-    if $INSTALL_DEPS; then
-        echo "Caching sudo credentials for unattended pacman install..."
-        sudo -v || { echo "sudo required for --deps"; exit 1; }
+    if $INSTALL_DEPS || $INSTALL_NVIDIA; then
+        echo "Caching sudo credentials for unattended install..."
+        sudo -v || { echo "sudo required for --deps / --nvidia"; exit 1; }
         # Keep sudo alive for the rest of the script
         ( while true; do sudo -n true; sleep 50; done 2>/dev/null ) &
         SUDO_KEEPALIVE_PID=$!
@@ -122,9 +124,19 @@ if $INSTALL_DEPS; then
         firefox zathura zathura-pdf-mupdf
         # GTK ssh-askpass (picks up the FoxML GTK theme automatically)
         seahorse
-        # Power profile switcher (waybar power-profiles-daemon module)
-        power-profiles-daemon
+        # Power profile switcher (waybar power-profiles-daemon module);
+        # python-gobject is the optional dep that makes `powerprofilesctl` work
+        # for click-to-switch handlers
+        power-profiles-daemon python-gobject
     )
+
+    # NVIDIA driver stack — only added when --nvidia is passed.
+    # nvidia-open-dkms is the kernel module (rebuilds on kernel updates
+    # via DKMS), linux-headers is the DKMS prereq, libva-nvidia-driver
+    # gives Firefox/VLC hardware video decode on the dGPU.
+    if $INSTALL_NVIDIA; then
+        PACMAN_PKGS+=(nvidia-open-dkms linux-headers libva-nvidia-driver)
+    fi
 
     TO_INSTALL=()
     for pkg in "${PACMAN_PKGS[@]}"; do
@@ -248,6 +260,15 @@ echo "Installing special configs..."
 install_specials "$RENDERED_DIR"
 
 # ─────────────────────────────────────────
+# Nvidia (full Wayland session on dGPU) — opt-in
+# ─────────────────────────────────────────
+if $INSTALL_NVIDIA; then
+    echo ""
+    echo "Configuring NVIDIA full-session setup..."
+    install_nvidia
+fi
+
+# ─────────────────────────────────────────
 # Cleanup
 # ─────────────────────────────────────────
 rm -rf "$RENDERED_DIR"
@@ -272,4 +293,7 @@ echo "  3. Open nvim and run :Lazy sync"
 echo "  4. Apply Spicetify: spicetify apply"
 echo "  5. Restart Firefox (enable userChrome in about:config)"
 echo "  6. Select 'Fox ML' theme in Cursor/VS Code"
+if $INSTALL_NVIDIA; then
+    echo "  7. Reboot to load the nvidia kernel module"
+fi
 echo ""
