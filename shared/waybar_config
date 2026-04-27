@@ -16,10 +16,13 @@
     "memory",
     "custom/gpu",
     "custom/disk",
+    "custom/updates",
     "network",
     "pulseaudio",
     "backlight",
+    "power-profiles-daemon",
     "battery",
+    "idle_inhibitor",
     "clock",
     "tray"
   ],
@@ -91,10 +94,43 @@
     "format-charging": "󰂄  {capacity}%",
     "format-icons": ["󰁺", "󰁼", "󰁾", "󰂀", "󰁹"],
     "interval": 10,
+    "tooltip-format": "{capacity}% — {time} left\n{power:0.1f} W",
+    "tooltip-format-charging": "{capacity}% — charging, {time} until full\n{power:0.1f} W",
+    "tooltip-format-full": "{capacity}% — full",
     "states": {
       "warning": 25,
       "critical": 10
     }
+  },
+
+  "power-profiles-daemon": {
+    "format": "{icon}",
+    "format-icons": {
+      "default": "BAL",
+      "performance": "PERF",
+      "balanced": "BAL",
+      "power-saver": "SAVE"
+    },
+    "tooltip-format": "Power profile: {profile}\nDriver: {driver}",
+    "on-click": "powerprofilesctl set balanced",
+    "on-click-right": "powerprofilesctl set power-saver"
+  },
+
+  "idle_inhibitor": {
+    "format": "{icon}",
+    "format-icons": {
+      "activated": "AWAKE",
+      "deactivated": "○"
+    },
+    "tooltip-format-activated": "Idle inhibited — click to release",
+    "tooltip-format-deactivated": "Click to keep screen awake"
+  },
+
+  "custom/updates": {
+    "exec": "~/.config/waybar/scripts/updates.sh",
+    "return-type": "json",
+    "interval": 1800,
+    "on-click": "kitty -e bash -lc 'checkupdates | less; exec zsh' &"
   },
 
   "clock": {

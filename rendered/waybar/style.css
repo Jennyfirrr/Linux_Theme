@@ -57,6 +57,9 @@ window#waybar > box {
 #memory,
 #custom-disk,
 #custom-gpu,
+#custom-updates,
+#power-profiles-daemon,
+#idle_inhibitor,
 #clock,
 #tray,
 #custom-media,
@@ -158,6 +161,34 @@ window#waybar > box {
 #memory.critical,
 #custom-disk.critical {
     color: #b05555;
+}
+
+/* ─────────────────────────────────────────
+   Updates / Power profile / Idle inhibitor
+   ───────────────────────────────────────── */
+#custom-updates {
+    color: #c4b48a;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+
+#power-profiles-daemon {
+    color: @dim;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+
+#power-profiles-daemon.performance { color: @peach; }
+#power-profiles-daemon.power-saver { color: #7aab88; }
+
+#idle_inhibitor {
+    color: @dim;
+}
+
+#idle_inhibitor.activated {
+    color: @peach;
+    font-weight: bold;
+    text-shadow: 0 0 6px rgba(212,152,90, 0.5);
 }
 
 #battery {

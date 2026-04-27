@@ -115,13 +115,15 @@ if $INSTALL_DEPS; then
         # Bar + launcher + notifications
         waybar rofi-wayland mako dunst
         # Shell + tooling
-        zsh fzf eza bat yazi btop fd zoxide jq git-delta github-cli
+        zsh fzf eza bat yazi btop fd zoxide jq git-delta github-cli pacman-contrib
         # Screenshots + clipboard + media keys
         grim slurp wl-clipboard playerctl brightnessctl pavucontrol
         # Apps + viewers
         firefox zathura zathura-pdf-mupdf
         # GTK ssh-askpass (picks up the FoxML GTK theme automatically)
         seahorse
+        # Power profile switcher (waybar power-profiles-daemon module)
+        power-profiles-daemon
     )
 
     TO_INSTALL=()
@@ -140,6 +142,13 @@ if $INSTALL_DEPS; then
         fi
     else
         echo "  All packages already installed"
+    fi
+
+    # Enable power-profiles-daemon (waybar module needs it active to read profiles)
+    if pacman -Qi power-profiles-daemon &>/dev/null \
+        && ! systemctl is-active --quiet power-profiles-daemon; then
+        sudo systemctl enable --now power-profiles-daemon \
+            && echo "  ✓ power-profiles-daemon enabled"
     fi
 
     # Oh My Zsh

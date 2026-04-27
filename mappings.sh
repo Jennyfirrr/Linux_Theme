@@ -120,6 +120,7 @@ SHARED_MAPPINGS=(
     "waybar_scripts/cpu.sh|~/.config/waybar/scripts/cpu.sh"
     "waybar_scripts/gpu.sh|~/.config/waybar/scripts/gpu.sh"
     "waybar_scripts/disk.sh|~/.config/waybar/scripts/disk.sh"
+    "waybar_scripts/updates.sh|~/.config/waybar/scripts/updates.sh"
 
     # ReGreet (login screen — needs sudo to install to /etc/greetd/)
     # "regreet.toml|/etc/greetd/regreet.toml"
