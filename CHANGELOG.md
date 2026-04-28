@@ -4,7 +4,55 @@ All notable changes to the Fox ML theme.
 
 ---
 
-## 2026-04-25
+## 2026-04-27 — v1.0.0 <3
+
+First tagged release. The earthy palette is settled, the installer is one-command, and a fresh Arch+Hyprland laptop boots into the full FoxML experience without manual surgery. Verified end-to-end on a Dell Precision 5540 (Quadro T2000 + Intel UHD 630).
+
+### Hyprland — NVIDIA Optimus Support (`install.sh --nvidia`)
+- New `install_nvidia()` hook routes the entire Wayland session to the discrete GPU on hybrid Optimus laptops where the iGPU bottlenecks under compositor + multi-Chromium + transparent windows + TUIs sharing it
+- Pulls `nvidia-open-dkms` + `linux-headers` + `libva-nvidia-driver` (auto-rebuilds on kernel updates), drops env vars into `~/.config/hypr/modules/nvidia.conf`, sets `MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)` in `mkinitcpio.conf`, and appends `nvidia_drm.modeset=1 nvidia_drm.fbdev=1` to the kernel cmdline (systemd-boot only; GRUB/refind users get manual instructions)
+- Lists **both** GPUs in `AQ_DRM_DEVICES` (dGPU first as primary render, iGPU second for eDP scanout) — Optimus eDP is hardwired to the iGPU at the hardware level, so dGPU-only would leave Hyprland with no outputs
+- Resolves `/dev/dri/by-path/...` symlinks to `/dev/dri/cardN` before joining — the by-path names contain colons (PCI BDF) that shredded Aquamarine's `:`-split device list
+- Refuses to touch `mkinitcpio.conf` if `/boot` has under 80 MB free — the nvidia-bearing initramfs is ~135 MB and a half-written `.img` on a full ESP bricks boot
+- Idempotent. Backups of every system file edited go to `<file>.foxml-bak`. Recovery instructions print at the end. Battery cost flagged in docs (~5W idle vs ~1-2W on iGPU)
+- `bootstrap.sh` auto-detects an NVIDIA dGPU by walking `/sys/bus/pci/devices` for vendor `0x10de` class `0x03*` and appends `--nvidia` for you — works on a freshly-imaged box before pciutils is installed
+
+### Hyprland — Layer Blur, Peach-Glow Active Window, Lockscreen Widgets
+- `layerrule` block (Hyprland 0.53+ syntax) blurs rofi/notifications/mako/dunst — launcher and toasts now sit on the desktop instead of pasted on top, matching window blur. Collapsed all four namespaces into one alternation regex
+- Active-window shadow tinted to `PRIMARY` (peach) at 0.40 alpha, range 20→24. Inactive stays a neutral dark drop-shadow at 0.30 — focus gets a subtle warm halo without changing the border
+- Hyprlock gains a `BAT %` widget (top-right) and a now-playing line (`♪ artist — title` via `playerctl`, exits silently when nothing's playing)
+- Stripped `general.conf` of a dead `general{}` block silently overridden by `theme.conf` (it included a `layout=master` conflicting with theme's `dwindle`) and a duplicate `input{}` already owned by `input.conf`
+
+### Hyprland — Window Rules
+- Steam launcher/library/store/friends pinned to 85% opacity (exact-match regex on class `steam` so game windows stay opaque) — `[3963a20]` opens Steam to main library view rather than restoring last-active tab
+- `engine_gui` (custom trading app) gets the same 85% treatment as `foxml_suite`
+
+### Wallpaper — `awww` (swww fork) replaces hyprpaper
+- hyprpaper 0.8.3 and Hyprland 0.54 disagreed on IPC protocol version, so every IPC call failed and rotation always fell back to a kill+restart with a fixed `0.3s sleep` (where the "sometimes wallpaper rotation just doesn't work" came from)
+- `awww` talks raw `wlr-layer-shell` so it doesn't care about Hyprland's IPC version. Bonus: real fade transitions on rotation
+- Autostart waits for the daemon socket and restores the last-picked wallpaper from `~/.wallpapers/.current`. Templates removed; deploy path simplified
+
+### Waybar — Stats Bar, Power Profile, Updates, Idle Inhibitor
+- New CPU/RAM/GPU/DISK modules with temps + totals. CPU resolves `coretemp` by hwmon name (not index, which drifts on reboot). GPU module is **Optimus-aware**: skips `nvidia-smi` while the dGPU is runtime-suspended so polling doesn't keep it awake on battery, and validates exit code + numeric output to handle the post-wake window where the driver is reachable but `nvidia-smi` still errors
+- `pacman` updates count via `checkupdates` (hides at 0; click opens the list in kitty); 30-min poll
+- `power-profiles-daemon` cycle on click (balanced → performance → power-saver). Pulls `power-profiles-daemon` + `pacman-contrib` into `--deps` and enables the service post-install
+- Idle-inhibitor toggle for video / long reads
+- Battery tooltip shows time remaining and current draw (W)
+
+### SSH — Themed Askpass via Seahorse
+- Pulls `seahorse` via `--deps` so the GTK askpass binary exists; auto-picks up the FoxML GTK theme instead of the bright-blue x11-ssh-askpass dialog
+- Exports `SSH_ASKPASS` / `SSH_ASKPASS_REQUIRE=prefer` / `SSH_AUTH_SOCK` to all Hyprland-launched processes (and to interactive shells via `.zshrc` for ssh-into-the-box / TTY logins). Agent socket comes from `gnome-keyring-daemon` already started in `autostart.conf`
+
+### Firefox — XDG Profile Path + Auto-Set Legacy Stylesheet Pref
+- Firefox 150 on Arch switched to `~/.config/mozilla/firefox` (XDG-compliant) instead of `~/.mozilla/firefox`. The old profile resolver returned empty and theming silently skipped on fresh installs — now probes both, prefers XDG
+- Writes `toolkit.legacyUserProfileCustomizations.stylesheets = true` into `user.js` so `userChrome.css` / `userContent.css` actually load. `user.js` overrides `prefs.js` on every launch, so this can't drift back
+
+### Tooling — zoxide, fd, jq, git-delta, gh, themed delta diff
+- `--deps` pulls `fd`, `zoxide`, `jq`, `git-delta`, `github-cli`. `.zshrc` initializes zoxide if installed
+- New `templates/git/delta.gitconfig` with a themed `[delta]` block, deployed to `~/.config/git/delta-foxml.gitconfig` and pulled in via `include.path` from `~/.gitconfig` so the user's commit identity stays untouched
+- `shared/bin/tmux-git-pane-label`: the missing helper that `.tmux.conf` has always called — pane border was silently empty in git directories. New install loop deploys `shared/bin/*` to `~/.local/bin`
+
+---
 
 ### Icons — Papirus-Dark with Catppuccin Mocha Peach folders
 - The GTK ini referenced `Papirus-Dark` but the theme files weren't installed, so Thunar (and other GTK apps) silently fell back to Adwaita's default blue folder icons — clashing with the warm peach UI chrome
