@@ -4,6 +4,27 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-04-28 — v1.0.1
+
+Patch release covering the missing-deps gap discovered immediately post-v1.0.0.
+
+### Installer — Neovim runtime deps
+- Added `nodejs`, `npm`, `tree-sitter-cli` to `install.sh`'s `PACMAN_PKGS`. v1.0.0 worked on the verifying box because these were already present from earlier setup, but a fresh Arch laptop hit four cascading errors on first nvim launch:
+  - `Copilot.lua: Could not determine Node.js version` → no `node` in `PATH`
+  - `Failed to run config for avante.nvim` → cascaded from the copilot failure
+  - `mason-lspconfig.nvim` failed to install pyright / bashls / jsonls / yamlls → all are npm-distributed
+  - `tree-sitter CLI not found: latex parser must be generated from grammar definitions` → the latex parser on the current `nvim-treesitter` line generates from source
+
+### Neovim — Pin nvim-treesitter to `master`
+- `nvim-treesitter` and `nvim-treesitter-textobjects` shipped a major rewrite on their default `main` branches that dropped the `nvim-treesitter.configs` module entirely. Our `init.lua` calls `require("nvim-treesitter.configs").setup({...})`, which errors with `module not found` against `main`.
+- Pinned both lazy specs to `branch = "master"` — the legacy v0.x branch that retains the `configs.setup()` API. The migration to the new API is a separate (larger) task; pinning is the right move for a 1.0 stability line.
+
+### Neovim — Drop `latex` parser from `ensure_installed`
+- `tree-sitter-cli 0.26.x` changed how `--no-bindings` is passed to `tree-sitter generate` (now requires `-- --no-bindings` to disambiguate from a flag), and `nvim-treesitter` `master`'s build script still calls the old form. The `latex` parser on this line generates from source so it hit the error every nvim launch
+- Removed `latex` from the `ensure_installed` list. Other parsers in the list ship pre-compiled grammars and are unaffected. Add `latex` back when nvim-treesitter updates its build script for the 0.26.x CLI
+
+---
+
 ## 2026-04-27 — v1.0.0 <3
 
 First tagged release. The earthy palette is settled, the installer is one-command, and a fresh Arch+Hyprland laptop boots into the full FoxML experience without manual surgery. Verified end-to-end on a Dell Precision 5540 (Quadro T2000 + Intel UHD 630).

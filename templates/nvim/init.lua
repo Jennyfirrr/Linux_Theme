@@ -245,7 +245,10 @@ local plugins = {
   },
 
   -- Syntax / Treesitter
-  { "nvim-treesitter/nvim-treesitter",  build = ":TSUpdate" },
+  -- Pin to master: the main branch dropped require("nvim-treesitter.configs") in
+  -- favor of a rewritten setup API. master keeps the legacy configs.setup() shape
+  -- our init.lua below uses. Same pin on textobjects (its main branch broke too).
+  { "nvim-treesitter/nvim-treesitter",  branch = "master", build = ":TSUpdate" },
 
   -- LSP + Autocomplete
   { "neovim/nvim-lspconfig" },
@@ -419,6 +422,7 @@ local plugins = {
   -- Treesitter textobjects (daf = delete a function, vac = select a class, etc.)
   {
     "nvim-treesitter/nvim-treesitter-textobjects",
+    branch = "master",
     dependencies = { "nvim-treesitter/nvim-treesitter" },
   },
 
@@ -1582,7 +1586,11 @@ require("lualine").setup({
 
 -- Treesitter
 require("nvim-treesitter.configs").setup({
-  ensure_installed = { "lua", "python", "c", "cpp", "bash", "json", "yaml", "markdown", "vim", "vimdoc", "java", "javadoc", "latex" },
+  -- Dropped "latex" — the parser on this nvim-treesitter line generates from
+  -- grammar source via tree-sitter-cli, and 0.26.x changed how `--no-bindings`
+  -- is passed (now needs `-- --no-bindings`), so the install errors out.
+  -- Add it back when nvim-treesitter ships a compatible build script.
+  ensure_installed = { "lua", "python", "c", "cpp", "bash", "json", "yaml", "markdown", "vim", "vimdoc", "java", "javadoc" },
   highlight = { enable = true },
   incremental_selection = { enable = true },
   indent = { enable = true },

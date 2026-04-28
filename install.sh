@@ -114,6 +114,12 @@ if $INSTALL_DEPS; then
         hyprland hyprlock awww hypridle
         # Editor + terminal + multiplexer
         neovim kitty tmux
+        # Neovim runtime deps:
+        #  - nodejs/npm: copilot.lua needs node to launch the Copilot LSP, and
+        #    mason installs pyright/bashls/jsonls/yamlls as npm packages
+        #  - tree-sitter-cli: nvim-treesitter regenerates the latex grammar from
+        #    source on this driver line; without the CLI it errors at startup
+        nodejs npm tree-sitter-cli
         # Bar + launcher + notifications
         waybar rofi-wayland mako dunst
         # Shell + tooling
