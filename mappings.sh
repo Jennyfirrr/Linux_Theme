@@ -421,13 +421,26 @@ install_nvidia() {
         return
     fi
 
-    local nvidia_drm="/dev/dri/by-path/pci-${nvidia_addr}-card"
+    # Resolve by-path symlinks to /dev/dri/cardN — aquamarine splits
+    # AQ_DRM_DEVICES on ':', and the by-path names contain ':' themselves
+    # (pci-0000:01:00.0-card), which shreds the list. cardN is colon-free.
+    local nvidia_drm intel_drm
+    nvidia_drm="$(readlink -f "/dev/dri/by-path/pci-${nvidia_addr}-card" 2>/dev/null)"
+    if [[ -z "$nvidia_drm" || ! -e "$nvidia_drm" ]]; then
+        echo "  ⚠ Could not resolve /dev/dri/by-path/pci-${nvidia_addr}-card — is the nvidia driver loaded?"
+        return
+    fi
     local aq_drm_devices="$nvidia_drm"
     if [[ -n "$intel_addr" ]]; then
-        aq_drm_devices+=":/dev/dri/by-path/pci-${intel_addr}-card"
-        echo "  Detected NVIDIA at ${nvidia_addr}, iGPU at ${intel_addr}"
+        intel_drm="$(readlink -f "/dev/dri/by-path/pci-${intel_addr}-card" 2>/dev/null)"
+        if [[ -n "$intel_drm" && -e "$intel_drm" ]]; then
+            aq_drm_devices+=":${intel_drm}"
+            echo "  Detected NVIDIA at ${nvidia_addr} (${nvidia_drm}), iGPU at ${intel_addr} (${intel_drm})"
+        else
+            echo "  Detected NVIDIA at ${nvidia_addr} (${nvidia_drm}); iGPU at ${intel_addr} but no DRM node yet — listing nvidia only"
+        fi
     else
-        echo "  Detected NVIDIA at ${nvidia_addr} (no iGPU — single-GPU box)"
+        echo "  Detected NVIDIA at ${nvidia_addr} (${nvidia_drm}) (no iGPU — single-GPU box)"
     fi
 
     # Hyprland env-var module
@@ -448,13 +461,26 @@ install_nvidia() {
 
     # /etc/mkinitcpio.conf — early-load nvidia modules so they claim the device
     # before kms / nouveau can. Idempotent: skip if nvidia_drm already listed.
+    #
+    # Guard against tiny EFI System Partitions: nvidia-bearing initramfs grows
+    # to ~135 MB on this driver line, and a half-written .img on a full /boot
+    # leaves the system unbootable. Refuse to edit if /boot has under 80 MB free.
     local mkinit="/etc/mkinitcpio.conf"
     if [[ -f "$mkinit" ]] && ! grep -qE '^MODULES=.*nvidia_drm' "$mkinit"; then
-        sudo sed -i.foxml-bak \
-            's/^MODULES=([^)]*)/MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)/' \
-            "$mkinit"
-        echo "  ✓ mkinitcpio MODULES updated (backup: ${mkinit}.foxml-bak)"
-        sudo mkinitcpio -P 2>&1 | tail -3
+        local boot_free_mb
+        boot_free_mb=$(df --output=avail -BM /boot 2>/dev/null | tail -1 | tr -dc '0-9')
+        if [[ -n "$boot_free_mb" && "$boot_free_mb" -lt 80 ]]; then
+            echo "  ⚠ /boot has only ${boot_free_mb} MB free — skipping mkinitcpio edit"
+            echo "    nvidia-bearing initramfs needs ~135 MB. Free space in /boot"
+            echo "    (older kernels, fallback initramfs) and re-run, or skip this"
+            echo "    step — the dGPU will still render via udev module loading."
+        else
+            sudo sed -i.foxml-bak \
+                's/^MODULES=([^)]*)/MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)/' \
+                "$mkinit"
+            echo "  ✓ mkinitcpio MODULES updated (backup: ${mkinit}.foxml-bak)"
+            sudo mkinitcpio -P 2>&1 | tail -3
+        fi
     else
         echo "  • mkinitcpio already has nvidia modules"
     fi
