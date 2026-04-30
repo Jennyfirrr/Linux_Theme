@@ -1,34 +1,86 @@
 #!/usr/bin/env bash
-# Pick a random wallpaper from ~/.wallpapers/ and apply via awww.
-# Excludes the .current marker, dotfiles, and other-theme images.
+# Apply the wallpaper for the current time-of-day slot via awww.
+#
+# Slots:
+#   05–10  dawn    → foxml_misty_dawn.jpg
+#   10–18  midday  → foxml_earthy.jpg
+#   18–22  sunset  → foxml_sunrise_sunbeams.jpg
+#   22–05  night   → foxml_night_woods.jpg
+#
+# Default invocation is idempotent — exits without fading or notifying if the
+# slot's wallpaper is already active. Safe to fire from a frequent timer.
+#
+# `--cycle` (used by the ALT+W keybind) advances one slot from whatever is
+# currently shown, regardless of the clock — gives "next mood now" semantics
+# for the manual keybind. The next timer fire snaps back to the calendar slot.
 set -euo pipefail
 
 WALL_DIR="${HOME}/.wallpapers"
+MODE="${1:-bucket}"
 
-shopt -s nullglob nocaseglob
-mapfile -t pool < <(
-    find "$WALL_DIR" -maxdepth 1 -type f \
-        \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \) \
-        ! -name ".*" ! -name "cave_data_center*"
+# Slot definitions: start-hour, label, filename. Keep ordered by start-hour.
+slots=(
+    "05 dawn   foxml_misty_dawn.jpg"
+    "10 midday foxml_earthy.jpg"
+    "18 sunset foxml_sunrise_sunbeams.jpg"
+    "22 night  foxml_night_woods.jpg"
 )
-shopt -u nullglob nocaseglob
 
-(( ${#pool[@]} == 0 )) && { echo "no wallpapers found in $WALL_DIR" >&2; exit 1; }
+# Map current hour → slot index. Hours before the first start (00–04) fall
+# through to the last slot (night, which spans midnight).
+calendar_slot_index() {
+    local hour idx=$(( ${#slots[@]} - 1 ))
+    hour=$((10#$(date +%H)))
+    for i in "${!slots[@]}"; do
+        read -r start _ _ <<<"${slots[$i]}"
+        (( hour >= 10#$start )) && idx=$i
+    done
+    echo "$idx"
+}
 
-# Drop the currently-active wallpaper from the pool so consecutive rotations
-# always change. .current is a relative symlink; resolve it before comparing.
-current=""
-[[ -L "$WALL_DIR/.current" ]] && current="$WALL_DIR/$(readlink "$WALL_DIR/.current")"
-if (( ${#pool[@]} > 1 )) && [[ -n "$current" ]]; then
-    filtered=()
-    for p in "${pool[@]}"; do [[ "$p" != "$current" ]] && filtered+=("$p"); done
-    pool=("${filtered[@]}")
+# Find the slot whose filename matches the .current symlink target.
+# Returns -1 if .current is missing or points at something not in the table.
+slot_index_of_current() {
+    local cur_link="" i fname
+    [[ -L "$WALL_DIR/.current" ]] && cur_link="$(readlink "$WALL_DIR/.current")"
+    [[ -z "$cur_link" ]] && { echo -1; return; }
+    for i in "${!slots[@]}"; do
+        read -r _ _ fname <<<"${slots[$i]}"
+        [[ "$fname" == "$cur_link" ]] && { echo "$i"; return; }
+    done
+    echo -1
+}
+
+case "$MODE" in
+    --cycle)
+        idx=$(slot_index_of_current)
+        # If .current isn't in the slot table, anchor cycle on the calendar
+        # slot so the first ALT+W press always moves somewhere predictable.
+        (( idx == -1 )) && idx=$(calendar_slot_index)
+        target_idx=$(( (idx + 1) % ${#slots[@]} ))
+        ;;
+    bucket|"")
+        target_idx=$(calendar_slot_index)
+        ;;
+    *)
+        echo "usage: $0 [--cycle]" >&2
+        exit 2
+        ;;
+esac
+
+read -r _ _ filename <<<"${slots[$target_idx]}"
+pick="${WALL_DIR}/${filename}"
+[[ ! -f "$pick" ]] && { echo "missing $pick" >&2; exit 1; }
+
+# Idempotency: skip the fade + notify if we'd be applying what's already up,
+# unless --cycle was passed (cycle should always change the image).
+if [[ "$MODE" != "--cycle" ]]; then
+    current_target=""
+    [[ -L "$WALL_DIR/.current" ]] && current_target="$(readlink "$WALL_DIR/.current")"
+    [[ "$current_target" == "$filename" ]] && exit 0
 fi
 
-pick="${pool[RANDOM % ${#pool[@]}]}"
-
-# Update the stable symlink so anything else (hyprlock, etc.) follows.
-ln -sfn "$(basename "$pick")" "$WALL_DIR/.current"
+ln -sfn "$filename" "$WALL_DIR/.current"
 
 # Rewrite hyprlock's wallpaper path. hyprlock's image loader dispatches on
 # file extension, so it can't load the .current symlink directly — point it
@@ -53,6 +105,6 @@ awww img "$pick" \
     --transition-duration 1 \
     --transition-fps 60
 
-echo "rotated to $(basename "$pick")"
+echo "rotated to $filename"
 command -v notify-send &>/dev/null && \
-    notify-send -t 3000 -i "$pick" "Wallpaper" "$(basename "${pick%.*}")" || true
+    notify-send -t 3000 -i "$pick" "Wallpaper" "${filename%.*}" || true

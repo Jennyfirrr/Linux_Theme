@@ -1,9 +1,15 @@
 [Unit]
-Description=Rotate Hyprland wallpaper periodically
+Description=Apply the time-of-day wallpaper
 
 [Timer]
-OnBootSec=10min
-OnUnitActiveSec=4h
+# Fire on every slot boundary (dawn 05, midday 10, sunset 18, night 22) plus
+# one mid-hour check so wake-from-suspend lands on the right wallpaper within
+# 30 minutes. The script is idempotent — re-fires no-op when the slot's
+# wallpaper is already active.
+OnCalendar=*-*-* 05,10,18,22:00:00
+OnCalendar=*-*-* *:30:00
+# Catch-up after suspend / boot — Persistent makes systemd run a missed fire
+# immediately on resume.
 Persistent=true
 
 [Install]

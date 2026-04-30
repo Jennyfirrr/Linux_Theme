@@ -4,6 +4,30 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-04-30 — v1.1.0
+
+Major update to the wallpaper system, moving from random rotation to time-of-day "buckets" that match the solar cycle.
+
+### Wallpaper — Time-of-Day Rotation ("Buckets")
+- Converted `rotate_wallpaper.sh` from random selection to a bucket-based system. The wallpaper now automatically matches the current hour:
+  - **05:00 – 10:00 (Dawn):** `foxml_misty_dawn.jpg`
+  - **10:00 – 18:00 (Midday):** `foxml_earthy.jpg`
+  - **18:00 – 22:00 (Sunset):** `foxml_sunrise_sunbeams.jpg`
+  - **22:00 – 05:00 (Night):** `foxml_night_woods.jpg`
+- Added `foxml_night_woods.jpg` (4K) to the wallpaper pool for the night slot.
+- Rotation is now **idempotent**: if the correct wallpaper for the current slot is already active, the script exits silently without triggering a fade or notification.
+- New `--cycle` flag for manual rotation (ALT+W). It advances one slot forward regardless of the time, allowing manual "mood" changes that persist until the next scheduled bucket transition.
+
+### Systemd — Precise Rotation Timer
+- Updated `wallpaper-rotate.timer` to fire exactly on slot boundaries (05, 10, 18, 22) plus a 30-minute mid-hour check.
+- Added `Persistent=true` to the timer so missed fires during suspend or power-off are caught up immediately on wake.
+
+### Hyprland — Integration Improvements
+- **Autostart:** `autostart.conf` now calls `rotate_wallpaper.sh` directly on startup. This ensures the correct time-of-day wallpaper is applied immediately on login, replacing the old behavior of just restoring the last-saved symlink.
+- **Keybinds:** Added `--cycle` to the `ALT+W` bind so manual rotation always changes the image instead of snapping to the current hour's bucket.
+
+---
+
 ## 2026-04-28 — v1.0.1
 
 Patch release covering the missing-deps gap discovered immediately post-v1.0.0.
