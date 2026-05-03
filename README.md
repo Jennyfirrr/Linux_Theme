@@ -118,11 +118,44 @@ themes/
     theme.conf              <- name, type=dark, description
 shared/                     <- non-color files copied as-is (keybinds, scripts, etc.)
 
-render.sh                   <- template engine (hex, RGB, ANSI, metadata substitution)
+render.sh                   <- Legacy template engine (bash/sed)
+foxml-cli/                  <- High-performance C++ engine (Zero-copy, TUI, Gen)
 mappings.sh                 <- source -> destination file routing + special handlers
-install.sh                  <- renders templates + copies to system
-update.sh                   <- reverse-renders system configs back into templates
-swap.sh                     <- interactive theme switcher with color previews
+install.sh                  <- Bash installer (fallback)
+update.sh                   <- Bash updater (fallback)
+swap.sh                     <- Bash theme swapper (fallback)
+```
+
+## FoxML Engine (C++)
+
+A high-performance, standalone theming engine built in C++17. It provides a modern alternative to the Bash scripts with advanced features for ricing power-users.
+
+### Performance & Features
+- **Zero-Copy Renderer**: Uses `mmap()` and `writev()` to stitch themed configs directly in the kernel buffer—theoretically the fastest way to render dotfiles.
+- **Interactive TUI**: Run `foxml swap` for a truecolor theme picker with live swatches.
+- **Wallpaper-to-Theme**: Generate entire palettes from images using K-Means clustering with `foxml gen`.
+- **Native JSON Merging**: Safely merges UI settings into complex configs (like Gemini CLI) natively.
+- **Live Reloads**: Instantly triggers Hyprland, Waybar, and terminal reloads upon installation.
+
+### Build from Source
+Requires `cmake` and a C++17 compiler (GCC/Clang).
+
+```bash
+cd foxml-cli
+make
+# Binary is located at ./build/foxml
+```
+
+### Usage
+```bash
+# Install a theme and reload the system
+./foxml-cli/build/foxml install FoxML_Classic
+
+# Launch the interactive swapper
+./foxml-cli/build/foxml swap
+
+# Generate a theme from a wallpaper
+./foxml-cli/build/foxml gen ~/wallpapers/nature.jpg MyNewTheme
 ```
 
 **Adding a new theme** = writing one `palette.sh` file. All 23+ app configs are generated from templates.
