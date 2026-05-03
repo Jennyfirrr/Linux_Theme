@@ -71,6 +71,9 @@ TEMPLATE_MAPPINGS=(
     # Bat
     "bat/foxml.tmTheme|~/.config/bat/themes/Fox ML.tmTheme"
 
+    # Gemini CLI
+    "gemini/settings.json|GEMINI_DIR/settings.json"
+
     # Git (delta pager — included from ~/.gitconfig, doesn't touch user identity)
 
     "git/delta.gitconfig|~/.config/git/delta-foxml.gitconfig"
@@ -206,7 +209,8 @@ PKGJSON
     fi
 
     # Gemini CLI theme merge
-    local gemini_settings="$HOME/.gemini/settings.json"
+    local gemini_dir="${GEMINI_CONFIG_HOME:-$HOME/.gemini}"
+    local gemini_settings="$gemini_dir/settings.json"
     if [[ -f "$rendered_dir/gemini/settings.json" ]]; then
         if [[ -f "$gemini_settings" ]]; then
             # Merge UI settings into existing config
@@ -582,7 +586,8 @@ update_specials() {
     fi
 
     # Gemini CLI (pull only UI section)
-    local gemini_settings="$HOME/.gemini/settings.json"
+    local gemini_dir="${GEMINI_CONFIG_HOME:-$HOME/.gemini}"
+    local gemini_settings="$gemini_dir/settings.json"
     if [[ -f "$gemini_settings" ]]; then
         local tmp_ui; tmp_ui="$(mktemp)"
         # Extract only the ui part to avoid pulling security settings into templates

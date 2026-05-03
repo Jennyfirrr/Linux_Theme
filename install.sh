@@ -230,6 +230,9 @@ for mapping in "${TEMPLATE_MAPPINGS[@]}"; do
     # Skip Firefox (handled by specials) and entries with FIREFOX_PROFILE
     [[ "$dest" == *"FIREFOX_PROFILE"* ]] && continue
 
+    # Skip Gemini (handled by specials)
+    [[ "$dest" == *"GEMINI_DIR"* ]] && continue
+
     # Skip if oh-my-zsh not installed (for caramel theme)
     [[ "$dest" == *".oh-my-zsh"* && ! -d "$HOME/.oh-my-zsh" ]] && continue
 
