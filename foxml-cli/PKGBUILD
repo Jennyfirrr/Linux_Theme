@@ -1,0 +1,27 @@
+# Maintainer: Caramel <caramel@example.com>
+pkgname=foxml-cli-git
+pkgver=r1.0.0
+pkgrel=1
+pkgdesc="High-performance C++ theming engine for FoxML Hub"
+arch=('x86_64')
+url="https://github.com/Jennyfirrr/Linux_Theme"
+license=('MIT')
+depends=('gcc-libs')
+makedepends=('cmake' 'git')
+provides=('foxml')
+conflicts=('foxml')
+source=("git+https://github.com/Jennyfirrr/Linux_Theme.git")
+md5sums=('SKIP')
+
+build() {
+  cd "$srcdir/Linux_Theme/foxml-cli"
+  mkdir -p build
+  cd build
+  cmake ..
+  make
+}
+
+package() {
+  cd "$srcdir/Linux_Theme/foxml-cli/build"
+  install -Dm755 foxml "$pkgdir/usr/bin/foxml"
+}

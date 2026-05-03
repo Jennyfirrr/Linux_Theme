@@ -1,0 +1,1 @@
+/usr/bin/c++ -Wl,--dependency-file=CMakeFiles/foxml.dir/link.d CMakeFiles/foxml.dir/src/main.cpp.o -o foxml
