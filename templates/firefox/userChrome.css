@@ -160,23 +160,23 @@ toolbarbutton.titlebar-button,
   border-radius: 0 !important;
 }
 
-.tabbrowser-tab[selected="true"],
-.tabbrowser-tab[selected="true"] .tab-stack,
-.tabbrowser-tab[selected="true"] .tab-background,
-.tabbrowser-tab[selected="true"] .tab-content {
+.tabbrowser-tab[selected="{{SHOW_WELCOME}}"],
+.tabbrowser-tab[selected="{{SHOW_WELCOME}}"] .tab-stack,
+.tabbrowser-tab[selected="{{SHOW_WELCOME}}"] .tab-background,
+.tabbrowser-tab[selected="{{SHOW_WELCOME}}"] .tab-content {
   background: var(--fox-bg-alt) !important;
   background-color: var(--fox-bg-alt) !important;
   color: var(--fox-pastel) !important;
 }
 
-.tabbrowser-tab[selected="true"] {
+.tabbrowser-tab[selected="{{SHOW_WELCOME}}"] {
   border-bottom: 2px solid var(--fox-peach) !important;
 }
 
-.tabbrowser-tab:hover:not([selected="true"]),
-.tabbrowser-tab:hover:not([selected="true"]) .tab-stack,
-.tabbrowser-tab:hover:not([selected="true"]) .tab-background,
-.tabbrowser-tab:hover:not([selected="true"]) .tab-content {
+.tabbrowser-tab:hover:not([selected="{{SHOW_WELCOME}}"]),
+.tabbrowser-tab:hover:not([selected="{{SHOW_WELCOME}}"]) .tab-stack,
+.tabbrowser-tab:hover:not([selected="{{SHOW_WELCOME}}"]) .tab-background,
+.tabbrowser-tab:hover:not([selected="{{SHOW_WELCOME}}"]) .tab-content {
   background: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.1) !important;
   background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.1) !important;
   color: var(--fox-pastel) !important;
@@ -378,7 +378,7 @@ menuitem:hover {
   color: var(--fox-peach) !important;
 }
 
-menuitem[disabled="true"] {
+menuitem[disabled="{{SHOW_WELCOME}}"] {
   color: var(--fox-dim) !important;
 }
 

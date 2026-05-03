@@ -24,7 +24,7 @@ function _caramel_welcome() {
   local ap=$(date '+%p' | tr '[:upper:]' '[:lower:]')
 
   echo ""
-  if [[ "{{SHOW_BANNER}}" == "true" ]]; then
+  if [[ "{{SHOW_WELCOME}}" == "{{SHOW_WELCOME}}" ]]; then
     echo -e "     ${c1}╱|、${O}\e[${rc}G${c1}█▀▀${O} ${c2}█▀█${O} ${c3}▀▄▀${O} ${c4}█▀▄▀█${O} ${c1}█${O}"
     echo -e "   ${c1}(${c3}˚${c1}ˎ ${c3}。${c1}7${O}      ${c1}${dow}${O}\e[${rc}G${c1}█▀ ${O} ${c2}█ █${O} ${c3} █ ${O} ${c4}█ ▀ █${O} ${c1}█${O}"
     echo -e "    ${c1}|、${c3}˜${c1}〵${O}      ${c2}${mon} ${dom}${O} ${DM}·${O} ${c4}${hr}:${min} ${ap}${O}\e[${rc}G${c1}▀  ${O} ${c2}▀▀▀${O} ${c3}▀ ▀${O} ${c4}▀   ▀${O} ${c1}▀▀▀${O}"
@@ -42,7 +42,7 @@ function _caramel_welcome() {
     theme_tag="  ${DM}▸ ${c3}${tname}${O}"
   fi
 
-  if [[ "{{SHOW_BANNER}}" == "true" ]]; then
+  if [[ "{{SHOW_WELCOME}}" == "{{SHOW_WELCOME}}" ]]; then
     echo -e "    ${c1}じし${c3}ˍ${c1},)ノ${O}${theme_tag}\e[${drc}G${dots}"
   else
     echo -e "    ${c1}じし${c3}ˍ${c1},)ノ${O}${theme_tag}"
@@ -89,4 +89,4 @@ todos() {
   [[ -s ~/.todo ]] && nl -ba ~/.todo || echo "nothing to do"
 }
 
-[[ "{{SHOW_WELCOME}}" == "true" ]] && _caramel_welcome
+[[ "{{SHOW_WELCOME}}" == "{{SHOW_WELCOME}}" ]] && _caramel_welcome

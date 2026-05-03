@@ -55,7 +55,7 @@ zstyle ':completion:*:descriptions' format '%F{{{ANSI_ACCENT1}}}── %d ──
 zstyle ':completion:*:warnings' format '%F{{{ANSI_ERROR}}}no matches%f'
 zstyle ':completion:*:default' list-prompt '%F{{{ANSI_ACCENT1}}}%l%f'
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' 'r:|[._-]=* r:|=*'
-zstyle ':completion:*' squeeze-slashes true
+zstyle ':completion:*' squeeze-slashes {{SHOW_WELCOME}}
 
 # ─── Colored man pages ───────────────────────
 export LESS_TERMCAP_mb=$'\e[1;38;5;{{ANSI_ACCENT3}}m'

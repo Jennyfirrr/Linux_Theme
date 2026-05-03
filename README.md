@@ -156,6 +156,7 @@ Every one of these gets its colors from the active theme's `palette.sh`:
 | Cursor/VS Code | `templates/cursor/` | `~/.cursor/extensions/foxml-theme/` |
 | Discord (Vencord) | `templates/vencord/foxml.css` | `~/.config/Vencord/themes/foxml.css` |
 | Bat | `templates/bat/foxml.tmTheme` | `~/.config/bat/themes/Fox ML.tmTheme` |
+| Gemini CLI | `templates/gemini/settings.json` | `~/.gemini/settings.json` (merged) |
 | ReGreet (login) | `templates/regreet/regreet.css` | `/etc/greetd/regreet.css` (via sudo) |
 
 ## Shared (Non-Color) Files

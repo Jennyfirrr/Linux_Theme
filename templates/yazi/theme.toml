@@ -10,15 +10,15 @@
 # pink:     #{{SECONDARY}}
 
 [manager]
-cwd = { fg = "#{{PRIMARY}}", bold = true }
+cwd = { fg = "#{{PRIMARY}}", bold = {{SHOW_WELCOME}} }
 
 # Hovered
-hovered         = { fg = "#{{BG}}", bg = "#{{PRIMARY}}", bold = true }
-preview_hovered = { underline = true }
+hovered         = { fg = "#{{BG}}", bg = "#{{PRIMARY}}", bold = {{SHOW_WELCOME}} }
+preview_hovered = { underline = {{SHOW_WELCOME}} }
 
 # Find
-find_keyword  = { fg = "#{{YELLOW}}", bold = true, italic = true, underline = true }
-find_position = { fg = "#{{ACCENT}}", bg = "reset", italic = true }
+find_keyword  = { fg = "#{{YELLOW}}", bold = {{SHOW_WELCOME}}, italic = {{SHOW_WELCOME}}, underline = {{SHOW_WELCOME}} }
+find_position = { fg = "#{{ACCENT}}", bg = "reset", italic = {{SHOW_WELCOME}} }
 
 # Marker
 marker_copied   = { fg = "#{{GREEN}}", bg = "#{{GREEN}}" }
@@ -27,7 +27,7 @@ marker_marked   = { fg = "#{{ACCENT}}", bg = "#{{ACCENT}}" }
 marker_selected = { fg = "#{{SECONDARY}}", bg = "#{{SECONDARY}}" }
 
 # Tab
-tab_active   = { fg = "#{{BG}}", bg = "#{{PRIMARY}}", bold = true }
+tab_active   = { fg = "#{{BG}}", bg = "#{{PRIMARY}}", bold = {{SHOW_WELCOME}} }
 tab_inactive = { fg = "#{{FG_DIM}}", bg = "#{{SURFACE}}" }
 tab_width    = 1
 
@@ -41,11 +41,11 @@ border_symbol = "│"
 border_style  = { fg = "#{{TMUX_ACTIVE_BG}}" }
 
 [mode]
-normal_main = { fg = "#{{BG}}", bg = "#{{PRIMARY}}", bold = true }
+normal_main = { fg = "#{{BG}}", bg = "#{{PRIMARY}}", bold = {{SHOW_WELCOME}} }
 normal_alt  = { fg = "#{{BG}}", bg = "#{{SECONDARY}}" }
-select_main = { fg = "#{{BG}}", bg = "#{{SECONDARY}}", bold = true }
+select_main = { fg = "#{{BG}}", bg = "#{{SECONDARY}}", bold = {{SHOW_WELCOME}} }
 select_alt  = { fg = "#{{BG}}", bg = "#{{ACCENT}}" }
-unset_main  = { fg = "#{{BG}}", bg = "#{{ACCENT}}", bold = true }
+unset_main  = { fg = "#{{BG}}", bg = "#{{ACCENT}}", bold = {{SHOW_WELCOME}} }
 unset_alt   = { fg = "#{{BG}}", bg = "#{{SURFACE}}" }
 
 [status]
@@ -54,7 +54,7 @@ sep_left  = { open = "", close = "" }
 sep_right = { open = "", close = "" }
 
 # Progress
-progress_label  = { fg = "#{{FG_PASTEL}}", bold = true }
+progress_label  = { fg = "#{{FG_PASTEL}}", bold = {{SHOW_WELCOME}} }
 progress_normal = { fg = "#{{PRIMARY}}", bg = "#{{SURFACE}}" }
 progress_error  = { fg = "#{{RED}}", bg = "#{{SURFACE}}" }
 
@@ -69,16 +69,16 @@ perm_sep  = { fg = "#{{FG_DIM}}" }
 border   = { fg = "#{{PRIMARY}}" }
 title    = {}
 value    = {}
-selected = { reversed = true }
+selected = { reversed = {{SHOW_WELCOME}} }
 
 [pick]
 border   = { fg = "#{{PRIMARY}}" }
-active   = { fg = "#{{SECONDARY}}", bold = true }
+active   = { fg = "#{{SECONDARY}}", bold = {{SHOW_WELCOME}} }
 inactive = {}
 
 [confirm]
 border     = { fg = "#{{PRIMARY}}" }
-title      = { fg = "#{{PRIMARY}}", bold = true }
+title      = { fg = "#{{PRIMARY}}", bold = {{SHOW_WELCOME}} }
 content    = {}
 list       = {}
 btn_yes    = { bg = "#{{PRIMARY}}", fg = "#{{BG}}" }
@@ -87,11 +87,11 @@ btn_labels = [ "  Yes  ", "  No  " ]
 
 [spot]
 border = { fg = "#{{PRIMARY}}" }
-title  = { fg = "#{{PRIMARY}}", bold = true }
+title  = { fg = "#{{PRIMARY}}", bold = {{SHOW_WELCOME}} }
 
 [completion]
 border   = { fg = "#{{PRIMARY}}" }
-active   = { fg = "#{{SECONDARY}}", bold = true }
+active   = { fg = "#{{SECONDARY}}", bold = {{SHOW_WELCOME}} }
 inactive = {}
 icon_file    = ""
 icon_folder  = ""
@@ -100,7 +100,7 @@ icon_command = ""
 [tasks]
 border  = { fg = "#{{PRIMARY}}" }
 title   = {}
-hovered = { fg = "#{{SECONDARY}}", underline = true }
+hovered = { fg = "#{{SECONDARY}}", underline = {{SHOW_WELCOME}} }
 
 [which]
 cols            = 3
@@ -115,7 +115,7 @@ separator_style = { fg = "#{{SURFACE}}" }
 on      = { fg = "#{{ACCENT}}" }
 run     = { fg = "#{{SECONDARY}}" }
 desc    = {}
-hovered = { reversed = true, bold = true }
+hovered = { reversed = {{SHOW_WELCOME}}, bold = {{SHOW_WELCOME}} }
 footer  = { fg = "#{{FG_DIM}}", bg = "#{{BG}}" }
 
 [notify]
@@ -129,8 +129,8 @@ icon_error = ""
 [filetype]
 rules = [
     # Symlinks
-    { is = "link", fg = "#{{CYAN}}", italic = true },
-    { is = "orphan", fg = "#{{RED}}", italic = true },
+    { is = "link", fg = "#{{CYAN}}", italic = {{SHOW_WELCOME}} },
+    { is = "orphan", fg = "#{{RED}}", italic = {{SHOW_WELCOME}} },
 
     # Executables
     { is = "exec", fg = "#{{GREEN_BRIGHT}}" },
@@ -150,7 +150,7 @@ rules = [
     { mime = "application/vnd.*", fg = "#{{BLUE}}" },
 
     # Directories — bold peach like neo-tree
-    { url = "*/", fg = "#{{PRIMARY}}", bold = true },
+    { url = "*/", fg = "#{{PRIMARY}}", bold = {{SHOW_WELCOME}} },
 
     # Fallback — peach to match tmux/statusbar
     { url = "*", fg = "#{{PRIMARY}}" },

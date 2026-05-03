@@ -1,0 +1,42 @@
+{
+  "ui": {
+    "theme": "FoxML",
+    "customThemes": {
+      "FoxML": {
+        "name": "FoxML",
+        "type": "custom",
+        "background": {
+          "primary": "#{{BG}}",
+          "diff": {
+            "added": "#{{DIFF_ADD}}",
+            "removed": "#{{DIFF_DELETE}}"
+          }
+        },
+        "text": {
+          "primary": "#{{FG}}",
+          "secondary": "#{{YELLOW}}",
+          "link": "#{{BLUE}}",
+          "accent": "#{{PRIMARY}}",
+          "response": "#{{FG}}"
+        },
+        "border": {
+          "default": "#{{SURFACE}}",
+          "focused": "#{{PRIMARY}}"
+        },
+        "status": {
+          "success": "#{{GREEN_BRIGHT}}",
+          "warning": "#{{YELLOW}}",
+          "error": "#{{RED}}"
+        },
+        "ui": {
+          "comment": "#{{COMMENT}}",
+          "symbol": "#{{PRIMARY}}",
+          "gradient": [
+            "#{{YELLOW}}",
+            "#{{PRIMARY}}"
+          ]
+        }
+      }
+    }
+  }
+}

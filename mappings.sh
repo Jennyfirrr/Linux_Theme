@@ -72,6 +72,7 @@ TEMPLATE_MAPPINGS=(
     "bat/foxml.tmTheme|~/.config/bat/themes/Fox ML.tmTheme"
 
     # Git (delta pager — included from ~/.gitconfig, doesn't touch user identity)
+
     "git/delta.gitconfig|~/.config/git/delta-foxml.gitconfig"
 
     # Cursor/VS Code
@@ -202,6 +203,26 @@ PKGJSON
     if command -v bat &>/dev/null; then
         bat cache --build &>/dev/null
         echo "  ✓ Bat cache rebuilt"
+    fi
+
+    # Gemini CLI theme merge
+    local gemini_settings="$HOME/.gemini/settings.json"
+    if [[ -f "$rendered_dir/gemini/settings.json" ]]; then
+        if [[ -f "$gemini_settings" ]]; then
+            # Merge UI settings into existing config
+            local tmp_settings; tmp_settings="$(mktemp)"
+            if jq -s '.[0] * .[1]' "$gemini_settings" "$rendered_dir/gemini/settings.json" > "$tmp_settings" 2>/dev/null; then
+                mv "$tmp_settings" "$gemini_settings"
+                echo "  ✓ Gemini theme merged"
+            else
+                rm -f "$tmp_settings"
+                echo "  ⚠ Gemini merge failed, skipping"
+            fi
+        else
+            mkdir -p "$(dirname "$gemini_settings")"
+            cp "$rendered_dir/gemini/settings.json" "$gemini_settings"
+            echo "  ✓ Gemini theme installed"
+        fi
     fi
 
     # ~/.local/bin helpers (tmux pane-label, etc.) — referenced by configs but
@@ -558,6 +579,18 @@ update_specials() {
             [[ -f "$spice_dir/$f" ]] && sed "$sed_expr" "$spice_dir/$f" > "$template_dir/spicetify/$f"
         done
         echo "  ✓ Spicetify"
+    fi
+
+    # Gemini CLI (pull only UI section)
+    local gemini_settings="$HOME/.gemini/settings.json"
+    if [[ -f "$gemini_settings" ]]; then
+        local tmp_ui; tmp_ui="$(mktemp)"
+        # Extract only the ui part to avoid pulling security settings into templates
+        if jq '{ui: .ui}' "$gemini_settings" > "$tmp_ui" 2>/dev/null; then
+            sed "$sed_expr" "$tmp_ui" > "$template_dir/gemini/settings.json"
+            echo "  ✓ Gemini theme"
+        fi
+        rm -f "$tmp_ui"
     fi
 
     # Hyprland scripts

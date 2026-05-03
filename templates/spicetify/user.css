@@ -93,7 +93,7 @@ button[data-testid="play-button"]:hover {
 
 /* Active control buttons */
 .control-button--active,
-button[aria-checked="true"] {
+button[aria-checked="{{SHOW_WELCOME}}"] {
     color: var(--fox-peach) !important;
 }
 
@@ -192,8 +192,8 @@ a:hover {
 }
 
 /* Liked/heart icon when active */
-button[aria-checked="true"] svg,
-.main-addButton-button[aria-checked="true"] svg {
+button[aria-checked="{{SHOW_WELCOME}}"] svg,
+.main-addButton-button[aria-checked="{{SHOW_WELCOME}}"] svg {
     fill: var(--fox-peach) !important;
 }
 

@@ -154,7 +154,7 @@ window#waybar > box {
 #custom-cpu.warning,
 #memory.warning,
 #custom-disk.warning {
-    color: #{{WARN}};
+    color: #{{YELLOW}};
 }
 
 #custom-cpu.critical,
@@ -200,7 +200,7 @@ window#waybar > box {
 }
 
 #battery.warning:not(.charging) {
-    color: #{{WARN}};
+    color: #{{YELLOW}};
 }
 
 #battery.critical:not(.charging) {

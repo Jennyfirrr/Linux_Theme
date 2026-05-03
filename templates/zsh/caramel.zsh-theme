@@ -1,7 +1,7 @@
 # ╭──────────────────────────────────────────────╮
 # │          Fox ML — caramel zsh theme          │
 # ╰──────────────────────────────────────────────╯
-# Palette: peach({{ANSI_PROMPT}}) pink({{ANSI_ACCENT1}},{{GRAD1}}) mauve({{GRAD2}}) lavender({{ANSI_PROMPT2}},141)
+# Palette: peach({{ANSI_ACCENT1}}) pink({{ANSI_ACCENT1}},{{ANSI_ACCENT1}}) mauve({{ANSI_ACCENT2}}) lavender({{ANSI_ACCENT5}},141)
 
 # ─── Config ──────────────────────────────────────
 CARAMEL_CMD_THRESHOLD=${CARAMEL_CMD_THRESHOLD:-3}

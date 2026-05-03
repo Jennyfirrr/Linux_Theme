@@ -4,6 +4,17 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-04-30 — v1.1.1
+
+Patch on top of v1.1.0 swapping the night-slot wallpaper to a darker option and adding multi-pick support.
+
+### Wallpaper — Darker Night Slot, Random Pick
+- Replaced `foxml_night_woods.jpg` (autumn dusk, not actually dark) with two darker 4K candidates: `foxml_night_dim_woods.jpg` (overcast bare woods, leaf-litter path) and `foxml_night_ruins.jpg` (overcast woods with stone ruins). Both from wallhaven, pure earthy palette — no cool blue, no sunbursts.
+- `rotate_wallpaper.sh` now accepts a comma-separated filename list per slot. When the list has more than one entry, the script picks one at random on slot transition. Bucket-mode invocations stay idempotent if `.current` is any file in the slot's list, so the timer doesn't re-roll on every fire — randomness only applies on slot crossings.
+- `--cycle` (ALT+W) prefers a different file from the target slot's list when possible, so manual cycling visibly changes the image even within a multi-file slot.
+
+---
+
 ## 2026-04-30 — v1.1.0
 
 Major update to the wallpaper system, moving from random rotation to time-of-day "buckets" that match the solar cycle.
