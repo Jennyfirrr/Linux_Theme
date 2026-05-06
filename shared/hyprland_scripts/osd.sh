@@ -1,0 +1,49 @@
+#!/bin/bash
+
+# Themed OSD popups for Volume and Brightness
+# Uses notify-send with progress bar hints (supported by mako/dunst)
+
+TYPE=$1 # "volume" or "brightness"
+CHANGE=$2 # "up" or "down" or "mute"
+
+case "$TYPE" in
+    volume)
+        if [[ "$CHANGE" == "mute" ]]; then
+            wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
+        elif [[ "$CHANGE" == "up" ]]; then
+            wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+ --limit 1.5
+        else
+            wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-
+        fi
+        
+        # Get volume and mute status
+        RAW=$(wpctl get-volume @DEFAULT_AUDIO_SINK@)
+        VOL=$(echo "$RAW" | awk '{print int($2*100)}')
+        MUTE=$(echo "$RAW" | grep -q "MUTED" && echo "yes" || echo "no")
+        
+        ICON="󰕾"
+        [[ "$MUTE" == "yes" ]] && ICON="󰝟"
+        
+        notify-send -h string:x-canonical-private-synchronous:volume \
+                    -h int:value:"$VOL" \
+                    -i audio-volume-high \
+                    "$ICON  Volume: $VOL%" \
+                    --transient
+        ;;
+        
+    brightness)
+        if [[ "$CHANGE" == "up" ]]; then
+            brightnessctl set 5%+
+        else
+            brightnessctl set 5%-
+        fi
+        
+        VAL=$(brightnessctl -m | cut -d, -f4 | tr -d '%')
+        
+        notify-send -h string:x-canonical-private-synchronous:brightness \
+                    -h int:value:"$VAL" \
+                    -i display-brightness \
+                    "󰃟  Brightness: $VAL%" \
+                    --transient
+        ;;
+esac

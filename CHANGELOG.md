@@ -4,6 +4,21 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-06 — v1.3.4
+
+Introduced a suite of themed Quality of Life (QL) upgrades for a smoother desktop experience.
+
+### Hyprland — Clipboard & Power Management
+- **Clipboard History**: Integrated `cliphist`. Press **`ALT + V`** to see a searchable Rofi menu of your recent copies (text and images).
+- **Power Menu**: Added a themed Rofi power menu. Press **`ALT + Shift + X`** for Shutdown, Reboot, Suspend, Lock, and Logout options.
+- **Themed OSD**: Created a new On-Screen Display (OSD) system for Volume and Brightness. Changes now trigger a transient, themed notification with a progress bar that matches the FoxML palette.
+
+### System — Lock Screen Sync
+- **Hyprlock Sync**: Replaced legacy `swaylock` references with `hyprlock`. The lock screen now perfectly matches your active theme's colors, wallpaper, and blur settings.
+- **Autostart**: Added clipboard background services to the autostart sequence.
+
+---
+
 ## 2026-05-06 — v1.3.3
 
 Cleaned up dependencies and removed broken components to ensure a reliable out-of-the-box experience.

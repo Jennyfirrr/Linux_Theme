@@ -135,7 +135,7 @@ if $INSTALL_DEPS; then
         cmake
         # Shell + tooling
         base-devel zsh fzf eza bat yazi btop fd zoxide jq git-delta github-cli pacman-contrib
-        lazygit ncspot
+        lazygit ncspot cliphist
         # unzip is needed by install_catppuccin_cursor (extracts the release zip)
         unzip
         # Screenshots + clipboard + media keys
