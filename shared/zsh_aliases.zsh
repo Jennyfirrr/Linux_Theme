@@ -102,3 +102,6 @@ fox-clean() {
     
     echo -e "\n✨ Cleanup complete! Stay earthy."
 }
+
+# Fingerprint setup helper
+alias fox-fingerprint='~/.config/hypr/scripts/fingerprint_setup.sh'

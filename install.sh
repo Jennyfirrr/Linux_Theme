@@ -234,10 +234,8 @@ if $INSTALL_DEPS; then
         echo "╭──────────────────────────────────────────────────────────────────╮"
         echo "│ 󰆐  Hardware Detected: Fingerprint Reader                        │"
         echo "├──────────────────────────────────────────────────────────────────┤"
-        echo "│ To enable for sudo/Git:                                          │"
-        echo "│   1. Enroll: fprintd-enroll                                      │"
-        echo "│   2. Enable: sudo nvim /etc/pam.d/system-local-login             │"
-        echo "│   3. Add to top: auth sufficient pam_fprintd.so                  │"
+        echo "│ To automate your biometric setup (Sudo, Login, Git):             │"
+        echo "│   Run: fox-fingerprint                                           │"
         echo "╰──────────────────────────────────────────────────────────────────╯"
     fi
 

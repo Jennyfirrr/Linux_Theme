@@ -4,6 +4,17 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-06 — v1.4.0
+
+Complete biometric automation for the FoxML environment.
+
+### Hardware — FoxML Fingerprint
+- **`fox-fingerprint`**: New automated setup utility. One command to enroll fingerprints, configure PAM for `sudo`, `login`, and `greetd`, and integrate SSH Keyring auto-unlocking.
+- **Biometric Sudo**: Optimized the authentication flow so `sudo` commands can be authorized with a touch, while maintaining a password fallback.
+- **SSH Automation**: Integrated GNOME Keyring with Zsh to automatically manage SSH passphrases, allowing biometrics to unlock your Git workflow.
+
+---
+
 ## 2026-05-06 — v1.3.9
 
 Integrated hardware support for the Lenovo P15's fingerprint reader.
