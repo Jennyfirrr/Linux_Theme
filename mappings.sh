@@ -126,6 +126,7 @@ SHARED_MAPPINGS=(
     "waybar_scripts/cpu.sh|~/.config/waybar/scripts/cpu.sh"
     "waybar_scripts/gpu.sh|~/.config/waybar/scripts/gpu.sh"
     "waybar_scripts/disk.sh|~/.config/waybar/scripts/disk.sh"
+    "waybar_scripts/spotify.sh|~/.config/waybar/scripts/spotify.sh"
     "waybar_scripts/updates.sh|~/.config/waybar/scripts/updates.sh"
     "waybar_scripts/ppd_cycle.sh|~/.config/waybar/scripts/ppd_cycle.sh"
 

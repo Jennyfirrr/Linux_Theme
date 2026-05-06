@@ -217,6 +217,20 @@ window#waybar > box {
     text-shadow: 0 0 10px rgba(212,152,90, 0.5);
 }
 
+#custom-spotify {
+    background-color: rgba(212,152,90, 0.1);
+    border: 1px solid rgba(212,152,90, 0.3);
+    color: @peach;
+    margin-right: 20px;
+    margin-left: 20px;
+}
+
+#custom-spotify.playing {
+    border-color: @lavender;
+    color: @lavender;
+    text-shadow: 0 0 8px rgba(138,154,122, 0.4);
+}
+
 #custom-logo:hover {
     background-color: rgba(212,152,90, 0.2);
     text-shadow: 0 0 14px rgba(212,152,90, 0.7);
