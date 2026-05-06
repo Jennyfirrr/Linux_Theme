@@ -226,17 +226,6 @@ if $INSTALL_DEPS; then
             && echo "  ✓ bluetooth service enabled"
     fi
 
-    # Fingerprint reader detection
-    if lsusb | grep -qi "fingerprint"; then
-        echo ""
-        echo "╭──────────────────────────────────────────────────────────────────╮"
-        echo "│ 󰆐  Hardware Detected: Fingerprint Reader                        │"
-        echo "├──────────────────────────────────────────────────────────────────┤"
-        echo "│ To automate your biometric setup (Sudo, Login, Git):             │"
-        echo "│   Run: fox-fingerprint                                           │"
-        echo "╰──────────────────────────────────────────────────────────────────╯"
-    fi
-
     # AUR Helper (yay) and Spotify/Spicetify
     AUR_HELPER=""
     command -v yay &>/dev/null && AUR_HELPER="yay"
@@ -483,10 +472,20 @@ echo "Post-install steps:"
 echo "  1. Reload Hyprland: hyprctl reload"
 echo "  2. Restart Waybar/Dunst: ~/.config/hypr/scripts/start_waybar.sh & pkill dunst && dunst &"
 echo "  3. Open nvim and run :Lazy sync"
-echo "  4. Apply Spicetify: spicetify apply (installer handles initial backup/apply)"
-echo "  5. Restart Firefox (enable userChrome in about:config)"
-echo "  6. Select 'Fox ML' theme in Cursor/VS Code"
+echo "  4. Restart Firefox (enable userChrome in about:config)"
+echo "  5. Select 'Fox ML' theme in Cursor/VS Code"
 if $INSTALL_NVIDIA; then
-    echo "  7. Reboot to load the nvidia kernel module"
+    echo "  6. Reboot to load the nvidia kernel module"
 fi
 echo ""
+
+# Fingerprint reader detection (Moved to bottom)
+if lsusb | grep -qi "fingerprint"; then
+    echo "╭──────────────────────────────────────────────────────────────────╮"
+    echo "│ 󰆐  Hardware Detected: Fingerprint Reader                        │"
+    echo "├──────────────────────────────────────────────────────────────────┤"
+    echo "│ To automate your biometric setup (Sudo, Login, Git):             │"
+    echo "│   Run: fox-fingerprint                                           │"
+    echo "╰──────────────────────────────────────────────────────────────────╯"
+    echo ""
+fi

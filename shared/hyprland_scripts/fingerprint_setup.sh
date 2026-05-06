@@ -21,7 +21,7 @@ fi
 # 2. Enrollment
 echo -e "\n${PEACH}[1/3] Enrolling your fingerprint...${NC}"
 echo "Please tap your right index finger on the reader when the light blinks."
-fprintd-enroll $USER
+sudo fprintd-enroll $USER
 
 # 3. PAM Configuration
 echo -e "\n${PEACH}[2/3] Configuring PAM (System Authentication)...${NC}"
