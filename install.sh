@@ -137,7 +137,7 @@ if $INSTALL_DEPS; then
         # unzip is needed by install_catppuccin_cursor (extracts the release zip)
         unzip
         # Screenshots + clipboard + media keys
-        grim slurp wl-clipboard playerctl brightnessctl pavucontrol wlsunset swappy
+        grim slurp wl-clipboard playerctl brightnessctl pavucontrol wlsunset satty
         # Bluetooth
         bluez bluez-utils blueman
         # Fingerprint support

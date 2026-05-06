@@ -18,6 +18,10 @@ Major suite of Workflow and Creative upgrades. This release transitions FoxML fr
 - **Fast Switching**: Themed **`ALT + Tab`** window switcher and rapid workspace cycling (**`ALT + , / .`**).
 - **Audio Switcher**: Dedicated Rofi menu for device switching.
 
+### Creative — Design & Annotation
+- **Color Picker**: Integrated `hyprpicker`. Press **`ALT + Shift + P`** to click any pixel on screen and instantly copy its Hex code to your clipboard.
+- **Pro Screenshots**: Upgraded the screenshot utility with `satty`. Region screenshots now open a modern GUI editor for instant arrows, text, and blurring. Includes a functional "Trash" button to instantly discard unwanted captures.
+
 ### Documentation & UX
 - **Keybind Overhaul**: Full refresh of `KEYBINDS.md` covering all new desktop-wide features.
 - **Aesthetic Refinement**: Perfected Frosted Glass transparency and Waybar alignment.
