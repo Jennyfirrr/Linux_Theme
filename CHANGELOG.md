@@ -4,6 +4,20 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-06 — v1.3.2
+
+Refined the Spotify experience for performance and aesthetics. Gated heavy dependencies for better thermals and upgraded the theme to a modern glass look.
+
+### Installer — Thermal Management
+- **Gated Spotify**: Spotify and Spicetify are now moved to an optional `--spotify` flag. `./install.sh --deps` no longer installs these heavy apps by default, protecting system thermals on low-spec hardware.
+
+### Spotify — Glassmorphism & UX
+- **Theme Upgrade**: Rewrote the Spicetify `user.css` with a "Glassmorphism" aesthetic. Includes `16px` backdrop blur, 70% transparency, and sage (lavender) accents for a more balanced, premium feel.
+- **Scratchpad Fix**: Improved `toggle_spotify.sh` to handle "ghost" processes. It now detects if Spotify is running in the tray without a window and restarts it automatically when the keybind (**ALT + Shift + S**) is pressed.
+- **Waybar Interaction**: The new Waybar module now supports scrolling to skip tracks and right-clicking to toggle the scratchpad.
+
+---
+
 ## 2026-05-06 — v1.3.1
 
 Automated the remaining manual steps for Spotify and Bluetooth support. This release makes the installation process truly "one-command" for users needing music and wireless audio.
