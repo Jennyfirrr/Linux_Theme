@@ -1,19 +1,21 @@
-/* Fox ML Theme for Spicetify
+/* Fox ML Theme for Spicetify - Glassmorphism Edition
    Background matches tmux active pane: #{{BG}}
-   Accents: peach #{{PRIMARY}}
+   Accents: peach #{{PRIMARY}}, sage #{{ACCENT}}
 */
 
 :root {
     --font-family: '{{FONT_FAMILY}}', monospace;
-    --fox-bg: #{{BG}};
-    --fox-card: #{{BG_ALT}};
+    --fox-bg: rgba({{BG_R}},{{BG_G}},{{BG_B}}, 0.7);
+    --fox-bg-deep: rgba({{BG_R}},{{BG_G}},{{BG_B}}, 0.85);
+    --fox-card: rgba({{SURFACE_R}},{{SURFACE_G}},{{SURFACE_B}}, 0.3);
+    --fox-card-hover: rgba({{SURFACE_R}},{{SURFACE_G}},{{SURFACE_B}}, 0.5);
     --fox-peach: #{{PRIMARY}};
-    --fox-pink: #{{SECONDARY}};
+    --fox-sage: #{{ACCENT}};
     --fox-fg: #{{FG}};
     --fox-dim: #{{FG_DIM}};
 }
 
-/* Base background - 80% transparency */
+/* Glass background with backdrop blur */
 html, body {
     background: transparent !important;
 }
@@ -22,18 +24,18 @@ body::before {
     content: '';
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba({{BG_R}},{{BG_G}},{{BG_B}}, 0.8);
+    background: var(--fox-bg);
+    backdrop-filter: blur(16px);
     z-index: -1;
     pointer-events: none;
 }
 
-/* All main containers */
+/* All main containers - transparent to show the blur */
 .Root,
 .Root__main-view,
 .main-view-container,
 .main-view-container__scroll-node,
 .main-view-container__scroll-node-child,
-.main-nowPlayingBar-container,
 .main-navBar-navBar,
 .Root__nav-bar,
 .main-yourLibraryX-libraryContainer {
@@ -41,11 +43,12 @@ body::before {
     background-color: transparent !important;
 }
 
-/* Now playing bar */
+/* Now playing bar - slightly deeper glass */
 .main-nowPlayingBar-container,
 footer {
-    background: rgba({{BG_R}},{{BG_G}},{{BG_B}}, 0.85) !important;
-    border-top: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.4) !important;
+    background: var(--fox-bg-deep) !important;
+    border-top: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.2) !important;
+    backdrop-filter: blur(10px);
 }
 
 /* Top bar */
@@ -53,15 +56,16 @@ footer {
     background: transparent !important;
 }
 
-/* Cards and panels */
-.main-card-card,
-.main-cardImage-imageWrapper,
-.x-entityImage-imageWrapper {
+/* Cards and panels - subtle frosted look */
+.main-card-card {
     background: var(--fox-card) !important;
+    border: 1px solid rgba(255,255,255, 0.05) !important;
+    transition: background 0.2s ease, transform 0.2s ease !important;
 }
 
 .main-card-card:hover {
-    background: #{{CARD_HOVER}} !important;
+    background: var(--fox-card-hover) !important;
+    transform: translateY(-4px);
 }
 
 /* Play buttons - PEACH */
@@ -70,131 +74,25 @@ button[data-testid="play-button"],
 .player-controls__buttons button,
 .main-playPauseButton-button {
     background-color: var(--fox-peach) !important;
-    color: var(--fox-bg) !important;
+    color: #{{BG}} !important;
+    box-shadow: 0 4px 12px rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.3);
 }
 
-.main-playButton-PlayButton:hover,
-button[data-testid="play-button"]:hover {
-    background-color: var(--fox-peach) !important;
-    filter: brightness(1.1);
-    transform: scale(1.04);
-}
-
-/* Control buttons (shuffle, repeat, skip) */
-.player-controls button,
-.control-button {
-    color: var(--fox-fg) !important;
-}
-
-.player-controls button:hover,
-.control-button:hover {
-    color: var(--fox-peach) !important;
-}
-
-/* Active control buttons */
-.control-button--active,
-button[aria-checked="true"] {
-    color: var(--fox-peach) !important;
-}
-
-/* Search input */
-.x-searchInput-searchInputInput,
-input[type="text"],
-input[type="search"] {
-    background: var(--fox-card) !important;
-    border: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.3) !important;
-    color: var(--fox-fg) !important;
-    font-family: var(--font-family) !important;
-}
-
-.x-searchInput-searchInputInput:focus,
-input[type="text"]:focus,
-input[type="search"]:focus {
-    border-color: var(--fox-peach) !important;
+/* Progress bar - SAGE (Balanced look) */
+.x-progressBar-fillColor,
+.playback-bar .x-progressBar-fillColor {
+    background: var(--fox-sage) !important;
 }
 
 /* Track list rows */
 .main-trackList-trackListRow:hover {
-    background: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.1) !important;
-}
-
-.main-trackList-trackListRow.main-trackList-selected {
-    background: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.15) !important;
-}
-
-/* Text colors */
-.main-type-mesto,
-.main-type-minuet,
-a {
-    color: var(--fox-fg) !important;
-}
-
-.main-type-mesto:hover,
-a:hover {
-    color: var(--fox-peach) !important;
-}
-
-/* Progress bar - peach */
-.x-progressBar-progressBarBg {
-    background: var(--fox-card) !important;
-}
-
-.x-progressBar-fillColor,
-.playback-bar .x-progressBar-fillColor {
-    background: var(--fox-peach) !important;
-}
-
-/* Volume bar */
-.x-progressBar-sliderArea .x-progressBar-fillColor {
-    background: var(--fox-peach) !important;
-}
-
-/* Scrollbar */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: var(--fox-bg);
-}
-
-::-webkit-scrollbar-thumb {
-    background: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.4);
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},{{KITTY_BG_OPACITY}});
-}
-
-/* Context menus and dropdowns */
-.main-contextMenu-menu,
-.Dropdown-menu {
-    background: var(--fox-bg) !important;
-    border: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.4) !important;
-}
-
-.main-contextMenu-menuItem:hover,
-.Dropdown-menuItem:hover {
-    background: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.15) !important;
-}
-
-/* Active/playing indicator */
-.main-trackList-playingIcon,
-.main-trackList-rowPlayPauseButton[aria-label="Pause"] {
-    color: var(--fox-peach) !important;
+    background: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.08) !important;
 }
 
 /* Navigation active state */
 .main-navBar-navBarLinkActive {
-    background: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.15) !important;
+    background: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.12) !important;
     border-left: 3px solid var(--fox-peach) !important;
-}
-
-/* Liked/heart icon when active */
-button[aria-checked="true"] svg,
-.main-addButton-button[aria-checked="true"] svg {
-    fill: var(--fox-peach) !important;
 }
 
 /* Remove all border radius - crisp edges */
@@ -202,9 +100,4 @@ button[aria-checked="true"] svg,
 *::before,
 *::after {
     border-radius: 0 !important;
-}
-
-/* Fonts */
-* {
-    font-family: var(--font-family) !important;
 }
