@@ -1906,12 +1906,6 @@ map("n", "<C-j>", "<C-w>j", { desc = "Focus below split" })
 map("n", "<C-k>", "<C-w>k", { desc = "Focus above split" })
 map("n", "<C-l>", "<C-w>l", { desc = "Focus right split" })
 
--- Navigate splits with Alt+hjkl (Seamless system-wide navigation)
-map("n", "<A-h>", "<C-w>h", { desc = "Focus left split" })
-map("n", "<A-j>", "<C-w>j", { desc = "Focus below split" })
-map("n", "<A-k>", "<C-w>k", { desc = "Focus above split" })
-map("n", "<A-l>", "<C-w>l", { desc = "Focus right split" })
-
 -- Quick close window
 map("n", "<leader>q", function()
   local wins = vim.iter(vim.api.nvim_tabpage_list_wins(0)):filter(function(w)
