@@ -137,7 +137,7 @@ if $INSTALL_DEPS; then
         # unzip is needed by install_catppuccin_cursor (extracts the release zip)
         unzip
         # Screenshots + clipboard + media keys
-        grim slurp wl-clipboard playerctl brightnessctl pavucontrol wlsunset
+        grim slurp wl-clipboard playerctl brightnessctl pavucontrol wlsunset swappy
         # Bluetooth
         bluez bluez-utils blueman
         # Fingerprint support
@@ -147,6 +147,8 @@ if $INSTALL_DEPS; then
         firefox zathura zathura-pdf-mupdf xdg-utils thunar steam
         # Runtime libs often needed by proprietary/AUR packages
         libutf8proc xsimd
+        # Tools
+        hyprpicker
         # Power profile switcher (waybar power-profiles-daemon module);
         # python-gobject is the optional dep that makes `powerprofilesctl` work
         # for click-to-switch handlers

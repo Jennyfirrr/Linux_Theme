@@ -4,6 +4,21 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-06 — v1.5.0
+
+Major suite of Workflow and Creative upgrades. Unified window management and creative tooling.
+
+### Workflow — Fast Switching & Audio
+- **App Switcher**: Map **`ALT + Tab`** to a themed Rofi window switcher. Instantly jump between open windows with a visual search.
+- **Audio Switcher**: New Rofi-based device selector (**`ALT + Shift + A`**). Quickly toggle between laptop speakers and Bluetooth headphones without opening a settings panel.
+- **FoxML Hub v2**: Expanded the central hub to include one-click access to the Audio Switcher and Color Picker.
+
+### Creative — Design & Annotation
+- **Color Picker**: Integrated `hyprpicker`. Press **`ALT + Shift + P`** to click any pixel on screen and instantly copy its Hex code to your clipboard.
+- **Pro Screenshots**: Upgraded the screenshot utility with `swappy`. Region screenshots now open a GUI editor for instant arrows, text, and blurring before saving.
+
+---
+
 ## 2026-05-06 — v1.4.2
 
 Aesthetic refinement and hardware-software synchronization. Fixed transparency issues and improved bar alignment.
