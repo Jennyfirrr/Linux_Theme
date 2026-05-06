@@ -41,43 +41,54 @@ effective_width() {
         (( s100 < 1 )) && s100=100
         echo $(( w * 100 / s100 ))
     else
-        # Fallback: parse text output. `Monitor … 3840x2160@…, scale: 2.0`
-        local w s
-        w=$(printf '%s' "$out" | awk '/^\s*[0-9]+x[0-9]+@/ { split($1,a,"x"); print a[1]; exit }')
-        s=$(printf '%s' "$out" | awk -F': ' '/scale:/ { print $2; exit }')
-        [[ -z "$w" ]] && { echo 1920; return; }
-        [[ -z "$s" ]] && s=1
-        local s100
-        s100=$(awk -v s="$s" 'BEGIN{ printf "%d", s*100 }')
-        (( s100 < 1 )) && s100=100
-        echo $(( w * 100 / s100 ))
+        echo 1920
+    fi
+}
+
+# Fetch gaps_out from Hyprland to align bar perfectly with windows.
+# Default to 12 if not found or if hyprctl fails.
+get_gaps() {
+    if ! command -v hyprctl >/dev/null 2>&1; then
+        echo 12; return
+    fi
+    local gaps
+    gaps=$(hyprctl getoption general:gaps_out -j 2>/dev/null | jq -r '.custom' | awk '{print $1}')
+    if [[ -z "$gaps" || "$gaps" == "null" ]]; then
+        echo 12
+    else
+        echo "$gaps"
     fi
 }
 
 EW=$(effective_width)
+GAPS=$(get_gaps)
 
 # Pick a profile. Each profile defines the size tokens used by both the CSS
 # and the JSON config — keep token names in sync with templates/waybar/style.css
 # and shared/waybar_config.
 if   (( EW <= 1920 )); then
     PROFILE="1080p"
-    FONT_BASE="9.5"; FONT_LOGO="11";   FONT_STATS="8.5"
+    FONT_BASE="10"; FONT_LOGO="12";   FONT_STATS="9"
     PAD_WIN="3px 8px"; PAD_MOD="2px 10px"; MARGIN_MOD="1px 4px"
-    HEIGHT="32"; MARGIN_BAR="6 6 0 6"; TRAY_ICON="14"
+    HEIGHT="34"; TRAY_ICON="14"
     CURSOR_SIZE="24"
 elif (( EW <= 2560 )); then
     PROFILE="1440p"
-    FONT_BASE="11";  FONT_LOGO="13";   FONT_STATS="10"
+    FONT_BASE="11.5";  FONT_LOGO="14";   FONT_STATS="10.5"
     PAD_WIN="4px 9px"; PAD_MOD="3px 12px"; MARGIN_MOD="2px 5px"
-    HEIGHT="40"; MARGIN_BAR="8 8 0 8"; TRAY_ICON="15"
+    HEIGHT="42"; TRAY_ICON="15"
     CURSOR_SIZE="28"
 else
     PROFILE="4K"
-    FONT_BASE="12.5"; FONT_LOGO="14";  FONT_STATS="11"
+    FONT_BASE="13"; FONT_LOGO="16";  FONT_STATS="12"
     PAD_WIN="4px 10px"; PAD_MOD="4px 14px"; MARGIN_MOD="2px 6px"
-    HEIGHT="52"; MARGIN_BAR="12 12 0 12"; TRAY_ICON="16"
+    HEIGHT="56"; TRAY_ICON="16"
     CURSOR_SIZE="32"
 fi
+
+# Construct margin string: {gaps} {gaps} 0 {gaps}
+# This ensures the top/left/right of the bar align with the window gaps.
+MARGIN_BAR="${GAPS} ${GAPS} 0 ${GAPS}"
 
 # If the .tmpl files don't exist yet (e.g. someone ran an older install.sh),
 # fall back to whatever's currently in style.css/config — better to start an
