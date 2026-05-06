@@ -4,6 +4,21 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-06 — v1.3.6
+
+Aesthetic and functional unification. Upgraded all major UI elements to a frosted glass look and added a central control hub.
+
+### Aesthetics — Frosted Glass Upgrades
+- **Rofi**: Dropped opacity to 70% and enabled backdrop blur. The launcher and manager menus now have a beautiful frosted glass aesthetic.
+- **Waybar**: Increased transparency (70%) for a lighter, more integrated feel on the desktop.
+
+### Workflow — FoxML Hub & Night Light
+- **FoxML Hub**: Introduced a unified control center (**`ALT + Shift + H`**). Access Power, Bluetooth, Network, Wallpapers, and Cleanup from a single menu.
+- **Night Light**: Integrated `wlsunset` for an automated earthy blue-light filter. Automatically warms the screen to 4500K after sunset.
+- **Interactive Wallpapers**: Added a "Next Wallpaper" option to the Hub to quickly cycle through the FoxML collection with a fade transition.
+
+---
+
 ## 2026-05-06 — v1.3.5
 
 Enhanced system management and maintenance utilities.

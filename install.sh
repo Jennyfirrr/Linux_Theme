@@ -139,7 +139,7 @@ if $INSTALL_DEPS; then
         # unzip is needed by install_catppuccin_cursor (extracts the release zip)
         unzip
         # Screenshots + clipboard + media keys
-        grim slurp wl-clipboard playerctl brightnessctl pavucontrol
+        grim slurp wl-clipboard playerctl brightnessctl pavucontrol wlsunset
         # Bluetooth
         bluez bluez-utils blueman
         # Apps + viewers (xdg-utils provides xdg-open / xdg-settings so CLI tools

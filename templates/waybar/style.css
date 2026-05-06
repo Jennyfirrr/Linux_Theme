@@ -19,7 +19,7 @@
 @define-color lavender  #{{ACCENT}};
 @define-color dim       #{{FG_DIM}};
 
-@define-color bubble       rgba({{BG_R}},{{BG_G}},{{BG_B}}, 0.85);
+@define-color bubble       rgba({{BG_R}},{{BG_G}},{{BG_B}}, 0.7);
 @define-color bubble_hover rgba({{SURFACE_R}},{{SURFACE_G}},{{SURFACE_B}}, {{KITTY_BG_OPACITY}});
 @define-color border       rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.4);
 

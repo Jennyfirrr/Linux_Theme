@@ -17,7 +17,7 @@ window {
   border-radius: 0;
   border: 2px;
   border-color: #{{PRIMARY}};
-  background-color: #{{BG}};
+  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.7);
   padding: 12px;
 }
 
@@ -27,7 +27,7 @@ mainbox {
 }
 
 inputbar {
-  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.85);
+  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.7);
   text-color: #{{FG}};
   border-radius: 0;
   border: 1px;
@@ -52,7 +52,7 @@ listview {
 
 /* base element */
 element {
-  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.85);
+  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.7);
   text-color: #{{FG}};
   border-radius: 0;
   padding: 8px 12px;
