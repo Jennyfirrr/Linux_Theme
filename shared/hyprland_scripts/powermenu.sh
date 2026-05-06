@@ -3,7 +3,11 @@
 # A simple themed power menu using Rofi
 # Matches FoxML sharp corners and earthy colors
 
-chosen=$(printf "󰐥  Shutdown\n󰜉  Reboot\n󰤄  Suspend\n  Lock\n󰗼  Logout" | rofi -dmenu -i -p "Power Menu" -theme-str 'window {width: 400px;}')
+chosen=$(printf "󰐥  Shutdown\n󰜉  Reboot\n󰤄  Suspend\n  Lock\n󰗼  Logout" | rofi -dmenu -i -p "Power Menu" \
+    -kb-row-up "k,Up" \
+    -kb-row-down "j,Down" \
+    -kb-accept-entry "l,Return" \
+    -theme-str 'mainbox {children: [listview];} window {width: 400px;}')
 
 case "$chosen" in
     "󰐥  Shutdown") systemctl poweroff ;;

@@ -18,7 +18,10 @@ fi
 devices=$(bluetoothctl devices Paired | cut -d ' ' -f 3-)
 options=$(printf "󰂲  Power Off\n󰚰  Scan\n---\n$devices")
 
-chosen=$(echo -e "$options" | rofi -dmenu -i -p "$msg" -theme-str 'window {width: 400px;}')
+chosen=$(echo -e "$options" | rofi -dmenu -i -p "$msg" \
+    -kb-row-up "Alt+k,Up" \
+    -kb-row-down "Alt+j,Down" \
+    -theme-str 'window {width: 400px;}')
 
 case "$chosen" in
     "󰂲  Power Off") bluetoothctl power off ;;

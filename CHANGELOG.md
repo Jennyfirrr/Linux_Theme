@@ -4,6 +4,16 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-06 — v1.3.7
+
+Refined the Rofi experience with Vim-like navigation and a distraction-free Hub.
+
+### Workflow — Vim Navigation
+- **Global `Alt + hjkl`**: All Rofi menus (Launcher, Bluetooth, Network, etc.) now support navigation using **`Alt + k`** (Up), **`Alt + j`** (Down), and **`Alt + l`** (Select).
+- **Clean Hub**: The **FoxML Hub** and **Power Menu** now have the search bar hidden for a cleaner "app-like" look. Since there is no search conflict, you can navigate these menus with **plain `j` and `k`** and select with **`l`**.
+
+---
+
 ## 2026-05-06 — v1.3.6
 
 Aesthetic and functional unification. Upgraded all major UI elements to a frosted glass look and added a central control hub.
