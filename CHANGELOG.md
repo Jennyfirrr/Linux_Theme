@@ -4,6 +4,22 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-06 — v1.3.8
+
+Created a unified "Seamless Navigation" system and addressed critical thermal issues.
+
+### Workflow — Seamless Navigation
+- **Unified `ALT + hjkl`**: Navigation is now identical across the entire desktop.
+  - **Hyprland**: Moves focus between windows.
+  - **Tmux**: Moves focus between panes (no prefix required).
+  - **Neovim**: Moves focus between splits.
+- **Rapid Workspaces**: Added **`ALT + ,`** and **`ALT + .`** to cycle through workspaces instantly without using the number row.
+
+### Performance — Thermal Management
+- **`ncspot` by Default**: Switched the primary music keybind to `ncspot` (terminal client). It uses ~90% less CPU/RAM than the Spotify Electron app, keeping your laptop cool while you work.
+
+---
+
 ## 2026-05-06 — v1.3.7
 
 Refined the Rofi experience with Vim-like navigation and a distraction-free Hub.
