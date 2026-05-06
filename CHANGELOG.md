@@ -6,16 +6,21 @@ All notable changes to the Fox ML theme.
 
 ## 2026-05-06 — v1.5.0
 
-Major suite of Workflow and Creative upgrades. Unified window management and creative tooling.
+Major suite of Workflow and Creative upgrades. This release transitions FoxML from a "Theme" to a complete "Distro Lite" experience for developers.
 
-### Workflow — Fast Switching & Audio
-- **App Switcher**: Map **`ALT + Tab`** to a themed Rofi window switcher. Instantly jump between open windows with a visual search.
-- **Audio Switcher**: New Rofi-based device selector (**`ALT + Shift + A`**). Quickly toggle between laptop speakers and Bluetooth headphones without opening a settings panel.
-- **FoxML Hub v2**: Expanded the central hub to include one-click access to the Audio Switcher and Color Picker.
+### Installer — "Distro Lite" Features
+- **Biometric Automation**: New `fox-fingerprint` command automates enrollment and PAM setup for the Lenovo P15.
+- **Dependency Sync**: Integrated Steam (multilib), Bluetooth drivers, and creative tools into the core installer.
+- **Thermal Awareness**: Gated heavy dependencies and optimized keybinds for lower resource usage.
 
-### Creative — Design & Annotation
-- **Color Picker**: Integrated `hyprpicker`. Press **`ALT + Shift + P`** to click any pixel on screen and instantly copy its Hex code to your clipboard.
-- **Pro Screenshots**: Upgraded the screenshot utility with `swappy`. Region screenshots now open a GUI editor for instant arrows, text, and blurring before saving.
+### Workflow — Centralized Control
+- **FoxML Hub**: Unified control center (**`ALT + Shift + H`**) for Power, Connectivity, and Maintenance.
+- **Fast Switching**: Themed **`ALT + Tab`** window switcher and rapid workspace cycling (**`ALT + , / .`**).
+- **Audio Switcher**: Dedicated Rofi menu for device switching.
+
+### Documentation & UX
+- **Keybind Overhaul**: Full refresh of `KEYBINDS.md` covering all new desktop-wide features.
+- **Aesthetic Refinement**: Perfected Frosted Glass transparency and Waybar alignment.
 
 ---
 

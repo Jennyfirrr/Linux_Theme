@@ -473,20 +473,51 @@ Shows indent guides automatically. No keybinds.
 
 ## Hyprland (ALT = mainMod)
 
+### Core Workflow
+| Key | Action |
+|-----|--------|
+| `ALT + Shift + H` | **FoxML Hub** (Power, BT, Wi-Fi, Wallpapers) |
+| `ALT + Tab` | **App Switcher** (Rofi Window Search) |
+| `ALT + Shift + R` | Reload Hyprland |
+| `ALT + Shift + X` | Power Menu (Themed Rofi) |
+| `ALT + V` | **Clipboard History** (Searchable Rofi) |
+
 ### Applications
 | Key | Action |
 |-----|--------|
-| `ALT + Enter` | Terminal (kitty + tmux) |
+| `ALT + Enter` | Terminal (Kitty + Tmux) |
 | `ALT + F` | Firefox |
-| `ALT + Shift + C` | Cursor |
-| `ALT + Shift + D` | Rofi launcher |
-| `ALT + Shift + S` | Music scratchpad |
+| `ALT + Shift + C` | Cursor (VS Code) |
+| `ALT + Shift + D` | Rofi App Launcher |
 | `ALT + Shift + V` | Steam |
-| `ALT + Shift + Y` | Yazi |
-| `ALT + Shift + B` | btop |
+| `ALT + Shift + Y` | Yazi (File Manager) |
+| `ALT + Shift + T` | btop (Task Manager) |
 | `ALT + Shift + I` | Discord |
-| `ALT + Shift + O` | Screenshot |
-| `ALT + Shift + L` | Toggle DPMS |
+| `ALT + Shift + O` | Screenshot (GUI Editor) |
+
+### Music & Audio
+| Key | Action |
+|-----|--------|
+| `ALT + Shift + S` | Spotify (GUI) |
+| `ALT + Shift + M` | ncspot (Thermal-friendly Terminal Spotify) |
+| `ALT + Shift + A` | **Audio Output Switcher** (Device list) |
+| `Media Keys` | Play/Pause, Next, Prev, Stop |
+
+### Connectivity
+| Key | Action |
+|-----|--------|
+| `ALT + Shift + B` | Bluetooth Manager (Rofi) |
+| `ALT + Shift + N` | Network/Wi-Fi Manager (Rofi) |
+
+### Tools & Utilities
+| Key | Action |
+|-----|--------|
+| `ALT + Shift + P` | **Color Picker** (Copy Hex to clipboard) |
+| `ALT + Shift + L` | Toggle DPMS (Screen Sleep) |
+| `ALT + B` | Toggle Waybar Visibility |
+| `ALT + W` | Cycle Wallpaper (Fade transition) |
+| `fox-clean` | Zsh: System maintenance utility |
+| `fox-fingerprint` | Zsh: Biometric setup automation |
 
 ### Windows
 | Key | Action |
@@ -495,10 +526,13 @@ Shows indent guides automatically. No keybinds.
 | `ALT + Shift + G` | Toggle floating |
 | `ALT + P` | Pin window |
 | `ALT + S` | Toggle split |
-| `ALT + Shift + R` | Reload Hyprland |
 | `ALT + h/j/k/l` | Focus left/down/up/right |
-| `ALT + Tab` | Cycle next |
-| `ALT + Shift + Tab` | Cycle prev |
+
+### Workspaces
+| Key | Action |
+|-----|--------|
+| `ALT + .` | Next workspace |
+| `ALT + ,` | Previous workspace |
 | `ALT + 1-9` | Workspace 1-9 |
 | `ALT + Shift + 1-9` | Move window to workspace |
 | `ALT + Scroll` | Switch workspaces |
