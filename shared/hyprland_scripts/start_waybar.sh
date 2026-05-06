@@ -87,8 +87,12 @@ else
 fi
 
 # Construct margin string: {gaps} {gaps} 0 {gaps}
-# This ensures the top/left/right of the bar align with the window gaps.
-MARGIN_BAR="${GAPS} ${GAPS} 0 ${GAPS}"
+# Subtract the 4px border width from the gap value so the outer edges 
+# of the bar and the windows line up perfectly.
+ALIGNED_MARGIN=$(( GAPS - 4 ))
+(( ALIGNED_MARGIN < 0 )) && ALIGNED_MARGIN=0
+
+MARGIN_BAR="${ALIGNED_MARGIN} ${GAPS} 0 ${GAPS}"
 
 # If the .tmpl files don't exist yet (e.g. someone ran an older install.sh),
 # fall back to whatever's currently in style.css/config — better to start an
