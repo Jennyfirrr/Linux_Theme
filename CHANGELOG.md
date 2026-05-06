@@ -4,7 +4,21 @@ All notable changes to the Fox ML theme.
 
 ---
 
-## 2026-05-06 — v1.5.0
+## 2026-05-06 — v1.5.2
+
+Enhanced window management with themed tabbed groups.
+
+### Workflow — Tabbed Window Groups
+- **Themed Groupbar**: Enabled Hyprland "Groups" (Window Tabs) with a custom FoxML look. Active tabs use the earthy Peach palette, while inactive tabs stay in the subtle Slate color.
+- **Group Keybinds**:
+    - **`ALT + G`**: Toggle the current window into/out of a group.
+    - **`ALT + [`** and **`ALT + ]`**: Cycle between tabs in the current group.
+- **Aesthetic Integration**: Sharp corners and 0px rounding maintained across all group elements for a consistent "Distro Lite" feel.
+
+---
+
+## 2026-05-06 — v1.5.1
+
 
 Major suite of Workflow and Creative upgrades. This release transitions FoxML from a "Theme" to a complete "Distro Lite" experience for developers.
 
