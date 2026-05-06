@@ -142,6 +142,8 @@ if $INSTALL_DEPS; then
         grim slurp wl-clipboard playerctl brightnessctl pavucontrol wlsunset
         # Bluetooth
         bluez bluez-utils blueman
+        # Fingerprint support
+        fprintd
         # Apps + viewers (xdg-utils provides xdg-open / xdg-settings so CLI tools
         # — gcloud, gh, etc. — can spawn the default browser without ENOENT)
         firefox zathura zathura-pdf-mupdf xdg-utils thunar steam
@@ -224,6 +226,19 @@ if $INSTALL_DEPS; then
         && ! systemctl is-active --quiet bluetooth; then
         sudo systemctl enable --now bluetooth \
             && echo "  ✓ bluetooth service enabled"
+    fi
+
+    # Fingerprint reader detection
+    if lsusb | grep -qi "fingerprint"; then
+        echo ""
+        echo "╭──────────────────────────────────────────────────────────────────╮"
+        echo "│ 󰆐  Hardware Detected: Fingerprint Reader                        │"
+        echo "├──────────────────────────────────────────────────────────────────┤"
+        echo "│ To enable for sudo/Git:                                          │"
+        echo "│   1. Enroll: fprintd-enroll                                      │"
+        echo "│   2. Enable: sudo nvim /etc/pam.d/system-local-login             │"
+        echo "│   3. Add to top: auth sufficient pam_fprintd.so                  │"
+        echo "╰──────────────────────────────────────────────────────────────────╯"
     fi
 
     # AUR Helper (yay) and Spotify/Spicetify

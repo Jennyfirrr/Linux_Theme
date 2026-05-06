@@ -4,6 +4,17 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-06 — v1.3.9
+
+Integrated hardware support for the Lenovo P15's fingerprint reader.
+
+### Hardware — Fingerprint Support
+- **Dependencies**: Added `fprintd` to the base installer.
+- **Auto-Detection**: The installer now detects Synaptics (and other) fingerprint readers via `lsusb` and provides a themed setup guide for enrollment and PAM (auth) integration.
+- **Git/Sudo Integration**: Unified the hardware with the system auth stack, allowing for fingerprint-authorized `sudo` and SSH key unlocking for GitHub pushes.
+
+---
+
 ## 2026-05-06 — v1.3.8
 
 Created a unified "Seamless Navigation" system and addressed critical thermal issues.
