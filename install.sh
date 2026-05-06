@@ -142,6 +142,8 @@ if $INSTALL_DEPS; then
         # Apps + viewers (xdg-utils provides xdg-open / xdg-settings so CLI tools
         # — gcloud, gh, etc. — can spawn the default browser without ENOENT)
         firefox zathura zathura-pdf-mupdf xdg-utils
+        # Runtime libs often needed by proprietary/AUR packages
+        libutf8proc xsimd
         # Power profile switcher (waybar power-profiles-daemon module);
         # python-gobject is the optional dep that makes `powerprofilesctl` work
         # for click-to-switch handlers
