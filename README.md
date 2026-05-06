@@ -43,7 +43,7 @@ Dark theme with earthy, muted tones — warm peach, dusty rose, sage, and wheat 
 | `kitty` | Terminal emulator |
 | `waybar` | Status bar |
 | `rofi-wayland` | App launcher |
-| `hyprpaper` | Wallpaper manager |
+| `awww` | Wallpaper manager |
 | `hypridle`, `hyprlock` | Idle/lock screen |
 | `mako` or `dunst` | Notifications |
 | `zsh`, `oh-my-zsh` | Shell |
@@ -151,10 +151,8 @@ Every one of these gets its colors from the active theme's `palette.sh`:
 | btop | `templates/btop/foxml.theme` | `~/.config/btop/themes/foxml.theme` |
 | Yazi | `templates/yazi/theme.toml` | `~/.config/yazi/theme.toml` |
 | Zathura | `templates/zathura/zathurarc` | `~/.config/zathura/zathurarc` |
-| Spicetify | `templates/spicetify/` (2 files) | `~/.config/spicetify/Themes/FoxML/` |
 | Firefox | `templates/firefox/` (2 files) | `<profile>/chrome/userChrome.css` |
 | Cursor/VS Code | `templates/cursor/` | `~/.cursor/extensions/foxml-theme/` |
-| Discord (Vencord) | `templates/vencord/foxml.css` | `~/.config/Vencord/themes/foxml.css` |
 | Bat | `templates/bat/foxml.tmTheme` | `~/.config/bat/themes/Fox ML.tmTheme` |
 | ReGreet (login) | `templates/regreet/regreet.css` | `/etc/greetd/regreet.css` (via sudo) |
 
@@ -165,10 +163,9 @@ These are copied as-is regardless of theme — keybinds, scripts, layout configs
 | File | Description |
 |------|-------------|
 | `shared/hyprland_modules/` | 12 Hyprland modules (keybinds, rules, monitors, scratchpads, etc.) |
-| `shared/hyprland_scripts/` | 8 helper scripts (lock, startup, yazi, theme switching, etc.) |
-| `shared/launchers/` | Toggle scripts for btop, ncspot, spotify, yazi |
+| `shared/hyprland_scripts/` | 12 helper scripts (lock, startup, yazi, fingerprint, etc.) |
+| `shared/launchers/` | Toggle scripts for btop, yazi |
 | `shared/wallpapers/` | Wallpaper files |
-| `shared/hyprpaper.conf` | Hyprpaper config |
 | `shared/nvim_lazy-lock.json` | Neovim plugin lock file |
 | `shared/nvim_ftplugin/` | Neovim filetype plugins |
 | `shared/rofi_config.rasi` | Rofi layout config |
