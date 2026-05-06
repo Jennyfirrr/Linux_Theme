@@ -208,16 +208,33 @@ PKGJSON
             echo "  ✓ Spotify folder permissions updated"
         fi
 
+        # Path auto-detection (fixes the "prefs file not found" error)
+        local prefs_path=""
+        [[ -f "$HOME/.config/spotify/prefs" ]] && prefs_path="$HOME/.config/spotify/prefs"
+        [[ -z "$prefs_path" && -f "$HOME/.var/app/com.spotify.Client/config/spotify/prefs" ]] && prefs_path="$HOME/.var/app/com.spotify.Client/config/spotify/prefs"
+        
+        if [[ -n "$prefs_path" ]]; then
+            spicetify config prefs_path "$prefs_path" 2>/dev/null || true
+        fi
+        
+        if [[ -d /opt/spotify ]]; then
+            spicetify config spotify_path "/opt/spotify" 2>/dev/null || true
+        fi
+
         spicetify config current_theme FoxML 2>/dev/null || true
         spicetify config color_scheme Base 2>/dev/null || true
         
-        # Only run backup apply if we haven't already
+        # Only run backup apply if we have a config (meaning it was initialized)
         if [[ -f ~/.config/spicetify/config-xpui.ini ]]; then
              echo "  Running 'spicetify backup apply'..."
-             spicetify backup apply 2>/dev/null || spicetify apply 2>/dev/null
-             echo "  ✓ Spicetify applied"
+             if ! spicetify backup apply 2>/dev/null; then
+                 # If backup fails, it might just need a plain 'apply' if already backed up
+                 spicetify apply 2>/dev/null || echo "  ⚠ Spicetify apply failed — try launching Spotify first then run 'spicetify apply'"
+             else
+                 echo "  ✓ Spicetify applied"
+             fi
         else
-             echo "  Run 'spicetify backup apply' to activate"
+             echo "  ⚠ Spicetify not initialized — launch Spotify once, then run 'spicetify backup apply'"
         fi
     fi
 

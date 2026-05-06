@@ -13,16 +13,16 @@
     --fox-dim: #{{FG_DIM}};
 }
 
-/* Base background - solid tmux pane color */
+/* Base background - 80% transparency */
 html, body {
-    background: var(--fox-bg) !important;
+    background: transparent !important;
 }
 
 body::before {
     content: '';
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: var(--fox-bg);
+    background: rgba({{BG_R}},{{BG_G}},{{BG_B}}, 0.8);
     z-index: -1;
     pointer-events: none;
 }
@@ -37,20 +37,20 @@ body::before {
 .main-navBar-navBar,
 .Root__nav-bar,
 .main-yourLibraryX-libraryContainer {
-    background: var(--fox-bg) !important;
-    background-color: var(--fox-bg) !important;
+    background: transparent !important;
+    background-color: transparent !important;
 }
 
 /* Now playing bar */
 .main-nowPlayingBar-container,
 footer {
-    background: var(--fox-bg) !important;
+    background: rgba({{BG_R}},{{BG_G}},{{BG_B}}, 0.85) !important;
     border-top: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.4) !important;
 }
 
 /* Top bar */
 .main-topBar-container {
-    background: var(--fox-bg) !important;
+    background: transparent !important;
 }
 
 /* Cards and panels */
