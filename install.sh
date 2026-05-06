@@ -166,6 +166,31 @@ if $INSTALL_DEPS; then
         pacman -Qi "$pkg" &>/dev/null || TO_INSTALL+=("$pkg")
     done
 
+    # Check for multilib if steam is needed
+    if [[ " ${TO_INSTALL[*]} " =~ " steam " ]] && ! grep -q "^\[multilib\]" /etc/pacman.conf; then
+        echo ""
+        echo "  ⚠ Steam requires the [multilib] repository, but it is disabled in /etc/pacman.conf"
+        ENABLE_MULTILIB=false
+        if $ASSUME_YES; then
+            ENABLE_MULTILIB=true
+        else
+            read -p "  Enable [multilib]? (Requires sudo) [y/N] " -n 1 -r
+            echo ""
+            [[ $REPLY =~ ^[Yy]$ ]] && ENABLE_MULTILIB=true
+        fi
+
+        if $ENABLE_MULTILIB; then
+            echo "  Enabling [multilib]..."
+            sudo sed -i '/#\[multilib\]/,/#Include = \/etc\/pacman.d\/mirrorlist/ s/^#//' /etc/pacman.conf
+            sudo pacman -Sy
+            echo "  ✓ [multilib] enabled"
+        else
+            echo "  ⚠ Skipping Steam (requires multilib)"
+            # Remove steam from TO_INSTALL
+            TO_INSTALL=(${TO_INSTALL[@]/steam/})
+        fi
+    fi
+
     if [[ ${#TO_INSTALL[@]} -gt 0 ]]; then
         echo "  Packages to install: ${TO_INSTALL[*]}"
         if $ASSUME_YES; then

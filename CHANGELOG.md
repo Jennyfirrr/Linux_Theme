@@ -9,7 +9,8 @@ All notable changes to the Fox ML theme.
 Cleaned up dependencies and removed broken components to ensure a reliable out-of-the-box experience.
 
 ### Installer — Dependency Sync
-- **Added Core Apps**: Added `lazygit`, `ncspot`, `steam`, and `thunar` to the mandatory `PACMAN_PKGS` list. This ensures all keybinds (e.g., `ALT + Shift + V` for Steam) and scratchpads work immediately after install.
+- **Added Core Apps**: Added `lazygit`, `ncspot`, `steam`, and `thunar` to the mandatory `PACMAN_PKGS` list.
+- **Multilib Support**: The installer now detects if Steam is requested and automatically offers to enable the `[multilib]` repository in `/etc/pacman.conf` if it's missing (required for 32-bit apps like Steam).
 - **Removed Vencord**: Deleted all Vencord (Discord) theme templates and mappings as they were reported as non-functional.
 
 ---
