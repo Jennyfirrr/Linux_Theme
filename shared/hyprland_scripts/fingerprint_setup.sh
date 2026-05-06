@@ -41,23 +41,14 @@ for file in "${PAM_FILES[@]}"; do
     fi
 done
 
-# 4. SSH Keyring Verification
-echo -e "\n${PEACH}[3/3] Optimizing SSH Keyring...${NC}"
-if grep -q "ssh-agent" ~/.zshrc || grep -q "gnome-keyring" ~/.zshrc; then
-     echo "  ✓ SSH Keyring already integrated in Zsh"
-else
-     echo "  Adding SSH Keyring auto-unlock to .zshrc..."
-     cat >> ~/.zshrc << 'EOF'
-
-# FoxML SSH Keyring Integration
-if command -v gnome-keyring-daemon >/dev/null; then
-    eval $(gnome-keyring-daemon --start --components=ssh)
-    export SSH_AUTH_SOCK
-fi
-EOF
-     echo "  ✓ SSH Keyring added to .zshrc"
-fi
+# 4. Final Instructions
+echo -e "\n${PEACH}[3/3] Finalizing...${NC}"
+echo "  ✓ Biometrics linked to System Auth"
+echo "  ✓ Biometrics linked to Greetd"
+echo "  ✓ Biometrics linked to Sudo"
 
 echo -e "\n${SAGE}✨ Setup Complete!${NC}"
-echo "You can now use your fingerprint for sudo, login, and unlocking SSH keys."
-echo "Note: Re-source your terminal (source ~/.zshrc) to activate the SSH changes."
+echo "To activate your fingerprint and SSH agent, you MUST:"
+echo "  1. Log out of your current session."
+echo "  2. Log back in (you can use your finger now!)."
+echo "  3. Open a terminal and run 'ssh-add ~/.ssh/id_ed25519' once."

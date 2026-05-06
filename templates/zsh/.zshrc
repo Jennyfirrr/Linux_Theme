@@ -25,8 +25,20 @@ if [[ -x /usr/lib/seahorse/ssh-askpass ]]; then
     export SSH_ASKPASS=/usr/lib/seahorse/ssh-askpass
     export SSH_ASKPASS_REQUIRE=prefer
 fi
-# gnome-keyring-daemon SSH agent (started by Hyprland exec-once)
-[[ -S "$XDG_RUNTIME_DIR/keyring/ssh" ]] && export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/keyring/ssh"
+# FoxML SSH Keyring Integration
+# GNOME Keyring usually starts via Hyprland exec-once, but we ensure 
+# the shell is correctly linked to the socket.
+if [[ -z "$SSH_AUTH_SOCK" ]]; then
+    if [[ -S "$XDG_RUNTIME_DIR/keyring/ssh" ]]; then
+        export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/keyring/ssh"
+    elif [[ -S "$HOME/.cache/keyring/ssh" ]]; then
+        export SSH_AUTH_SOCK="$HOME/.cache/keyring/ssh"
+    else
+        # Fallback: try to start it if missing (useful for remote SSH sessions)
+        eval $(gnome-keyring-daemon --start --components=ssh 2>/dev/null)
+        export SSH_AUTH_SOCK
+    fi
+fi
 
 # ─── Oh My Zsh ────────────────────────────────
 export ZSH="$HOME/.oh-my-zsh"
