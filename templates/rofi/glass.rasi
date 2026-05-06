@@ -17,17 +17,18 @@ window {
   border-radius: 0;
   border: 2px;
   border-color: #{{PRIMARY}};
-  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.7);
+  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.6);
   padding: 12px;
 }
 
 mainbox {
   children: [ inputbar, listview ];
   spacing: 12px;
+  background-color: transparent;
 }
 
 inputbar {
-  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.7);
+  background-color: transparent;
   text-color: #{{FG}};
   border-radius: 0;
   border: 1px;
@@ -38,6 +39,7 @@ inputbar {
 entry {
   placeholder: "Search...";
   placeholder-color: rgba({{FG_R}},{{FG_G}},{{FG_B}},0.5);
+  background-color: transparent;
 }
 
 /* === bubble cloud layout === */
@@ -52,12 +54,12 @@ listview {
 
 /* base element */
 element {
-  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.7);
+  background-color: transparent;
   text-color: #{{FG}};
   border-radius: 0;
   padding: 8px 12px;
   border: 1px;
-  border-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.3);
+  border-color: transparent;
 }
 
 /* selected bubble (ring-ish look) */

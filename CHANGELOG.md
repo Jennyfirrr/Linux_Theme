@@ -4,6 +4,17 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-06 — v1.4.2
+
+Aesthetic refinement and hardware-software synchronization. Fixed transparency issues and improved bar alignment.
+
+### Aesthetics — Perfect Transparency & Glass
+- **Rofi Fixed**: Resolved "opacity stacking" where inner elements were making the menus look opaque. Transparency is now applied only at the window level, allowing for a pure frosted glass look.
+- **Waybar Alignment**: The top bar now dynamically reads your Hyprland `gaps_out` and sets its margins to match. It now aligns perfectly with your windows for a seamless "floating" aesthetic.
+- **Improved Scaling**: Refined font sizes and heights across all resolution profiles to ensure UI elements are proportional and highly readable on 1080p, 1440p, and 4K displays.
+
+---
+
 ## 2026-05-06 — v1.4.1
 
 Project cleanup and focus refinement. Removed all Spotify/Spicetify components as requested.
