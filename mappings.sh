@@ -63,10 +63,6 @@ TEMPLATE_MAPPINGS=(
     # Zathura
     "zathura/zathurarc|~/.config/zathura/zathurarc"
 
-    # Spicetify
-    "spicetify/color.ini|~/.config/spicetify/Themes/FoxML/color.ini"
-    "spicetify/user.css|~/.config/spicetify/Themes/FoxML/user.css"
-
     # Bat
     "bat/foxml.tmTheme|~/.config/bat/themes/Fox ML.tmTheme"
 
@@ -98,8 +94,6 @@ SHARED_MAPPINGS=(
     # Launcher toggle scripts (referenced by keybinds.conf)
     "launchers/toggle/toggle_btop.sh|~/.config/launchers/toggle/toggle_btop.sh"
     "launchers/toggle/toggle_yazi.sh|~/.config/launchers/toggle/toggle_yazi.sh"
-    "launchers/toggle/toggle_ncspot.sh|~/.config/launchers/toggle/toggle_ncspot.sh"
-    "launchers/toggle/toggle_spotify.sh|~/.config/launchers/toggle/toggle_spotify.sh"
 
     # Neovim
     "nvim_lazy-lock.json|~/.config/nvim/lazy-lock.json"
@@ -123,7 +117,6 @@ SHARED_MAPPINGS=(
     "waybar_scripts/cpu.sh|~/.config/waybar/scripts/cpu.sh"
     "waybar_scripts/gpu.sh|~/.config/waybar/scripts/gpu.sh"
     "waybar_scripts/disk.sh|~/.config/waybar/scripts/disk.sh"
-    "waybar_scripts/spotify.sh|~/.config/waybar/scripts/spotify.sh"
     "waybar_scripts/updates.sh|~/.config/waybar/scripts/updates.sh"
     "waybar_scripts/ppd_cycle.sh|~/.config/waybar/scripts/ppd_cycle.sh"
 
@@ -194,46 +187,6 @@ PKGJSON
             echo "  ✓ $(basename "$ext_dir" | sed 's/^\.//') theme"
         fi
     done
-
-    # Spicetify config
-    if command -v spicetify &>/dev/null; then
-        # Fix permissions so spicetify can write to the Spotify directory
-        # (Needed for 'backup apply' to work)
-        if [[ -d /opt/spotify ]]; then
-            sudo chmod a+wr /opt/spotify
-            sudo chmod a+wr /opt/spotify/Apps -R
-            echo "  ✓ Spotify folder permissions updated"
-        fi
-
-        # Path auto-detection (fixes the "prefs file not found" error)
-        local prefs_path=""
-        [[ -f "$HOME/.config/spotify/prefs" ]] && prefs_path="$HOME/.config/spotify/prefs"
-        [[ -z "$prefs_path" && -f "$HOME/.var/app/com.spotify.Client/config/spotify/prefs" ]] && prefs_path="$HOME/.var/app/com.spotify.Client/config/spotify/prefs"
-        
-        if [[ -n "$prefs_path" ]]; then
-            spicetify config prefs_path "$prefs_path" 2>/dev/null || true
-        fi
-        
-        if [[ -d /opt/spotify ]]; then
-            spicetify config spotify_path "/opt/spotify" 2>/dev/null || true
-        fi
-
-        spicetify config current_theme FoxML 2>/dev/null || true
-        spicetify config color_scheme Base 2>/dev/null || true
-        
-        # Only run backup apply if we have a config (meaning it was initialized)
-        if [[ -f ~/.config/spicetify/config-xpui.ini ]]; then
-             echo "  Running 'spicetify backup apply'..."
-             if ! spicetify backup apply 2>/dev/null; then
-                 # If backup fails, it might just need a plain 'apply' if already backed up
-                 spicetify apply 2>/dev/null || echo "  ⚠ Spicetify apply failed — try launching Spotify first then run 'spicetify apply'"
-             else
-                 echo "  ✓ Spicetify applied"
-             fi
-        else
-             echo "  ⚠ Spicetify not initialized — launch Spotify once, then run 'spicetify backup apply'"
-        fi
-    fi
 
     # Bat cache rebuild
     if command -v bat &>/dev/null; then
@@ -737,15 +690,6 @@ update_specials() {
     if [[ -f "$bat_dir/themes/Fox ML.tmTheme" ]]; then
         sed "$sed_expr" "$bat_dir/themes/Fox ML.tmTheme" > "$template_dir/bat/foxml.tmTheme"
         echo "  ✓ Bat theme"
-    fi
-
-    # Spicetify
-    local spice_dir="$HOME/.config/spicetify/Themes/FoxML"
-    if [[ -d "$spice_dir" ]]; then
-        for f in color.ini user.css; do
-            [[ -f "$spice_dir/$f" ]] && sed "$sed_expr" "$spice_dir/$f" > "$template_dir/spicetify/$f"
-        done
-        echo "  ✓ Spicetify"
     fi
 
     # Gemini CLI — pull only the ui block back into the template; keeping

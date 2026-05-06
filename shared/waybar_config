@@ -9,9 +9,7 @@
     "hyprland/workspaces"
   ],
 
-  "modules-center": [
-    "custom/spotify"
-  ],
+  "modules-center": [],
 
   "modules-right": [
     "custom/cpu",
@@ -148,16 +146,5 @@
     "format": "󰣇",
     "tooltip": "Launcher",
     "on-click": "bash -lc 'command -v wheel && wheel || rofi -show drun'"
-  },
-
-  "custom/spotify": {
-    "exec": "~/.config/waybar/scripts/spotify.sh",
-    "return-type": "json",
-    "interval": 2,
-    "on-click": "playerctl -p spotify play-pause",
-    "on-click-right": "hyprctl dispatch togglespecialworkspace music",
-    "on-scroll-up": "playerctl -p spotify next",
-    "on-scroll-down": "playerctl -p spotify previous",
-    "tooltip": true
   }
 }

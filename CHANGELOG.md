@@ -4,6 +4,18 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-06 — v1.4.1
+
+Project cleanup and focus refinement. Removed all Spotify/Spicetify components as requested.
+
+### Cleanup — Spotify Removal
+- **Deleted Integration**: Removed `spotify` and `spicetify-cli` from the installer and dependency lists.
+- **Removed Themes**: Deleted all Spicetify theme templates (`color.ini`, `user.css`) and mappings.
+- **UI Decoupling**: Removed the Spotify Waybar module and associated helper scripts.
+- **Keybind Cleanup**: Deleted dedicated Spotify/ncspot keybinds. Standard media keys now use generic `playerctl` commands for maximum compatibility with any running player.
+
+---
+
 ## 2026-05-06 — v1.4.0
 
 Complete biometric automation for the FoxML environment.

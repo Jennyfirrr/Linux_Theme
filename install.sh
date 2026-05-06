@@ -1,7 +1,7 @@
 #!/bin/bash
 # FoxML Theme Hub — Installer
 # Renders templates with theme palette, copies to system
-# Usage: ./install.sh [theme_name] [--deps] [--nvidia] [--xgboost] [--spotify] [-y|--yes]
+# Usage: ./install.sh [theme_name] [--deps] [--nvidia] [--xgboost] [-y|--yes]
 
 set -e
 
@@ -22,7 +22,6 @@ THEME_NAME=""
 INSTALL_DEPS=false
 INSTALL_NVIDIA=false
 INSTALL_XGBOOST=false
-INSTALL_SPOTIFY=false
 ASSUME_YES=false
 DEFAULT_THEME="FoxML_Classic"
 
@@ -31,7 +30,6 @@ for arg in "$@"; do
         --deps) INSTALL_DEPS=true ;;
         --nvidia) INSTALL_NVIDIA=true ;;
         --xgboost) INSTALL_XGBOOST=true ;;
-        --spotify) INSTALL_SPOTIFY=true ;;
         -y|--yes) ASSUME_YES=true ;;
         *) THEME_NAME="$arg" ;;
     esac
@@ -40,7 +38,7 @@ done
 # Non-interactive mode: default theme + prime sudo cache so pacman doesn't pause
 if $ASSUME_YES; then
     [[ -z "$THEME_NAME" ]] && THEME_NAME="$DEFAULT_THEME"
-    if $INSTALL_DEPS || $INSTALL_NVIDIA || $INSTALL_XGBOOST || $INSTALL_SPOTIFY; then
+    if $INSTALL_DEPS || $INSTALL_NVIDIA || $INSTALL_XGBOOST; then
         echo "Caching sudo credentials for unattended install..."
         sudo -v || { echo "sudo required for --deps / --nvidia / --xgboost"; exit 1; }
         # Keep sudo alive for the rest of the script
@@ -270,29 +268,7 @@ if $INSTALL_DEPS; then
     fi
 
     if [[ -n "$AUR_HELPER" ]]; then
-        AUR_PKGS=()
-        if $INSTALL_SPOTIFY; then
-            AUR_PKGS+=(spotify spicetify-cli)
-        fi
-
-        if [[ ${#AUR_PKGS[@]} -gt 0 ]]; then
-            TO_INSTALL_AUR=()
-            for pkg in "${AUR_PKGS[@]}"; do
-                $AUR_HELPER -Qi "$pkg" &>/dev/null || TO_INSTALL_AUR+=("$pkg")
-            done
-
-            if [[ ${#TO_INSTALL_AUR[@]} -gt 0 ]]; then
-                echo ""
-                echo "Installing AUR packages: ${TO_INSTALL_AUR[*]}"
-                if $ASSUME_YES; then
-                    $AUR_HELPER -S --needed --noconfirm "${TO_INSTALL_AUR[@]}"
-                else
-                    read -p "  Install with $AUR_HELPER? [y/N] " -n 1 -r
-                    echo ""
-                    [[ $REPLY =~ ^[Yy]$ ]] && $AUR_HELPER -S --needed "${TO_INSTALL_AUR[@]}"
-                fi
-            fi
-        fi
+        echo "  ✓ AUR helper $AUR_HELPER found"
     fi
 
     # Oh My Zsh

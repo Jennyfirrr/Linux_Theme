@@ -222,20 +222,6 @@ window#waybar > box {
     text-shadow: 0 0 10px rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.5);
 }
 
-#custom-spotify {
-    background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.1);
-    border: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.3);
-    color: @peach;
-    margin-right: 20px;
-    margin-left: 20px;
-}
-
-#custom-spotify.playing {
-    border-color: @lavender;
-    color: @lavender;
-    text-shadow: 0 0 8px rgba({{ACCENT_R}},{{ACCENT_G}},{{ACCENT_B}}, 0.4);
-}
-
 #custom-logo:hover {
     background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.2);
     text-shadow: 0 0 14px rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.7);
