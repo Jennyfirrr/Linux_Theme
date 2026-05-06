@@ -4,6 +4,20 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-06 — v1.3.5
+
+Enhanced system management and maintenance utilities.
+
+### Connectivity — Rofi Managers
+- **Bluetooth Manager**: Added a themed Rofi menu (**`ALT + Shift + B`**) to power on/off, scan, and connect to paired devices.
+- **Network Manager**: Added a Rofi Wi-Fi selector (**`ALT + Shift + N`**) for quick network switching.
+- **Keybind Refactor**: Moved `btop` to **`ALT + Shift + T`** (Task manager) to make room for the new connectivity binds.
+
+### Maintenance — FoxML Cleanup
+- **`fox-clean`**: New Zsh utility for automated system maintenance. Purges package cache (keeping 2 versions), removes orphans, rotates system logs (7 days), and trims clipboard history (keeping last 100).
+
+---
+
 ## 2026-05-06 — v1.3.4
 
 Introduced a suite of themed Quality of Life (QL) upgrades for a smoother desktop experience.

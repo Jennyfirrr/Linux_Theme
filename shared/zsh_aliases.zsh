@@ -74,3 +74,31 @@ gpp() {
   echo "Compiling your questionable code..."
   g++ -std=c++17 -Wall -Wextra -O2 "$src" -o "$out"
 }
+
+# ─────────────────────────────────────────
+# FoxML Utilities
+# ─────────────────────────────────────────
+
+# System maintenance helper
+fox-clean() {
+    echo "🦊 Starting FoxML System Cleanup..."
+    
+    echo -e "\n[1/4] Cleaning pacman cache (keeping last 2 versions)..."
+    sudo paccache -rk2
+    
+    echo -e "\n[2/4] Removing orphan packages..."
+    local orphans=$(pacman -Qtdq)
+    if [[ -n "$orphans" ]]; then
+        sudo pacman -Rns $orphans
+    else
+        echo "No orphans to remove."
+    fi
+    
+    echo -e "\n[3/4] Vacuuming system logs (older than 7 days)..."
+    sudo journalctl --vacuum-time=7d
+    
+    echo -e "\n[4/4] Clearing old cliphist entries (keeping last 100)..."
+    cliphist list | head -n -100 | cliphist decode | cliphist delete
+    
+    echo -e "\n✨ Cleanup complete! Stay earthy."
+}
