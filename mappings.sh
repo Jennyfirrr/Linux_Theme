@@ -63,9 +63,6 @@ TEMPLATE_MAPPINGS=(
     # Zathura
     "zathura/zathurarc|~/.config/zathura/zathurarc"
 
-    # Vencord
-    "vencord/foxml.css|~/.config/Vencord/themes/foxml.css"
-
     # Spicetify
     "spicetify/color.ini|~/.config/spicetify/Themes/FoxML/color.ini"
     "spicetify/user.css|~/.config/spicetify/Themes/FoxML/user.css"

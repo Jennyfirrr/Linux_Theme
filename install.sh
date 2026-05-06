@@ -135,6 +135,7 @@ if $INSTALL_DEPS; then
         cmake
         # Shell + tooling
         base-devel zsh fzf eza bat yazi btop fd zoxide jq git-delta github-cli pacman-contrib
+        lazygit ncspot
         # unzip is needed by install_catppuccin_cursor (extracts the release zip)
         unzip
         # Screenshots + clipboard + media keys
@@ -143,7 +144,7 @@ if $INSTALL_DEPS; then
         bluez bluez-utils blueman
         # Apps + viewers (xdg-utils provides xdg-open / xdg-settings so CLI tools
         # — gcloud, gh, etc. — can spawn the default browser without ENOENT)
-        firefox zathura zathura-pdf-mupdf xdg-utils
+        firefox zathura zathura-pdf-mupdf xdg-utils thunar steam
         # Runtime libs often needed by proprietary/AUR packages
         libutf8proc xsimd
         # Power profile switcher (waybar power-profiles-daemon module);

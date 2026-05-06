@@ -4,6 +4,16 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-06 — v1.3.3
+
+Cleaned up dependencies and removed broken components to ensure a reliable out-of-the-box experience.
+
+### Installer — Dependency Sync
+- **Added Core Apps**: Added `lazygit`, `ncspot`, `steam`, and `thunar` to the mandatory `PACMAN_PKGS` list. This ensures all keybinds (e.g., `ALT + Shift + V` for Steam) and scratchpads work immediately after install.
+- **Removed Vencord**: Deleted all Vencord (Discord) theme templates and mappings as they were reported as non-functional.
+
+---
+
 ## 2026-05-06 — v1.3.2
 
 Refined the Spotify experience for performance and aesthetics. Gated heavy dependencies for better thermals and upgraded the theme to a modern glass look.
