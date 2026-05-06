@@ -268,7 +268,7 @@ See `themes/FoxML_Classic/palette.sh` for the full variable list.
 
 1. `hyprctl reload`
 2. Restart terminals/apps
-3. `spicetify apply`
+3. `spicetify apply` (installer handles initial backup/apply)
 4. Firefox: enable `toolkit.legacyUserProfileCustomizations.stylesheets` in `about:config`
 5. Cursor: Select "Fox ML" in color theme picker
 6. Discord: Enable theme in Settings > Vencord > Themes

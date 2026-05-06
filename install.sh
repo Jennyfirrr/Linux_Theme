@@ -132,11 +132,13 @@ if $INSTALL_DEPS; then
         # Build tools (cmake for C++ projects bootstrapped from this machine)
         cmake
         # Shell + tooling
-        zsh fzf eza bat yazi btop fd zoxide jq git-delta github-cli pacman-contrib
+        base-devel zsh fzf eza bat yazi btop fd zoxide jq git-delta github-cli pacman-contrib
         # unzip is needed by install_catppuccin_cursor (extracts the release zip)
         unzip
         # Screenshots + clipboard + media keys
         grim slurp wl-clipboard playerctl brightnessctl pavucontrol
+        # Bluetooth
+        bluez bluez-utils blueman
         # Apps + viewers (xdg-utils provides xdg-open / xdg-settings so CLI tools
         # — gcloud, gh, etc. — can spawn the default browser without ENOENT)
         firefox zathura zathura-pdf-mupdf xdg-utils
@@ -185,6 +187,63 @@ if $INSTALL_DEPS; then
         && ! systemctl is-active --quiet power-profiles-daemon; then
         sudo systemctl enable --now power-profiles-daemon \
             && echo "  ✓ power-profiles-daemon enabled"
+    fi
+
+    # Enable bluetooth service
+    if pacman -Qi bluez &>/dev/null \
+        && ! systemctl is-active --quiet bluetooth; then
+        sudo systemctl enable --now bluetooth \
+            && echo "  ✓ bluetooth service enabled"
+    fi
+
+    # AUR Helper (yay) and Spotify/Spicetify
+    AUR_HELPER=""
+    command -v yay &>/dev/null && AUR_HELPER="yay"
+    command -v paru &>/dev/null && [[ -z "$AUR_HELPER" ]] && AUR_HELPER="paru"
+
+    if [[ -z "$AUR_HELPER" ]]; then
+        echo ""
+        echo "No AUR helper (yay/paru) found."
+        INSTALL_YAY=false
+        if $ASSUME_YES; then
+            INSTALL_YAY=true
+        else
+            read -p "  Install yay? [y/N] " -n 1 -r
+            echo ""
+            [[ $REPLY =~ ^[Yy]$ ]] && INSTALL_YAY=true
+        fi
+
+        if $INSTALL_YAY; then
+            echo "  Installing yay..."
+            YAY_DIR=$(mktemp -d)
+            (
+                set -e
+                git clone https://aur.archlinux.org/yay-bin.git "$YAY_DIR"
+                cd "$YAY_DIR"
+                makepkg -si --noconfirm
+            ) && AUR_HELPER="yay" || echo "  ⚠ yay install failed"
+            rm -rf "$YAY_DIR"
+        fi
+    fi
+
+    if [[ -n "$AUR_HELPER" ]]; then
+        AUR_PKGS=(spotify spicetify-cli)
+        TO_INSTALL_AUR=()
+        for pkg in "${AUR_PKGS[@]}"; do
+            $AUR_HELPER -Qi "$pkg" &>/dev/null || TO_INSTALL_AUR+=("$pkg")
+        done
+
+        if [[ ${#TO_INSTALL_AUR[@]} -gt 0 ]]; then
+            echo ""
+            echo "Installing AUR packages: ${TO_INSTALL_AUR[*]}"
+            if $ASSUME_YES; then
+                $AUR_HELPER -S --needed --noconfirm "${TO_INSTALL_AUR[@]}"
+            else
+                read -p "  Install with $AUR_HELPER? [y/N] " -n 1 -r
+                echo ""
+                [[ $REPLY =~ ^[Yy]$ ]] && $AUR_HELPER -S --needed "${TO_INSTALL_AUR[@]}"
+            fi
+        fi
     fi
 
     # Oh My Zsh
@@ -399,7 +458,7 @@ echo "Post-install steps:"
 echo "  1. Reload Hyprland: hyprctl reload"
 echo "  2. Restart Waybar/Dunst: ~/.config/hypr/scripts/start_waybar.sh & pkill dunst && dunst &"
 echo "  3. Open nvim and run :Lazy sync"
-echo "  4. Apply Spicetify: spicetify apply"
+echo "  4. Apply Spicetify: spicetify apply (installer handles initial backup/apply)"
 echo "  5. Restart Firefox (enable userChrome in about:config)"
 echo "  6. Select 'Fox ML' theme in Cursor/VS Code"
 if $INSTALL_NVIDIA; then

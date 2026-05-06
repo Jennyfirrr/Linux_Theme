@@ -4,6 +4,22 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-06 — v1.3.1
+
+Automated the remaining manual steps for Spotify and Bluetooth support. This release makes the installation process truly "one-command" for users needing music and wireless audio.
+
+### Installer — Spotify & AUR Support
+- **AUR Helper Automation**: The installer now detects `yay` or `paru`. If neither is found, it offers to automatically install `yay-bin` from the AUR (requires confirmation or `--yes`).
+- **Spotify & Spicetify**: Added `spotify` and `spicetify-cli` to the automated dependency list. When `--deps` and `--yes` are passed, they are installed unattended.
+- **Auto-Theming**: The installer now handles the `chmod` permissions for `/opt/spotify` and runs `spicetify backup apply` automatically. Spotify now boots fully themed on the first run.
+
+### Installer — Bluetooth Support
+- **Dependencies**: Added `bluez`, `bluez-utils`, and `blueman` (GUI manager) to the base `PACMAN_PKGS`.
+- **Auto-Enable**: The installer now automatically enables and starts the `bluetooth` systemd service.
+- **Audio Integration**: Integrated with `pavucontrol` and `playerctl` (already in deps) for a seamless wireless audio experience.
+
+---
+
 ## 2026-05-06 — v1.3.0
 
 Frictionless first-boot pass. The previous release got the login screen and waybar to the user without manual steps; this one closes the remaining holes that surfaced on a clean Arch box: CLI auth flows that died with `xdg-open ENOENT`, btop launching unthemed because no `btop.conf` existed yet, and the AI CLIs (Gemini, Claude Code) needing a separate manual install pass. Also adds Gemini CLI to the themed-app list and gates the heavy XGBoost source build behind its own flag.

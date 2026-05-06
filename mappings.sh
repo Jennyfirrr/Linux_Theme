@@ -199,9 +199,25 @@ PKGJSON
 
     # Spicetify config
     if command -v spicetify &>/dev/null; then
+        # Fix permissions so spicetify can write to the Spotify directory
+        # (Needed for 'backup apply' to work)
+        if [[ -d /opt/spotify ]]; then
+            sudo chmod a+wr /opt/spotify
+            sudo chmod a+wr /opt/spotify/Apps -R
+            echo "  ✓ Spotify folder permissions updated"
+        fi
+
         spicetify config current_theme FoxML 2>/dev/null || true
         spicetify config color_scheme Base 2>/dev/null || true
-        echo "  Run 'spicetify apply' to activate"
+        
+        # Only run backup apply if we haven't already
+        if [[ -f ~/.config/spicetify/config-xpui.ini ]]; then
+             echo "  Running 'spicetify backup apply'..."
+             spicetify backup apply 2>/dev/null || spicetify apply 2>/dev/null
+             echo "  ✓ Spicetify applied"
+        else
+             echo "  Run 'spicetify backup apply' to activate"
+        fi
     fi
 
     # Bat cache rebuild
