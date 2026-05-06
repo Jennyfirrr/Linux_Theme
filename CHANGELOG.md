@@ -20,7 +20,8 @@ Major suite of Workflow and Creative upgrades. This release transitions FoxML fr
 
 ### Creative — Design & Annotation
 - **Color Picker**: Integrated `hyprpicker`. Press **`ALT + Shift + P`** to click any pixel on screen and instantly copy its Hex code to your clipboard.
-- **Pro Screenshots**: Upgraded the screenshot utility with `satty`. Region screenshots now open a modern GUI editor for instant arrows, text, and blurring. Includes a functional "Trash" button to instantly discard unwanted captures.
+- **Pro Screenshots**: Upgraded the screenshot utility with `swappy`. Region screenshots now open a lightweight GUI editor that always floats in the center of your screen. 
+- **User UX**: Fixed the "heavy app" feel by forcing the editor to float. To discard a screenshot, simply hit **`ESC`**. To save and copy, click the **Save** icon.
 
 ### Documentation & UX
 - **Keybind Overhaul**: Full refresh of `KEYBINDS.md` covering all new desktop-wide features.
