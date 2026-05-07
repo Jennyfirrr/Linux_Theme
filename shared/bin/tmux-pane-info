@@ -1,15 +1,19 @@
 #!/bin/bash
-# Comprehensive pane info for tmux border
+# Refined pane info for tmux border
 # Usage: tmux-pane-info <path> <command> <active_flag>
 
 path="${1:-$PWD}"
 cmd="${2:-}"
 active="${3:-0}"
 
-# 1. Shortened Path
+# 1. Shortened Path (just the last two segments if long)
+# ~/code/Linux_Theme -> .../Linux_Theme
 short_path=$(echo "$path" | sed "s|^$HOME|~|")
+if [[ $(echo "$short_path" | tr -cd '/' | wc -c) -gt 2 ]]; then
+    short_path=".../$(basename "$path")"
+fi
 
-# 2. Git Info (reusing logic from tmux-git-pane-label)
+# 2. Git Info (Minimalist)
 git_info=""
 git_dir=$(git -C "$path" rev-parse --git-dir 2>/dev/null)
 if [[ -n "$git_dir" ]]; then
@@ -17,39 +21,11 @@ if [[ -n "$git_dir" ]]; then
         || branch=$(git -C "$path" rev-parse --short HEAD 2>/dev/null)
     
     if [[ -n "$branch" ]]; then
-        status=$(git -C "$path" status --porcelain=v2 --branch 2>/dev/null)
-        
-        # Ahead/Behind
-        ab_line=$(echo "$status" | grep "^# branch.ab")
-        ahead=$(echo "$ab_line" | awk '{print $3}' | tr -d '+')
-        behind=$(echo "$ab_line" | awk '{print $4}' | tr -d '-')
-        [[ "$ahead" == "0" ]] && ahead=""
-        [[ "$behind" == "0" ]] && behind=""
-        
-        # Indicators
-        [[ -n "$ahead" ]] && branch="$branch ↑$ahead"
-        [[ -n "$behind" ]] && branch="$branch ↓$behind"
-        
-        # Stats
-        staged=$(echo "$status" | grep -c "^1 [MADRC]")
-        unstaged=$(echo "$status" | grep -c "^2 [MADRC]")
-        untracked=$(echo "$status" | grep -c "^?")
-        
-        stats=""
-        [[ "$staged" -gt 0 ]] && stats="${stats}+${staged} "
-        [[ "$unstaged" -gt 0 ]] && stats="${stats}~${unstaged} "
-        [[ "$untracked" -gt 0 ]] && stats="${stats}?${untracked} "
-        
-        git_info="⎇ $branch"
-        [[ -n "$stats" ]] && git_info="$git_info │ ${stats% }"
-        
-        # Last commit
-        last_commit=$(git -C "$path" log -1 --format="%h %s" 2>/dev/null | sed 's/  */ /g')
-        if [[ -n "$last_commit" ]]; then
-            c_msg=$(echo "$last_commit" | cut -d' ' -f2-)
-            c_hash=$(echo "$last_commit" | cut -d' ' -f1)
-            [[ ${#c_msg} -gt 25 ]] && c_msg="${c_msg:0:22}..."
-            git_info="$git_info │ $c_hash: $c_msg"
+        # Just branch name + a simple indicator if dirty
+        if [[ -n "$(git -C "$path" status --porcelain 2>/dev/null)" ]]; then
+            git_info="⎇ $branch ●"
+        else
+            git_info="⎇ $branch"
         fi
     fi
 fi
@@ -62,10 +38,10 @@ elif [[ -n "$VIRTUAL_ENV" ]]; then
     env_info="󰟓 $(basename "$VIRTUAL_ENV")"
 fi
 
-# Build final string
-# Format: [ActiveMarker] Session:Window │ Path │ Command │ [Env] │ [Git]
-res="$short_path │ $cmd"
-[[ -n "$env_info" ]] && res="$res │ $env_info"
-[[ -n "$git_info" ]] && res="$res │ $git_info"
+# Build final string with better spacing
+# Format: Path  │  Command  │  [Env]  │  [Git]
+res="$short_path  │  $cmd"
+[[ -n "$env_info" ]] && res="$res  │  $env_info"
+[[ -n "$git_info" ]] && res="$res  │  $git_info"
 
-echo "$res"
+echo " $res "
