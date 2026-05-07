@@ -7,7 +7,11 @@ msg="Select Network"
 # Get list of SSIDs
 options=$(nmcli -t -f SSID dev wifi list | grep -v '^--' | sort -u)
 
-chosen=$(echo -e "$options" | rofi -dmenu -i -p "$msg" -theme-str 'window {width: 400px;}')
+chosen=$(echo -e "$options" | rofi -dmenu -i -p "$msg" \
+    -kb-row-up "k,Up" \
+    -kb-row-down "j,Down" \
+    -kb-accept-entry "l,Return" \
+    -theme-str 'inputbar {enabled: false;} window {width: 30%;}')
 
 if [[ -n "$chosen" ]]; then
     # Prompt for password if not a known connection
