@@ -2,10 +2,6 @@ configuration {
     modi: "drun,run,window";
     show-icons: true;
     terminal: "kitty";
-
-    /* Global Navigation (works even when search bar is visible) */
-    kb-row-up: "Up,Control+k";
-    kb-row-down: "Down,Control+j";
-    kb-accept-entry: "Return,KP_Enter,Control+l";
 }
+
 @theme "~/.config/rofi/glass.rasi"
