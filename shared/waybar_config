@@ -113,7 +113,7 @@
   "custom/logo": {
     "format": "🦊",
     "tooltip": "Launcher",
-    "on-click": "~/.config/hypr/scripts/toggle_rofi.sh rofi -show drun"
+    "on-click": "~/.config/hypr/scripts/toggle_rofi.sh rofi -show drun -kb-row-up \"k,Up\" -kb-row-down \"j,Down\" -kb-accept-entry \"l,Return\""
   },
 
   "custom/net_speed": {

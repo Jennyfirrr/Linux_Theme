@@ -63,7 +63,7 @@ EOF
     case "$chosen" in
         *"Search Apps"*) 
             # Exit loop and launch app menu via the toggle wrapper to ensure clean handoff
-            ~/.config/hypr/scripts/toggle_rofi.sh rofi -show drun &
+            ~/.config/hypr/scripts/toggle_rofi.sh rofi -show drun -kb-row-up "k,Up" -kb-row-down "j,Down" -kb-accept-entry "l,Return" &
             exit 0
             ;;
         *"Active Windows"*)
