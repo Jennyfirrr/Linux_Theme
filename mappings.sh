@@ -63,6 +63,10 @@ TEMPLATE_MAPPINGS=(
     # Zathura
     "zathura/zathurarc|~/.config/zathura/zathurarc"
 
+    # Eww
+    "eww/eww.yuck|~/.config/eww/eww.yuck"
+    "eww/eww.scss|~/.config/eww/eww.scss"
+
     # Bat
     "bat/foxml.tmTheme|~/.config/bat/themes/Fox ML.tmTheme"
 

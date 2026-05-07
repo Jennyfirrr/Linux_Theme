@@ -7,6 +7,7 @@ This file provides persistent instructions and architectural context for the Gem
 - **Path Agnosticism**: All configuration mappings and special handlers must be path-agnostic. Use environment variables (e.g., `GEMINI_CONFIG_HOME`, `XDG_CONFIG_HOME`) with appropriate fallbacks.
 - **Mapping Patterns**: New application configurations should be added to `TEMPLATE_MAPPINGS` in `mappings.sh`. If an application requires special logic (like JSON merging or complex path resolution), use a placeholder in the mapping (e.g., `GEMINI_DIR`, `FIREFOX_PROFILE`) and implement the logic in `install_specials` and `update_specials`.
 - **No Hardcoded Home Paths**: Avoid using hardcoded `/home/user` or `~` in logic when an environment variable or standard placeholder is available.
+- **Hyprland Standard (v0.54+)**: All Hyprland configurations must use the unified `windowrule` keyword and the `col.active_border` property name. `windowrulev2` and `bordercolor` are strictly prohibited.
 
 ## Architecture
 

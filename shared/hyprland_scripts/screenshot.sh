@@ -6,8 +6,11 @@ mkdir -p "$out_dir"
 file="$out_dir/screenshot-$(date +%Y%m%d-%H%M%S).png"
 
 # Capture to stdout and pipe to swappy
-# Note: Hit 'ESC' to discard, or the 'Save' icon to keep it.
-grim -g "$(slurp)" - | swappy -f - -o "$file"
+# We use a slight delay to ensure slurp's selection box is cleared from the compositor
+# and use a fully transparent background for slurp to avoid 'white out' artifacts.
+geom=$(slurp -b 00000000 -c c4956eff)
+sleep 0.1
+grim -g "$geom" - | swappy -f - -o "$file"
 
 # Check if file was actually saved
 if [[ -f "$file" ]]; then

@@ -1,0 +1,143 @@
+;; FoxML Control Center
+;; Vertical menu hub + side drawer that mirrors the Rofi syshub layout.
+;; Triggered via ~/.config/hypr/scripts/toggle_control_center.sh
+;; Buttons dispatch through ~/.config/hypr/scripts/eww_action.sh
+
+;; ─── Polled status ───────────────────────────────────────────────────
+(defpoll volume :interval "1s"
+  "wpctl get-volume @DEFAULT_AUDIO_SINK@ 2>/dev/null | awk '{print int($2*100)}'")
+
+(defpoll wifi_status :interval "5s"
+  "ssid=$(nmcli -t -f active,ssid dev wifi 2>/dev/null | awk -F: '$1==\"yes\"{print $2; exit}'); [[ -z \"$ssid\" ]] && echo 'Disconnected' || echo \"$ssid\"")
+
+(defpoll bt_status :interval "5s"
+  "if ! bluetoothctl show 2>/dev/null | grep -q 'Powered: yes'; then echo 'Off'; else name=$(bluetoothctl info 2>/dev/null | awk -F': ' '/Name:/{print $2; exit}'); [[ -n \"$name\" ]] && echo \"$name\" || echo 'On'; fi")
+
+(defpoll nl_status :interval "10s"
+  "pkill -0 wlsunset 2>/dev/null && echo 'On' || echo 'Off'")
+
+(defpoll idle_status :interval "10s"
+  "d=$XDG_RUNTIME_DIR; [[ -z $d ]] && d=/tmp; [[ -f $d/hypridle_paused ]] && echo 'Stay Awake' || echo 'Normal'")
+
+;; ─── Drawer state ────────────────────────────────────────────────────
+(defvar drawer_panel "")
+
+;; ─── Hub row widget ──────────────────────────────────────────────────
+(defwidget hub_row [icon label status onclick]
+  (button :class "hub-row" :onclick onclick
+    (box :orientation "h" :space-evenly false
+      (label :text icon  :class "row-icon")
+      (label :text label :class "row-label" :hexpand true :xalign 0)
+      (label :text status :class "row-status" :xalign 1))))
+
+;; ─── Main hub window ─────────────────────────────────────────────────
+(defwindow control_center
+  :monitor 0
+  :stacking "fg"
+  :exclusive false
+  :focusable true
+  :geometry (geometry :x "12px" :y "50px"
+                      :width "340px" :height "640px"
+                      :anchor "top left")
+  (control_center_layout))
+
+(defwidget control_center_layout []
+  (box :class "main-box" :orientation "v" :space-evenly false
+    (label :text "FOX ML CONTROL CENTER" :class "title")
+    (box :class "menu" :orientation "v" :space-evenly false
+      (hub_row :icon "󰀻" :label "Search Apps"            :status ""
+               :onclick "~/.config/hypr/scripts/eww_action.sh apps")
+      (hub_row :icon "󰖲" :label "Active Windows"         :status ""
+               :onclick "~/.config/hypr/scripts/eww_action.sh windows")
+      (hub_row :icon "󰐥" :label "Power Menu"             :status "›"
+               :onclick "~/.config/hypr/scripts/eww_action.sh drawer power")
+      (hub_row :icon "󰖩" :label "Network"                :status wifi_status
+               :onclick "~/.config/hypr/scripts/eww_action.sh drawer network")
+      (hub_row :icon "󰂯" :label "Bluetooth"              :status bt_status
+               :onclick "~/.config/hypr/scripts/eww_action.sh drawer bluetooth")
+      (hub_row :icon "󰓃" :label "Audio"                  :status "${volume}%"
+               :onclick "~/.config/hypr/scripts/eww_action.sh drawer audio")
+      (hub_row :icon "󰖔" :label "Night Light"            :status nl_status
+               :onclick "~/.config/hypr/scripts/eww_action.sh nightlight")
+      (hub_row :icon "󱑙" :label "Idle Inhibitor"         :status idle_status
+               :onclick "~/.config/hypr/scripts/eww_action.sh idle")
+      (hub_row :icon "󰸉" :label "Next Wallpaper"         :status ""
+               :onclick "~/.config/hypr/scripts/eww_action.sh wallpaper")
+      (hub_row :icon "󰚚" :label "Sync Theme to Wallpaper" :status ""
+               :onclick "~/.config/hypr/scripts/eww_action.sh sync_theme")
+      (hub_row :icon "󰈋" :label "Color Picker"           :status ""
+               :onclick "~/.config/hypr/scripts/eww_action.sh picker")
+      (hub_row :icon "🦊" :label "System Cleanup"        :status ""
+               :onclick "~/.config/hypr/scripts/eww_action.sh cleanup")
+      (hub_row :icon "" :label "Lock Screen"            :status ""
+               :onclick "~/.config/hypr/scripts/eww_action.sh lock"))
+    (button :class "close-btn"
+            :onclick "~/.config/hypr/scripts/toggle_control_center.sh"
+      "󰗼  Close")))
+
+;; ─── Side drawer window ──────────────────────────────────────────────
+(defwindow control_center_drawer
+  :monitor 0
+  :stacking "fg"
+  :exclusive false
+  :focusable true
+  :geometry (geometry :x "364px" :y "50px"
+                      :width "320px" :height "640px"
+                      :anchor "top left")
+  (drawer_layout :panel drawer_panel))
+
+(defwidget drawer_layout [panel]
+  (box :class "drawer-box" :orientation "v" :space-evenly false
+    (box :visible {panel == "audio"}     :orientation "v" :space-evenly false (audio_panel))
+    (box :visible {panel == "network"}   :orientation "v" :space-evenly false (network_panel))
+    (box :visible {panel == "bluetooth"} :orientation "v" :space-evenly false (bluetooth_panel))
+    (box :visible {panel == "power"}     :orientation "v" :space-evenly false (power_panel))))
+
+(defwidget audio_panel []
+  (box :class "panel" :orientation "v" :space-evenly false
+    (label :text "AUDIO" :class "panel-title" :xalign 0)
+    (box :class "panel-row" :orientation "h" :space-evenly false
+      (label :text "󰓃" :class "row-icon")
+      (scale :min 0 :max 101 :value volume :hexpand true
+             :onchange "wpctl set-volume @DEFAULT_AUDIO_SINK@ {}%"))
+    (button :class "panel-btn"
+            :onclick "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
+            "Toggle Mute")
+    (button :class "panel-btn"
+            :onclick "~/.config/hypr/scripts/eww_action.sh run_close audio_switcher.sh"
+            "Switch Output Device")))
+
+(defwidget network_panel []
+  (box :class "panel" :orientation "v" :space-evenly false
+    (label :text "NETWORK" :class "panel-title" :xalign 0)
+    (label :text "Status: ${wifi_status}" :class "panel-info" :xalign 0)
+    (button :class "panel-btn"
+            :onclick "~/.config/hypr/scripts/eww_action.sh run_close network.sh"
+            "Open Network Picker")))
+
+(defwidget bluetooth_panel []
+  (box :class "panel" :orientation "v" :space-evenly false
+    (label :text "BLUETOOTH" :class "panel-title" :xalign 0)
+    (label :text "Status: ${bt_status}" :class "panel-info" :xalign 0)
+    (button :class "panel-btn"
+            :onclick "~/.config/hypr/scripts/eww_action.sh run_close bluetooth.sh"
+            "Open Bluetooth Picker")))
+
+(defwidget power_panel []
+  (box :class "panel" :orientation "v" :space-evenly false
+    (label :text "POWER" :class "panel-title" :xalign 0)
+    (button :class "panel-btn"
+            :onclick "~/.config/hypr/scripts/eww_action.sh power lock"
+            "  Lock")
+    (button :class "panel-btn"
+            :onclick "~/.config/hypr/scripts/eww_action.sh power suspend"
+            "󰒲  Suspend")
+    (button :class "panel-btn"
+            :onclick "~/.config/hypr/scripts/eww_action.sh power logout"
+            "󰗽  Logout")
+    (button :class "panel-btn"
+            :onclick "~/.config/hypr/scripts/eww_action.sh power reboot"
+            "  Reboot")
+    (button :class "panel-btn panel-btn-danger"
+            :onclick "~/.config/hypr/scripts/eww_action.sh power shutdown"
+            "󰐥  Shutdown")))

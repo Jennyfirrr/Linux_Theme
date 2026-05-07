@@ -4,6 +4,36 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-07 — v1.5.5
+
+A stability + UX pass. Hyprland 0.54.3 config errors resolved, Rofi popups consistently anchored under the workspaces, and an Eww control-center experiment paused after weighing its trade-offs.
+
+### Hyprland — Window-Rule Compatibility
+- **Swappy windowrules fixed for 0.54.3**: The inline form (`windowrule = float, class:^(swappy)$`) was failing parser validation because the colon in the regex matcher was being read as a key/value separator (`invalid field class:^(swappy)$: missing a value`). Converted to the unified block form already used throughout `rules.conf`:
+  ```
+  windowrule {
+      name = swappy-float
+      match:class = ^(swappy)$
+      float = true
+      size = 1200 800
+      center = true
+  }
+  ```
+
+### UI — Rofi Popup Alignment
+- **Top-left anchor across the board**: The drun launcher (`Mod+Shift+D`) and the `Mod+Tab` window switcher both anchor `north west` with `x-offset: 12px` and `y-offset: 50px`, so popups land directly under the workspaces in the bar instead of top-center. Folds in the recent `force top-alignment on Rofi drun launcher` and `align Rofi to top and update layer animations` commits.
+- **Robust theme loading**: Standardized on `-theme-str` overrides where positional offsets matter, so the override wins regardless of `~/.config/rofi/config.rasi` ordering. Fixes Alt+Shift+D occasionally picking up the wrong theme.
+
+### Waybar — GPU Tooltip
+- **GPU metrics folded into CPU tooltip**: Removed the standalone GPU pill; the CPU bubble's hover tooltip now lists CPU temp/load and GPU usage/temp together, matching the v1.5.4 density direction.
+
+### Eww Control Center — Paused
+- **Experiment, then revert**: Tried replacing the Rofi syshub with a graphical Eww panel + right-extending drawer for sub-menus (Audio, Network, Bluetooth, Power). Eww 0.5.0 has no native `hjkl` navigation (only GTK Tab/arrow keys), and matching the Rofi syshub UX — close handling, toggle behavior, keyboard nav — needed more plumbing than the visual upgrade justified.
+- **Disabled, not removed**: Templates (`templates/eww/eww.yuck`, `eww.scss`), the action dispatcher (`shared/hyprland_scripts/eww_action.sh`), and the toggle script remain in the repo. Disabled at three integration points so nothing auto-launches: the `Mod+Shift+H` keybind reverted to `hub.sh`, the Rofi hub's "Open Control Center (Eww)" entry removed, and `eww daemon &` commented out in `startup.sh`. Re-enabling is a one-line flip if revisited later.
+- **Toggle-loop bug fixed in the dormant script** for if/when it's re-enabled: `eww active-windows` outputs `<id>: <name>`, so the previous `^control_center$` grep never matched and the close path was unreachable. Switched to `eww list-windows` with a more lenient pattern.
+
+---
+
 ## 2026-05-07 — v1.5.4
 
 Power tuning gets a guided installer pass, and Waybar is consolidated from a 15-module sprawl into 10 dense bubbles with everything else folded into hover tooltips.

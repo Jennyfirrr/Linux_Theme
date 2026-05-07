@@ -12,6 +12,8 @@ CPU_HIGH=80
 BAT_LOW=20
 
 last_state=""
+BUSY_FILE="/tmp/fox_busy"
+DONE_FILE="/tmp/fox_done"
 
 get_cpu() {
     # Returns CPU usage as integer
@@ -19,7 +21,6 @@ get_cpu() {
 }
 
 get_bat_info() {
-    # Returns "status percentage" e.g. "Charging 85"
     if command -v upower &>/dev/null; then
         local bat
         bat=$(upower -e | grep battery | head -1)
@@ -28,7 +29,6 @@ get_bat_info() {
             return
         fi
     fi
-    # Fallback to sysfs
     if [[ -d /sys/class/power_supply/BAT0 ]]; then
         local status cap
         status=$(cat /sys/class/power_supply/BAT0/status)
@@ -51,6 +51,18 @@ update_border() {
 }
 
 while true; do
+    # Priority 0: Command Hooks (Zsh)
+    if [[ -f "$BUSY_FILE" ]]; then
+        update_border "$C_YELLOW_BRIGHT" "$C_PRIMARY"
+        sleep 1
+        continue
+    elif [[ -f "$DONE_FILE" ]]; then
+        update_border "$C_OK" "$C_GREEN_BRIGHT"
+        rm -f "$DONE_FILE"
+        sleep 2 # Hold success color for a moment
+        continue
+    fi
+
     cpu=$(get_cpu)
     read -r bat_status bat_cap <<< "$(get_bat_info)"
 

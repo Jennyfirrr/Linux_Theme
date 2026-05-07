@@ -127,7 +127,7 @@ if $INSTALL_DEPS; then
         #  - tree-sitter-cli: nvim-treesitter regenerates the latex grammar from
         #    source on this driver line; without the CLI it errors at startup
         nodejs npm tree-sitter-cli
-        # Bar + launcher + notifications
+        # Bar + launcher + notifications + widgets
         waybar rofi-wayland mako dunst
         # Build tools (cmake for C++ projects bootstrapped from this machine)
         cmake
@@ -260,6 +260,19 @@ if $INSTALL_DEPS; then
 
     if [[ -n "$AUR_HELPER" ]]; then
         echo "  ✓ AUR helper $AUR_HELPER found"
+
+        # Install Eww from AUR since it's not in official repos
+        if ! pacman -Qi eww &>/dev/null && ! pacman -Qi eww-git &>/dev/null; then
+            echo ""
+            echo "Installing Eww from AUR..."
+            if $ASSUME_YES; then
+                $AUR_HELPER -S --needed --noconfirm eww
+            else
+                read -p "  Install eww with $AUR_HELPER? [y/N] " -n 1 -r
+                echo ""
+                [[ $REPLY =~ ^[Yy]$ ]] && $AUR_HELPER -S --needed eww
+            fi
+        fi
     fi
 
     # Oh My Zsh

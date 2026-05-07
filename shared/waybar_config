@@ -20,8 +20,16 @@
     "custom/battery",
     "idle_inhibitor",
     "custom/clock",
+    "custom/system_health",
     "tray"
   ],
+
+  "custom/system_health": {
+    "exec": "~/.config/waybar/scripts/system_health.sh",
+    "return-type": "json",
+    "interval": 10,
+    "tooltip": true
+  },
 
   "hyprland/workspaces": {
     "format": "{name}",
@@ -92,6 +100,16 @@
     "exec": "~/.config/waybar/scripts/net_speed.sh",
     "return-type": "json",
     "interval": 2,
+    "tooltip": true
+  },
+
+  "custom/media": {
+    "exec": "~/.config/waybar/scripts/media.sh",
+    "return-type": "json",
+    "interval": 2,
+    "on-click": "playerctl play-pause",
+    "on-scroll-up": "playerctl next",
+    "on-scroll-down": "playerctl previous",
     "tooltip": true
   },
 

@@ -82,6 +82,14 @@ gpp() {
 # FoxML Utilities
 # ─────────────────────────────────────────
 
+# Border Telemetry Hooks
+# Signals command start/finish to ~/.config/hypr/scripts/border_telemetry.sh
+fox_preexec() { touch /tmp/fox_busy; }
+fox_precmd() { [[ -f /tmp/fox_busy ]] && { rm -f /tmp/fox_busy; touch /tmp/fox_done; }; }
+autoload -Uz add-zsh-hook
+add-zsh-hook preexec fox_preexec
+add-zsh-hook precmd fox_precmd
+
 # System maintenance helper
 fox-clean() {
     echo "🦊 Starting FoxML System Cleanup..."

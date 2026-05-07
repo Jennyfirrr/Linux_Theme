@@ -88,6 +88,15 @@ window#waybar > box {
     margin: 2px 2px;
 }
 
+#workspaces button.persistent {
+    color: @dim;
+}
+
+#workspaces button:not(.empty) {
+    color: @fg;
+    border-bottom: 2px solid @peach;
+}
+
 #workspaces button.active {
     background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.35);
     color: @peach;
