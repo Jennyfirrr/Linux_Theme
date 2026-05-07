@@ -13,15 +13,19 @@ A stability + UX pass. Hyprland 0.54.3 config errors resolved, Rofi popups seaml
 - **Dynamic Popup Anchoring**: `start_waybar.sh` now dynamically calculates the exact pixel coordinates for the bottom edge of the Waybar and the left edge of the launcher box, exporting them as `ROFI_Y` and `ROFI_X`.
 - **Flush Glass Theme**: Updated the Rofi `glass.rasi` theme to use a 1px 40%-opacity border (matching Waybar) and removed top padding. The popup now overlaps the Waybar border by exactly 1px, creating a seamless "drop-down" extension of the launcher box.
 - **Global Toggle Wrapper**: Introduced `shared/hyprland_scripts/toggle_rofi.sh` to centralize Rofi toggling (killing active instances) and positioning injection. This fixes the "unexpected pixels" syntax error caused by Hyprland aggressively evaluating `$$` as PIDs instead of passing variables to the shell.
-- **Clean Hub Navigation**: The `Active Windows` view launched from within the SysHub now hides its search bar, keeping the Hub experience clean. The standalone `Alt+Tab` bind was also updated to hide the search bar for a cleaner utility feel.
-- **Calculator & Emoji Picker**: Added `rofi-calc` and `rofi-emoji` to the installer dependencies and integrated them directly into the SysHub. Both use the unified `j/k` navigation.
+- **Centralized Hub Workflow**: Swapped the primary hotkey **`Alt + Shift + D`** (and the Waybar Fox icon) to open the **SysHub** directly. Standalone hotkeys for Search and Active Windows were removed to encourage a Hub-centric workflow.
+- **Vim-Style Navigation & Exits**:
+    - **`j/k`**: Scroll up/down through all menus.
+    - **`l` or `Enter`**: Select/Execute items.
+    - **`h`**: Instantly exits the Hub and sub-menus (Power, Network, etc.), providing a fast Vim-like escape.
+- **Calculator & Emoji Picker**: Added `rofi-calc` and `rofi-emoji` to the installer dependencies and integrated them directly into the SysHub. Both use the unified `j/k/l` navigation.
 - **Workspace App Icons**: Implemented Waybar's `window-rewrite` feature to display Nerd Font application icons next to the active workspace numbers (e.g., `1 󰈹` for Firefox), providing lightweight, real-time app tracking.
 - **Fox Launcher Logo**: Swapped the default Arch Linux logo in the Waybar launcher for a Fox icon (`🦊`) to match the project's branding.
 - **Polished Tooltips & Notifications**: Themed Waybar hover tooltips and system notifications (Dunst & Mako) to perfectly match the new Rofi glass aesthetic—featuring 90% opaque earthy backgrounds, 0px corner radii, and translucent 1px borders.
 - **Tmux Git Ahead/Behind Counts**: The tmux status bar now tracks how many commits your current feature branch is ahead (↑) or behind (↓) the default branch (`main` or `master`), alongside the existing dirty indicator.
 
 ### Installer — Proper Deployment & Performance
-- **Fixed `--render-only`**: The `install.sh --render-only` flag now correctly deploys updated `shared/` scripts and modules to your live config directories. Previously, it only regenerated templates, leaving the system running outdated logic.
+- **Fixed `--render-only`**: The `install.sh --render-only` flag now correctly deploys updated `shared/` scripts, `bin/` helpers, and modules to your live config directories. Previously, it only regenerated templates, leaving the system running outdated logic.
 - **Hub Speedup**: The SysHub (`hub.sh`) now uses `nmcli connection show --active` instead of a full WiFi scan, eliminating the 2-3 second startup lag.
 
 ### Hyprland — Window-Rule Compatibility
