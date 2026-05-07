@@ -7,7 +7,8 @@ chosen=$(printf "󰐥  Shutdown\n󰜉  Reboot\n󰤄  Suspend\n  Lock\n󰗼  L
     -kb-row-up "k,Up" \
     -kb-row-down "j,Down" \
     -kb-accept-entry "l,Return" \
-    -theme-str 'mainbox {children: [listview];} window {width: 400px;}')
+    -theme-str 'inputbar {enabled: false;} window {width: 400px;}'")
+
 
 case "$chosen" in
     "󰐥  Shutdown") systemctl poweroff ;;

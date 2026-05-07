@@ -7,7 +7,8 @@ chosen=$(printf "󰐥  Power Menu\n󰂯  Bluetooth\n󰖩  Network\n󰓃  Audio S
     -kb-row-up "k,Up" \
     -kb-row-down "j,Down" \
     -kb-accept-entry "l,Return" \
-    -theme-str 'mainbox {children: [listview];} window {width: 400px;}')
+    -theme-str 'inputbar {enabled: false;} window {width: 400px;}'")
+
 
 case "$chosen" in
     "󰐥  Power Menu") ~/.config/hypr/scripts/powermenu.sh ;;

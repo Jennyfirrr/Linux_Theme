@@ -14,7 +14,8 @@ chosen=$(echo -e "$options" | rofi -dmenu -i -p "$msg" \
     -kb-row-up "k,Up" \
     -kb-row-down "j,Down" \
     -kb-accept-entry "l,Return" \
-    -theme-str 'mainbox {children: [listview];} window {width: 400px;}')
+    -theme-str 'inputbar {enabled: false;} window {width: 400px;}'")
+
 
 if [[ -n "$chosen" ]]; then
     # Prompt for password if not a known connection
