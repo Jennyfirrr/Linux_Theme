@@ -51,7 +51,7 @@ window#waybar > box {
 /* ─────────────────────────────────────────
    Module Base Style
    ───────────────────────────────────────── */
-#workspaces,
+#workspaces button,
 #network,
 #pulseaudio,
 #backlight,
@@ -80,22 +80,32 @@ window#waybar > box {
    Workspaces
    ───────────────────────────────────────── */
 #workspaces {
+    background-color: transparent;
+    border: none;
     padding: 0;
+    margin: 0;
 }
 
 #workspaces button {
     color: @dim;
-    border: none;
-    border-radius: 0;
-    padding: __PAD_MOD__;
+    padding: 0px 12px;
+    margin: __MARGIN_MOD__;
 }
 
 #workspaces button.active {
-    background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.25);
+    background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.35);
     color: @peach;
+    border: 1px solid @peach;
     box-shadow: inset 0 0 8px rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.5);
     text-shadow: 0 0 8px rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.5);
 }
+
+#workspaces button.urgent {
+    background-color: rgba({{RED_R}},{{RED_G}},{{RED_B}}, 0.3);
+    color: #{{RED}};
+    border: 1px solid #{{RED}};
+}
+
 
 #workspaces button:hover {
     background-color: @bubble_hover;
