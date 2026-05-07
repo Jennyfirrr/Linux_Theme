@@ -59,6 +59,7 @@ for mapping in "${TEMPLATE_MAPPINGS[@]}"; do
 
     # Skip Firefox and conditional entries
     [[ "$dest" == *"FIREFOX_PROFILE"* ]] && continue
+    [[ "$dest" == *"GEMINI_DIR"* ]] && continue
     [[ "$dest" == *".oh-my-zsh"* && ! -d "$HOME/.oh-my-zsh" ]] && continue
 
     if [[ -f "$dest" ]]; then

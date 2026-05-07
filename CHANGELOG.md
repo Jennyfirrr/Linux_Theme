@@ -4,6 +4,38 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-06 — v1.3.0
+
+Frictionless first-boot pass. The previous release got the login screen and waybar to the user without manual steps; this one closes the remaining holes that surfaced on a clean Arch box: CLI auth flows that died with `xdg-open ENOENT`, btop launching unthemed because no `btop.conf` existed yet, and the AI CLIs (Gemini, Claude Code) needing a separate manual install pass. Also adds Gemini CLI to the themed-app list and gates the heavy XGBoost source build behind its own flag.
+
+### Installer — XDG default browser + `xdg-utils`
+- **`xdg-utils`** added to `PACMAN_PKGS` (Apps + viewers group). Without it, CLI auth helpers — gcloud, gh, oauth flows — try to spawn a browser via `xdg-open` and die with `ENOENT` on a fresh install.
+- New post-pacman block runs `xdg-settings set default-web-browser firefox.desktop` automatically (idempotent — writes `~/.config/mimeapps.list`). Guarded on `xdg-settings` being on PATH and `firefox.desktop` existing in `/usr/share/applications`, so re-runs and non-firefox systems are no-ops.
+
+### Installer — AI CLIs via npm
+- New global-CLI block in `--deps` installs `@google/gemini-cli` (→ `gemini`) and `@anthropic-ai/claude-code` (→ `claude`) via `sudo npm install -g`. Idempotent: probes PATH for each command name and only installs the missing ones, so re-runs print `✓ Gemini CLI + Claude Code already installed`.
+- Sits after the Oh My Zsh step and depends on `nodejs npm` already being in `PACMAN_PKGS` (was added in v1.0.1 for nvim Mason).
+
+### Installer — `--xgboost` flag (source build)
+- New top-level `if $INSTALL_XGBOOST;` section, gated behind `--xgboost`. Clones `dmlc/xgboost` (recursive) to `~/code/xgboost`, runs `cmake .. -DBUILD_STATIC_LIB=OFF && make -j$(nproc) && sudo make install && sudo ldconfig`. ~5–10 min compile, opt-in because most users won't need it.
+- Idempotent at three levels: skipped entirely if `/usr/local/lib/libxgboost.so` already exists; clone is guarded by an `[[ -d ... ]]` check; the build runs in a subshell with its own `set -e` so a compile failure doesn't abort the rest of the installer.
+- Hard-fails early if `cmake` is missing with a hint to run `--deps` first or `pacman -S cmake`.
+- `--xgboost` joins `--deps` / `--nvidia` in the unattended-mode sudo-cache check, so `-y --xgboost` doesn't pause for a password mid-build.
+- `cmake` added to `PACMAN_PKGS` (new "Build tools" group) so `--deps --xgboost` works in one pass.
+
+### Themes — Gemini CLI integration
+- `templates/gemini/settings.json` (placeholders for the FoxML custom theme) and `rendered/gemini/settings.json` (FoxML_Classic-rendered output) added. Uses placeholders already present in both shipping palettes (`BG`, `FG`, `PRIMARY`, `SURFACE`, `YELLOW`, `BLUE`, `GREEN_BRIGHT`, `RED`, `COMMENT`, `DIFF_ADD`, `DIFF_DELETE`).
+- New `GEMINI_DIR` placeholder in `TEMPLATE_MAPPINGS` (`mappings.sh`), resolved to `${GEMINI_CONFIG_HOME:-$HOME/.gemini}` by the special handler. Skip-guards added in `install.sh` and `update.sh` so the generic copy loop bypasses the entry — the merge can't be a plain copy or it would clobber `security.auth`.
+- `install_specials()` jq-merges the rendered `ui` block into `~/.gemini/settings.json` (`jq -s '.[0] * .[1]'`), so existing keys (auth, MCP servers, model selection) are preserved across re-installs. Falls back to a plain copy if the file doesn't exist yet, or prints a warning if jq fails.
+- `update_specials()` reverses the flow: `jq '{ui: .ui}'` extracts only the UI block back into `templates/gemini/settings.json`, keeping security/auth state out of the captured template (so `update.sh` doesn't leak session creds into the repo).
+- `GEMINI.md` ported from the cpp-rewrite branch — architectural mandates and refactor notes for the future C++ CLI.
+
+### Bugfix — btop on fresh install
+- `mappings.sh` btop handler now creates `~/.config/btop/btop.conf` with `color_theme = "foxml"` if the file doesn't exist. Previously the handler only flipped an existing config, so on a fresh box (no `btop.conf` yet — btop creates it on first launch) the theme silently no-op'd: the rendered `foxml.theme` landed in `~/.config/btop/themes/`, but nothing pointed at it. btop auto-fills the rest of the defaults on first run, so the one-line config is enough.
+- Three explicit branches: missing file → create; `color_theme = "foxml"` already → noop; `color_theme = ` line present → sed; line entirely absent → append.
+
+---
+
 ## 2026-05-06 — v1.2.0
 
 Hands-off install pass. The previous release left three things to the user as manual post-install dances: copy regreet files into `/etc/greetd/` and write `config.toml`, fetch the Catppuccin cursor theme by hand, and re-tune the waybar by hand when moving between a 4K and a 1080p screen. All three are now driven by the installer + a single runtime wrapper.

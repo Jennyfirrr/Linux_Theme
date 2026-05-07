@@ -1,7 +1,7 @@
 #!/bin/bash
 # FoxML Theme Hub — Installer
 # Renders templates with theme palette, copies to system
-# Usage: ./install.sh [theme_name] [--deps]
+# Usage: ./install.sh [theme_name] [--deps] [--nvidia] [--xgboost] [-y|--yes]
 
 set -e
 
@@ -21,6 +21,7 @@ source "$SCRIPT_DIR/render.sh"
 THEME_NAME=""
 INSTALL_DEPS=false
 INSTALL_NVIDIA=false
+INSTALL_XGBOOST=false
 ASSUME_YES=false
 DEFAULT_THEME="FoxML_Classic"
 
@@ -28,6 +29,7 @@ for arg in "$@"; do
     case "$arg" in
         --deps) INSTALL_DEPS=true ;;
         --nvidia) INSTALL_NVIDIA=true ;;
+        --xgboost) INSTALL_XGBOOST=true ;;
         -y|--yes) ASSUME_YES=true ;;
         *) THEME_NAME="$arg" ;;
     esac
@@ -36,9 +38,9 @@ done
 # Non-interactive mode: default theme + prime sudo cache so pacman doesn't pause
 if $ASSUME_YES; then
     [[ -z "$THEME_NAME" ]] && THEME_NAME="$DEFAULT_THEME"
-    if $INSTALL_DEPS || $INSTALL_NVIDIA; then
+    if $INSTALL_DEPS || $INSTALL_NVIDIA || $INSTALL_XGBOOST; then
         echo "Caching sudo credentials for unattended install..."
-        sudo -v || { echo "sudo required for --deps / --nvidia"; exit 1; }
+        sudo -v || { echo "sudo required for --deps / --nvidia / --xgboost"; exit 1; }
         # Keep sudo alive for the rest of the script
         ( while true; do sudo -n true; sleep 50; done 2>/dev/null ) &
         SUDO_KEEPALIVE_PID=$!
@@ -127,14 +129,17 @@ if $INSTALL_DEPS; then
         nodejs npm tree-sitter-cli
         # Bar + launcher + notifications
         waybar rofi-wayland mako dunst
+        # Build tools (cmake for C++ projects bootstrapped from this machine)
+        cmake
         # Shell + tooling
         zsh fzf eza bat yazi btop fd zoxide jq git-delta github-cli pacman-contrib
         # unzip is needed by install_catppuccin_cursor (extracts the release zip)
         unzip
         # Screenshots + clipboard + media keys
         grim slurp wl-clipboard playerctl brightnessctl pavucontrol
-        # Apps + viewers
-        firefox zathura zathura-pdf-mupdf
+        # Apps + viewers (xdg-utils provides xdg-open / xdg-settings so CLI tools
+        # — gcloud, gh, etc. — can spawn the default browser without ENOENT)
+        firefox zathura zathura-pdf-mupdf xdg-utils
         # Power profile switcher (waybar power-profiles-daemon module);
         # python-gobject is the optional dep that makes `powerprofilesctl` work
         # for click-to-switch handlers
@@ -167,6 +172,14 @@ if $INSTALL_DEPS; then
         echo "  All packages already installed"
     fi
 
+    # Default web browser — wire xdg-open to Firefox so CLI auth flows
+    # (gcloud, gh, oauth helpers) launch a browser instead of ENOENT-ing.
+    # Idempotent: writes the user's ~/.config/mimeapps.list.
+    if command -v xdg-settings &>/dev/null && [[ -f /usr/share/applications/firefox.desktop ]]; then
+        xdg-settings set default-web-browser firefox.desktop \
+            && echo "  ✓ Default browser set to Firefox"
+    fi
+
     # Enable power-profiles-daemon (waybar module needs it active to read profiles)
     if pacman -Qi power-profiles-daemon &>/dev/null \
         && ! systemctl is-active --quiet power-profiles-daemon; then
@@ -183,6 +196,59 @@ if $INSTALL_DEPS; then
             echo ""
             [[ $REPLY =~ ^[Yy]$ ]] && sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
         fi
+    fi
+
+    # Global CLI tools (npm). Idempotent: only installs ones missing from PATH.
+    #  - @google/gemini-cli      → `gemini`  (Google Gemini)
+    #  - @anthropic-ai/claude-code → `claude` (Anthropic Claude Code)
+    if command -v npm &>/dev/null; then
+        NPM_GLOBALS=()
+        command -v gemini &>/dev/null || NPM_GLOBALS+=("@google/gemini-cli")
+        command -v claude &>/dev/null || NPM_GLOBALS+=("@anthropic-ai/claude-code")
+        if [[ ${#NPM_GLOBALS[@]} -gt 0 ]]; then
+            echo ""
+            echo "Installing CLI tools (npm -g): ${NPM_GLOBALS[*]}"
+            sudo npm install -g "${NPM_GLOBALS[@]}" \
+                && echo "  ✓ Installed: ${NPM_GLOBALS[*]}" \
+                || echo "  ⚠ npm install failed — see output above"
+        else
+            echo "  ✓ Gemini CLI + Claude Code already installed"
+        fi
+    fi
+fi
+
+# ─────────────────────────────────────────
+# XGBoost — built from source (not in any Arch repo). Heavy: ~5–10 min compile.
+# Used by the FoxML_Trader training pipeline and other ML projects.
+# Gated behind its own --xgboost flag since most users won't need it.
+# Idempotent: skipped entirely if libxgboost.so is already installed system-wide.
+# ─────────────────────────────────────────
+if $INSTALL_XGBOOST; then
+    if [[ -f /usr/local/lib/libxgboost.so ]]; then
+        echo ""
+        echo "XGBoost already installed (skipping build)"
+    else
+        echo ""
+        echo "Building XGBoost from source (~5-10 min)..."
+        # Hard-fail early if cmake is missing — saves a clone before the build dies.
+        if ! command -v cmake &>/dev/null; then
+            echo "  ✗ cmake not found. Run with --deps first, or: sudo pacman -S cmake"
+            exit 1
+        fi
+        XGB_DIR="$HOME/code/xgboost"
+        [[ -d "$XGB_DIR" ]] || git clone --recursive https://github.com/dmlc/xgboost.git "$XGB_DIR"
+        # Subshell isolates the build's set -e so a failure here doesn't abort the
+        # rest of the installer — XGBoost is opt-in via --xgboost.
+        (
+            set -e
+            cd "$XGB_DIR"
+            mkdir -p build && cd build
+            cmake .. -DBUILD_STATIC_LIB=OFF
+            make -j"$(nproc)"
+            sudo make install
+            sudo ldconfig
+        ) && echo "  ✓ XGBoost installed to /usr/local/" \
+          || echo "  ⚠ XGBoost build failed — see output above (continuing)"
     fi
 fi
 
@@ -234,6 +300,9 @@ for mapping in "${TEMPLATE_MAPPINGS[@]}"; do
 
     # Skip Firefox (handled by specials) and entries with FIREFOX_PROFILE
     [[ "$dest" == *"FIREFOX_PROFILE"* ]] && continue
+
+    # Skip Gemini (handled by specials — needs jq merge to preserve auth keys)
+    [[ "$dest" == *"GEMINI_DIR"* ]] && continue
 
     # Skip if oh-my-zsh not installed (for caramel theme)
     [[ "$dest" == *".oh-my-zsh"* && ! -d "$HOME/.oh-my-zsh" ]] && continue

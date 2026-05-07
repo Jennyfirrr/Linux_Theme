@@ -73,6 +73,10 @@ TEMPLATE_MAPPINGS=(
     # Bat
     "bat/foxml.tmTheme|~/.config/bat/themes/Fox ML.tmTheme"
 
+    # Gemini CLI — GEMINI_DIR placeholder is resolved by the special handler,
+    # which jq-merges into the user's settings.json to preserve security.auth.
+    "gemini/settings.json|GEMINI_DIR/settings.json"
+
     # Git (delta pager — included from ~/.gitconfig, doesn't touch user identity)
     "git/delta.gitconfig|~/.config/git/delta-foxml.gitconfig"
 
@@ -204,6 +208,28 @@ PKGJSON
     if command -v bat &>/dev/null; then
         bat cache --build &>/dev/null
         echo "  ✓ Bat cache rebuilt"
+    fi
+
+    # Gemini CLI — merge the rendered ui block into the user's settings.json so
+    # security/auth keys are preserved. Falls back to a plain copy if the file
+    # doesn't exist yet, or if jq isn't available.
+    local gemini_dir="${GEMINI_CONFIG_HOME:-$HOME/.gemini}"
+    local gemini_settings="$gemini_dir/settings.json"
+    if [[ -f "$rendered_dir/gemini/settings.json" ]]; then
+        if [[ -f "$gemini_settings" ]]; then
+            local tmp_settings; tmp_settings="$(mktemp)"
+            if jq -s '.[0] * .[1]' "$gemini_settings" "$rendered_dir/gemini/settings.json" > "$tmp_settings" 2>/dev/null; then
+                mv "$tmp_settings" "$gemini_settings"
+                echo "  ✓ Gemini theme merged"
+            else
+                rm -f "$tmp_settings"
+                echo "  ⚠ Gemini merge failed, skipping"
+            fi
+        else
+            mkdir -p "$(dirname "$gemini_settings")"
+            cp "$rendered_dir/gemini/settings.json" "$gemini_settings"
+            echo "  ✓ Gemini theme installed"
+        fi
     fi
 
     # ~/.local/bin helpers (tmux pane-label, etc.) — referenced by configs but
@@ -362,15 +388,23 @@ PKGJSON
         echo "  ✓ git delta include → $delta_inc"
     fi
 
-    # btop — flip user's btop.conf to the FoxML theme (file is owned by btop)
+    # btop — point btop.conf at the FoxML theme. If btop hasn't run yet there's
+    # no btop.conf; create a one-line config (btop auto-fills the rest of the
+    # defaults on first launch). Without this branch the theme silently no-ops
+    # on first install.
     local btop_conf="$HOME/.config/btop/btop.conf"
-    if [[ -f "$btop_conf" ]]; then
-        if grep -qE '^color_theme\s*=\s*"foxml"' "$btop_conf"; then
-            echo "  ✓ btop already on FoxML theme"
-        else
-            sed -i -E 's|^(color_theme\s*=\s*).*|\1"foxml"|' "$btop_conf"
-            echo "  ✓ btop color_theme → foxml"
-        fi
+    if [[ ! -f "$btop_conf" ]]; then
+        mkdir -p "$(dirname "$btop_conf")"
+        echo 'color_theme = "foxml"' > "$btop_conf"
+        echo "  ✓ btop.conf created with FoxML theme"
+    elif grep -qE '^color_theme\s*=\s*"foxml"' "$btop_conf"; then
+        echo "  ✓ btop already on FoxML theme"
+    elif grep -qE '^color_theme\s*=' "$btop_conf"; then
+        sed -i -E 's|^(color_theme\s*=\s*).*|\1"foxml"|' "$btop_conf"
+        echo "  ✓ btop color_theme → foxml"
+    else
+        echo 'color_theme = "foxml"' >> "$btop_conf"
+        echo "  ✓ btop color_theme → foxml"
     fi
 
     # Systemd user units (wallpaper rotation timer, etc.)
@@ -681,6 +715,21 @@ update_specials() {
             [[ -f "$spice_dir/$f" ]] && sed "$sed_expr" "$spice_dir/$f" > "$template_dir/spicetify/$f"
         done
         echo "  ✓ Spicetify"
+    fi
+
+    # Gemini CLI — pull only the ui block back into the template; keeping
+    # security/auth out of the captured template avoids leaking session creds
+    # into the repo on `update.sh`.
+    local gemini_dir="${GEMINI_CONFIG_HOME:-$HOME/.gemini}"
+    local gemini_settings="$gemini_dir/settings.json"
+    if [[ -f "$gemini_settings" ]]; then
+        local tmp_ui; tmp_ui="$(mktemp)"
+        if jq '{ui: .ui}' "$gemini_settings" > "$tmp_ui" 2>/dev/null; then
+            mkdir -p "$template_dir/gemini"
+            sed "$sed_expr" "$tmp_ui" > "$template_dir/gemini/settings.json"
+            echo "  ✓ Gemini theme"
+        fi
+        rm -f "$tmp_ui"
     fi
 
     # Hyprland scripts
