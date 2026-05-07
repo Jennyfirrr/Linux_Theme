@@ -70,13 +70,9 @@ zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}' 'r:|[._-]=* r:|=*'
 zstyle ':completion:*' squeeze-slashes true
 
 # ─── Colored man pages ───────────────────────
-export LESS_TERMCAP_mb=$'\e[1;38;5;{{ANSI_ACCENT3}}m'
-export LESS_TERMCAP_md=$'\e[1;38;5;{{ANSI_ACCENT1}}m'
-export LESS_TERMCAP_me=$'\e[0m'
-export LESS_TERMCAP_se=$'\e[0m'
-export LESS_TERMCAP_so=$'\e[38;5;{{ANSI_STANDOUT_BG}};48;5;{{ANSI_ACCENT2}}m'
-export LESS_TERMCAP_ue=$'\e[0m'
-export LESS_TERMCAP_us=$'\e[4;38;5;{{ANSI_ACCENT3}}m'
+# Uses bat with the FoxML palette to highlight manual pages.
+# Zero bloat: replaces the 8+ LESS_TERMCAP lines with one robust pager command.
+export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 
 # ─── fzf ──────────────────────────────────────
 source /usr/share/fzf/key-bindings.zsh
