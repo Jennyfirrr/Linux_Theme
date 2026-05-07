@@ -582,11 +582,10 @@ local plugins = {
         enabled = true,
         preset = {
           header = [[
-      /\   /\
-     /  ▀▄▀  \
-    (  o   o  )
-     \   V   /
-      '-----'
+         /\_∕\
+        (˚ˎ 。7
+         |、^ 〵
+            じしˍ,)ノ
 
     ~ F o x M L ~
           ]],
