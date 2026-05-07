@@ -6,14 +6,23 @@ All notable changes to the Fox ML theme.
 
 ## 2026-05-06 — v1.5.2
 
-Enhanced window management with themed tabbed groups.
+Aesthetic refinement and power-user window management. Perfected UI transparency, bar alignment, and browser integration.
 
 ### Workflow — Tabbed Window Groups
 - **Themed Groupbar**: Enabled Hyprland "Groups" (Window Tabs) with a custom FoxML look. Active tabs use the earthy Peach palette, while inactive tabs stay in the subtle Slate color.
 - **Group Keybinds**:
     - **`ALT + G`**: Toggle the current window into/out of a group.
     - **`ALT + [`** and **`ALT + ]`**: Cycle between tabs in the current group.
-- **Aesthetic Integration**: Sharp corners and 0px rounding maintained across all group elements for a consistent "Distro Lite" feel.
+
+### Aesthetics — Perfect Transparency & Glass
+- **Rofi Fixed**: Resolved "opacity stacking" where inner elements were making the menus look opaque. Transparency is now applied only at the window level, allowing for a pure frosted glass look.
+- **Waybar Alignment**: The top bar now dynamically reads your Hyprland `gaps_out` and sets its margins to match. It now aligns perfectly with your windows for a seamless "floating" aesthetic.
+- **Improved Scaling**: Refined font sizes and heights across all resolution profiles to ensure UI elements are proportional and highly readable on 1080p, 1440p, and 4K displays.
+
+### Firefox — Distro-Grade UI Refinement
+- **Context Menu Fix**: Eliminated the "white background" glitch on context menus by aggressively forcing earthy backgrounds and disabling native theme overrides.
+- **URL Bar Dropdown**: Refined the search suggestion dropdown with proper dark backgrounds, sharp borders, and high-contrast peach selection highlights.
+- **Unified Sharpness**: Ensured all popups, panels, and menus maintain 0px rounding for a consistent FoxML aesthetic.
 
 ---
 

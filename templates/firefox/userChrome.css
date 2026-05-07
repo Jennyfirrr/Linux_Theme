@@ -118,10 +118,15 @@ toolbarbutton.titlebar-button,
 #urlbar-results,
 .urlbarView,
 .urlbarView-body-inner,
-.urlbarView-body-outer {
+.urlbarView-body-outer,
+#urlbar-anon-search-settings {
+  -moz-appearance: none !important;
   background: var(--fox-bg) !important;
+  background-color: var(--fox-bg) !important;
   color: var(--fox-fg) !important;
   border-radius: 0 !important;
+  border: 1px solid var(--fox-peach) !important;
+  border-top: none !important;
 }
 
 .urlbarView-row,
@@ -133,7 +138,8 @@ toolbarbutton.titlebar-button,
 
 .urlbarView-row:hover,
 .urlbarView-row[selected] {
-  background: var(--fox-bg-alt) !important;
+  background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.25) !important;
+  color: var(--fox-peach) !important;
 }
 
 .urlbarView-title strong,
@@ -360,40 +366,51 @@ toolbarbutton.titlebar-button,
 }
 
 /* ===== Menus & Popups ===== */
-menupopup {
+menupopup,
+panel,
+panelview,
+panelmultiview,
+.panel-arrowcontent {
+  -moz-appearance: none !important;
   background: var(--fox-bg) !important;
+  background-color: var(--fox-bg) !important;
   color: var(--fox-pastel) !important;
   border: 2px solid var(--fox-peach) !important;
   border-radius: 0 !important;
   padding: 4px !important;
 }
 
-menuitem {
+menuitem,
+menu {
+  -moz-appearance: none !important;
   color: var(--fox-pastel) !important;
   border-radius: 0 !important;
 }
 
-menuitem:hover {
+menuitem:hover,
+menu:hover,
+menuitem[_moz-menuactive="true"],
+menu[_moz-menuactive="true"] {
+  -moz-appearance: none !important;
   background: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.25) !important;
   color: var(--fox-peach) !important;
 }
 
-menuitem[disabled="true"] {
+menuitem[disabled="true"],
+menu[disabled="true"] {
   color: var(--fox-dim) !important;
 }
 
 menuseparator {
-  border-color: var(--fox-slate) !important;
+  -moz-appearance: none !important;
+  border-top: 1px solid var(--fox-slate) !important;
+  margin: 4px 8px !important;
+  padding: 0 !important;
 }
 
-/* Panels */
-panel,
-.panel-arrowcontent,
-panelview,
-panelmultiview {
-  background: var(--fox-bg) !important;
-  color: var(--fox-pastel) !important;
-  border-radius: 0 !important;
+/* Sidebar context menu fix */
+#sidebar-box menupopup {
+  background-color: var(--fox-bg) !important;
 }
 
 .panel-viewstack,
