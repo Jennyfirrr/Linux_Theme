@@ -523,7 +523,7 @@ Shows indent guides automatically. No keybinds.
 | Key | Action |
 |-----|--------|
 | `ALT + Shift + Q` | Kill window |
-| `ALT + Shift + G` | Toggle floating |
+| `ALT + Shift + G` | **Snap and Float** (Center current window) |
 | `ALT + P` | Pin window |
 | `ALT + S` | Toggle split |
 | `ALT + h/j/k/l` | Focus left/down/up/right |
