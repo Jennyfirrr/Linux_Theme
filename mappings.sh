@@ -117,11 +117,6 @@ SHARED_MAPPINGS=(
 
     # Waybar config
     "waybar_config|~/.config/waybar/config.tmpl"
-    "waybar_scripts/cpu.sh|~/.config/waybar/scripts/cpu.sh"
-    "waybar_scripts/gpu.sh|~/.config/waybar/scripts/gpu.sh"
-    "waybar_scripts/disk.sh|~/.config/waybar/scripts/disk.sh"
-    "waybar_scripts/updates.sh|~/.config/waybar/scripts/updates.sh"
-    "waybar_scripts/ppd_cycle.sh|~/.config/waybar/scripts/ppd_cycle.sh"
 
     # ReGreet (login screen — needs sudo to install to /etc/greetd/)
     # "regreet.toml|/etc/greetd/regreet.toml"
@@ -239,6 +234,17 @@ PKGJSON
             cp "$script" "$HOME/.config/hypr/scripts/$(basename "$script")"
             chmod +x "$HOME/.config/hypr/scripts/$(basename "$script")"
             echo "  ✓ scripts/$(basename "$script")"
+        done
+    fi
+
+    # Waybar scripts
+    if [[ -d "$SCRIPT_DIR/shared/waybar_scripts" ]]; then
+        mkdir -p ~/.config/waybar/scripts
+        for script in "$SCRIPT_DIR/shared/waybar_scripts/"*.sh; do
+            [[ -f "$script" ]] || continue
+            cp "$script" "$HOME/.config/waybar/scripts/$(basename "$script")"
+            chmod +x "$HOME/.config/waybar/scripts/$(basename "$script")"
+            echo "  ✓ waybar/$(basename "$script")"
         done
     fi
 
@@ -655,6 +661,174 @@ EOF
     else
         echo "  • greetd already enabled"
     fi
+}
+
+# ─────────────────────────────────────────
+# CPU throttling / power tuning — interactive wizard prompted at end of
+# install. Each step is its own y/N so users can pick & choose:
+#   * Intel turbo disable → /etc/tmpfiles.d/disable-turbo.conf
+#     (systemd-tmpfiles re-applies on every boot, so the kernel reset
+#     after suspend/wake doesn't bring turbo back)
+#   * cpupower max-frequency cap → persisted via /etc/default/cpupower
+#     and cpupower.service so it survives reboots
+#   * Optional CPU governor (powersave / performance / schedutil / etc.)
+#   * throttled — Lenovo ThinkPad MSR-based undervolt + temperature fix
+#     from AUR (only offered when DMI says ThinkPad)
+# Skipped under -y because every step needs a user-chosen value.
+# ─────────────────────────────────────────
+
+# Idempotent KEY=VALUE writer for /etc/default/cpupower (sourced as shell
+# by the cpupower service). Replaces an existing key if present, else
+# appends. Numeric values pass unquoted; quote string values at the call
+# site (`'performance'`).
+_persist_cpupower() {
+    local key="$1" val="$2"
+    sudo install -d /etc/default
+    [[ -f /etc/default/cpupower ]] || echo "" | sudo tee /etc/default/cpupower >/dev/null
+    if sudo grep -qE "^${key}=" /etc/default/cpupower; then
+        sudo sed -i -E "s|^${key}=.*|${key}=${val}|" /etc/default/cpupower
+    else
+        echo "${key}=${val}" | sudo tee -a /etc/default/cpupower >/dev/null
+    fi
+}
+
+install_throttling() {
+    if $ASSUME_YES; then
+        echo ""
+        echo "  • Throttling setup skipped (run without -y to configure)"
+        return
+    fi
+
+    echo ""
+    echo "╭──────────────────────────────────────────────────────────────────╮"
+    echo "│   CPU Throttling / Power Setup (optional)                       │"
+    echo "├──────────────────────────────────────────────────────────────────┤"
+    echo "│ Configure max-frequency cap, Intel turbo, governor, and (on     │"
+    echo "│ ThinkPads) the 'throttled' MSR fix. Each step is opt-in.        │"
+    echo "╰──────────────────────────────────────────────────────────────────╯"
+    read -p "Configure CPU throttling now? [y/N] " -n 1 -r; echo ""
+    [[ ! $REPLY =~ ^[Yy]$ ]] && return
+
+    # Hardware detection
+    local is_intel=false is_thinkpad=false
+    grep -qi 'GenuineIntel' /proc/cpuinfo && is_intel=true
+    if [[ -r /sys/class/dmi/id/product_family ]] \
+        && grep -qi thinkpad /sys/class/dmi/id/product_family 2>/dev/null; then
+        is_thinkpad=true
+    elif [[ -r /sys/class/dmi/id/product_version ]] \
+        && grep -qi thinkpad /sys/class/dmi/id/product_version 2>/dev/null; then
+        is_thinkpad=true
+    fi
+
+    # Resolve AUR helper — may not be set if --deps wasn't passed earlier
+    local aur=""
+    command -v yay  &>/dev/null && aur="yay"
+    [[ -z "$aur" ]] && command -v paru &>/dev/null && aur="paru"
+
+    # ── 1. Intel turbo ────────────────────────────────────────────
+    if $is_intel && [[ -e /sys/devices/system/cpu/intel_pstate/no_turbo ]]; then
+        local turbo_now turbo_state="enabled"
+        turbo_now=$(cat /sys/devices/system/cpu/intel_pstate/no_turbo 2>/dev/null)
+        [[ "$turbo_now" == "1" ]] && turbo_state="disabled"
+        echo ""
+        echo "  Intel Turbo Boost is currently: ${turbo_state}"
+        read -p "  Disable Intel turbo on every boot? [y/N] " -n 1 -r; echo ""
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            sudo install -d /etc/tmpfiles.d
+            sudo tee /etc/tmpfiles.d/disable-turbo.conf >/dev/null <<'EOF'
+# Re-applied on every boot by systemd-tmpfiles
+w /sys/devices/system/cpu/intel_pstate/no_turbo - - - - 1
+EOF
+            sudo systemd-tmpfiles --create /etc/tmpfiles.d/disable-turbo.conf >/dev/null 2>&1
+            echo 1 | sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo >/dev/null
+            echo "    ✓ Intel Turbo disabled (now and on every boot)"
+        fi
+    fi
+
+    # ── 2. cpupower max frequency ─────────────────────────────────
+    echo ""
+    read -p "  Cap CPU max frequency via cpupower? [y/N] " -n 1 -r; echo ""
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        if ! pacman -Qi cpupower &>/dev/null; then
+            echo "    Installing cpupower..."
+            sudo pacman -S --needed --noconfirm cpupower
+        fi
+        local hw_max_khz hw_max_mhz
+        hw_max_khz=$(cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq 2>/dev/null || echo 0)
+        hw_max_mhz=$((hw_max_khz / 1000))
+        (( hw_max_mhz > 0 )) && echo "    Hardware max: ${hw_max_mhz} MHz"
+        read -p "    Cap max frequency in MHz (e.g. 2400, blank to skip): " max_mhz
+        if [[ "$max_mhz" =~ ^[0-9]+$ ]] && (( max_mhz > 0 )); then
+            local max_khz=$((max_mhz * 1000))
+            if sudo cpupower frequency-set -u "${max_mhz}MHz" >/dev/null 2>&1; then
+                echo "    ✓ Max set to ${max_mhz} MHz (live)"
+            else
+                echo "    ⚠ Live cap failed — will still try to persist"
+            fi
+            _persist_cpupower max_freq "${max_khz}"
+            echo "    ✓ Persisted via /etc/default/cpupower"
+        elif [[ -n "$max_mhz" ]]; then
+            echo "    ⚠ '$max_mhz' is not a positive integer — skipping"
+        fi
+    fi
+
+    # ── 3. CPU governor ───────────────────────────────────────────
+    if command -v cpupower &>/dev/null; then
+        local available_gov
+        available_gov=$(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors 2>/dev/null)
+        if [[ -n "$available_gov" ]]; then
+            echo ""
+            echo "  Available governors: $available_gov"
+            read -p "  Set CPU governor (blank to skip): " governor
+            if [[ -n "$governor" ]]; then
+                # validate against the available list to avoid a confusing live-set failure
+                if [[ " $available_gov " == *" $governor "* ]]; then
+                    sudo cpupower frequency-set -g "$governor" >/dev/null 2>&1
+                    _persist_cpupower governor "'${governor}'"
+                    echo "    ✓ Governor → $governor (now and persistent)"
+                else
+                    echo "    ⚠ '$governor' not in available list — skipping"
+                fi
+            fi
+        fi
+    fi
+
+    # Enable cpupower.service so /etc/default/cpupower applies on every boot
+    if pacman -Qi cpupower &>/dev/null && [[ -f /etc/default/cpupower ]]; then
+        if ! systemctl is-enabled --quiet cpupower.service 2>/dev/null; then
+            sudo systemctl enable --now cpupower.service >/dev/null 2>&1 \
+                && echo "  ✓ cpupower.service enabled"
+        fi
+    fi
+
+    # ── 4. throttled (ThinkPad MSR fix) ───────────────────────────
+    if $is_thinkpad; then
+        echo ""
+        echo "  ThinkPad detected — 'throttled' applies an MSR-based undervolt"
+        echo "  + thermal-cap fix, configured via /etc/throttled.conf."
+        echo "  A documented sample lives at shared/throttled.conf."
+        read -p "  Install throttled from AUR? [y/N] " -n 1 -r; echo ""
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            if ! pacman -Qi throttled &>/dev/null; then
+                if [[ -n "$aur" ]]; then
+                    "$aur" -S --needed throttled
+                else
+                    echo "    ⚠ No AUR helper (yay/paru) found. Re-run install with"
+                    echo "      --deps to install yay first, then retry this wizard."
+                fi
+            else
+                echo "    • throttled already installed"
+            fi
+            if pacman -Qi throttled &>/dev/null \
+                && ! systemctl is-active --quiet throttled.service; then
+                sudo systemctl enable --now throttled.service >/dev/null 2>&1 \
+                    && echo "    ✓ throttled enabled (edit /etc/throttled.conf to tune)"
+            fi
+        fi
+    fi
+
+    echo ""
+    echo "  Done. Verify with: cpupower frequency-info | head -20"
 }
 
 # ─────────────────────────────────────────

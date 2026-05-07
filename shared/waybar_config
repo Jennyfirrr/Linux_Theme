@@ -9,9 +9,13 @@
     "hyprland/workspaces"
   ],
 
-  "modules-center": [],
+  "modules-center": [
+    "custom/project_name"
+  ],
 
   "modules-right": [
+    "custom/weather",
+    "custom/net_speed",
     "custom/cpu",
     "memory",
     "custom/gpu",
@@ -146,5 +150,26 @@
     "format": "󰣇",
     "tooltip": "Launcher",
     "on-click": "bash -lc 'command -v wheel && wheel || rofi -show drun'"
+  },
+
+  "custom/weather": {
+    "exec": "~/.config/waybar/scripts/weather.sh",
+    "return-type": "json",
+    "interval": 1800,
+    "tooltip": true
+  },
+
+  "custom/net_speed": {
+    "exec": "~/.config/waybar/scripts/net_speed.sh",
+    "return-type": "json",
+    "interval": 2,
+    "tooltip": true
+  },
+
+  "custom/project_name": {
+    "exec": "~/.config/waybar/scripts/project_name.sh",
+    "return-type": "json",
+    "interval": 5,
+    "tooltip": true
   }
 }

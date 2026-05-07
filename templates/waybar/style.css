@@ -67,6 +67,8 @@ window#waybar > box {
 #tray,
 #custom-media,
 #custom-weather,
+#custom-net_speed,
+#custom-project_name,
 #custom-system_health,
 #custom-logo {
     background-color: @bubble;
@@ -128,7 +130,17 @@ window#waybar > box {
 }
 
 #custom-weather {
+    color: #{{GREEN_BRIGHT}};
+}
+
+#custom-net_speed {
+    color: @lavender;
+    font-size: __FONT_STATS__pt;
+}
+
+#custom-project_name {
     color: @peach;
+    font-weight: bold;
 }
 
 #clock {

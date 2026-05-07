@@ -453,6 +453,12 @@ if $INSTALL_NVIDIA; then
 fi
 
 # ─────────────────────────────────────────
+# CPU throttling / power tuning — interactive wizard. Always offered at
+# the end of an interactive install; auto-skipped under -y.
+# ─────────────────────────────────────────
+install_throttling
+
+# ─────────────────────────────────────────
 # Cleanup
 # ─────────────────────────────────────────
 rm -rf "$RENDERED_DIR"

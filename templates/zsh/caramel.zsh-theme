@@ -185,7 +185,7 @@ function _caramel_accept_line() {
   # Save the full prompt, replace with minimal
   _caramel_saved_prompt="$PROMPT"
   _caramel_saved_rprompt="$RPROMPT"
-  PROMPT=' %{%F{{{ANSI_ACCENT2}}}%}❯%{%f%} '
+  PROMPT=' %{%F{{{ANSI_OK}}}%}•%{%f%} '
   RPROMPT=''
   zle reset-prompt
   # Restore for next command
