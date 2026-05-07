@@ -42,17 +42,16 @@ window#waybar {
 }
 
 window#waybar > box {
-    background-color: @bubble;
-    border: 4px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.4);
-    border-radius: 0;
-    padding: __PAD_WIN__;
+    background-color: transparent;
+    border: none;
+    padding: 0;
     margin: 0;
 }
 
 /* ─────────────────────────────────────────
    Module Base Style
    ───────────────────────────────────────── */
-#workspaces button,
+#workspaces,
 #network,
 #pulseaudio,
 #backlight,
@@ -70,24 +69,31 @@ window#waybar > box {
 #custom-weather,
 #custom-system_health,
 #custom-logo {
-    background-color: transparent;
+    background-color: @bubble;
+    border: 1px solid @border;
     padding: __PAD_MOD__;
     margin: __MARGIN_MOD__;
     border-radius: 0;
-    border: 1px solid transparent;
 }
 
 /* ─────────────────────────────────────────
    Workspaces
    ───────────────────────────────────────── */
+#workspaces {
+    padding: 0;
+}
+
 #workspaces button {
     color: @dim;
+    border: none;
+    border-radius: 0;
+    padding: __PAD_MOD__;
 }
 
 #workspaces button.active {
     background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.25);
     color: @peach;
-    border: 1px solid @peach;
+    box-shadow: inset 0 0 8px rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.5);
     text-shadow: 0 0 8px rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.5);
 }
 
