@@ -133,8 +133,8 @@ if $INSTALL_DEPS; then
         waybar rofi-wayland mako dunst
         # Build tools (cmake for C++ projects bootstrapped from this machine)
         cmake
-        # Shell + tooling
-        base-devel zsh fzf eza bat yazi btop fd zoxide jq git-delta github-cli pacman-contrib
+        # Core & CLI Tools
+        base-devel zsh fzf eza bat yazi btop fd zoxide jq git-delta github-cli pacman-contrib rofi-calc rofi-emoji
         lazygit ncspot cliphist
         # unzip is needed by install_catppuccin_cursor (extracts the release zip)
         unzip

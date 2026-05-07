@@ -44,6 +44,8 @@ while true; do
         -theme-str "inputbar {enabled: false;} window {location: north west; anchor: north west; x-offset: ${ROFI_X}px; y-offset: ${ROFI_Y}px; width: 35%;} listview {lines: 15;}"
 󰀻  Search Apps
 󰖲  Active Windows
+󰪚  Calculator
+󰱫  Emoji Picker
 󰐥  Power Menu
 󰖩  Network           󰇙  $wifi_status
 󰂯  Bluetooth         󰇙  $bt_status
@@ -70,6 +72,16 @@ EOF
         *"Active Windows"*)
             # Launch window switcher and check exit code
             ~/.config/hypr/scripts/toggle_rofi.sh rofi -show window -kb-row-up "k,Up" -kb-row-down "j,Down" -kb-accept-entry "l,Return" -theme-str 'inputbar {enabled: false;}' -kb-custom-1 "h"
+            if [[ $? -eq 10 ]]; then continue; fi
+            exit 0
+            ;;
+        *"Calculator"*)
+            ~/.config/hypr/scripts/toggle_rofi.sh rofi -show calc -modi calc -no-show-match -no-sort -kb-row-up "k,Up" -kb-row-down "j,Down" -kb-accept-entry "l,Return" -kb-custom-1 "h"
+            if [[ $? -eq 10 ]]; then continue; fi
+            exit 0
+            ;;
+        *"Emoji Picker"*)
+            ~/.config/hypr/scripts/toggle_rofi.sh rofi -show emoji -modi emoji -kb-row-up "k,Up" -kb-row-down "j,Down" -kb-accept-entry "l,Return" -kb-custom-1 "h"
             if [[ $? -eq 10 ]]; then continue; fi
             exit 0
             ;;
