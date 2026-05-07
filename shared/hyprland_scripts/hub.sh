@@ -62,19 +62,37 @@ EOF
     # --- Handle Selection ---
     case "$chosen" in
         *"Search Apps"*) 
-            # Exit loop and launch app menu via the toggle wrapper to ensure clean handoff
-            ~/.config/hypr/scripts/toggle_rofi.sh rofi -show drun -kb-row-up "k,Up" -kb-row-down "j,Down" -kb-accept-entry "l,Return" &
+            # Launch app menu and check exit code
+            ~/.config/hypr/scripts/toggle_rofi.sh rofi -show drun -kb-row-up "k,Up" -kb-row-down "j,Down" -kb-accept-entry "l,Return" -kb-custom-1 "h"
+            if [[ $? -eq 10 ]]; then continue; fi
             exit 0
             ;;
         *"Active Windows"*)
-            # Exit loop and launch window switcher without search bar
-            ~/.config/hypr/scripts/toggle_rofi.sh rofi -show window -kb-row-up "k,Up" -kb-row-down "j,Down" -kb-accept-entry "l,Return" -theme-str 'inputbar {enabled: false;}' &
+            # Launch window switcher and check exit code
+            ~/.config/hypr/scripts/toggle_rofi.sh rofi -show window -kb-row-up "k,Up" -kb-row-down "j,Down" -kb-accept-entry "l,Return" -theme-str 'inputbar {enabled: false;}' -kb-custom-1 "h"
+            if [[ $? -eq 10 ]]; then continue; fi
             exit 0
             ;;
-        *"Power Menu"*) ~/.config/hypr/scripts/powermenu.sh ;;
-        *"Network"*) ~/.config/hypr/scripts/network.sh ;;
-        *"Bluetooth"*) ~/.config/hypr/scripts/bluetooth.sh ;;
-        *"Audio"*) ~/.config/hypr/scripts/audio_switcher.sh ;;
+        *"Power Menu"*) 
+            ~/.config/hypr/scripts/powermenu.sh
+            if [[ $? -eq 10 ]]; then continue; fi
+            exit 0
+            ;;
+        *"Network"*) 
+            ~/.config/hypr/scripts/network.sh
+            if [[ $? -eq 10 ]]; then continue; fi
+            exit 0
+            ;;
+        *"Bluetooth"*) 
+            ~/.config/hypr/scripts/bluetooth.sh
+            if [[ $? -eq 10 ]]; then continue; fi
+            exit 0
+            ;;
+        *"Audio"*) 
+            ~/.config/hypr/scripts/audio_switcher.sh
+            if [[ $? -eq 10 ]]; then continue; fi
+            exit 0
+            ;;
         *"Night Light"*)
             if pkill wlsunset; then
                 notify-send "Night Light" "Disabled"

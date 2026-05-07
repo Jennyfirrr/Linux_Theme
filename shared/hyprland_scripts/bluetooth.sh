@@ -9,7 +9,9 @@ msg="Bluetooth"
 POWER=$(bluetoothctl show | grep "Powered: yes" >/dev/null && echo "on" || echo "off")
 
 if [[ "$POWER" == "off" ]]; then
-    chosen=$(printf "󰂯  Power On\n󰗼  Exit" | rofi -dmenu -i -p "$msg" -theme-str 'window {width: 300px;}')
+    chosen=$(printf "󰂯  Power On\n󰗼  Exit" | rofi -dmenu -i -p "$msg" -kb-custom-1 "h" -theme-str 'window {width: 300px;}')
+    rofi_exit=$?
+    if [[ $rofi_exit -eq 10 ]]; then exit 10; fi
     [[ "$chosen" == "󰂯  Power On" ]] && bluetoothctl power on
     exit 0
 fi
@@ -44,3 +46,4 @@ case "$chosen" in
         fi
         ;;
 esac
+c
