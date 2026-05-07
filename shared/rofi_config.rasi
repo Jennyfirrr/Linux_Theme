@@ -1,4 +1,11 @@
 configuration {
+  /* Clear conflicting default bindings */
+  kb-remove-char-back: "BackSpace";
+  kb-remove-to-eol: "";
+  kb-mode-complete: "";
+  kb-accept-entry: "Return,KP_Enter";
+
+  /* Set custom navigation */
   kb-row-up: "Up,Control+k";
   kb-row-down: "Down,Control+j";
   kb-accept-entry: "Return,KP_Enter,Control+l";
