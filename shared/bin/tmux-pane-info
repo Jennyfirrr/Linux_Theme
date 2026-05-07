@@ -27,15 +27,16 @@ if [[ -n "$git_dir" ]]; then
         # Build string
         git_info="⎇ $branch"
         
-        # Ahead/Behind counts against default branch (main/master)
-        default_branch="main"
-        if ! git -C "$path" show-ref --verify --quiet refs/heads/main 2>/dev/null; then
-            if git -C "$path" show-ref --verify --quiet refs/heads/master 2>/dev/null; then
-                default_branch="master"
+        # Ahead/Behind counts against default branch (origin/main, origin/master, main, master)
+        default_branch=""
+        for b in origin/main origin/master main master; do
+            if git -C "$path" rev-parse --verify --quiet "$b" >/dev/null 2>&1; then
+                default_branch="$b"
+                break
             fi
-        fi
+        done
         
-        if [[ "$branch" != "$default_branch" && "$branch" != "HEAD" ]]; then
+        if [[ -n "$default_branch" && "$branch" != "${default_branch#origin/}" && "$branch" != "HEAD" ]]; then
             ab=$(git -C "$path" rev-list --left-right --count "$default_branch"..."$branch" 2>/dev/null)
             if [[ -n "$ab" ]]; then
                 behind=$(echo "$ab" | awk '{print $1}')
