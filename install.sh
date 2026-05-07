@@ -394,9 +394,10 @@ if $RENDER_ONLY; then
     done
 
     # Re-run script and module deployment
-    mkdir -p ~/.config/hypr/scripts ~/.config/waybar/scripts ~/.config/hypr/modules
+    mkdir -p ~/.config/hypr/scripts ~/.config/waybar/scripts ~/.config/hypr/modules ~/.local/bin
     for script in "$SHARED_DIR/hyprland_scripts/"*.sh; do cp "$script" ~/.config/hypr/scripts/; chmod +x ~/.config/hypr/scripts/$(basename "$script"); done
     for script in "$SHARED_DIR/waybar_scripts/"*.sh; do cp "$script" ~/.config/waybar/scripts/; chmod +x ~/.config/waybar/scripts/$(basename "$script"); done
+    for bin in "$SHARED_DIR/bin/"*; do cp "$bin" ~/.local/bin/; chmod +x ~/.local/bin/$(basename "$bin"); done
     for mod in "$SHARED_DIR/hyprland_modules/"*.conf; do 
         basename="$(basename "$mod")"
         [[ "$basename" == "theme.conf" ]] && continue
