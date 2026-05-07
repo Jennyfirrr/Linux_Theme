@@ -31,6 +31,9 @@ alias lock='sudo systemctl restart greetd'
 alias stop='systemd-inhibit --what=idle:sleep:handle-lid-switch --why="Training models" tail -f /dev/null'
 alias trade='systemd-inhibit --what=idle:sleep:handle-lid-switch --why="Trading" ./engine'
 
+# ─── Clipboard (Terminal) ────────────────────
+alias cb='cliphist list | fzf --height=40% --border --prompt="clipboard > " | cliphist decode | wl-copy'
+
 # ─── LLM / AI ────────────────────────────────
 alias @recall='~/.contextai/src/recall_with_context.sh'
 alias flush='~/.contextai/src/flush_llm_cache.sh'
