@@ -111,7 +111,7 @@
   },
 
   "custom/logo": {
-    "format": "󰣇",
+    "format": "🦊",
     "tooltip": "Launcher",
     "on-click": "~/.config/hypr/scripts/toggle_rofi.sh rofi -show drun"
   },
