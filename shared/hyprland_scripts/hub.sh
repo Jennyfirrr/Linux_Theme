@@ -68,7 +68,7 @@ EOF
             ;;
         *"Active Windows"*)
             # Exit loop and launch window switcher without search bar
-            ~/.config/hypr/scripts/toggle_rofi.sh rofi -show window -theme-str 'inputbar {enabled: false;}' &
+            ~/.config/hypr/scripts/toggle_rofi.sh rofi -show window -kb-row-up "k,Up" -kb-row-down "j,Down" -kb-accept-entry "l,Return" -theme-str 'inputbar {enabled: false;}' &
             exit 0
             ;;
         *"Power Menu"*) ~/.config/hypr/scripts/powermenu.sh ;;
