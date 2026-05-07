@@ -88,8 +88,8 @@ window#waybar > box {
 
 #workspaces button {
     color: @dim;
-    padding: 0px 12px;
-    margin: __MARGIN_MOD__;
+    padding: 0px 8px;
+    margin: 2px 2px;
 }
 
 #workspaces button.active {
