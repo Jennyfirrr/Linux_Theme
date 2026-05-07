@@ -230,26 +230,7 @@ See [`shared/nvim_NVIM-KEYBINDS.md`](shared/nvim_NVIM-KEYBINDS.md) for the compl
 
 The login screen is themed via regreet (a GTK4 greeter for greetd) running inside a minimal Hyprland session — no cage, no TTY flash.
 
-After running `./install.sh`, deploy the login theme:
-
-```bash
-# Copy themed files to greetd
-sudo cp ~/.config/regreet/regreet.{css,toml} /etc/greetd/
-sudo cp ~/.config/regreet/hyprland.conf /etc/greetd/hyprland.conf
-sudo cp ~/.wallpapers/foxml_earthy.jpg /usr/share/wallpapers/
-
-# Set greetd to use Hyprland as the greeter compositor
-sudo tee /etc/greetd/config.toml << 'EOF'
-[terminal]
-vt = 1
-[default_session]
-command = "Hyprland -c /etc/greetd/hyprland.conf"
-user = "greeter"
-EOF
-
-# Enable greetd
-sudo systemctl enable greetd
-```
+`./install.sh --deps` installs `greetd` + `greetd-regreet` and `install_greetd()` auto-runs: it deploys regreet css/toml + the wallpaper to `/etc/greetd/` and `/usr/share/wallpapers/`, writes `/etc/greetd/config.toml` to launch Hyprland as the greeter, and enables the systemd unit. Idempotent — rerunning preserves a customized `config.toml`.
 
 On first login, select your Hyprland session from the Session dropdown — regreet remembers it for next time.
 
@@ -291,7 +272,6 @@ See `themes/FoxML_Classic/palette.sh` for the full variable list.
 4. Firefox: enable `toolkit.legacyUserProfileCustomizations.stylesheets` in `about:config`
 5. Cursor: Select "Fox ML" in color theme picker
 6. Discord: Enable theme in Settings > Vencord > Themes
-7. Login screen: `sudo cp ~/.config/regreet/regreet.{css,toml} /etc/greetd/`
 
 ## License
 

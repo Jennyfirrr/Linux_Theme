@@ -1,7 +1,9 @@
 #!/bin/bash
 
-# Start UI services (hypridle started via exec-once in autostart.conf)
-waybar &
+# Start UI services (hypridle started via exec-once in autostart.conf).
+# start_waybar.sh detects monitor scale + sed-substitutes size tokens into
+# the live waybar style.css/config, then execs waybar.
+~/.config/hypr/scripts/start_waybar.sh &
 
 # Set wallpaper with a small delay
 sleep 1

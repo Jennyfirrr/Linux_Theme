@@ -4,6 +4,36 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-06 — v1.2.0
+
+Hands-off install pass. The previous release left three things to the user as manual post-install dances: copy regreet files into `/etc/greetd/` and write `config.toml`, fetch the Catppuccin cursor theme by hand, and re-tune the waybar by hand when moving between a 4K and a 1080p screen. All three are now driven by the installer + a single runtime wrapper.
+
+### Installer — Login screen, cursor, deps
+- **`install_greetd()`** (in `mappings.sh`) auto-runs whenever `greetd-regreet` is installed. It deploys regreet css/toml + the staged Hyprland greeter config to `/etc/greetd/`, copies the wallpaper referenced by `regreet.toml` into `/usr/share/wallpapers/` (creating the dir), writes `/etc/greetd/config.toml` to launch Hyprland as the greeter, and `systemctl enable greetd`. Idempotent — preserves a customized `config.toml` and skips when the system already has the right state.
+- **`install_catppuccin_cursor()`** fetches `catppuccin-mocha-peach-cursors` from the upstream `catppuccin/cursors` GitHub releases and extracts it to `~/.local/share/icons/` (XDG user dir, no sudo). Runs unconditionally because every theme references this cursor; bails early if already present, if the asset URL can't be resolved, or if `unzip`/`curl` are missing.
+- **New `PACMAN_PKGS` entries:** `greetd`, `greetd-regreet` (login screen now installs by default), `gnome-keyring`, `libsecret` (the keyring/secrets stack the autostart line and `seahorse` askpass already assumed was present), `unzip` (consumed by `install_catppuccin_cursor`).
+- **`XCURSOR_PATH`** added to `env-init.sh` and `environment.conf` so apps actually find `~/.local/share/icons` — the default path (`~/.icons:/usr/share/icons:/usr/share/pixmaps`) doesn't include the XDG user dir, which is why a previously-extracted Catppuccin theme was silently ignored.
+
+### Waybar — Auto-scaling per monitor
+- New `shared/hyprland_scripts/start_waybar.sh` wrapper. Reads `hyprctl monitors -j` for the primary monitor's effective width (pixels ÷ scale), picks one of three profiles, sed-substitutes `__SIZE__` tokens into `~/.config/waybar/{style.css,config}` from `.tmpl` source files, then `exec waybar`.
+  - **1080p (≤1920):** font 9.5pt, bar height 32, margin 6, cursor 24
+  - **1440p (≤2560):** font 11pt, bar height 40, margin 8, cursor 28
+  - **4K (else):** font 12.5pt, bar height 52, margin 12, cursor 32 *(the original 4K-tuned values)*
+- `templates/waybar/style.css` and `shared/waybar_config` now carry `__FONT_BASE__`, `__FONT_LOGO__`, `__FONT_STATS__`, `__PAD_WIN__`, `__PAD_MOD__`, `__MARGIN_MOD__`, `__HEIGHT__`, `__MARGIN_BAR__`, `__TRAY_ICON__` placeholders. Mappings deploy them as `style.css.tmpl` / `config.tmpl`; the wrapper writes the live files.
+- `--render-only` mode lets `install.sh` produce the live files without launching waybar, so a fresh install ends up with a correctly-sized config before the next Hyprland session.
+- Cursor sizing piggybacks on the same profile pick: the wrapper also `hyprctl setcursor`s the running session and `setenv`s `XCURSOR_SIZE` for new children. The hardcoded `XCURSOR_SIZE=30` in `env-init.sh` / `environment.conf` is now a 24 fallback that the wrapper overrides on the first apply pass.
+- `startup.sh` calls the wrapper instead of `waybar &` directly.
+
+### Kitty — CJK fallback for the welcome banner
+- Added `symbol_map U+3000-U+30FF,U+FF00-U+FFEF,U+4E00-U+9FFF Noto Sans CJK JP` to `templates/kitty/kitty.conf`. The fox banner's kaomoji glyphs (`じ`, `し`, `ノ`, `〵`, etc.) were rendering as tofu boxes because `noto-fonts-cjk` is installed but fontconfig picks Latin-only Noto Sans for those codepoints — kitty needs the explicit map.
+
+### Docs
+- README "Login Screen" section: removed the manual `sudo cp` + `tee` post-install dance — now a one-paragraph note that `install.sh --deps` does it.
+- README "Post-Install" step 7 (manual greetd copy) dropped.
+- `install.sh` summary line for restarting waybar updated to `~/.config/hypr/scripts/start_waybar.sh` so you don't need to remember to bypass the wrapper.
+
+---
+
 ## 2026-04-30 — v1.1.0
 
 Major update to the wallpaper system, moving from random rotation to time-of-day "buckets" that match the solar cycle.

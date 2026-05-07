@@ -112,6 +112,11 @@ if $INSTALL_DEPS; then
         ttf-hack-nerd ttf-jetbrains-mono-nerd noto-fonts noto-fonts-cjk noto-fonts-emoji
         # Compositor + lock + wallpaper + idle
         hyprland hyprlock awww hypridle
+        # Themed login screen — auto-configured by install_greetd() below
+        greetd greetd-regreet
+        # Secrets / keyring (gnome-keyring-daemon is started from autostart.conf;
+        # libsecret is the API most apps query, seahorse is the GUI manager)
+        gnome-keyring libsecret seahorse
         # Editor + terminal + multiplexer
         neovim kitty tmux
         # Neovim runtime deps:
@@ -124,12 +129,12 @@ if $INSTALL_DEPS; then
         waybar rofi-wayland mako dunst
         # Shell + tooling
         zsh fzf eza bat yazi btop fd zoxide jq git-delta github-cli pacman-contrib
+        # unzip is needed by install_catppuccin_cursor (extracts the release zip)
+        unzip
         # Screenshots + clipboard + media keys
         grim slurp wl-clipboard playerctl brightnessctl pavucontrol
         # Apps + viewers
         firefox zathura zathura-pdf-mupdf
-        # GTK ssh-askpass (picks up the FoxML GTK theme automatically)
-        seahorse
         # Power profile switcher (waybar power-profiles-daemon module);
         # python-gobject is the optional dep that makes `powerprofilesctl` work
         # for click-to-switch handlers
@@ -266,6 +271,35 @@ echo "Installing special configs..."
 install_specials "$RENDERED_DIR"
 
 # ─────────────────────────────────────────
+# Render waybar at install time so the live style.css/config exist
+# immediately (without waiting for the next Hyprland session). The wrapper
+# detects the current monitor and substitutes size tokens into the .tmpl
+# files just deployed by the mappings loop.
+# ─────────────────────────────────────────
+if [[ -x "$HOME/.config/hypr/scripts/start_waybar.sh" ]]; then
+    echo ""
+    echo "Rendering waybar for current monitor..."
+    "$HOME/.config/hypr/scripts/start_waybar.sh" --render-only || true
+fi
+
+# ─────────────────────────────────────────
+# Catppuccin cursor (per-user fetch from GitHub releases).
+# Always runs — it's idempotent and our configs reference the theme.
+# ─────────────────────────────────────────
+echo ""
+echo "Installing Catppuccin cursor..."
+install_catppuccin_cursor
+
+# ─────────────────────────────────────────
+# greetd login screen — auto-runs when greetd-regreet is installed
+# ─────────────────────────────────────────
+if pacman -Qi greetd-regreet &>/dev/null; then
+    echo ""
+    echo "Configuring greetd login screen..."
+    install_greetd
+fi
+
+# ─────────────────────────────────────────
 # Nvidia (full Wayland session on dGPU) — opt-in
 # ─────────────────────────────────────────
 if $INSTALL_NVIDIA; then
@@ -294,7 +328,7 @@ echo "Backups saved to: $BACKUP_DIR"
 echo ""
 echo "Post-install steps:"
 echo "  1. Reload Hyprland: hyprctl reload"
-echo "  2. Restart Waybar/Dunst: pkill waybar && waybar & pkill dunst && dunst &"
+echo "  2. Restart Waybar/Dunst: ~/.config/hypr/scripts/start_waybar.sh & pkill dunst && dunst &"
 echo "  3. Open nvim and run :Lazy sync"
 echo "  4. Apply Spicetify: spicetify apply"
 echo "  5. Restart Firefox (enable userChrome in about:config)"

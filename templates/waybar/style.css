@@ -23,9 +23,14 @@
 @define-color bubble_hover rgba({{SURFACE_R}},{{SURFACE_G}},{{SURFACE_B}}, {{KITTY_BG_OPACITY}});
 @define-color border       rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.4);
 
+/* Size tokens (__FONT_BASE__, __FONT_LOGO__, __FONT_STATS__, __PAD_WIN__,
+   __PAD_MOD__, __MARGIN_MOD__) are substituted by start_waybar.sh based on
+   detected monitor width. The rendered template lives at
+   ~/.config/waybar/style.css.tmpl; the wrapper writes the live style.css. */
+
 * {
     font-family: "{{FONT_FAMILY}}", monospace;
-    font-size: 12.5pt;
+    font-size: __FONT_BASE__pt;
     color: @fg;
 }
 
@@ -41,7 +46,7 @@ window#waybar > box {
     border: 4px solid transparent;
     border-image: linear-gradient(45deg, #{{PRIMARY}}, #{{SECONDARY}}) 1;
     border-radius: 0;
-    padding: 4px 10px;
+    padding: __PAD_WIN__;
     margin: 0;
 }
 
@@ -67,8 +72,8 @@ window#waybar > box {
 #custom-system_health,
 #custom-logo {
     background-color: transparent;
-    padding: 4px 14px;
-    margin: 2px 6px;
+    padding: __PAD_MOD__;
+    margin: __MARGIN_MOD__;
     border-radius: 0;
     border: 1px solid transparent;
 }
@@ -137,7 +142,7 @@ window#waybar > box {
 #memory,
 #custom-disk,
 #custom-gpu {
-    font-size: 11pt;
+    font-size: __FONT_STATS__pt;
     font-weight: bold;
     letter-spacing: 0.5px;
 }
@@ -212,8 +217,8 @@ window#waybar > box {
    ───────────────────────────────────────── */
 #custom-logo {
     color: @peach;
-    font-size: 14pt;
-    padding: 4px 14px;
+    font-size: __FONT_LOGO__pt;
+    padding: __PAD_MOD__;
     text-shadow: 0 0 10px rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.5);
 }
 

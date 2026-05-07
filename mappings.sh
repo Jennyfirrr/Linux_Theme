@@ -18,8 +18,10 @@ TEMPLATE_MAPPINGS=(
     # Kitty
     "kitty/kitty.conf|~/.config/kitty/kitty.conf"
 
-    # Waybar
-    "waybar/style.css|~/.config/waybar/style.css"
+    # Waybar — style.css carries __SIZE__ tokens that start_waybar.sh
+    # substitutes at runtime based on detected monitor scale, so we deploy
+    # it as .tmpl. The wrapper writes the live style.css on first launch.
+    "waybar/style.css|~/.config/waybar/style.css.tmpl"
 
     # Tmux
     "tmux/.tmux.conf|~/.tmux.conf"
@@ -116,7 +118,7 @@ SHARED_MAPPINGS=(
     "zsh_conda.zsh|~/.config/zsh/conda.zsh"
 
     # Waybar config
-    "waybar_config|~/.config/waybar/config"
+    "waybar_config|~/.config/waybar/config.tmpl"
     "waybar_scripts/cpu.sh|~/.config/waybar/scripts/cpu.sh"
     "waybar_scripts/gpu.sh|~/.config/waybar/scripts/gpu.sh"
     "waybar_scripts/disk.sh|~/.config/waybar/scripts/disk.sh"
@@ -511,6 +513,127 @@ install_nvidia() {
     echo "  Recovery: if Hyprland fails to start, switch to a TTY"
     echo "  (Ctrl+Alt+F2), restore ${mkinit}.foxml-bak and"
     echo "  ${boot_entry}.foxml-bak, run 'sudo mkinitcpio -P', reboot."
+}
+
+# ─────────────────────────────────────────
+# Catppuccin cursor (referenced by GTK / Hyprland env / regreet.toml).
+# Not in official Arch repos; pull from upstream GitHub releases and drop
+# into ~/.local/share/icons (per-user, no sudo). Idempotent.
+# ─────────────────────────────────────────
+
+install_catppuccin_cursor() {
+    local theme="catppuccin-mocha-peach-cursors"
+    local user_dir="$HOME/.local/share/icons"
+    local sys_dir="/usr/share/icons"
+
+    if [[ -d "$sys_dir/$theme" || -d "$user_dir/$theme" ]]; then
+        echo "  • $theme already installed"
+        return
+    fi
+
+    if ! command -v curl >/dev/null 2>&1; then
+        echo "  ⚠ curl not found — install curl or fetch $theme manually"
+        return
+    fi
+
+    # GitHub release asset name (catppuccin/cursors ships one zip per flavor).
+    local asset="${theme}.zip"
+    local api="https://api.github.com/repos/catppuccin/cursors/releases/latest"
+    local url
+    url=$(curl -fsSL "$api" 2>/dev/null \
+            | grep -oE "https://[^\"]+/${asset}" \
+            | head -1)
+
+    if [[ -z "$url" ]]; then
+        echo "  ⚠ Couldn't resolve $asset from $api — skipping cursor install"
+        return
+    fi
+
+    local tmp
+    tmp=$(mktemp -d)
+    if ! curl -fsSL -o "$tmp/$asset" "$url"; then
+        echo "  ⚠ Download failed: $url"
+        rm -rf "$tmp"
+        return
+    fi
+
+    if ! command -v unzip >/dev/null 2>&1; then
+        echo "  ⚠ unzip not found — pacman -S unzip then re-run"
+        rm -rf "$tmp"
+        return
+    fi
+
+    mkdir -p "$user_dir"
+    unzip -q -o "$tmp/$asset" -d "$user_dir"
+    rm -rf "$tmp"
+
+    if [[ -d "$user_dir/$theme" ]]; then
+        echo "  ✓ $theme → $user_dir"
+    else
+        echo "  ⚠ Extraction did not produce $user_dir/$theme — check asset layout"
+    fi
+}
+
+# ─────────────────────────────────────────
+# greetd + regreet (themed login screen)
+# Auto-runs when greetd-regreet is installed. Idempotent.
+# Replaces the README's manual "sudo cp + tee" post-install dance.
+# ─────────────────────────────────────────
+
+install_greetd() {
+    if ! pacman -Qi greetd-regreet &>/dev/null; then
+        echo "  • greetd-regreet not installed, skipping login-screen setup"
+        return
+    fi
+
+    local staged="$HOME/.config/regreet"
+    if [[ ! -f "$staged/regreet.css" || ! -f "$staged/regreet.toml" || ! -f "$staged/hyprland.conf" ]]; then
+        echo "  ⚠ Staged regreet files missing in $staged — skipping"
+        return
+    fi
+
+    # Wallpaper referenced from regreet.toml. Read it out and copy that exact
+    # file, so theme swaps that change the wallpaper Just Work.
+    local wall_path
+    wall_path=$(awk -F'"' '/^path *= *"/ { print $2; exit }' "$staged/regreet.toml")
+    [[ -z "$wall_path" ]] && wall_path="/usr/share/wallpapers/foxml_earthy.jpg"
+    local wall_name="$(basename "$wall_path")"
+    local wall_src="$HOME/.wallpapers/$wall_name"
+
+    if [[ ! -f "$wall_src" ]]; then
+        echo "  ⚠ Login wallpaper $wall_src missing — copy your wallpaper to ~/.wallpapers/ first"
+        return
+    fi
+
+    sudo install -d /etc/greetd /usr/share/wallpapers
+    sudo install -m 644 "$staged/regreet.css"     /etc/greetd/regreet.css
+    sudo install -m 644 "$staged/regreet.toml"    /etc/greetd/regreet.toml
+    sudo install -m 644 "$staged/hyprland.conf"   /etc/greetd/hyprland.conf
+    sudo install -m 644 "$wall_src"               "$wall_path"
+    echo "  ✓ regreet css/toml/hyprland.conf → /etc/greetd/"
+    echo "  ✓ login wallpaper → $wall_path"
+
+    # /etc/greetd/config.toml — only rewrite if it's still the stock default
+    # (command = "agreety …"). Preserve any user customization beyond that.
+    local cfg=/etc/greetd/config.toml
+    if [[ ! -f "$cfg" ]] || sudo grep -qE '^command = "agreety' "$cfg" 2>/dev/null; then
+        sudo tee "$cfg" >/dev/null <<'EOF'
+[terminal]
+vt = 1
+[default_session]
+command = "Hyprland -c /etc/greetd/hyprland.conf"
+user = "greeter"
+EOF
+        echo "  ✓ /etc/greetd/config.toml (Hyprland greeter session)"
+    else
+        echo "  • /etc/greetd/config.toml already customized — leaving as-is"
+    fi
+
+    if ! systemctl is-enabled --quiet greetd 2>/dev/null; then
+        sudo systemctl enable greetd && echo "  ✓ greetd enabled (login screen on next boot)"
+    else
+        echo "  • greetd already enabled"
+    fi
 }
 
 # ─────────────────────────────────────────
