@@ -1,11 +1,11 @@
 configuration {
-  /* Clear conflicting default bindings */
-  kb-remove-char-back: "BackSpace";
-  kb-remove-to-eol: "";
-  kb-mode-complete: "";
-  kb-accept-entry: "Return,KP_Enter";
+  /* 1. Remove hjkl from default bindings to avoid conflicts */
+  kb-remove-char-back: "BackSpace";           /* removed Control+h */
+  kb-accept-entry: "Return,KP_Enter";         /* removed Control+j and Control+m */
+  kb-remove-to-eol: "";                      /* removed Control+k */
+  kb-mode-complete: "";                      /* removed Control+l */
 
-  /* Set custom navigation */
+  /* 2. Assign hjkl to custom navigation */
   kb-row-up: "Up,Control+k";
   kb-row-down: "Down,Control+j";
   kb-accept-entry: "Return,KP_Enter,Control+l";
