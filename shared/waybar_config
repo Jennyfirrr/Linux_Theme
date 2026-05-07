@@ -15,7 +15,6 @@
     "custom/net_speed",
     "custom/cpu",
     "memory",
-    "custom/gpu",
     "custom/disk",
     "power-profiles-daemon",
     "custom/battery",
@@ -37,7 +36,7 @@
     "exec": "~/.config/waybar/scripts/cpu.sh",
     "return-type": "json",
     "interval": 5,
-    "tooltip": false
+    "tooltip": true
   },
 
   "memory": {
@@ -47,14 +46,7 @@
       "warning": 75,
       "critical": 90
     },
-    "tooltip-format": "RAM: {used:0.1f}g / {total:0.1f}g ({percentage}%)\nSwap: {swapUsed:0.1f}g / {swapTotal:0.1f}g"
-  },
-
-  "custom/gpu": {
-    "exec": "~/.config/waybar/scripts/gpu.sh",
-    "return-type": "json",
-    "interval": 5,
-    "tooltip": false
+    "tooltip-format": "RAM: {used:0.1f}g / {total:0.1f}g ({percentage}%)\nSwap: {swapUsed:0.1f}g / {total:0.1f}g"
   },
 
   "custom/disk": {
