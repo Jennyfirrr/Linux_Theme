@@ -5,6 +5,9 @@
 # the live waybar style.css/config, then execs waybar.
 ~/.config/hypr/scripts/start_waybar.sh &
 
+# Border telemetry (dynamic earthy borders based on system state)
+~/.config/hypr/scripts/border_telemetry.sh &
+
 # Set wallpaper with a small delay
 sleep 1
 #swww img ~/.wallpapers/fox.png --transition-type simple &

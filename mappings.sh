@@ -66,6 +66,9 @@ TEMPLATE_MAPPINGS=(
     # Bat
     "bat/foxml.tmTheme|~/.config/bat/themes/Fox ML.tmTheme"
 
+    # Border colors for scripts
+    "hyprland/border_colors.sh|~/.config/hypr/modules/border_colors.sh"
+
     # Gemini CLI — GEMINI_DIR placeholder is resolved by the special handler,
     # which jq-merges into the user's settings.json to preserve security.auth.
     "gemini/settings.json|GEMINI_DIR/settings.json"
