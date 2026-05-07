@@ -3,9 +3,6 @@
 # FoxML Audio Switcher
 # A themed Rofi menu to toggle between audio output devices
 
-# Get current sink name
-current_sink=$(wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{print $1}')
-
 # Get list of sinks (id and name)
 # Format: "  * 54. Family 17h (Models 10h-1fh) HD Audio Controller Speaker [vol: 0.40]"
 sinks=$(wpctl status | grep -A 10 "Sinks:" | grep "\[vol:" | sed 's/^[[:space:]]*//')
@@ -26,11 +23,7 @@ while IFS= read -r line; do
     fi
 done <<< "$sinks"
 
-chosen=$(echo -e "$options" | rofi -dmenu -i -p "Audio Output" \
-    -kb-row-up "k,Up" \
-    -kb-row-down "j,Down" \
-    -kb-accept-entry "l,Return" \
-    -theme-str 'inputbar {enabled: false;} window {width: 600px;}')
+chosen=$(echo -e "$options" | rofi -dmenu -i -p "Audio Output" -theme-str 'inputbar {enabled: false;} window {width: 600px;}')
 
 if [[ -n "$chosen" ]]; then
     # Extract name from selection

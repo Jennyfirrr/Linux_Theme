@@ -9,7 +9,7 @@ msg="Bluetooth"
 POWER=$(bluetoothctl show | grep "Powered: yes" >/dev/null && echo "on" || echo "off")
 
 if [[ "$POWER" == "off" ]]; then
-    chosen=$(printf "󰂯  Power On\n󰗼  Exit" | rofi -dmenu -i -p "$msg" -theme-str 'window {width: 300px;}')
+    chosen=$(printf "󰂯  Power On\n󰗼  Exit" | rofi -dmenu -i -p "$msg" -theme-str 'inputbar {enabled: false;} window {width: 300px;}')
     [[ "$chosen" == "󰂯  Power On" ]] && bluetoothctl power on
     exit 0
 fi
@@ -18,12 +18,7 @@ fi
 devices=$(bluetoothctl devices Paired | cut -d ' ' -f 3-)
 options=$(printf "󰂲  Power Off\n󰚰  Scan\n---\n$devices")
 
-chosen=$(echo -e "$options" | rofi -dmenu -i -p "$msg" \
-    -kb-row-up "k,Up" \
-    -kb-row-down "j,Down" \
-    -kb-accept-entry "l,Return" \
-    -theme-str 'inputbar {enabled: false;} window {width: 400px;}'")
-
+chosen=$(echo -e "$options" | rofi -dmenu -i -p "$msg" -theme-str 'inputbar {enabled: false;} window {width: 400px;}')
 
 case "$chosen" in
     "󰂲  Power Off") bluetoothctl power off ;;

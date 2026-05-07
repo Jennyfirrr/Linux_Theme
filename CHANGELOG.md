@@ -10,7 +10,8 @@ Final UI refinement for a distraction-free experience.
 
 ### Aesthetics — Global Clean UI
 - **Hidden Search Bars**: Removed the search bar from all non-launcher Rofi menus (Bluetooth, Network, Audio, Hub, and App Switcher). These menus now feel like clean, native desktop utilities.
-- **Universal `j/k` Navigation**: Since there is no search conflict, all utility menus now use **plain `j` and `k`** for navigation and **`l`** for selection.
+- **Universal `ALT + j/k` Navigation**: All Rofi menus now support **`ALT + j`** (Down) and **`ALT + k`** (Up) for navigation, and **`ALT + l`** for selection. This allows for unified, home-row navigation across all system utilities.
+- **Robust Cleanup**: Refactored utility scripts to explicitly disable the Rofi input bar, resolving a text-overlapping glitch in the App Switcher.
 - **Persistent Launcher**: The search bar remains active only in the main Application Launcher (`ALT + Shift + D`), where it is functionally required.
 
 ---

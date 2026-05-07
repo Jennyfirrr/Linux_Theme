@@ -3,12 +3,7 @@
 # The FoxML Hub
 # A unified control center for managing your earthy desktop
 
-chosen=$(printf "󰐥  Power Menu\n󰂯  Bluetooth\n󰖩  Network\n󰓃  Audio Switcher\n󰸉  Next Wallpaper\n󰈋  Color Picker\n🦊  System Cleanup\n  Lock Screen" | rofi -dmenu -i -p "FoxML Hub" \
-    -kb-row-up "k,Up" \
-    -kb-row-down "j,Down" \
-    -kb-accept-entry "l,Return" \
-    -theme-str 'inputbar {enabled: false;} window {width: 400px;}'")
-
+chosen=$(printf "󰐥  Power Menu\n󰂯  Bluetooth\n󰖩  Network\n󰓃  Audio Switcher\n󰸉  Next Wallpaper\n󰈋  Color Picker\n🦊  System Cleanup\n  Lock Screen" | rofi -dmenu -i -p "FoxML Hub" -theme-str 'inputbar {enabled: false;} window {width: 400px;}')
 
 case "$chosen" in
     "󰐥  Power Menu") ~/.config/hypr/scripts/powermenu.sh ;;

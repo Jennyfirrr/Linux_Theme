@@ -1,14 +1,13 @@
 configuration {
-  /* 1. Remove hjkl from default bindings to avoid conflicts */
-  kb-remove-char-back: "BackSpace";           /* removed Control+h */
-  kb-accept-entry: "Return,KP_Enter";         /* removed Control+j and Control+m */
-  kb-remove-to-eol: "";                      /* removed Control+k */
-  kb-mode-complete: "";                      /* removed Control+l */
+    modi: "drun,run,window";
+    show-icons: true;
+    terminal: "kitty";
 
-  /* 2. Assign hjkl to custom navigation */
-  kb-row-up: "Up,Control+k";
-  kb-row-down: "Down,Control+j";
-  kb-accept-entry: "Return,KP_Enter,Control+l";
-  kb-mode-next: "Shift+Right,Control+Tab,Control+h";
+    /* Keybindings */
+    kb-row-up: "Up,Alt+k";
+    kb-row-down: "Down,Alt+j";
+    kb-accept-entry: "Return,KP_Enter,Alt+l";
+    kb-mode-next: "Shift+Right,Control+Tab,Alt+h";
 }
+
 @theme "~/.config/rofi/glass.rasi"
