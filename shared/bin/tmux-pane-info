@@ -24,18 +24,30 @@ if [[ -n "$git_dir" ]]; then
         # Get detailed status in porcelain v2
         status=$(git -C "$path" status --porcelain=v2 --branch 2>/dev/null)
         
-        # Ahead/Behind counts
-        ab_line=$(echo "$status" | grep "^# branch.ab")
-        ahead=$(echo "$ab_line" | awk '{print $3}' | tr -d '+')
-        behind=$(echo "$ab_line" | awk '{print $4}' | tr -d '-')
-        
-        ab=""
-        [[ "$ahead" != "0" && -n "$ahead" ]] && ab="↑$ahead"
-        [[ "$behind" != "0" && -n "$behind" ]] && ab="${ab}↓$behind"
-        
         # Build string
         git_info="⎇ $branch"
-        [[ -n "$ab" ]] && git_info="$git_info $ab"
+        
+        # Ahead/Behind counts against default branch (main/master)
+        default_branch="main"
+        if ! git -C "$path" show-ref --verify --quiet refs/heads/main 2>/dev/null; then
+            if git -C "$path" show-ref --verify --quiet refs/heads/master 2>/dev/null; then
+                default_branch="master"
+            fi
+        fi
+        
+        if [[ "$branch" != "$default_branch" && "$branch" != "HEAD" ]]; then
+            ab=$(git -C "$path" rev-list --left-right --count "$default_branch"..."$branch" 2>/dev/null)
+            if [[ -n "$ab" ]]; then
+                behind=$(echo "$ab" | awk '{print $1}')
+                ahead=$(echo "$ab" | awk '{print $2}')
+                
+                ab_str=""
+                [[ "$ahead" != "0" && -n "$ahead" ]] && ab_str="↑$ahead"
+                [[ "$behind" != "0" && -n "$behind" ]] && ab_str="${ab_str}↓$behind"
+                
+                [[ -n "$ab_str" ]] && git_info="$git_info $ab_str"
+            fi
+        fi
         
         # Dirty indicator (any line that doesn't start with #)
         if echo "$status" | grep -qv "^#"; then

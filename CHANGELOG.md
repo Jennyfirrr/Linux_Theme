@@ -17,6 +17,7 @@ A stability + UX pass. Hyprland 0.54.3 config errors resolved, Rofi popups seaml
 - **Workspace App Icons**: Implemented Waybar's `window-rewrite` feature to display Nerd Font application icons next to the active workspace numbers (e.g., `1 󰈹` for Firefox), providing lightweight, real-time app tracking.
 - **Fox Launcher Logo**: Swapped the default Arch Linux logo in the Waybar launcher for a Fox icon (`🦊`) to match the project's branding.
 - **Polished Tooltips & Notifications**: Themed Waybar hover tooltips and system notifications (Dunst & Mako) to perfectly match the new Rofi glass aesthetic—featuring 90% opaque earthy backgrounds, 0px corner radii, and translucent 1px borders.
+- **Tmux Git Ahead/Behind Counts**: The tmux status bar now tracks how many commits your current feature branch is ahead (↑) or behind (↓) the default branch (`main` or `master`), alongside the existing dirty indicator.
 
 ### Installer — Proper Deployment & Performance
 - **Fixed `--render-only`**: The `install.sh --render-only` flag now correctly deploys updated `shared/` scripts and modules to your live config directories. Previously, it only regenerated templates, leaving the system running outdated logic.
