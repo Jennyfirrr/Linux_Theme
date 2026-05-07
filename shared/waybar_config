@@ -39,7 +39,20 @@
   },
 
   "hyprland/workspaces": {
-    "format": "{name}",
+    "format": "{name} {windows}",
+    "format-window-separator": " ",
+    "window-rewrite-default": "󰘔",
+    "window-rewrite": {
+        "class<firefox>": "󰈹",
+        "class<kitty>": "󰄛",
+        "class<discord>": "󰙯",
+        "class<steam>": "󰓓",
+        "class<yazi>": "󰇥",
+        "class<thunar>": "󰝰",
+        "class<rofi>": "󰀻",
+        "class<cursor>": "󰨞",
+        "class<btopterm>": "󰑮"
+    },
     "disable-scroll": false,
     "all-outputs": true,
     "persistent-workspaces": {
