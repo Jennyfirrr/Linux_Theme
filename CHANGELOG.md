@@ -4,6 +4,17 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-06 — v1.5.3
+
+Final UI refinement for a distraction-free experience.
+
+### Aesthetics — Global Clean UI
+- **Hidden Search Bars**: Removed the search bar from all non-launcher Rofi menus (Bluetooth, Network, Audio, Hub, and App Switcher). These menus now feel like clean, native desktop utilities.
+- **Universal `j/k` Navigation**: Since there is no search conflict, all utility menus now use **plain `j` and `k`** for navigation and **`l`** for selection.
+- **Persistent Launcher**: The search bar remains active only in the main Application Launcher (`ALT + Shift + D`), where it is functionally required.
+
+---
+
 ## 2026-05-06 — v1.5.2
 
 Aesthetic refinement and power-user window management. Perfected UI transparency, bar alignment, and browser integration.
