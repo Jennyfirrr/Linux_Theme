@@ -27,13 +27,7 @@ chosen=$(echo -e "$options" | rofi -dmenu -i -p "Audio Output" \
     -kb-row-up "k,Up" \
     -kb-row-down "j,Down" \
     -kb-accept-entry "l,Return" \
-    -kb-custom-1 "h" \
     -theme-str 'inputbar {enabled: false;} window {width: 35%;}')
-rofi_exit=$?
-
-if [[ $rofi_exit -eq 10 ]]; then
-    exit 10
-fi
 
 if [[ -n "$chosen" ]]; then
     # Extract name from selection
