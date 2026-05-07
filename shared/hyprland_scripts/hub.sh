@@ -40,6 +40,7 @@ while true; do
         -kb-row-up "k,Up" \
         -kb-row-down "j,Down" \
         -kb-accept-entry "l,Return" \
+        -kb-cancel "Escape,h" \
         -theme-str "inputbar {enabled: false;} window {location: north west; anchor: north west; x-offset: ${ROFI_X}px; y-offset: ${ROFI_Y}px; width: 35%;} listview {lines: 15;}"
 󰀻  Search Apps
 󰖲  Active Windows
@@ -67,7 +68,7 @@ EOF
             exit 0
             ;;
         *"Active Windows"*)
-            ~/.config/hypr/scripts/toggle_rofi.sh rofi -show window -kb-row-up "k,Up" -kb-row-down "j,Down" -kb-accept-entry "l,Return" -theme-str 'inputbar {enabled: false;}' &
+            ~/.config/hypr/scripts/toggle_rofi.sh rofi -show window -kb-row-up "k,Up" -kb-row-down "j,Down" -kb-accept-entry "l,Return" -kb-cancel "Escape,h" -theme-str 'inputbar {enabled: false;}' &
             exit 0
             ;;
         *"Calculator"*)

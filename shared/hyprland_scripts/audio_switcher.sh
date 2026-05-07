@@ -27,6 +27,7 @@ chosen=$(echo -e "$options" | rofi -dmenu -i -p "Audio Output" \
     -kb-row-up "k,Up" \
     -kb-row-down "j,Down" \
     -kb-accept-entry "l,Return" \
+    -kb-cancel "Escape,h" \
     -theme-str 'inputbar {enabled: false;} window {width: 35%;}')
 
 if [[ -n "$chosen" ]]; then

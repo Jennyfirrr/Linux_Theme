@@ -22,6 +22,7 @@ chosen=$(echo -e "$options" | rofi -dmenu -i -p "$msg" \
     -kb-row-up "k,Up" \
     -kb-row-down "j,Down" \
     -kb-accept-entry "l,Return" \
+    -kb-cancel "Escape,h" \
     -theme-str 'inputbar {enabled: false;} window {width: 30%;}')
 
 case "$chosen" in

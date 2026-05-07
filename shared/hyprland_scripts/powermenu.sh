@@ -7,6 +7,7 @@ chosen=$(printf "󰐥  Shutdown\n󰜉  Reboot\n󰤄  Suspend\n  Lock\n󰗼  L
     -kb-row-up "k,Up" \
     -kb-row-down "j,Down" \
     -kb-accept-entry "l,Return" \
+    -kb-cancel "Escape,h" \
     -theme-str 'inputbar {enabled: false;} window {width: 25%;}')
 
 case "$chosen" in
