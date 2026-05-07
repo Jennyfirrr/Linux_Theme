@@ -51,7 +51,6 @@ window#waybar > box {
 /* ─────────────────────────────────────────
    Module Base Style
    ───────────────────────────────────────── */
-#workspaces button,
 #custom-battery,
 #custom-cpu,
 #memory,
@@ -64,12 +63,16 @@ window#waybar > box {
 #custom-media,
 #custom-net_speed,
 #custom-system_health,
-#custom-logo {
+#launcher {
     background-color: @bubble;
     border: 1px solid @border;
     padding: __PAD_MOD__;
     margin: __MARGIN_MOD__;
     border-radius: 0;
+}
+
+#launcher {
+    padding: 0; /* Launcher group handles its own internal spacing */
 }
 
 /* ─────────────────────────────────────────
@@ -83,6 +86,8 @@ window#waybar > box {
 }
 
 #workspaces button {
+    background-color: transparent;
+    border: none;
     color: @dim;
     padding: 0px 8px;
     margin: 2px 2px;
@@ -221,9 +226,12 @@ window#waybar > box {
    Logo
    ───────────────────────────────────────── */
 #custom-logo {
+    background-color: transparent;
+    border: none;
     color: @peach;
     font-size: __FONT_LOGO__pt;
     padding: __PAD_MOD__;
+    margin: 0;
     text-shadow: 0 0 10px rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.5);
 }
 

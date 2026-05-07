@@ -23,6 +23,7 @@ INSTALL_DEPS=false
 INSTALL_NVIDIA=false
 INSTALL_XGBOOST=false
 ASSUME_YES=false
+RENDER_ONLY=false
 DEFAULT_THEME="FoxML_Classic"
 
 for arg in "$@"; do
@@ -30,6 +31,7 @@ for arg in "$@"; do
         --deps) INSTALL_DEPS=true ;;
         --nvidia) INSTALL_NVIDIA=true ;;
         --xgboost) INSTALL_XGBOOST=true ;;
+        --render-only) RENDER_ONLY=true ;;
         -y|--yes) ASSUME_YES=true ;;
         *) THEME_NAME="$arg" ;;
     esac
@@ -360,6 +362,58 @@ echo "Rendering templates with $THEME_NAME palette..."
 RENDERED_DIR=$(mktemp -d)
 render_all "$PALETTE_FILE" "$TEMPLATES_DIR" "$RENDERED_DIR"
 echo "  ✓ Templates rendered"
+
+if $RENDER_ONLY; then
+    # In render-only mode, we still need to deploy them to the system 
+    # but we skip dependencies, backups, and special sudo-heavy handlers.
+    echo "Installing rendered configs (render-only)..."
+    for mapping in "${TEMPLATE_MAPPINGS[@]}"; do
+        src="${mapping%%|*}"
+        dest="${mapping##*|}"
+        dest="${dest/#\~/$HOME}"
+        [[ "$dest" == *"FIREFOX_PROFILE"* ]] && continue
+        [[ "$dest" == *"GEMINI_DIR"* ]] && continue
+        if [[ -f "$RENDERED_DIR/$src" ]]; then
+            mkdir -p "$(dirname "$dest")"
+            cp "$RENDERED_DIR/$src" "$dest"
+        fi
+    done
+    
+    echo "Installing shared configs (render-only)..."
+    for mapping in "${SHARED_MAPPINGS[@]}"; do
+        src="${mapping%%|*}"
+        dest="${mapping##*|}"
+        dest="${dest/#\~/$HOME}"
+        if [[ -f "$SHARED_DIR/$src" ]]; then
+            mkdir -p "$(dirname "$dest")"
+            cp "$SHARED_DIR/$src" "$dest"
+        elif [[ -d "$SHARED_DIR/$src" ]]; then
+            mkdir -p "$(dirname "$dest")"
+            cp -r "$SHARED_DIR/$src" "$dest"
+        fi
+    done
+
+    # Re-run script and module deployment
+    mkdir -p ~/.config/hypr/scripts ~/.config/waybar/scripts ~/.config/hypr/modules
+    for script in "$SHARED_DIR/hyprland_scripts/"*.sh; do cp "$script" ~/.config/hypr/scripts/; chmod +x ~/.config/hypr/scripts/$(basename "$script"); done
+    for script in "$SHARED_DIR/waybar_scripts/"*.sh; do cp "$script" ~/.config/waybar/scripts/; chmod +x ~/.config/waybar/scripts/$(basename "$script"); done
+    for mod in "$SHARED_DIR/hyprland_modules/"*.conf; do 
+        basename="$(basename "$mod")"
+        [[ "$basename" == "theme.conf" ]] && continue
+        [[ "$basename" == "nvidia.conf" ]] && continue
+        cp "$mod" ~/.config/hypr/modules/
+    done
+    
+    # Still run waybar render to pick up monitor scale
+    if [[ -x "$HOME/.config/hypr/scripts/start_waybar.sh" ]]; then
+        "$HOME/.config/hypr/scripts/start_waybar.sh" --render-only || true
+    fi
+    
+    rm -rf "$RENDERED_DIR"
+    echo "Active theme: $THEME_NAME"
+    echo "✓ Render and deployment complete."
+    exit 0
+fi
 
 # ─────────────────────────────────────────
 # Backup and copy helper

@@ -1,41 +1,47 @@
 #!/bin/bash
 
-# The FoxML Hub 2.0
+# The FoxML Hub 2.0 (Optimized)
 # A dynamic, status-aware control center for your earthy desktop
+# Uses faster status gathering to eliminate startup lag.
+
+# Ensure we have the positioning variables
+ROFI_X=${ROFI_X:-12}
+ROFI_Y=${ROFI_Y:-50}
 
 while true; do
-    # --- Gather System Status ---
+    # --- Gather System Status (High-Speed Path) ---
     
-    # WiFi Status
-    wifi_ssid=$(nmcli -t -f active,ssid dev wifi | grep '^yes' | cut -d: -f2)
+    # WiFi Status: Query active connections (much faster than scanning dev wifi)
+    wifi_ssid=$(nmcli -t -f NAME,TYPE connection show --active | grep ':802-11-wireless' | head -1 | cut -d: -f1)
     [[ -z "$wifi_ssid" ]] && wifi_status="Disconnected" || wifi_status="Connected: $wifi_ssid"
 
-    # Bluetooth Status
-    bt_device=$(bluetoothctl info | grep "Name:" | cut -d' ' -f2-)
-    [[ -z "$bt_device" ]] && bt_status="On (No Device)" || bt_status="Connected: $bt_device"
-    if ! bluetoothctl show | grep -q "Powered: yes"; then bt_status="Off"; fi
+    # Bluetooth Status: Use a lighter check if possible
+    if ! bluetoothctl show | grep -q "Powered: yes"; then 
+        bt_status="Off"
+    else
+        bt_device=$(bluetoothctl info | grep "Name:" | cut -d' ' -f2-)
+        [[ -z "$bt_device" ]] && bt_status="On (No Device)" || bt_status="Connected: $bt_device"
+    fi
 
-    # Audio Status
+    # Audio Status (Fast)
     vol_raw=$(wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{print $2}')
-    vol_percent=$(echo "$vol_raw * 100 / 1" | bc 2>/dev/null || awk "BEGIN {print int($vol_raw*100)}")
+    vol_percent=$(awk "BEGIN {print int($vol_raw*100)}")
     mute=$(wpctl get-volume @DEFAULT_AUDIO_SINK@ | grep -q "MUTED" && echo " (Muted)" || echo "")
     audio_status="Volume: ${vol_percent}%$mute"
 
-    # Night Light Status
+    # Night Light Status (Fast)
     if pkill -0 wlsunset 2>/dev/null; then nl_status="On"; else nl_status="Off"; fi
 
-    # Idle Status
+    # Idle Status (Fast)
     if [[ -f "${XDG_RUNTIME_DIR:-/tmp}/hypridle_paused" ]]; then idle_status="Stay Awake (On)"; else idle_status="Normal (Off)"; fi
 
     # --- Build Menu ---
-    # We use -no-custom and a theme-str to hide the entry box and ensure it feels static.
-    # We add "Search Apps" and "Active Windows" to bridge the other Rofi modes.
     chosen=$(cat <<EOF | rofi -dmenu -i -no-custom -p "FoxML Hub" \
         -kb-row-up "k,Up" \
         -kb-row-down "j,Down" \
         -kb-accept-entry "l,Return" \
         -kb-row-left "h" \
-        -theme-str 'inputbar {enabled: false;} window {location: north west; anchor: north west; x-offset: 12px; y-offset: 50px; width: 35%;} listview {lines: 15;}'
+        -theme-str "inputbar {enabled: false;} window {location: north west; anchor: north west; x-offset: ${ROFI_X}px; y-offset: ${ROFI_Y}px; width: 35%;} listview {lines: 15;}"
 󰀻  Search Apps
 󰖲  Active Windows
 󰐥  Power Menu
@@ -56,13 +62,13 @@ EOF
     # --- Handle Selection ---
     case "$chosen" in
         *"Search Apps"*) 
-            # Exit loop and launch app menu
-            rofi -show drun -theme-str 'window {location: north; anchor: north; y-offset: 50px;}' &
+            # Exit loop and launch app menu via the toggle wrapper to ensure clean handoff
+            ~/.config/hypr/scripts/toggle_rofi.sh rofi -show drun &
             exit 0
             ;;
         *"Active Windows"*)
-            # Exit loop and launch window switcher
-            rofi -show window -kb-row-up "k,Up" -kb-row-down "j,Down" -kb-accept-entry "l,Return" -theme-str 'window {width: 50%;}' &
+            # Exit loop and launch window switcher without search bar
+            ~/.config/hypr/scripts/toggle_rofi.sh rofi -show window -theme-str 'inputbar {enabled: false;}' &
             exit 0
             ;;
         *"Power Menu"*) ~/.config/hypr/scripts/powermenu.sh ;;
@@ -94,5 +100,5 @@ EOF
     esac
 
     # Small sleep to allow system state to update before re-rendering the loop
-    sleep 0.2
+    sleep 0.1
 done

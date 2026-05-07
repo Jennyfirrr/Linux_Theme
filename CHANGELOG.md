@@ -6,7 +6,18 @@ All notable changes to the Fox ML theme.
 
 ## 2026-05-07 — v1.5.5
 
-A stability + UX pass. Hyprland 0.54.3 config errors resolved, Rofi popups consistently anchored under the workspaces, and an Eww control-center experiment paused after weighing its trade-offs.
+A stability + UX pass. Hyprland 0.54.3 config errors resolved, Rofi popups seamlessly integrated with Waybar, and installer deployment logic fixed.
+
+### UI — Seamless Rofi Dropdowns & Waybar Integration
+- **Unified Launcher Box**: Grouped the Waybar `custom/logo` and `hyprland/workspaces` modules into a single, cohesive `group/launcher` box with a shared border and background.
+- **Dynamic Popup Anchoring**: `start_waybar.sh` now dynamically calculates the exact pixel coordinates for the bottom edge of the Waybar and the left edge of the launcher box, exporting them as `ROFI_Y` and `ROFI_X`.
+- **Flush Glass Theme**: Updated the Rofi `glass.rasi` theme to use a 1px 40%-opacity border (matching Waybar) and removed top padding. The popup now overlaps the Waybar border by exactly 1px, creating a seamless "drop-down" extension of the launcher box.
+- **Global Toggle Wrapper**: Introduced `shared/hyprland_scripts/toggle_rofi.sh` to centralize Rofi toggling (killing active instances) and positioning injection. This fixes the "unexpected pixels" syntax error caused by Hyprland aggressively evaluating `$$` as PIDs instead of passing variables to the shell.
+- **Clean Hub Navigation**: The `Active Windows` view launched from within the SysHub now hides its search bar, keeping the Hub experience clean, while the standalone `Alt+Tab` bind retains it.
+
+### Installer — Proper Deployment & Performance
+- **Fixed `--render-only`**: The `install.sh --render-only` flag now correctly deploys updated `shared/` scripts and modules to your live config directories. Previously, it only regenerated templates, leaving the system running outdated logic.
+- **Hub Speedup**: The SysHub (`hub.sh`) now uses `nmcli connection show --active` instead of a full WiFi scan, eliminating the 2-3 second startup lag.
 
 ### Hyprland — Window-Rule Compatibility
 - **Swappy windowrules fixed for 0.54.3**: The inline form (`windowrule = float, class:^(swappy)$`) was failing parser validation because the colon in the regex matcher was being read as a key/value separator (`invalid field class:^(swappy)$: missing a value`). Converted to the unified block form already used throughout `rules.conf`:

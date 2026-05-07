@@ -120,12 +120,24 @@ substitute() {
 [[ -f "$STYLE_TMPL"  ]] && substitute "$STYLE_TMPL"  "$STYLE_OUT"
 [[ -f "$CONFIG_TMPL" ]] && substitute "$CONFIG_TMPL" "$CONFIG_OUT"
 
+# Calculate Rofi offsets for the launcher-integrated look.
+# Y: bottom of the bar (top margin + height).
+# X: left edge of the launcher box (gaps + module margin).
+# We set these as env vars so scripts and keybinds can use them.
+# We subtract 1 from Y to overlap the borders and make it look like one unit.
+ROFI_Y=$(( ALIGNED_MARGIN + HEIGHT - 1 ))
+# Extract the horizontal margin from MARGIN_MOD (e.g., "1px 4px" -> 4)
+MOD_X_MARGIN=$(echo "$MARGIN_MOD" | awk '{print $NF}' | tr -dc '0-9')
+ROFI_X=$(( GAPS + MOD_X_MARGIN ))
+
 # Apply cursor size to the running session AND set XCURSOR_SIZE for new
 # children Hyprland spawns. Skip silently if hyprctl can't reach the IPC
 # socket (we're being called pre-Hyprland from install.sh).
 if command -v hyprctl >/dev/null 2>&1 && [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" || -d "${XDG_RUNTIME_DIR:-/run/user/$UID}/hypr" ]]; then
     hyprctl setcursor "${XCURSOR_THEME:-catppuccin-mocha-peach-cursors}" "$CURSOR_SIZE" >/dev/null 2>&1 || true
     hyprctl setenv XCURSOR_SIZE "$CURSOR_SIZE" >/dev/null 2>&1 || true
+    hyprctl setenv ROFI_X "$ROFI_X" >/dev/null 2>&1 || true
+    hyprctl setenv ROFI_Y "$ROFI_Y" >/dev/null 2>&1 || true
 fi
 
 # `--render-only`: install.sh calls us this way after rendering templates,

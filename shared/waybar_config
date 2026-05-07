@@ -5,8 +5,7 @@
   "margin": "__MARGIN_BAR__",
 
   "modules-left": [
-    "custom/logo",
-    "hyprland/workspaces"
+    "group/launcher"
   ],
 
   "modules-center": [],
@@ -23,6 +22,14 @@
     "custom/system_health",
     "tray"
   ],
+
+  "group/launcher": {
+    "orientation": "horizontal",
+    "modules": [
+        "custom/logo",
+        "hyprland/workspaces"
+    ]
+  },
 
   "custom/system_health": {
     "exec": "~/.config/waybar/scripts/system_health.sh",
@@ -93,7 +100,7 @@
   "custom/logo": {
     "format": "󰣇",
     "tooltip": "Launcher",
-    "on-click": "bash -lc 'command -v wheel && wheel || rofi -show drun'"
+    "on-click": "~/.config/hypr/scripts/toggle_rofi.sh rofi -show drun"
   },
 
   "custom/net_speed": {
