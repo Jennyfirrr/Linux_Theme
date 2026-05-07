@@ -52,23 +52,17 @@ window#waybar > box {
    Module Base Style
    ───────────────────────────────────────── */
 #workspaces button,
-#network,
-#pulseaudio,
-#backlight,
-#battery,
+#custom-battery,
 #custom-cpu,
 #memory,
 #custom-disk,
 #custom-gpu,
-#custom-updates,
 #power-profiles-daemon,
 #idle_inhibitor,
-#clock,
+#custom-clock,
 #tray,
 #custom-media,
-#custom-weather,
 #custom-net_speed,
-#custom-project_name,
 #custom-system_health,
 #custom-logo {
     background-color: @bubble;
@@ -129,37 +123,15 @@ window#waybar > box {
     border: 1px solid @slate;
 }
 
-#custom-weather {
-    color: #{{GREEN_BRIGHT}};
-}
-
 #custom-net_speed {
     color: @lavender;
     font-size: __FONT_STATS__pt;
 }
 
-#custom-project_name {
-    color: @peach;
-    font-weight: bold;
-}
-
-#clock {
+#custom-clock {
     color: @peach;
     font-weight: bold;
     text-shadow: 0 0 8px rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.4);
-}
-
-#pulseaudio {
-    color: @lavender;
-    text-shadow: 0 0 6px rgba({{ACCENT_R}},{{ACCENT_G}},{{ACCENT_B}}, 0.35);
-}
-
-#network {
-    color: @fg;
-}
-
-#backlight {
-    color: @dim;
 }
 
 /* ─────────────────────────────────────────
@@ -196,14 +168,8 @@ window#waybar > box {
 }
 
 /* ─────────────────────────────────────────
-   Updates / Power profile / Idle inhibitor
+   Power profile / Idle inhibitor
    ───────────────────────────────────────── */
-#custom-updates {
-    color: #{{YELLOW}};
-    font-weight: bold;
-    letter-spacing: 0.5px;
-}
-
 #power-profiles-daemon {
     color: @dim;
     font-weight: bold;
@@ -223,19 +189,22 @@ window#waybar > box {
     text-shadow: 0 0 6px rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.5);
 }
 
-#battery {
+/* Composite battery (capacity text + volume/brightness in tooltip).
+   The script emits a "class" field in its JSON so waybar applies these
+   state selectors — same color set as the old built-in battery module. */
+#custom-battery {
     color: @fg;
 }
 
-#battery.charging {
+#custom-battery.charging {
     color: @peach;
 }
 
-#battery.warning:not(.charging) {
+#custom-battery.warning {
     color: #{{WARN}};
 }
 
-#battery.critical:not(.charging) {
+#custom-battery.critical {
     color: #{{RED}};
 }
 

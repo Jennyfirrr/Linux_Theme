@@ -29,4 +29,19 @@ format_speed() {
 RX_F=$(format_speed $RX_SPEED)
 TX_F=$(format_speed $TX_SPEED)
 
-echo "{\"text\": \"󰇚 $RX_F  󰕒 $TX_F\", \"tooltip\": \"Interface: $INTERFACE\"}"
+# Tooltip — interface plus SSID/signal when on a wireless link, since the
+# standalone `network` module was retired into this bubble.
+tooltip="Interface: $INTERFACE"
+if [[ "$INTERFACE" == wl* ]] && command -v nmcli >/dev/null 2>&1; then
+    # active wifi line is marked with '*' in column 1
+    line=$(nmcli -t -f IN-USE,SSID,SIGNAL device wifi 2>/dev/null \
+            | awk -F: '$1=="*"{print; exit}')
+    if [[ -n "$line" ]]; then
+        ssid=$(awk -F: '{print $2}' <<<"$line")
+        signal=$(awk -F: '{print $3}' <<<"$line")
+        [[ -n "$ssid" ]]   && tooltip+="\\n  SSID: $ssid"
+        [[ -n "$signal" ]] && tooltip+="\\n  Signal: ${signal}%"
+    fi
+fi
+
+printf '{"text":"󰇚 %s  󰕒 %s","tooltip":"%s"}\n' "$RX_F" "$TX_F" "$tooltip"

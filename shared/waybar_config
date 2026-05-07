@@ -9,25 +9,18 @@
     "hyprland/workspaces"
   ],
 
-  "modules-center": [
-    "custom/project_name"
-  ],
+  "modules-center": [],
 
   "modules-right": [
-    "custom/weather",
     "custom/net_speed",
     "custom/cpu",
     "memory",
     "custom/gpu",
     "custom/disk",
-    "custom/updates",
-    "network",
-    "pulseaudio",
-    "backlight",
     "power-profiles-daemon",
-    "battery",
+    "custom/battery",
     "idle_inhibitor",
-    "clock",
+    "custom/clock",
     "tray"
   ],
 
@@ -70,43 +63,6 @@
     "interval": 60
   },
 
-  "network": {
-    "format-wifi": "󰖩  {essid} {signalStrength}%",
-    "format-ethernet": "󰈀  {ipaddr}",
-    "format-disconnected": "󰖪  offline",
-    "tooltip-format": "{ifname}\n{ipaddr}",
-    "family": "ipv4"
-  },
-
-  "pulseaudio": {
-    "format": "{icon} {volume}%",
-    "format-muted": "󰝟  mute",
-    "format-icons": {
-      "headphones": "󰋋",
-      "default": ["󰕿", "󰖀", "󰕾"]
-    },
-    "on-click": "pavucontrol"
-  },
-
-  "backlight": {
-    "format": "󰃟  {percent}%",
-    "interval": 2
-  },
-
-  "battery": {
-    "format": "{icon} {capacity}%",
-    "format-charging": "󰂄  {capacity}%",
-    "format-icons": ["󰁺", "󰁼", "󰁾", "󰂀", "󰁹"],
-    "interval": 10,
-    "tooltip-format": "{capacity}% — {time} left\n{power:0.1f} W",
-    "tooltip-format-charging": "{capacity}% — charging, {time} until full\n{power:0.1f} W",
-    "tooltip-format-full": "{capacity}% — full",
-    "states": {
-      "warning": 25,
-      "critical": 10
-    }
-  },
-
   "power-profiles-daemon": {
     "format": "{icon}",
     "format-icons": {
@@ -129,18 +85,6 @@
     "tooltip-format-deactivated": "Click to keep screen awake"
   },
 
-  "custom/updates": {
-    "exec": "~/.config/waybar/scripts/updates.sh",
-    "return-type": "json",
-    "interval": 1800,
-    "on-click": "kitty -e bash -lc 'checkupdates | less; exec zsh' &"
-  },
-
-  "clock": {
-    "format": "  {:%a %b %d  %I:%M %p}",
-    "tooltip-format": "{:%A, %B %d, %Y}\nWeek %V"
-  },
-
   "tray": {
     "icon-size": __TRAY_ICON__,
     "spacing": 8
@@ -152,13 +96,6 @@
     "on-click": "bash -lc 'command -v wheel && wheel || rofi -show drun'"
   },
 
-  "custom/weather": {
-    "exec": "~/.config/waybar/scripts/weather.sh",
-    "return-type": "json",
-    "interval": 1800,
-    "tooltip": true
-  },
-
   "custom/net_speed": {
     "exec": "~/.config/waybar/scripts/net_speed.sh",
     "return-type": "json",
@@ -166,10 +103,19 @@
     "tooltip": true
   },
 
-  "custom/project_name": {
-    "exec": "~/.config/waybar/scripts/project_name.sh",
+  "custom/battery": {
+    "exec": "~/.config/waybar/scripts/battery.sh",
     "return-type": "json",
     "interval": 5,
-    "tooltip": true
+    "tooltip": true,
+    "on-click": "pavucontrol"
+  },
+
+  "custom/clock": {
+    "exec": "~/.config/waybar/scripts/clock.sh",
+    "return-type": "json",
+    "interval": 60,
+    "tooltip": true,
+    "on-click": "kitty -e bash -lc 'checkupdates | less; exec zsh' &"
   }
 }

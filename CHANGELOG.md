@@ -4,6 +4,32 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-07 — v1.5.4
+
+Power tuning gets a guided installer pass, and Waybar is consolidated from a 15-module sprawl into 10 dense bubbles with everything else folded into hover tooltips.
+
+### Installer — CPU Throttling Wizard
+- **Always-prompt setup**: New `install_throttling()` runs at the end of every interactive install (skipped under `-y`). Each step is its own y/N so users can pick & choose.
+- **Intel turbo disable**: Writes `/etc/tmpfiles.d/disable-turbo.conf` so `no_turbo=1` re-applies on every boot — survives suspend/wake and kernel resets.
+- **`cpupower` max-frequency cap**: Prompts for an MHz value (showing the hardware max as a hint), persists via `/etc/default/cpupower`, and enables `cpupower.service` so the cap survives reboots — fixing the common gotcha where `cpupower frequency-set -u` is a one-shot.
+- **CPU governor**: Validates the requested governor against the kernel-reported list before applying, then persists it alongside `max_freq`.
+- **`throttled` (ThinkPad MSR fix)**: Auto-detected via DMI. Installs from AUR using `yay`/`paru` and enables the service. Tunables (PL1/PL2, `Trip_Temp_C`, voltage offsets) stay hand-edited in `/etc/throttled.conf` — wrong undervolts crash silently, so no risky defaults are imposed.
+- **Sample config**: New `shared/throttled.conf` ships a documented starting point (P15 Gen 2i, conservative PL1/PL2, no undervolt) with per-CPU tuning notes in the header.
+
+### Aesthetics — Waybar Streamlining
+- **Density cut from 15 → 10 modules**. Six standalone pills folded into composite tooltips so the right-hand cluster has room to breathe.
+- **`custom/clock`**: Date + time in the bubble (with the `` calendar glyph and the same peach-bold + glow as before). Hover reveals weather (via `wttr.in`, cached 30 min) and pending pacman updates (via `checkupdates`, cached 10 min).
+- **`custom/battery`**: Capacity + charge icon in the bubble. Hover reveals current speaker volume and screen brightness. Charging / warning / critical states preserved via JSON `class` field — same color set as the old built-in module.
+- **`custom/net_speed` tooltip**: When on a wireless link, hover now shows the active SSID and signal strength (read via `nmcli`) — the standalone `network` module is gone.
+- **Removed from bar**: `weather`, `network`, `updates`, `pulseaudio`, `backlight`, `project_name`. Their data lives in tooltips now.
+- **Pure-bash `net_speed`**: Dropped the `bc` runtime dependency — speed formatting now uses integer math.
+
+### Branding — Fox ASCII Repair
+- **Welcome banner**: Fixed a corrupted escape sequence (`/\\\\_∕\\\\` → `/\_/\`) so the Fox face renders cleanly in `welcome.zsh` and the Neovim dashboard header.
+- **Quieter post-submit prompt**: The caramel theme's accept-line indicator changed from `❯` (accent2) to `•` (ANSI_OK) — softer visual hand-off after each command.
+
+---
+
 ## 2026-05-06 — v1.5.3
 
 Final UI refinement for a distraction-free experience.
