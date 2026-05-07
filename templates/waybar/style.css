@@ -246,3 +246,16 @@ window#waybar > box {
 #tray > * {
     margin: 0 4px;
 }
+
+/* ─────────────────────────────────────────
+   Tooltips
+   ───────────────────────────────────────── */
+tooltip {
+    background: rgba({{BG_R}},{{BG_G}},{{BG_B}}, 0.9);
+    border: 1px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.4);
+    border-radius: 0;
+}
+
+tooltip label {
+    color: @fg;
+}

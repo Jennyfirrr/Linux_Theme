@@ -67,32 +67,32 @@
     mouse_right_click = close_all
 
 [urgency_low]
-    background = "#{{BG_DUNST}}"
+    background = "#{{BG_DUNST}}E6"
     foreground = "#{{FG_DIM}}"
-    frame_color = "#{{SURFACE}}"
+    frame_color = "#{{SURFACE}}66"
     highlight = "#{{PRIMARY}}"
     timeout = 5
 
 [urgency_normal]
-    background = "#{{BG_DUNST}}"
+    background = "#{{BG_DUNST}}E6"
     foreground = "#{{FG}}"
-    frame_color = "#{{PRIMARY}}"
+    frame_color = "#{{PRIMARY}}66"
     highlight = "#{{PRIMARY}}"
     timeout = 8
 
 [urgency_critical]
-    background = "#{{BG_DUNST}}"
+    background = "#{{BG_DUNST}}E6"
     foreground = "#{{FG}}"
-    frame_color = "#{{RED}}"
+    frame_color = "#{{RED}}66"
     highlight = "#{{RED}}"
     timeout = 0
 
 # Spotify notifications - lavender accent
 [spotify]
     appname = Spotify
-    background = "#{{BG_DUNST}}"
+    background = "#{{BG_DUNST}}E6"
     foreground = "#{{FG}}"
-    frame_color = "#{{ACCENT}}"
+    frame_color = "#{{ACCENT}}66"
     highlight = "#{{ACCENT}}"
     format = "<b>%s</b>\n%b"
     timeout = 5
@@ -100,9 +100,9 @@
 # Spotify (flatpak)
 [spotify-flatpak]
     appname = "com.spotify.Client"
-    background = "#{{BG_DUNST}}"
+    background = "#{{BG_DUNST}}E6"
     foreground = "#{{FG}}"
-    frame_color = "#{{ACCENT}}"
+    frame_color = "#{{ACCENT}}66"
     highlight = "#{{ACCENT}}"
     format = "<b>%s</b>\n%b"
     timeout = 5

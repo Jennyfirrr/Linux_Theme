@@ -1,8 +1,8 @@
 font={{FONT_FAMILY}} 10
-background-color=#{{BG}}EE
+background-color=#{{BG}}E6
 text-color=#{{FG}}
-border-color=#{{PRIMARY}}
-border-size=2
+border-color=#{{PRIMARY}}66
+border-size=1
 border-radius=0
 padding=12
 margin=12
@@ -13,21 +13,21 @@ ignore-timeout=1
 icon-path=/usr/share/icons/{{MAKO_ICON_THEME}}
 
 [urgency=low]
-background-color=#{{BG}}DD
+background-color=#{{BG}}E6
 text-color=#{{FG_DIM}}
-border-color=#{{SURFACE}}
+border-color=#{{SURFACE}}66
 default-timeout=3000
 
 [urgency=critical]
-background-color=#{{BG}}EE
+background-color=#{{BG}}E6
 text-color=#{{FG}}
-border-color=#{{RED}}
+border-color=#{{RED}}66
 default-timeout=15000
 
 [app-name=Spotify]
-border-color=#{{ACCENT}}
+border-color=#{{ACCENT}}66
 default-timeout=4000
 
 [app-name="com.spotify.Client"]
-border-color=#{{ACCENT}}
+border-color=#{{ACCENT}}66
 default-timeout=4000
