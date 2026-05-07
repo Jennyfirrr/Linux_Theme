@@ -12,7 +12,9 @@ configuration {
 }
 
 window {
-  location: center;
+  location: north;
+  anchor: north;
+  y-offset: 50px;
   width: 480px;
   border-radius: 0;
   border: 2px;
