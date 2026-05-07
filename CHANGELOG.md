@@ -8,11 +8,10 @@ All notable changes to the Fox ML theme.
 
 Final UI refinement for a distraction-free experience.
 
-### Aesthetics — Global Clean UI
-- **Hidden Search Bars**: Removed the search bar from all non-launcher Rofi menus (Bluetooth, Network, Audio, Hub, and App Switcher). These menus now feel like clean, native desktop utilities.
-- **Universal `ALT + j/k` Navigation**: All Rofi menus now support **`ALT + j`** (Down) and **`ALT + k`** (Up) for navigation, and **`ALT + l`** for selection. This allows for unified, home-row navigation across all system utilities.
-- **Robust Cleanup**: Refactored utility scripts to explicitly disable the Rofi input bar, resolving a text-overlapping glitch in the App Switcher.
-- **Persistent Launcher**: The search bar remains active only in the main Application Launcher (`ALT + Shift + D`), where it is functionally required.
+### Aesthetics — Search-First Rofi UI
+- **Restored Search Bars**: Re-enabled search bars across all Rofi menus (Bluetooth, Network, Audio, Hub, and App Switcher). This provides the fastest way to interact with the system via fuzzy searching.
+- **Robust Navigation**: Reverted to standard Rofi navigation keys (Arrows/Typing). This eliminates all keybinding conflicts with Hyprland and ensures 100% stability.
+- **Aesthetic Preservation**: Maintained the beautiful 60% Frosted Glass transparency and FoxML earthy palette across all menus, including the newly searchable App Switcher.
 
 ---
 

@@ -23,7 +23,7 @@ while IFS= read -r line; do
     fi
 done <<< "$sinks"
 
-chosen=$(echo -e "$options" | rofi -dmenu -i -p "Audio Output" -theme-str 'inputbar {enabled: false;} window {width: 600px;}')
+chosen=$(echo -e "$options" | rofi -dmenu -i -p "Audio Output" -theme-str 'window {width: 600px;}')
 
 if [[ -n "$chosen" ]]; then
     # Extract name from selection
