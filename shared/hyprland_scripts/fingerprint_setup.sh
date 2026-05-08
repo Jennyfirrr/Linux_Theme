@@ -32,20 +32,20 @@ PAM_LINE="auth      sufficient  pam_fprintd.so"
 for file in "${PAM_FILES[@]}"; do
     if [[ -f "$file" ]]; then
         if grep -q "pam_fprintd.so" "$file"; then
-            echo "  ✓ $file already configured"
+            echo "  + $file already configured"
         else
             # Insert at the top of the file
             sudo sed -i "1i $PAM_LINE" "$file"
-            echo "  ✓ Configured $file"
+            echo "  + Configured $file"
         fi
     fi
 done
 
 # 4. Final Instructions
 echo -e "\n${PEACH}[3/3] Finalizing...${NC}"
-echo "  ✓ Biometrics linked to System Auth"
-echo "  ✓ Biometrics linked to Greetd"
-echo "  ✓ Biometrics linked to Sudo"
+echo "  + Biometrics linked to System Auth"
+echo "  + Biometrics linked to Greetd"
+echo "  + Biometrics linked to Sudo"
 
 echo -e "\n${SAGE}✨ Setup Complete!${NC}"
 echo "To activate your fingerprint and SSH agent, you MUST:"

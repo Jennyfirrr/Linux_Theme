@@ -16,7 +16,7 @@ fi
 mkdir -p "$PROJECT_NAME"
 cd "$PROJECT_NAME" || exit 1
 
-echo "🦊 Bootstrapping $PROJECT_NAME..."
+echo "Bootstrapping $PROJECT_NAME..."
 
 # Init git
 git init -q
@@ -36,5 +36,5 @@ EOF
 fox-ai-setup-project
 
 echo ""
-echo "✨ $PROJECT_NAME is ready for high-discipline development."
+echo "$PROJECT_NAME is ready for high-discipline development."
 echo "   Run: cd $PROJECT_NAME && opencode \"/readiness\""

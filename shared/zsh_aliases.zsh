@@ -42,7 +42,7 @@ alias flush='~/.contextai/src/flush_llm_cache.sh'
 ??() {
   local prompt="$*"
   local model="qwen2.5-coder:7b"
-  echo "🤔 Thinking..."
+  echo "Thinking..."
   local cmd=$(ollama run "$model" "Return ONLY the linux command (no explanation, no markdown) to do the following: $prompt")
   echo -e "\n\033[1;32m$cmd\033[0m\n"
   read -p "Run this command? [y/N] " -n 1 -r

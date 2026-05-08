@@ -28,7 +28,7 @@ warnings=()
 [[ $temp_int -gt $TEMP_THRESHOLD ]] && warnings+=("Temp: ${temp_int}°C")
 
 if [[ ${#warnings[@]} -gt 0 ]]; then
-    text="󰀦 HEALTH"
+    text="  HEALTH"
     tooltip="System Stress Detected:\\n"
     for w in "${warnings[@]}"; do
         tooltip+="  • $w\\n"

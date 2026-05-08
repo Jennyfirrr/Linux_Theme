@@ -10,19 +10,19 @@ fi
 MODEL="qwen2.5-coder:$MODEL_TAG"
 
 # Get question from Rofi
-QUESTION=$(rofi -dmenu -p "󰚩 Ask AI ($MODEL_TAG)" -theme-str 'window {width: 40%;} listview {enabled: false;}')
+QUESTION=$(rofi -dmenu -p "  Ask AI ($MODEL_TAG)" -theme-str 'window {width: 40%;} listview {enabled: false;}')
 
 if [[ -z "$QUESTION" ]]; then
     exit 0
 fi
 
 # Show thinking notification
-notify-send "󰚩 AI Thinking..." "$QUESTION" -t 3000
+notify-send "  AI Thinking..." "$QUESTION" -t 3000
 
 # Run AI and show result in a small Kitty window
 # We use a temp file to store the response
 TMP_FILE=$(mktemp)
-echo "󰚩 AI Response ($MODEL_TAG):" > "$TMP_FILE"
+echo "  AI Response ($MODEL_TAG):" > "$TMP_FILE"
 echo "-----------------------------------" >> "$TMP_FILE"
 echo "Question: $QUESTION" >> "$TMP_FILE"
 echo "" >> "$TMP_FILE"

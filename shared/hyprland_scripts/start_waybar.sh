@@ -143,7 +143,7 @@ fi
 # `--render-only`: install.sh calls us this way after rendering templates,
 # so the live style.css/config exist before Hyprland is even running.
 if [[ "${1:-}" == "--render-only" ]]; then
-    echo "  ✓ waybar rendered for ${PROFILE} (width ${EW}px, cursor ${CURSOR_SIZE}px)"
+    echo "  + waybar rendered for ${PROFILE} (width ${EW}px, cursor ${CURSOR_SIZE}px)"
     exit 0
 fi
 

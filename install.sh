@@ -28,6 +28,7 @@ INSTALL_NVIDIA=false
 INSTALL_XGBOOST=false
 INSTALL_AI=false
 INSTALL_MODELS=false
+INSTALL_GITHUB=false
 ASSUME_YES=false
 RENDER_ONLY=false
 DEFAULT_THEME="FoxML_Classic"
@@ -43,6 +44,7 @@ for arg in "$@"; do
         --xgboost) INSTALL_XGBOOST=true ;;
         --ai) INSTALL_AI=true ;;
         --models) INSTALL_MODELS=true ;;
+        --github) INSTALL_GITHUB=true ;;
         --render-only) RENDER_ONLY=true ;;
         -y|--yes) ASSUME_YES=true ;;
         *) THEME_NAME="$arg" ;;
@@ -200,7 +202,7 @@ if $INSTALL_DEPS; then
     # Check for multilib if steam is needed
     if [[ " ${TO_INSTALL[*]} " =~ " steam " ]] && ! grep -q "^\[multilib\]" /etc/pacman.conf; then
         echo ""
-        echo "  ⚠ Steam requires the [multilib] repository, but it is disabled in /etc/pacman.conf"
+        echo "  Steam requires the [multilib] repository, but it is disabled in /etc/pacman.conf"
         ENABLE_MULTILIB=false
         if $ASSUME_YES; then
             ENABLE_MULTILIB=true
@@ -214,9 +216,9 @@ if $INSTALL_DEPS; then
             echo "  Enabling [multilib]..."
             sudo sed -i '/#\[multilib\]/,/#Include = \/etc\/pacman.d\/mirrorlist/ s/^#//' /etc/pacman.conf
             sudo pacman -Sy
-            echo "  ✓ [multilib] enabled"
+            echo "  [multilib] enabled"
         else
-            echo "  ⚠ Skipping Steam (requires multilib)"
+            echo "  Skipping Steam (requires multilib)"
             # Remove steam from TO_INSTALL
             TO_INSTALL=(${TO_INSTALL[@]/steam/})
         fi
@@ -240,21 +242,21 @@ if $INSTALL_DEPS; then
     # Idempotent: writes the user's ~/.config/mimeapps.list.
     if command -v xdg-settings &>/dev/null && [[ -f /usr/share/applications/firefox.desktop ]]; then
         xdg-settings set default-web-browser firefox.desktop \
-            && echo "  ✓ Default browser set to Firefox"
+            && echo "  Default browser set to Firefox"
     fi
 
     # Enable power-profiles-daemon (waybar module needs it active to read profiles)
     if pacman -Qi power-profiles-daemon &>/dev/null \
         && ! systemctl is-active --quiet power-profiles-daemon; then
         sudo systemctl enable --now power-profiles-daemon \
-            && echo "  ✓ power-profiles-daemon enabled"
+            && echo "  power-profiles-daemon enabled"
     fi
 
     # Enable bluetooth service
     if pacman -Qi bluez &>/dev/null \
         && ! systemctl is-active --quiet bluetooth; then
         sudo systemctl enable --now bluetooth \
-            && echo "  ✓ bluetooth service enabled"
+            && echo "  bluetooth service enabled"
     fi
 
     # AUR Helper (yay) and Spotify/Spicetify
@@ -282,13 +284,13 @@ if $INSTALL_DEPS; then
                 git clone https://aur.archlinux.org/yay-bin.git "$YAY_DIR"
                 cd "$YAY_DIR"
                 makepkg -si --noconfirm
-            ) && AUR_HELPER="yay" || echo "  ⚠ yay install failed"
+            ) && AUR_HELPER="yay" || echo "  yay install failed"
             rm -rf "$YAY_DIR"
         fi
     fi
 
     if [[ -n "$AUR_HELPER" ]]; then
-        echo "  ✓ AUR helper $AUR_HELPER found"
+        echo "  AUR helper $AUR_HELPER found"
 
         # Install Eww from AUR since it's not in official repos
         if ! pacman -Qi eww &>/dev/null && ! pacman -Qi eww-git &>/dev/null; then
@@ -326,10 +328,10 @@ if $INSTALL_DEPS; then
             echo ""
             echo "Installing CLI tools (npm -g): ${NPM_GLOBALS[*]}"
             sudo npm install -g "${NPM_GLOBALS[@]}" \
-                && echo "  ✓ Installed: ${NPM_GLOBALS[*]}" \
-                || echo "  ⚠ npm install failed — see output above"
+                && echo "  Installed: ${NPM_GLOBALS[*]}" \
+                || echo "  npm install failed — see output above"
         else
-            echo "  ✓ Gemini CLI + Claude Code already installed"
+            echo "  Gemini CLI + Claude Code already installed"
         fi
     fi
 fi
@@ -349,7 +351,7 @@ if $INSTALL_XGBOOST; then
         echo "Building XGBoost from source (~5-10 min)..."
         # Hard-fail early if cmake is missing — saves a clone before the build dies.
         if ! command -v cmake &>/dev/null; then
-            echo "  ✗ cmake not found. Run with --deps first, or: sudo pacman -S cmake"
+            echo "  cmake not found. Run with --deps first, or: sudo pacman -S cmake"
             exit 1
         fi
         XGB_DIR="$HOME/code/xgboost"
@@ -364,8 +366,8 @@ if $INSTALL_XGBOOST; then
             make -j"$(nproc)"
             sudo make install
             sudo ldconfig
-        ) && echo "  ✓ XGBoost installed to /usr/local/" \
-          || echo "  ⚠ XGBoost build failed — see output above (continuing)"
+        ) && echo "  XGBoost installed to /usr/local/" \
+          || echo "  XGBoost build failed — see output above (continuing)"
     fi
 fi
 
@@ -376,7 +378,7 @@ if [[ -d "$HOME/.oh-my-zsh" ]]; then
     for repo in zsh-syntax-highlighting zsh-autosuggestions zsh-completions; do
         if [[ ! -d "$ZSH_CUSTOM/plugins/$repo" ]]; then
             git clone --quiet --depth 1 "https://github.com/zsh-users/$repo.git" "$ZSH_CUSTOM/plugins/$repo" \
-                && echo "  ✓ zsh plugin: $repo"
+                && echo "  zsh plugin: $repo"
         fi
     done
 fi
@@ -388,7 +390,7 @@ echo ""
 echo "Rendering templates with $THEME_NAME palette..."
 RENDERED_DIR=$(mktemp -d)
 render_all "$PALETTE_FILE" "$TEMPLATES_DIR" "$RENDERED_DIR"
-echo "  ✓ Templates rendered"
+echo "  Templates rendered"
 
 if $RENDER_ONLY; then
     # In render-only mode, we still need to deploy them to the system 
@@ -439,7 +441,7 @@ if $RENDER_ONLY; then
     
     rm -rf "$RENDERED_DIR"
     echo "Active theme: $THEME_NAME"
-    echo "✓ Render and deployment complete."
+    echo "Render and deployment complete."
     exit 0
 fi
 
@@ -455,7 +457,7 @@ backup_and_copy() {
         cp "$dest" "$backup_path" 2>/dev/null || true
     fi
     cp "$src" "$dest"
-    echo "  ✓ $(basename "$dest")"
+    echo "  $(basename "$dest")"
 }
 
 # ─────────────────────────────────────────
@@ -498,7 +500,7 @@ for mapping in "${SHARED_MAPPINGS[@]}"; do
         # Handle directory entries (like nvim_ftplugin/cpp.lua)
         mkdir -p "$(dirname "$dest")"
         cp "$SHARED_DIR/$src" "$dest"
-        echo "  ✓ $(basename "$dest")"
+        echo "  $(basename "$dest")"
     fi
 done
 
@@ -615,7 +617,7 @@ if $INSTALL_AI || $INSTALL_MODELS; then
   "model": "ollama/qwen2.5-coder:7b"
 }
 EOF
-        echo "  ✓ AI Tools setup complete."
+        echo "  AI Tools setup complete."
     fi
 
     if $INSTALL_MODELS; then
@@ -623,13 +625,13 @@ EOF
         ollama pull qwen2.5-coder:7b
         ollama pull qwen2.5-coder:14b
         ollama pull qwen2.5-coder:32b
-        echo "  ✓ AI Models ready."
+        echo "  AI Models ready."
     fi
 
     echo "Deploying AI Skills Vault..."
     mkdir -p "$HOME/.local/share/foxml/ai_skills"
     cp -r "$SHARED_DIR/ai_skills/"* "$HOME/.local/share/foxml/ai_skills/"
-    echo "  ✓ Vault initialized at ~/.local/share/foxml/ai_skills"
+    echo "  Vault initialized at ~/.local/share/foxml/ai_skills"
 
     # Plug skills into the current project folder
     echo "Plugging AI skills into project..."
@@ -637,11 +639,87 @@ EOF
     for skill in "$SHARED_DIR/ai_skills/"*.md; do
         cp "$skill" "$SCRIPT_DIR/.claude/commands/"
     done
-    echo "  ✓ Project-level AI skills ready."
-fi
+    echo "  + Project-level AI skills ready."
+    fi
 
-# ─────────────────────────────────────────
-# CPU throttling / power tuning — interactive wizard. Always offered at
+    # ─────────────────────────────────────────
+    # GitHub Workspace — opt-in
+    # ─────────────────────────────────────────
+    install_github_workspace() {
+    if $ASSUME_YES; then
+        echo "  • Skipping GitHub workspace setup (requires interaction)"
+        return
+    fi
+
+    echo ""
+    echo "╭──────────────────────────────────────────────────────────────────╮"
+    echo "│   GitHub Workspace Setup                                        │"
+    echo "├──────────────────────────────────────────────────────────────────┤"
+    echo "│ This will create ~/code and clone all your public/private       │"
+    echo "│ repositories. It uses 'gh' (GitHub CLI) for automation.         │"
+    echo "╰──────────────────────────────────────────────────────────────────╯"
+    read -p "Set up GitHub workspace? [y/N] " -n 1 -r; echo ""
+    [[ ! $REPLY =~ ^[Yy]$ ]] && return
+
+    # 1. Ensure gh is installed
+    if ! command -v gh &>/dev/null; then
+        echo "    Installing GitHub CLI..."
+        sudo pacman -S --needed --noconfirm github-cli
+    fi
+
+    # 2. Check auth
+    if ! gh auth status &>/dev/null; then
+        echo "    You need to authenticate with GitHub."
+        gh auth login
+    fi
+
+    # 3. Get username
+    local gh_user
+    gh_user=$(gh api user -q .login 2>/dev/null)
+    if [[ -z "$gh_user" ]]; then
+        read -p "    Enter your GitHub username: " gh_user
+    fi
+
+    if [[ -z "$gh_user" ]]; then
+        echo "    ! No username provided, skipping."
+        return
+    fi
+
+    # 4. Git Config Check
+    if [[ -z "$(git config --global user.name)" ]]; then
+        read -p "    Enter Git Name: " git_name
+        [[ -n "$git_name" ]] && git config --global user.name "$git_name"
+    fi
+    if [[ -z "$(git config --global user.email)" ]]; then
+        read -p "    Enter Git Email: " git_email
+        [[ -n "$git_email" ]] && git config --global user.email "$git_email"
+    fi
+
+    # 5. Workspace Directory
+    mkdir -p "$HOME/code"
+    cd "$HOME/code" || return
+
+    # 6. Pull Repos
+    echo "      Pulling all repositories for $gh_user..."
+    # Get list of all repos (name and sshUrl)
+    gh repo list "$gh_user" --limit 1000 --json name,sshUrl -q '.[] | [.name, .sshUrl] | @tsv' | while read -r name url; do
+        if [[ -d "$name" ]]; then
+            echo "      • $name already exists, skipping"
+        else
+            echo "      ↓ Cloning $name..."
+            git clone "$url" "$name" --quiet
+        fi
+    done
+
+    echo "    + Workspace setup complete in ~/code"
+    }
+
+    if $INSTALL_GITHUB; then
+    install_github_workspace
+    fi
+
+    # ─────────────────────────────────────────
+    # CPU throttling / power tuning — interactive wizard. Always offered at
 # the end of an interactive install; auto-skipped under -y.
 # ─────────────────────────────────────────
 install_throttling
@@ -673,15 +751,18 @@ echo "  5. Select 'Fox ML' theme in Cursor/VS Code"
 if $INSTALL_AI; then
     echo "  6. OpenCode is ready: Run 'opencode' to start local AI development"
 fi
+if $INSTALL_GITHUB; then
+    echo "  7. GitHub Workspace is ready: Your repos are in ~/code"
+fi
 if $INSTALL_NVIDIA; then
-    echo "  7. Reboot to load the nvidia kernel module"
+    echo "  8. Reboot to load the nvidia kernel module"
 fi
 echo ""
 
 # Fingerprint reader detection (Moved to bottom)
 if lsusb | grep -qi "fingerprint"; then
     echo "╭──────────────────────────────────────────────────────────────────╮"
-    echo "│ 󰆐  Hardware Detected: Fingerprint Reader                        │"
+    echo "│  Hardware Detected: Fingerprint Reader                        │"
     echo "├──────────────────────────────────────────────────────────────────┤"
     echo "│ To automate your biometric setup (Sudo, Login, Git):             │"
     echo "│   Run: fox-fingerprint                                           │"

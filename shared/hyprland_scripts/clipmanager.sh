@@ -17,10 +17,10 @@ if [[ "$MODE" == "image" ]]; then
     # Image mode — uses a custom theme with large previews if possible
     # Note: cliphist stores images as encoded binary; this list shows the metadata
     selected=$(cliphist list | grep -iE "\[\[ binary data .* (png|jpg|jpeg|webp) .* \]\]" | \
-        rofi -dmenu -p "🖼️ Images" -i -theme-str "window {width: 40%;} listview {lines: 10;}")
+        rofi -dmenu -p " Images" -i -theme-str "window {width: 40%;} listview {lines: 10;}")
 else
     # Text mode — clean earthy list
-    selected=$(cliphist list | rofi -dmenu -p "📋 Clipboard" -i \
+    selected=$(cliphist list | rofi -dmenu -p " Clipboard" -i \
         -kb-row-up "k,Up" \
         -kb-row-down "j,Down" \
         -kb-accept-entry "l,Return" \

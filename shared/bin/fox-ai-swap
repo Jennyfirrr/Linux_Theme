@@ -11,7 +11,7 @@ fi
 switch_model() {
     local model=$1
     sed -i "s/\"model\": \"ollama\/qwen2.5-coder:.*\"/\"model\": \"ollama\/qwen2.5-coder:$model\"/" "$CONFIG_FILE"
-    echo "✓ OpenCode switched to: qwen2.5-coder:$model"
+    echo "+ OpenCode switched to: qwen2.5-coder:$model"
 }
 
 if [[ "$1" == "7b" ]]; then

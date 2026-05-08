@@ -21,9 +21,9 @@ fi
 mkdir -p "$TARGET_DIR"
 
 if $USE_SYMLINK; then
-    echo "🔌 Plugging in high-discipline AI skills (symlinks)..."
+    echo "Plugging in high-discipline AI skills (symlinks)..."
 else
-    echo "💾 Plugging in high-discipline AI skills (copies)..."
+    echo "Plugging in high-discipline AI skills (copies)..."
 fi
 
 for skill in "$VAULT"/*.md; do
@@ -33,7 +33,7 @@ for skill in "$VAULT"/*.md; do
     else
         cp "$skill" "$TARGET_DIR/$skill_name"
     fi
-    echo "  ✓ $skill_name"
+    echo "  + $skill_name"
 done
 
 echo "✨ Project initialized with high-discipline AI protocols."

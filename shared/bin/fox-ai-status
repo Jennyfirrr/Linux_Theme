@@ -4,7 +4,7 @@
 CONFIG_FILE="$HOME/.config/opencode/opencode.json"
 
 if [[ ! -f "$CONFIG_FILE" ]]; then
-    echo '{"text": "󰚩 OFF", "tooltip": "OpenCode config not found", "class": "offline"}'
+    echo '{"text": "  OFF", "tooltip": "OpenCode config not found", "class": "offline"}'
     exit 0
 fi
 
@@ -23,25 +23,25 @@ fi
 
 case "$MODEL_TAG" in
     "7b")
-        ICON="󰚩"
+        ICON=" "
         LABEL="7B$VRAM_INFO"
         CLASS="fast"
         TOOLTIP="Qwen 7B (Fast / Low VRAM)"
         ;;
     "14b")
-        ICON="󰚩"
+        ICON=" "
         LABEL="14B$VRAM_INFO"
         CLASS="smart"
         TOOLTIP="Qwen 14B (Smart / Balanced)"
         ;;
     "32b")
-        ICON="󰚩"
+        ICON=" "
         LABEL="32B$VRAM_INFO"
         CLASS="expert"
         TOOLTIP="Qwen 32B (Expert / Heavy)"
         ;;
     *)
-        ICON="󰚩"
+        ICON=" "
         LABEL="UNK$VRAM_INFO"
         CLASS="unknown"
         TOOLTIP="Model: $MODEL_TAG"

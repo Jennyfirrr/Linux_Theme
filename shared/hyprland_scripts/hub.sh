@@ -46,7 +46,7 @@ while true; do
 󰖲  Active Windows
 󰪚  Calculator
 󰱫  Emoji Picker
-󰚩  Quick AI Chat
+   Quick AI Chat
 󱉩  Vault (Passwords)
 󰀦  Panic Button
 󰒃  Security Audit

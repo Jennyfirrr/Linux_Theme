@@ -162,7 +162,7 @@ install_specials() {
             if [[ -f "$rendered_dir/firefox/$css" ]]; then
                 mkdir -p "$ff_profile/chrome"
                 cp "$rendered_dir/firefox/$css" "$ff_profile/chrome/$css"
-                echo "  ✓ Firefox $css"
+                echo "  Firefox $css"
             fi
         done
         # Set the legacy stylesheet pref via user.js so userChrome/userContent
@@ -172,10 +172,10 @@ install_specials() {
         local ff_pref='user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);'
         if ! grep -qF 'toolkit.legacyUserProfileCustomizations.stylesheets' "$ff_userjs" 2>/dev/null; then
             printf '// FoxML theming\n%s\n' "$ff_pref" >> "$ff_userjs"
-            echo "  ✓ Firefox user.js (legacy stylesheet pref)"
+            echo "  Firefox user.js (legacy stylesheet pref)"
         fi
     else
-        echo "  ⚠ No Firefox profile found, skipping"
+        echo "  No Firefox profile found, skipping"
     fi
 
     # Cursor/VS Code — package.json setup
@@ -196,14 +196,14 @@ install_specials() {
   }
 }
 PKGJSON
-            echo "  ✓ $(basename "$ext_dir" | sed 's/^\.//') theme"
+            echo "  $(basename "$ext_dir" | sed 's/^\.//') theme"
         fi
     done
 
     # Bat cache rebuild
     if command -v bat &>/dev/null; then
         bat cache --build &>/dev/null
-        echo "  ✓ Bat cache rebuilt"
+        echo "  Bat cache rebuilt"
     fi
 
     # Gemini CLI — merge the rendered ui block into the user's settings.json so
@@ -216,15 +216,15 @@ PKGJSON
             local tmp_settings; tmp_settings="$(mktemp)"
             if jq -s '.[0] * .[1]' "$gemini_settings" "$rendered_dir/gemini/settings.json" > "$tmp_settings" 2>/dev/null; then
                 mv "$tmp_settings" "$gemini_settings"
-                echo "  ✓ Gemini theme merged"
+                echo "  Gemini theme merged"
             else
                 rm -f "$tmp_settings"
-                echo "  ⚠ Gemini merge failed, skipping"
+                echo "  Gemini merge failed, skipping"
             fi
         else
             mkdir -p "$(dirname "$gemini_settings")"
             cp "$rendered_dir/gemini/settings.json" "$gemini_settings"
-            echo "  ✓ Gemini theme installed"
+            echo "  Gemini theme installed"
         fi
     fi
 
@@ -236,7 +236,7 @@ PKGJSON
             [[ -f "$bin" ]] || continue
             cp "$bin" "$HOME/.local/bin/$(basename "$bin")"
             chmod +x "$HOME/.local/bin/$(basename "$bin")"
-            echo "  ✓ bin/$(basename "$bin")"
+            echo "  bin/$(basename "$bin")"
         done
     fi
 
@@ -247,7 +247,7 @@ PKGJSON
             [[ -f "$script" ]] || continue
             cp "$script" "$HOME/.config/hypr/scripts/$(basename "$script")"
             chmod +x "$HOME/.config/hypr/scripts/$(basename "$script")"
-            echo "  ✓ scripts/$(basename "$script")"
+            echo "  scripts/$(basename "$script")"
         done
     fi
 
@@ -258,7 +258,7 @@ PKGJSON
             [[ -f "$script" ]] || continue
             cp "$script" "$HOME/.config/waybar/scripts/$(basename "$script")"
             chmod +x "$HOME/.config/waybar/scripts/$(basename "$script")"
-            echo "  ✓ waybar/$(basename "$script")"
+            echo "  waybar/$(basename "$script")"
         done
     fi
 
@@ -271,7 +271,7 @@ PKGJSON
             [[ "$basename" == "theme.conf" ]] && continue   # theme.conf comes from templates
             [[ "$basename" == "nvidia.conf" ]] && continue  # opt-in, handled by install_nvidia()
             cp "$mod" "$HOME/.config/hypr/modules/$basename"
-            echo "  ✓ modules/$basename"
+            echo "  modules/$basename"
         done
     fi
 
@@ -282,7 +282,7 @@ PKGJSON
         cp "$rendered_dir/regreet/regreet.css" ~/.config/regreet/regreet.css
         cp "$SCRIPT_DIR/shared/regreet.toml" ~/.config/regreet/regreet.toml
         cp "$SCRIPT_DIR/shared/greetd_hyprland.conf" ~/.config/regreet/hyprland.conf
-        echo "  ✓ ReGreet staged to ~/.config/regreet/"
+        echo "  ReGreet staged to ~/.config/regreet/"
         echo "  To activate:"
         echo "    sudo cp ~/.config/regreet/regreet.{css,toml} /etc/greetd/"
         echo "    sudo cp ~/.config/regreet/hyprland.conf /etc/greetd/hyprland.conf"
@@ -297,7 +297,7 @@ PKGJSON
         shopt -s nullglob nocaseglob
         for wp in "$SCRIPT_DIR/shared/wallpapers/"*.{jpg,jpeg,png,webp}; do
             cp "$wp" ~/.wallpapers/
-            echo "  ✓ $(basename "$wp")"
+            echo "  $(basename "$wp")"
         done
         shopt -u nullglob nocaseglob
     fi
@@ -314,12 +314,12 @@ PKGJSON
             mkdir -p "$HOME/.local/share/icons"
             unzip -o -q "$tmp_zip" -d "$HOME/.local/share/icons/"
             rm -f "$tmp_zip"
-            echo "  ✓ cursor theme: $cursor_name"
+            echo "  cursor theme: $cursor_name"
         else
-            echo "  ⚠ cursor download failed; install from AUR or skip"
+            echo "  cursor download failed; install from AUR or skip"
         fi
     else
-        echo "  ✓ cursor theme already present"
+        echo "  cursor theme already present"
     fi
     if command -v gsettings &>/dev/null; then
         gsettings set org.gnome.desktop.interface cursor-theme "$cursor_name" 2>/dev/null || true
@@ -333,12 +333,12 @@ PKGJSON
     if [[ ! -d "$icons_dir/Papirus" ]]; then
         if curl -fsSL "https://raw.githubusercontent.com/PapirusDevelopmentTeam/papirus-icon-theme/master/install.sh" \
                 | DESTDIR="$icons_dir" sh &>/dev/null; then
-            echo "  ✓ Papirus icon theme"
+            echo "  Papirus icon theme"
         else
-            echo "  ⚠ Papirus install failed; skipping folder recolor"
+            echo "  Papirus install failed; skipping folder recolor"
         fi
     else
-        echo "  ✓ Papirus already present"
+        echo "  Papirus already present"
     fi
 
     if [[ -d "$icons_dir/Papirus" ]]; then
@@ -347,7 +347,7 @@ PKGJSON
         if git clone --depth 1 --quiet \
                 https://github.com/catppuccin/papirus-folders.git "$cat_tmp/repo" 2>/dev/null; then
             cp -r "$cat_tmp/repo/src/"* "$icons_dir/Papirus/" 2>/dev/null || true
-            echo "  ✓ Catppuccin folder palette injected"
+            echo "  Catppuccin folder palette injected"
         fi
         rm -rf "$cat_tmp"
 
@@ -363,7 +363,7 @@ PKGJSON
         fi
         if [[ -x "$pf_script" ]]; then
             "$pf_script" -C cat-mocha-peach -t Papirus-Dark &>/dev/null || true
-            echo "  ✓ folders → cat-mocha-peach"
+            echo "  folders → cat-mocha-peach"
             [[ "$pf_script" != "papirus-folders" ]] && rm -f "$pf_script"
         fi
 
@@ -381,7 +381,7 @@ PKGJSON
             mkdir -p "$bat_dir"
             printf -- '--theme="Fox ML"\n' >> "$bat_dir/config"
         fi
-        echo "  ✓ bat --theme=\"Fox ML\""
+        echo "  bat --theme=\"Fox ML\""
     fi
 
     # delta — wire the rendered FoxML gitconfig in via [include] so the user's
@@ -392,7 +392,7 @@ PKGJSON
         if ! git config --global --get-all include.path 2>/dev/null | grep -qxF "$delta_inc"; then
             git config --global --add include.path "$delta_inc"
         fi
-        echo "  ✓ git delta include → $delta_inc"
+        echo "  git delta include → $delta_inc"
     fi
 
     # btop — point btop.conf at the FoxML theme. If btop hasn't run yet there's
@@ -403,15 +403,15 @@ PKGJSON
     if [[ ! -f "$btop_conf" ]]; then
         mkdir -p "$(dirname "$btop_conf")"
         echo 'color_theme = "foxml"' > "$btop_conf"
-        echo "  ✓ btop.conf created with FoxML theme"
+        echo "  btop.conf created with FoxML theme"
     elif grep -qE '^color_theme\s*=\s*"foxml"' "$btop_conf"; then
-        echo "  ✓ btop already on FoxML theme"
+        echo "  btop already on FoxML theme"
     elif grep -qE '^color_theme\s*=' "$btop_conf"; then
         sed -i -E 's|^(color_theme\s*=\s*).*|\1"foxml"|' "$btop_conf"
-        echo "  ✓ btop color_theme → foxml"
+        echo "  btop color_theme → foxml"
     else
         echo 'color_theme = "foxml"' >> "$btop_conf"
-        echo "  ✓ btop color_theme → foxml"
+        echo "  btop color_theme → foxml"
     fi
 
     # Systemd user units (wallpaper rotation timer, etc.)
@@ -421,7 +421,7 @@ PKGJSON
         for unit in "$SCRIPT_DIR/shared/systemd_user/"*.{service,timer}; do
             [[ -f "$unit" ]] || continue
             cp "$unit" "$HOME/.config/systemd/user/$(basename "$unit")"
-            echo "  ✓ systemd/$(basename "$unit")"
+            echo "  systemd/$(basename "$unit")"
             installed_any=1
         done
         if (( installed_any )); then
@@ -430,7 +430,7 @@ PKGJSON
                 [[ -f "$timer" ]] || continue
                 systemctl --user enable --now "$(basename "$timer")" &>/dev/null || true
             done
-            echo "  ✓ systemd user timers enabled"
+            echo "  systemd user timers enabled"
         fi
     fi
 }
@@ -460,7 +460,7 @@ install_nvidia() {
     done
 
     if [[ -z "$nvidia_addr" ]]; then
-        echo "  ⚠ No NVIDIA GPU found, skipping nvidia setup"
+        echo "  No NVIDIA GPU found, skipping nvidia setup"
         return
     fi
 
@@ -470,7 +470,7 @@ install_nvidia() {
     local nvidia_drm intel_drm
     nvidia_drm="$(readlink -f "/dev/dri/by-path/pci-${nvidia_addr}-card" 2>/dev/null)"
     if [[ -z "$nvidia_drm" || ! -e "$nvidia_drm" ]]; then
-        echo "  ⚠ Could not resolve /dev/dri/by-path/pci-${nvidia_addr}-card — is the nvidia driver loaded?"
+        echo "  Could not resolve /dev/dri/by-path/pci-${nvidia_addr}-card — is the nvidia driver loaded?"
         return
     fi
     local aq_drm_devices="$nvidia_drm"
@@ -492,13 +492,13 @@ install_nvidia() {
         sed "s|AQ_DRM_DEVICES,.*|AQ_DRM_DEVICES, ${aq_drm_devices}|" \
             "$SCRIPT_DIR/shared/hyprland_modules/nvidia.conf" \
             > ~/.config/hypr/modules/nvidia.conf
-        echo "  ✓ modules/nvidia.conf (AQ_DRM_DEVICES → ${aq_drm_devices})"
+        echo "  modules/nvidia.conf (AQ_DRM_DEVICES → ${aq_drm_devices})"
 
         local hypr_main="$HOME/.config/hypr/hyprland.conf"
         if [[ -f "$hypr_main" ]] && ! grep -qF 'modules/nvidia.conf' "$hypr_main"; then
             printf '\n# Nvidia (added by install.sh --nvidia)\nsource = ~/.config/hypr/modules/nvidia.conf\n' \
                 >> "$hypr_main"
-            echo "  ✓ hyprland.conf sources nvidia.conf"
+            echo "  hyprland.conf sources nvidia.conf"
         fi
     fi
 
@@ -513,7 +513,7 @@ install_nvidia() {
         local boot_free_mb
         boot_free_mb=$(df --output=avail -BM /boot 2>/dev/null | tail -1 | tr -dc '0-9')
         if [[ -n "$boot_free_mb" && "$boot_free_mb" -lt 80 ]]; then
-            echo "  ⚠ /boot has only ${boot_free_mb} MB free — skipping mkinitcpio edit"
+            echo "  /boot has only ${boot_free_mb} MB free — skipping mkinitcpio edit"
             echo "    nvidia-bearing initramfs needs ~135 MB. Free space in /boot"
             echo "    (older kernels, fallback initramfs) and re-run, or skip this"
             echo "    step — the dGPU will still render via udev module loading."
@@ -521,7 +521,7 @@ install_nvidia() {
             sudo sed -i.foxml-bak \
                 's/^MODULES=([^)]*)/MODULES=(nvidia nvidia_modeset nvidia_uvm nvidia_drm)/' \
                 "$mkinit"
-            echo "  ✓ mkinitcpio MODULES updated (backup: ${mkinit}.foxml-bak)"
+            echo "  mkinitcpio MODULES updated (backup: ${mkinit}.foxml-bak)"
             sudo mkinitcpio -P 2>&1 | tail -3
         fi
     else
@@ -536,16 +536,16 @@ install_nvidia() {
             sudo sed -i.foxml-bak \
                 -E 's/^(options .*)$/\1 nvidia_drm.modeset=1 nvidia_drm.fbdev=1/' \
                 "$boot_entry"
-            echo "  ✓ kernel cmdline updated (backup: ${boot_entry}.foxml-bak)"
+            echo "  kernel cmdline updated (backup: ${boot_entry}.foxml-bak)"
         else
             echo "  • kernel cmdline already has nvidia_drm.modeset=1"
         fi
     elif [[ -f /etc/default/grub ]]; then
-        echo "  ⚠ GRUB detected — add 'nvidia_drm.modeset=1 nvidia_drm.fbdev=1'"
+        echo "  GRUB detected — add 'nvidia_drm.modeset=1 nvidia_drm.fbdev=1'"
         echo "    to GRUB_CMDLINE_LINUX_DEFAULT in /etc/default/grub, then"
         echo "    run: sudo grub-mkconfig -o /boot/grub/grub.cfg"
     else
-        echo "  ⚠ Unknown bootloader — add 'nvidia_drm.modeset=1 nvidia_drm.fbdev=1'"
+        echo "  Unknown bootloader — add 'nvidia_drm.modeset=1 nvidia_drm.fbdev=1'"
         echo "    to your kernel cmdline manually."
     fi
 
@@ -573,7 +573,7 @@ install_catppuccin_cursor() {
     fi
 
     if ! command -v curl >/dev/null 2>&1; then
-        echo "  ⚠ curl not found — install curl or fetch $theme manually"
+        echo "  curl not found — install curl or fetch $theme manually"
         return
     fi
 
@@ -586,20 +586,20 @@ install_catppuccin_cursor() {
             | head -1)
 
     if [[ -z "$url" ]]; then
-        echo "  ⚠ Couldn't resolve $asset from $api — skipping cursor install"
+        echo "  Couldn't resolve $asset from $api — skipping cursor install"
         return
     fi
 
     local tmp
     tmp=$(mktemp -d)
     if ! curl -fsSL -o "$tmp/$asset" "$url"; then
-        echo "  ⚠ Download failed: $url"
+        echo "  Download failed: $url"
         rm -rf "$tmp"
         return
     fi
 
     if ! command -v unzip >/dev/null 2>&1; then
-        echo "  ⚠ unzip not found — pacman -S unzip then re-run"
+        echo "  unzip not found — pacman -S unzip then re-run"
         rm -rf "$tmp"
         return
     fi
@@ -609,9 +609,9 @@ install_catppuccin_cursor() {
     rm -rf "$tmp"
 
     if [[ -d "$user_dir/$theme" ]]; then
-        echo "  ✓ $theme → $user_dir"
+        echo "  $theme → $user_dir"
     else
-        echo "  ⚠ Extraction did not produce $user_dir/$theme — check asset layout"
+        echo "  Extraction did not produce $user_dir/$theme — check asset layout"
     fi
 }
 
@@ -629,7 +629,7 @@ install_greetd() {
 
     local staged="$HOME/.config/regreet"
     if [[ ! -f "$staged/regreet.css" || ! -f "$staged/regreet.toml" || ! -f "$staged/hyprland.conf" ]]; then
-        echo "  ⚠ Staged regreet files missing in $staged — skipping"
+        echo "  Staged regreet files missing in $staged — skipping"
         return
     fi
 
@@ -642,7 +642,7 @@ install_greetd() {
     local wall_src="$HOME/.wallpapers/$wall_name"
 
     if [[ ! -f "$wall_src" ]]; then
-        echo "  ⚠ Login wallpaper $wall_src missing — copy your wallpaper to ~/.wallpapers/ first"
+        echo "  Login wallpaper $wall_src missing — copy your wallpaper to ~/.wallpapers/ first"
         return
     fi
 
@@ -651,8 +651,8 @@ install_greetd() {
     sudo install -m 644 "$staged/regreet.toml"    /etc/greetd/regreet.toml
     sudo install -m 644 "$staged/hyprland.conf"   /etc/greetd/hyprland.conf
     sudo install -m 644 "$wall_src"               "$wall_path"
-    echo "  ✓ regreet css/toml/hyprland.conf → /etc/greetd/"
-    echo "  ✓ login wallpaper → $wall_path"
+    echo "  regreet css/toml/hyprland.conf → /etc/greetd/"
+    echo "  login wallpaper → $wall_path"
 
     # /etc/greetd/config.toml — only rewrite if it's still the stock default
     # (command = "agreety …"). Preserve any user customization beyond that.
@@ -665,13 +665,13 @@ vt = 1
 command = "Hyprland -c /etc/greetd/hyprland.conf"
 user = "greeter"
 EOF
-        echo "  ✓ /etc/greetd/config.toml (Hyprland greeter session)"
+        echo "  /etc/greetd/config.toml (Hyprland greeter session)"
     else
         echo "  • /etc/greetd/config.toml already customized — leaving as-is"
     fi
 
     if ! systemctl is-enabled --quiet greetd 2>/dev/null; then
-        sudo systemctl enable greetd && echo "  ✓ greetd enabled (login screen on next boot)"
+        sudo systemctl enable greetd && echo "  greetd enabled (login screen on next boot)"
     else
         echo "  • greetd already enabled"
     fi
@@ -755,7 +755,7 @@ w /sys/devices/system/cpu/intel_pstate/no_turbo - - - - 1
 EOF
             sudo systemd-tmpfiles --create /etc/tmpfiles.d/disable-turbo.conf >/dev/null 2>&1
             echo 1 | sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo >/dev/null
-            echo "    ✓ Intel Turbo disabled (now and on every boot)"
+            echo "    Intel Turbo disabled (now and on every boot)"
         fi
     fi
 
@@ -775,14 +775,14 @@ EOF
         if [[ "$max_mhz" =~ ^[0-9]+$ ]] && (( max_mhz > 0 )); then
             local max_khz=$((max_mhz * 1000))
             if sudo cpupower frequency-set -u "${max_mhz}MHz" >/dev/null 2>&1; then
-                echo "    ✓ Max set to ${max_mhz} MHz (live)"
+                echo "    Max set to ${max_mhz} MHz (live)"
             else
-                echo "    ⚠ Live cap failed — will still try to persist"
+                echo "    Live cap failed — will still try to persist"
             fi
             _persist_cpupower max_freq "${max_khz}"
-            echo "    ✓ Persisted via /etc/default/cpupower"
+            echo "    Persisted via /etc/default/cpupower"
         elif [[ -n "$max_mhz" ]]; then
-            echo "    ⚠ '$max_mhz' is not a positive integer — skipping"
+            echo "    '$max_mhz' is not a positive integer — skipping"
         fi
     fi
 
@@ -799,9 +799,9 @@ EOF
                 if [[ " $available_gov " == *" $governor "* ]]; then
                     sudo cpupower frequency-set -g "$governor" >/dev/null 2>&1
                     _persist_cpupower governor "'${governor}'"
-                    echo "    ✓ Governor → $governor (now and persistent)"
+                    echo "    Governor → $governor (now and persistent)"
                 else
-                    echo "    ⚠ '$governor' not in available list — skipping"
+                    echo "    '$governor' not in available list — skipping"
                 fi
             fi
         fi
@@ -811,7 +811,7 @@ EOF
     if pacman -Qi cpupower &>/dev/null && [[ -f /etc/default/cpupower ]]; then
         if ! systemctl is-enabled --quiet cpupower.service 2>/dev/null; then
             sudo systemctl enable --now cpupower.service >/dev/null 2>&1 \
-                && echo "  ✓ cpupower.service enabled"
+                && echo "  cpupower.service enabled"
         fi
     fi
 
@@ -827,7 +827,7 @@ EOF
                 if [[ -n "$aur" ]]; then
                     "$aur" -S --needed throttled
                 else
-                    echo "    ⚠ No AUR helper (yay/paru) found. Re-run install with"
+                    echo "    No AUR helper (yay/paru) found. Re-run install with"
                     echo "      --deps to install yay first, then retry this wizard."
                 fi
             else
@@ -836,7 +836,7 @@ EOF
             if pacman -Qi throttled &>/dev/null \
                 && ! systemctl is-active --quiet throttled.service; then
                 sudo systemctl enable --now throttled.service >/dev/null 2>&1 \
-                    && echo "    ✓ throttled enabled (edit /etc/throttled.conf to tune)"
+                    && echo "    throttled enabled (edit /etc/throttled.conf to tune)"
             fi
         fi
     fi
@@ -857,13 +857,13 @@ install_performance() {
             # Disable systemd-timesyncd first
             sudo systemctl disable --now systemd-timesyncd >/dev/null 2>&1
             sudo systemctl enable --now chronyd >/dev/null 2>&1
-            echo "    ✓ chronyd enabled (replaces timesyncd)"
-            echo "    ✓ Precision sync active (check with: chronyc tracking)"
+            echo "    chronyd enabled (replaces timesyncd)"
+            echo "    Precision sync active (check with: chronyc tracking)"
         else
             echo "  • chronyd already active"
         fi
     else
-        echo "  ⚠ chrony package not found — run with --deps --perf"
+        echo "  chrony package not found — run with --deps --perf"
     fi
 }
 
@@ -895,8 +895,8 @@ EOF
         sudo ln -rsf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
     fi
     
-    echo "    ✓ systemd-resolved configured with DoH (Cloudflare/Google)"
-    echo "    ✓ DNS traffic now encrypted via HTTPS (Port 443)"
+    echo "    systemd-resolved configured with DoH (Cloudflare/Google)"
+    echo "    DNS traffic now encrypted via HTTPS (Port 443)"
 }
 
 # ─────────────────────────────────────────
@@ -921,7 +921,7 @@ install_vault() {
         # 2. Initialize pass
         if [[ ! -d "$HOME/.password-store" ]]; then
             pass init "$gpg_key" >/dev/null
-            echo "    ✓ Password store initialized with key $gpg_key"
+            echo "    Password store initialized with key $gpg_key"
         else
             echo "    • Password store already exists"
         fi
@@ -930,7 +930,7 @@ install_vault() {
         if command -v git &>/dev/null; then
             git config --global user.signingkey "$gpg_key"
             git config --global commit.gpgsign true
-            echo "    ✓ Git configured to sign commits with key $gpg_key"
+            echo "    Git configured to sign commits with key $gpg_key"
         fi
 
         # 4. AUR helper check for rofi-pass-wayland
@@ -943,12 +943,12 @@ install_vault() {
                 read -p "    Install rofi-pass (Wayland) for SysHub integration? [y/N] " -n 1 -r; echo ""
                 if [[ $REPLY =~ ^[Yy]$ ]]; then
                     "$aur" -S --needed rofi-pass-wayland-git
-                    echo "    ✓ rofi-pass installed"
+                    echo "    rofi-pass installed"
                 fi
             fi
         fi
     else
-        echo "  ⚠ pass package not found — run with --deps --vault"
+        echo "  pass package not found — run with --deps --vault"
     fi
 }
 
@@ -968,24 +968,24 @@ install_security() {
             # y| ensures it doesn't pause for confirmation
             echo "y" | sudo ufw enable >/dev/null
             sudo systemctl enable --now ufw >/dev/null 2>&1
-            echo "    ✓ UFW enabled (Deny incoming, Allow outgoing/ssh)"
+            echo "    UFW enabled (Deny incoming, Allow outgoing/ssh)"
         else
             echo "  • UFW already active"
         fi
     else
-        echo "  ⚠ ufw package not found — run with --deps --secure"
+        echo "  ufw package not found — run with --deps --secure"
     fi
 
     # 2. Fail2ban (Brute-force protection)
     if pacman -Qi fail2ban &>/dev/null; then
         if ! systemctl is-active --quiet fail2ban; then
             sudo systemctl enable --now fail2ban >/dev/null 2>&1
-            echo "    ✓ fail2ban service enabled"
+            echo "    fail2ban service enabled"
         else
             echo "  • fail2ban already active"
         fi
     else
-        echo "  ⚠ fail2ban package not found — run with --deps --secure"
+        echo "  fail2ban package not found — run with --deps --secure"
     fi
 
     # 3. Auditd (System Auditing)
@@ -997,7 +997,7 @@ install_security() {
             sudo auditctl -w /etc/passwd -p wa -k passwd_changes >/dev/null 2>&1
             sudo auditctl -w /etc/shadow -p wa -k shadow_changes >/dev/null 2>&1
             sudo auditctl -w /etc/ssh/sshd_config.d/ -p wa -k sshd_config_changes >/dev/null 2>&1
-            echo "    ✓ auditd enabled and watching sensitive files"
+            echo "    auditd enabled and watching sensitive files"
         else
             echo "  • auditd already active"
         fi
@@ -1009,7 +1009,7 @@ install_security() {
         echo "  Configuring sudoers for Waybar Overwatch..."
         echo "$USER ALL=(ALL) NOPASSWD: /usr/bin/ufw status, /usr/bin/fail2ban-client status *" | sudo tee "$waybar_sudo" >/dev/null
         sudo chmod 440 "$waybar_sudo"
-        echo "    ✓ Sudoers rule added for UFW/Fail2ban status"
+        echo "    Sudoers rule added for UFW/Fail2ban status"
     fi
 
     # 5. SSH Hardening Wizard
@@ -1043,10 +1043,10 @@ install_security() {
                     chmod 700 "$HOME/.ssh"
                     if curl -fsSL "https://github.com/${gh_user}.keys" >> "$HOME/.ssh/authorized_keys"; then
                         chmod 600 "$HOME/.ssh/authorized_keys"
-                        echo "    ✓ Imported keys from GitHub (${gh_user})"
+                        echo "    Imported keys from GitHub (${gh_user})"
                         has_keys=true
                     else
-                        echo "    ⚠ Failed to fetch keys for user: ${gh_user}"
+                        echo "    Failed to fetch keys for user: ${gh_user}"
                     fi
                 fi
             fi
@@ -1056,7 +1056,7 @@ install_security() {
                 read -p "  Disable password authentication? (Keys detected) [y/N] " -n 1 -r; echo ""
                 [[ $REPLY =~ ^[Yy]$ ]] && disable_pass="no"
             else
-                echo "  ⚠ No authorized_keys found. Forcing 'PasswordAuthentication yes' to prevent lockout."
+                echo "  No authorized_keys found. Forcing 'PasswordAuthentication yes' to prevent lockout."
                 disable_pass="yes"
             fi
 
@@ -1067,25 +1067,25 @@ Port $custom_port
 PasswordAuthentication $disable_pass
 PubkeyAuthentication yes
 EOF
-            echo "    ✓ SSH config written to $hardening_conf"
+            echo "    SSH config written to $hardening_conf"
 
             # 4. Update UFW
             if [[ "$custom_port" != "22" ]]; then
                 sudo ufw allow "$custom_port/tcp" >/dev/null
                 sudo ufw delete allow 22 >/dev/null
-                echo "    ✓ UFW updated: Allowed $custom_port, Blocked 22"
+                echo "    UFW updated: Allowed $custom_port, Blocked 22"
             fi
 
             # 5. Restart SSH
             sudo systemctl restart sshd
-            echo "    ✓ sshd restarted"
+            echo "    sshd restarted"
             
             if [[ "$disable_pass" == "no" ]]; then
                 echo ""
-                echo "  🎉 SSH is now LOCKED DOWN to keys-only on port $custom_port."
+                echo "  SSH is now LOCKED DOWN to keys-only on port $custom_port."
             else
                 echo ""
-                echo "  ⚠ SSH is on port $custom_port, but password login is still ENABLED."
+                echo "  SSH is on port $custom_port, but password login is still ENABLED."
                 echo "    Add your key to ~/.ssh/authorized_keys to disable passwords later."
             fi
         fi
@@ -1107,7 +1107,7 @@ update_specials() {
         for css in userChrome.css userContent.css; do
             if [[ -f "$ff_profile/chrome/$css" ]]; then
                 sed "$sed_expr" "$ff_profile/chrome/$css" > "$template_dir/firefox/$css"
-                echo "  ✓ Firefox $css"
+                echo "  Firefox $css"
             fi
         done
     fi
@@ -1117,7 +1117,7 @@ update_specials() {
         local src="$ext_dir/foxml-theme/themes/foxml-color-theme.json"
         if [[ -f "$src" ]]; then
             sed "$sed_expr" "$src" > "$template_dir/cursor/foxml-color-theme.json"
-            echo "  ✓ foxml-color-theme.json"
+            echo "  foxml-color-theme.json"
             break
         fi
     done
@@ -1127,7 +1127,7 @@ update_specials() {
     bat_dir="$(bat --config-dir 2>/dev/null || echo "$HOME/.config/bat")"
     if [[ -f "$bat_dir/themes/Fox ML.tmTheme" ]]; then
         sed "$sed_expr" "$bat_dir/themes/Fox ML.tmTheme" > "$template_dir/bat/foxml.tmTheme"
-        echo "  ✓ Bat theme"
+        echo "  Bat theme"
     fi
 
     # Gemini CLI — pull only the ui block back into the template; keeping
@@ -1140,7 +1140,7 @@ update_specials() {
         if jq '{ui: .ui}' "$gemini_settings" > "$tmp_ui" 2>/dev/null; then
             mkdir -p "$template_dir/gemini"
             sed "$sed_expr" "$tmp_ui" > "$template_dir/gemini/settings.json"
-            echo "  ✓ Gemini theme"
+            echo "  Gemini theme"
         fi
         rm -f "$tmp_ui"
     fi
@@ -1151,7 +1151,7 @@ update_specials() {
         for script in ~/.config/hypr/scripts/*.sh; do
             [[ -f "$script" ]] || continue
             cp "$script" "$SCRIPT_DIR/shared/hyprland_scripts/$(basename "$script")"
-            echo "  ✓ scripts/$(basename "$script")"
+            echo "  scripts/$(basename "$script")"
         done
     fi
 }
