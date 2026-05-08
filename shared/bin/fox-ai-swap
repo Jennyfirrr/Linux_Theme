@@ -8,32 +8,56 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
     exit 1
 fi
 
+source "fox-hw-info"
+
 switch_model() {
     local model=$1
     sed -i "s/\"model\": \"ollama\/qwen2.5-coder:.*\"/\"model\": \"ollama\/qwen2.5-coder:$model\"/" "$CONFIG_FILE"
     echo "+ OpenCode switched to: qwen2.5-coder:$model"
 }
 
-if [[ "$1" == "7b" ]]; then
-    switch_model "7b"
-elif [[ "$1" == "14b" ]]; then
-    switch_model "14b"
+# Dynamic Labels based on TIER
+case "$TIER" in
+    "lite")
+        L1="qwen2.5-coder:1.5b (Safe)"
+        L2="qwen2.5-coder:3b   (Balanced)"
+        L3="qwen2.5-coder:7b   (Heavy/Slow)"
+        M1="1.5b"; M2="3b"; M3="7b"
+        ;;
+    "standard")
+        L1="qwen2.5-coder:7b   (Fast)"
+        L2="qwen2.5-coder:14b  (Balanced)"
+        L3="qwen2.5-coder:32b  (Expert/Heavy)"
+        M1="7b"; M2="14b"; M3="32b"
+        ;;
+    "pro")
+        L1="qwen2.5-coder:14b  (Fast)"
+        L2="qwen2.5-coder:32b  (Balanced)"
+        L3="qwen2.5-coder:70b  (Expert/Heavy)"
+        M1="14b"; M2="32b"; M3="70b"
+        ;;
+esac
+
+if [[ "$1" == "7b" || "$1" == "1.5b" || "$1" == "14b" ]]; then
+    # Direct switch logic could be improved to be generic, but for now we keep the arg pattern
+    switch_model "$1"
 else
     echo "FoxML AI Model Switcher"
     echo "-----------------------"
-    echo "Current: $(grep '"model"' "$CONFIG_FILE" | cut -d: -f3 | tr -d '", ')"
+    echo "Hardware: ${RAM_GB}GB RAM / ${VRAM_GB}GB VRAM (Tier: $TIER)"
+    echo "Current:  $(grep '"model"' "$CONFIG_FILE" | cut -d: -f3 | tr -d '", ')"
     echo ""
-    echo "Select a model:"
-    echo "  [1] qwen2.5-coder:7b  (Fast/Low VRAM)"
-    echo "  [2] qwen2.5-coder:14b (Smart/Balanced)"
-    echo "  [3] qwen2.5-coder:32b (Expert/Heavy)"
+    echo "Select a model tier for your hardware:"
+    echo "  [1] $L1"
+    echo "  [2] $L2"
+    echo "  [3] $L3"
     echo ""
     read -p "Choice [1-3]: " choice
 
     case $choice in
-        1) switch_model "7b" ;;
-        2) switch_model "14b" ;;
-        3) switch_model "32b" ;;
+        1) switch_model "$M1" ;;
+        2) switch_model "$M2" ;;
+        3) switch_model "$M3" ;;
         *) echo "Invalid choice." ; exit 1 ;;
     esac
 fi

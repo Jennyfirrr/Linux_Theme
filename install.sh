@@ -621,11 +621,31 @@ EOF
     fi
 
     if $INSTALL_MODELS; then
-        echo "Pulling Qwen Coder models (7B, 14B, 32B)..."
-        ollama pull qwen2.5-coder:7b
-        ollama pull qwen2.5-coder:14b
-        ollama pull qwen2.5-coder:32b
-        echo "  AI Models ready."
+        echo "Detecting hardware for optimal AI model stack..."
+        source "$SHARED_DIR/bin/fox-hw-info"
+        echo "  RAM: ${RAM_GB}GB, VRAM: ${VRAM_GB}GB (Tier: $TIER)"
+
+        case "$TIER" in
+            "lite")
+                echo "Pulling Lite Stack (1B, 3B, 7B)..."
+                ollama pull qwen2.5-coder:1.5b
+                ollama pull qwen2.5-coder:3b
+                ollama pull qwen2.5-coder:7b
+                ;;
+            "standard")
+                echo "Pulling Standard Stack (7B, 14B, 32B)..."
+                ollama pull qwen2.5-coder:7b
+                ollama pull qwen2.5-coder:14b
+                ollama pull qwen2.5-coder:32b
+                ;;
+            "pro")
+                echo "Pulling Pro Stack (14B, 32B, 70B)..."
+                ollama pull qwen2.5-coder:14b
+                ollama pull qwen2.5-coder:32b
+                ollama pull qwen2.5-coder:70b
+                ;;
+        esac
+        echo "  + AI Models ready."
     fi
 
     echo "Deploying AI Skills Vault..."

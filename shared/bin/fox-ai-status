@@ -13,6 +13,7 @@ MODEL_TAG=$(grep '"model"' "$CONFIG_FILE" | cut -d: -f3 | tr -d '", ')
 
 # Determine icon and label
 VRAM_INFO=""
+VRAM_PERCENT=0
 if command -v nvidia-smi &>/dev/null; then
     VRAM_RAW=$(nvidia-smi --query-gpu=memory.used,memory.total --format=csv,noheader,nounits | tr -d ' ')
     VRAM_USED=${VRAM_RAW%,*}
@@ -21,31 +22,28 @@ if command -v nvidia-smi &>/dev/null; then
     VRAM_INFO=" (VRAM: ${VRAM_PERCENT}%)"
 fi
 
+# Categorize current load for the tooltip
+LOAD_LABEL="Safe"
+[[ $VRAM_PERCENT -gt 50 ]] && LOAD_LABEL="Moderate"
+[[ $VRAM_PERCENT -gt 85 ]] && LOAD_LABEL="Heavy"
+[[ $VRAM_PERCENT -gt 95 ]] && LOAD_LABEL="CRITICAL"
+
+ICON=" "
+LABEL="$MODEL_TAG$VRAM_INFO"
+CLASS="smart"
+
+# Apply tier-based coloring based on name (generic)
 case "$MODEL_TAG" in
-    "7b")
-        ICON=" "
-        LABEL="7B$VRAM_INFO"
-        CLASS="fast"
-        TOOLTIP="Qwen 7B (Fast / Low VRAM)"
-        ;;
-    "14b")
-        ICON=" "
-        LABEL="14B$VRAM_INFO"
-        CLASS="smart"
-        TOOLTIP="Qwen 14B (Smart / Balanced)"
-        ;;
-    "32b")
-        ICON=" "
-        LABEL="32B$VRAM_INFO"
-        CLASS="expert"
-        TOOLTIP="Qwen 32B (Expert / Heavy)"
-        ;;
-    *)
-        ICON=" "
-        LABEL="UNK$VRAM_INFO"
-        CLASS="unknown"
-        TOOLTIP="Model: $MODEL_TAG"
+    *b) # Numeric models like 7b, 14b, etc.
+        SIZE=$(echo "$MODEL_TAG" | tr -dc '0-9.')
+        if [[ $SIZE -le 7 ]]; then
+            CLASS="fast"
+        elif [[ $SIZE -le 14 ]]; then
+            CLASS="smart"
+        else
+            CLASS="expert"
+        fi
         ;;
 esac
 
-echo "{\"text\": \"$ICON $LABEL\", \"tooltip\": \"$TOOLTIP$VRAM_INFO\", \"class\": \"$CLASS\"}"
+echo "{\"text\": \"$ICON $LABEL\", \"tooltip\": \"Model: $MODEL_TAG\\nStatus: $LOAD_LABEL$VRAM_INFO\", \"class\": \"$CLASS\"}"
