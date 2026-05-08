@@ -225,7 +225,7 @@ PKGJSON
                 echo "  Agent theme merged"
             else
                 rm -f "$tmp_settings"
-                echo "  Gemini merge failed, skipping"
+                echo "  Agent merge failed, skipping"
             fi
         else
             mkdir -p "$(dirname "$gemini_settings")"

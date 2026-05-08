@@ -318,7 +318,7 @@ if $INSTALL_DEPS; then
     fi
 
     # Global CLI tools (npm). Idempotent: only installs ones missing from PATH.
-    #  - @google/gemini-cli      → `gemini`  (Google Gemini)
+    #  - @google/gemini-cli      → `gemini`  (Local or Cloud Agent)
     #  - @anthropic-ai.agent-code → .agent` (Anthropic Claude Code)
     if command -v npm &>/dev/null; then
         NPM_GLOBALS=()
@@ -473,7 +473,7 @@ for mapping in "${TEMPLATE_MAPPINGS[@]}"; do
     # Skip Firefox (handled by specials) and entries with FIREFOX_PROFILE
     [[ "$dest" == *"FIREFOX_PROFILE"* ]] && continue
 
-    # Skip Gemini (handled by specials — needs jq merge to preserve auth keys)
+    # Skip Agent config (handled by specials — needs jq merge to preserve auth keys)
     [[ "$dest" == *"GEMINI_DIR"* ]] && continue
 
     # Skip if oh-my-zsh not installed (for caramel theme)
