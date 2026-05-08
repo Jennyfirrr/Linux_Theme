@@ -19,6 +19,7 @@
     "custom/battery",
     "idle_inhibitor",
     "custom/clock",
+    "custom/security",
     "custom/system_health",
     "tray"
   ],
@@ -114,6 +115,13 @@
     "format": "🦊",
     "tooltip": "Launcher",
     "on-click": "~/.config/hypr/scripts/toggle_rofi.sh rofi -show drun -kb-row-up \"k,Up\" -kb-row-down \"j,Down\" -kb-accept-entry \"l,Return\""
+  },
+
+  "custom/security": {
+    "exec": "~/.config/waybar/scripts/security_overwatch.sh",
+    "return-type": "json",
+    "interval": 30,
+    "tooltip": true
   },
 
   "custom/net_speed": {
