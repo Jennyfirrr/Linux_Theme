@@ -53,17 +53,13 @@ Run `./install.sh --deps` to install most of these automatically.
 
 ## Quick Start
 
-**One-command install** (fresh Arch + Hyprland — installs deps, clones repo, applies FoxML Classic):
+**One-command workstation bootstrap** (fresh Arch + Hyprland — installs deps, clones repo, sets up AI Lab, GitHub workspace, and applies FoxML Classic):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Jennyfirrr/Linux_Theme/main/bootstrap.sh | bash
 ```
 
-Pick a different theme:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/Jennyfirrr/Linux_Theme/main/bootstrap.sh | bash -s Cave_Data_Center
-```
+This single command provides a complete, professional development environment out-of-the-box.
 
 **Manual install** (clone first if you want to read the scripts before running them):
 
@@ -71,11 +67,17 @@ curl -fsSL https://raw.githubusercontent.com/Jennyfirrr/Linux_Theme/main/bootstr
 git clone https://github.com/Jennyfirrr/Linux_Theme.git
 cd Linux_Theme
 
+# Full Workstation Stack (AI + GitHub + Deps)
+./install.sh FoxML_Classic --deps --ai --models --github --yes
+
 # Interactive — shows available themes and prompts before each step
 ./install.sh
 
-# Specific theme
-./install.sh FoxML_Classic
+# Integrated AI Lab (Ollama, OpenCode, Qwen 7B/14B/32B models, AI Skills)
+./install.sh FoxML_Classic --ai --models
+
+# GitHub Workspace Automation (clones all your repos into ~/code)
+./install.sh FoxML_Classic --github
 
 # Hardened security (UFW, Fail2ban, Auditd, SSH hardening wizard)
 ./install.sh FoxML_Classic --secure

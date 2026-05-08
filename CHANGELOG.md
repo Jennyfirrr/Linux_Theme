@@ -6,32 +6,34 @@ All notable changes to the Fox ML theme.
 
 ## 2026-05-07 — v1.5.8
 
-AI Lab Integration. Local LLM workspace, terminal superpowers, and real-time AI monitoring.
+Total Workstation Automation. Single-command workstation bootstrap, automated GitHub workspace, and integrated AI Lab.
+
+### One-Command Bootstrap (`bootstrap.sh`)
+- **Complete Environment Deployment**: The `bootstrap.sh` script now defaults to a full workstation stack (`--deps --ai --models --github`). A single `curl | bash` line now delivers a complete, professional dev environment from a fresh Arch install.
+
+### GitHub — Automated Workspace (`--github`)
+- **Seamless Repository Deployment**: New `--github` flag automates the creation of `~/code` and clones all public and private repositories for the user via `gh`.
+- **Integrated Auth**: Synchronized with the SSH hardening wizard for a zero-password cloning experience once keys are authorized.
+- **Git Identity Management**: Automatically prompts for and configures global Git name/email if missing.
 
 ### AI — Local LLM Workspace (Ollama & OpenCode)
-- **New `--ai` & `--models` Flags**: Added comprehensive AI bootstrapping to `install.sh`.
-    - **`--ai`**: Installs Ollama, OpenCode CLI, and configures them for local-first development.
-    - **`--models`**: Automates the pulling of the **Qwen2.5-Coder stack (7B, 14B, 32B)**, providing a ready-to-code environment in minutes.
-- **Model Switcher (`ai-swap`)**: A new interactive script to toggle between local models. Optimized for 32GB RAM/4GB VRAM hardware.
-- **AI Purge (`ai-purge`)**: A one-click utility to flush models from VRAM/RAM, freeing up system resources for gaming or heavy browser work.
+- **Automated AI Stack**: `--ai` installs Ollama/OpenCode; `--models` automates pulling the **Qwen2.5-Coder stack (7B, 14B, 32B)**.
+- **Universal Skills Vault**: Deploys a central vault at `~/.local/share/foxml/ai_skills/` and plugs high-discipline AI protocols (/readiness, /ship, /dust, etc.) into any project.
+- **Model Management**: Added `ai-swap` (Tier switcher), `ai-purge` (VRAM/RAM flush), and `ai-bench` (Hardware performance tracking).
+- **Project Tools**: Added `ai-new` (High-discipline project creator) and `ai-init` (Instant skill symlinking).
 
 ### Neovim — AI-Powered IDE
-- **CodeCompanion.nvim**: Integrated for inline code generation and workspace chat. Pointed natively to local Ollama.
-- **Avante.nvim (Local)**: Reconfigured the Cursor-style AI sidebar to use local Qwen models instead of cloud APIs.
-- **AI Keybinds**: Added a full suite of keybinds:
-    - `<leader>ci`: Inline AI prompt.
-    - `<leader>ca`: Toggle AI chat.
-    - `<leader>cc`: AI Actions menu (Refactor, Explain, Fix).
+- **CodeCompanion.nvim**: Integrated for inline code generation and workspace chat.
+- **Avante.nvim (Local)**: Cursor-style AI sidebar reconfigured for local-first privacy.
 
 ### Terminal — AI Superpowers
-- **Natural Language Terminal (`??`)**: A new alias to turn natural language into validated Linux commands (e.g., `?? "find all large logs and delete them"`).
-- **AI Commits (`ai-commit`)**: Automatically generates professional Conventional Commit messages based on staged git diffs.
-- **AI Log Analysis (`ai-log`)**: A pipeable utility to feed complex errors or logs to the AI for instant root-cause analysis and fixes.
+- **`??` Alias**: Natural language to Linux command generator.
+- **`ai-commit`**: Automated Conventional Commit message generation.
+- **`ai-log` / `ai-find`**: Instant error analysis and semantic codebase search.
 
 ### UI — Real-time AI Monitoring
-- **Waybar AI Status**: Added a live `󰚩` status module to the bar.
-    - **Visual Feedback**: Displays the active model name (7B/14B/32B).
-    - **Quick Toggle**: Clicking the module opens the model switcher menu.
+- **Waybar AI Status**: Real-time tier display (7B/14B/32B) with **Live VRAM Tracking** for 4GB hardware.
+- **SysHub Integration**: Added "Quick AI Chat" to the Rofi hub for floating, context-free queries.
 
 ---
 
