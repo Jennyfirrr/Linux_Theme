@@ -128,6 +128,10 @@ SHARED_MAPPINGS=(
     "bin/fox-ai-bench|~/.local/bin/fox-ai-bench"
     "bin/fox-ai-setup-project|~/.local/bin/fox-ai-setup-project"
     "bin/fox-new-project|~/.local/bin/fox-new-project"
+    "bin/fox-distro-guide|~/.local/bin/fox-distro-guide"
+
+    # Distro profiles
+    "foxml-profile.json|~/.local/share/foxml/distro/foxml-profile.json"
 
     # Waybar config
     "waybar_config|~/.config/waybar/config.tmpl"

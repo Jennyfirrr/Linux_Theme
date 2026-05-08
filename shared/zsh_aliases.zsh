@@ -63,6 +63,7 @@ alias ai-swap='fox-ai-swap'
 alias ai-status='fox-ai-status'
 alias ai-init='fox-ai-setup-project'
 alias ai-new='fox-new-project'
+alias ai-distro='fox-distro-guide'
 
 # ─── Functions ────────────────────────────────
 give() {

@@ -4,6 +4,19 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-07 — v1.5.9
+
+FoxML OS. Complete operating system specification via `archinstall` profiles.
+
+### Distro — FoxML OS Experience
+- **`archinstall` Profile**: Created `shared/foxml-profile.json` allowing for a fully automated OS installation using the official Arch Linux installer.
+- **Kernel Optimization**: Defaults to the **linux-zen** kernel for superior desktop responsiveness and workstation performance.
+- **Hardware-Ready**: Pre-configures NVIDIA drivers, Pipewire audio, and NetworkManager out of the box.
+- **Bootstrapped**: The profile automatically triggers the FoxML one-command bootstrap at the end of the installation process.
+- **Distro Guide**: Added `ai-distro` (`fox-distro-guide`) to provide instant instructions on how to deploy the OS experience.
+
+---
+
 ## 2026-05-07 — v1.5.8
 
 Total Workstation Automation. Single-command workstation bootstrap, automated GitHub workspace, and integrated AI Lab.

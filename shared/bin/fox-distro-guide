@@ -1,0 +1,23 @@
+#!/bin/bash
+# fox-distro-guide — Instructions for the FoxML Distro experience
+
+echo "🦊 FoxML OS — High-Discipline Workstation"
+echo "----------------------------------------"
+echo "You can now deploy FoxML as a complete OS experience in two ways:"
+echo ""
+echo "1. The archinstall Profile (Recommended)"
+echo "   Boot a standard Arch Linux ISO and run:"
+echo "   archinstall --config https://raw.githubusercontent.com/Jennyfirrr/Linux_Theme/main/shared/foxml-profile.json"
+echo ""
+echo "   This will automatically:"
+echo "   - Install linux-zen kernel (optimized for desktop responsiveness)"
+echo "   - Configure systemd-boot, pipewire, and NetworkManager"
+echo "   - Install NVIDIA drivers (if needed) and base-devel"
+echo "   - Trigger the FoxML one-command bootstrap at first boot"
+echo ""
+echo "2. Build a Custom FoxML ISO"
+echo "   If you want a 'live' environment with FoxML baked in:"
+echo "   - Install 'archiso': sudo pacman -S archiso"
+echo "   - Use the template at: /home/caramel/code/Linux_Theme/distro/ (WIP)"
+echo ""
+echo "Your entire workstation is now defined as a portable OS manifest."

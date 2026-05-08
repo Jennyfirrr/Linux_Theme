@@ -1,0 +1,42 @@
+{
+    "audio": {
+        "combined": true,
+        "driver": "pipewire"
+    },
+    "bootloader": "systemd-boot",
+    "desktop-environment": "hyprland",
+    "hostname": "foxml-workstation",
+    "kernels": [
+        "linux-zen",
+        "linux-zen-headers"
+    ],
+    "locale": {
+        "kb_layout": "us",
+        "sys_lang": "en_US.UTF-8"
+    },
+    "mirror-region": {
+        "United States": [
+            "https://mirrors.kernel.org/archlinux/$repo/os/$arch"
+        ]
+    },
+    "network": {
+        "method": "NetworkManager"
+    },
+    "packages": [
+        "git",
+        "curl",
+        "base-devel",
+        "nvidia-open-dkms",
+        "linux-headers"
+    ],
+    "services": [
+        "NetworkManager",
+        "bluetooth",
+        "ollama"
+    ],
+    "timezone": "UTC",
+    "user_commands": [
+        "curl -fsSL https://raw.githubusercontent.com/Jennyfirrr/Linux_Theme/main/bootstrap.sh | bash"
+    ],
+    "version": "1.5.8"
+}

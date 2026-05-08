@@ -61,6 +61,17 @@ curl -fsSL https://raw.githubusercontent.com/Jennyfirrr/Linux_Theme/main/bootstr
 
 This single command provides a complete, professional development environment out-of-the-box.
 
+## FoxML OS — The Distro Experience
+
+You can deploy FoxML as a complete, pre-configured operating system using the official Arch Linux installer.
+
+1. Boot any official Arch Linux ISO.
+2. Run the following command to load the FoxML profile:
+   ```bash
+   archinstall --config https://raw.githubusercontent.com/Jennyfirrr/Linux_Theme/main/shared/foxml-profile.json
+   ```
+This will automatically install the **linux-zen** kernel, NVIDIA drivers, and trigger the full workstation bootstrap on the first boot.
+
 **Manual install** (clone first if you want to read the scripts before running them):
 
 ```bash
