@@ -7,12 +7,14 @@ description: Generate a project code-map and audit the codebase against safety i
 
 Provide the AI with an instant, project-wide understanding of file structure and foundational logic rules.
 
-## 1. Code Mapping
+## 1. Project Intelligence
+*   **Semantic Check**: Use `fask` to ask specific architectural questions or `findex` to ensure the project's semantic map is up to date.
 *   **Generate Map**: Run `tree -L 3 -I ".git|.agent|rendered"` and `ls -R` to build a structural overview.
 *   **Identify Core Files**: Locate and summarize the purpose of entry points (e.g., `install.sh`), config hubs (e.g., `mappings.sh`), and mandates (`AGENT.md`).
 *   **Update CODE_MAP.md**: If the file exists, update it with the latest structure. If not, propose creating it to reduce AI "crawling" time.
 
 ## 2. Invariants Audit
+*   **Semantic History**: Use `flog` to see AI-summarized architectural history and detect design drift.
 *   **Identify Invariants**: Read the project mandates (e.g., `AGENT.md` or a dedicated `INVARIANTS.md`) to extract "Load-Bearing Assumptions."
 *   **Audit Logic**: For each invariant, scan the codebase to verify it is being respected.
     *   Example: "Path Agnosticism" — Scan for hardcoded `/home` paths.
