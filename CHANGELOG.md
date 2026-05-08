@@ -21,7 +21,7 @@ FoxML OS & ISO Pipeline. Complete operating system specification, automated ISO 
 - **Context-Aware Switcher**: `ai-swap` now dynamically labels model choices (Safe/Balanced/Heavy) based on detected system capacity.
 
 ### Maintenance & Safety
-- **Universal Commands**: Generalized all `/slash` commands in `.claude/commands/` for use in any project.
+- **Universal Commands**: Generalized all `/slash` commands in `.agent/commands/` for use in any project.
 - **Improved Backups**: Refined `backup_and_copy` logic to ensure system configs are safely versioned before being overwritten.
 - **Emoji Purge**: Stripped emojis from installer and CLI tools for a high-discipline, professional terminal experience.
 
@@ -405,7 +405,7 @@ Frictionless first-boot pass. The previous release got the login screen and wayb
 - New post-pacman block runs `xdg-settings set default-web-browser firefox.desktop` automatically (idempotent — writes `~/.config/mimeapps.list`). Guarded on `xdg-settings` being on PATH and `firefox.desktop` existing in `/usr/share/applications`, so re-runs and non-firefox systems are no-ops.
 
 ### Installer — AI CLIs via npm
-- New global-CLI block in `--deps` installs `@google/gemini-cli` (→ `gemini`) and `@anthropic-ai/claude-code` (→ `claude`) via `sudo npm install -g`. Idempotent: probes PATH for each command name and only installs the missing ones, so re-runs print `✓ Gemini CLI + Claude Code already installed`.
+- New global-CLI block in `--deps` installs `@google/gemini-cli` (→ `gemini`) and `@anthropic-ai.agent-code` (→ .agent`) via `sudo npm install -g`. Idempotent: probes PATH for each command name and only installs the missing ones, so re-runs print `✓ Gemini CLI + Claude Code already installed`.
 - Sits after the Oh My Zsh step and depends on `nodejs npm` already being in `PACMAN_PKGS` (was added in v1.0.1 for nvim Mason).
 
 ### Installer — `--xgboost` flag (source build)
@@ -420,7 +420,7 @@ Frictionless first-boot pass. The previous release got the login screen and wayb
 - New `GEMINI_DIR` placeholder in `TEMPLATE_MAPPINGS` (`mappings.sh`), resolved to `${GEMINI_CONFIG_HOME:-$HOME/.gemini}` by the special handler. Skip-guards added in `install.sh` and `update.sh` so the generic copy loop bypasses the entry — the merge can't be a plain copy or it would clobber `security.auth`.
 - `install_specials()` jq-merges the rendered `ui` block into `~/.gemini/settings.json` (`jq -s '.[0] * .[1]'`), so existing keys (auth, MCP servers, model selection) are preserved across re-installs. Falls back to a plain copy if the file doesn't exist yet, or prints a warning if jq fails.
 - `update_specials()` reverses the flow: `jq '{ui: .ui}'` extracts only the UI block back into `templates/gemini/settings.json`, keeping security/auth state out of the captured template (so `update.sh` doesn't leak session creds into the repo).
-- `GEMINI.md` ported from the cpp-rewrite branch — architectural mandates and refactor notes for the future C++ CLI.
+- `AGENT.md` ported from the cpp-rewrite branch — architectural mandates and refactor notes for the future C++ CLI.
 
 ### Bugfix — btop on fresh install
 - `mappings.sh` btop handler now creates `~/.config/btop/btop.conf` with `color_theme = "foxml"` if the file doesn't exist. Previously the handler only flipped an existing config, so on a fresh box (no `btop.conf` yet — btop creates it on first launch) the theme silently no-op'd: the rendered `foxml.theme` landed in `~/.config/btop/themes/`, but nothing pointed at it. btop auto-fills the rest of the defaults on first run, so the one-line config is enough.

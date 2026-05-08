@@ -73,9 +73,9 @@ TEMPLATE_MAPPINGS=(
     # Border colors for scripts
     "hyprland/border_colors.sh|~/.config/hypr/modules/border_colors.sh"
 
-    # Gemini CLI — GEMINI_DIR placeholder is resolved by the special handler,
+    # AI Agent — AGENT_DIR placeholder is resolved by the special handler,
     # which jq-merges into the user's settings.json to preserve security.auth.
-    "gemini/settings.json|GEMINI_DIR/settings.json"
+    "gemini/settings.json|AGENT_DIR/settings.json"
 
     # Git (delta pager — included from ~/.gitconfig, doesn't touch user identity)
     "git/delta.gitconfig|~/.config/git/delta-foxml.gitconfig"
@@ -212,7 +212,7 @@ PKGJSON
         echo "  Bat cache rebuilt"
     fi
 
-    # Gemini CLI — merge the rendered ui block into the user's settings.json so
+    # AI Agent — merge the rendered ui block into the user's settings.json so
     # security/auth keys are preserved. Falls back to a plain copy if the file
     # doesn't exist yet, or if jq isn't available.
     local gemini_dir="${GEMINI_CONFIG_HOME:-$HOME/.gemini}"
@@ -222,7 +222,7 @@ PKGJSON
             local tmp_settings; tmp_settings="$(mktemp)"
             if jq -s '.[0] * .[1]' "$gemini_settings" "$rendered_dir/gemini/settings.json" > "$tmp_settings" 2>/dev/null; then
                 mv "$tmp_settings" "$gemini_settings"
-                echo "  Gemini theme merged"
+                echo "  Agent theme merged"
             else
                 rm -f "$tmp_settings"
                 echo "  Gemini merge failed, skipping"
@@ -230,7 +230,7 @@ PKGJSON
         else
             mkdir -p "$(dirname "$gemini_settings")"
             cp "$rendered_dir/gemini/settings.json" "$gemini_settings"
-            echo "  Gemini theme installed"
+            echo "  Agent theme installed"
         fi
     fi
 
@@ -1136,7 +1136,7 @@ update_specials() {
         echo "  Bat theme"
     fi
 
-    # Gemini CLI — pull only the ui block back into the template; keeping
+    # AI Agent — pull only the ui block back into the template; keeping
     # security/auth out of the captured template avoids leaking session creds
     # into the repo on `update.sh`.
     local gemini_dir="${GEMINI_CONFIG_HOME:-$HOME/.gemini}"
@@ -1146,7 +1146,7 @@ update_specials() {
         if jq '{ui: .ui}' "$gemini_settings" > "$tmp_ui" 2>/dev/null; then
             mkdir -p "$template_dir/gemini"
             sed "$sed_expr" "$tmp_ui" > "$template_dir/gemini/settings.json"
-            echo "  Gemini theme"
+            echo "  Agent theme"
         fi
         rm -f "$tmp_ui"
     fi

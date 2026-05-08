@@ -20,10 +20,10 @@ echo "Bootstrapping $PROJECT_NAME..."
 
 # Init git
 git init -q
-echo ".claude/" >> .gitignore
+echo ".agent/" >> .gitignore
 
-# Create GEMINI.md
-cat <<EOF > GEMINI.md
+# Create AGENT.md
+cat <<EOF > AGENT.md
 # $PROJECT_NAME — Project Mandates
 
 ## Core Mandates

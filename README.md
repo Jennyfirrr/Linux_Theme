@@ -34,6 +34,10 @@ Dark theme with earthy, muted tones — warm peach, dusty rose, sage, and wheat 
 - `bash`, `git`, `sed`
 - Apps you want themed should already be installed, or use `--deps` to install them
 
+### Agent Mandates
+- **AGENT.md** — Architectural mandates and refactor notes for the AI Agent.
+- **.agent/commands/** — Project-specific AI skills and protocols.
+
 ### Key Dependencies
 
 | Package | Purpose |

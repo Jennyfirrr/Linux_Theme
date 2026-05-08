@@ -1,6 +1,6 @@
-# FoxML Theme Hub — Gemini Mandates
+# FoxML Theme Hub — Agent Mandates
 
-This file provides persistent instructions and architectural context for the Gemini CLI agent.
+This file provides persistent instructions and architectural context for the AI Agent agent.
 
 ## Core Mandates
 

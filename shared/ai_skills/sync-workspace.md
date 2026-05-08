@@ -8,7 +8,7 @@ description: Synchronize project-private files (plans, skills, local configs) wi
 Back up sensitive or local-only project data to an off-machine repository.
 
 ## Instructions
-1.  **Identify Targets**: Identify files ignored by the main repository but requiring backup (e.g., `plans/`, `claude-skills/`, `.env` files, local memory overlays).
+1.  **Identify Targets**: Identify files ignored by the main repository but requiring backup (e.g., `plans/`, .agent-skills/`, `.env` files, local memory overlays).
 2.  **Verify Remote**: Ensure the "Workspace" repository is initialized and has a valid private remote.
 3.  **Grouping**: Group changes by category (e.g., "plans", "skills", "configs").
 4.  **Verification**: 

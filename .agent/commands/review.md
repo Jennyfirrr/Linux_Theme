@@ -8,7 +8,7 @@ description: Review changes against project mandates (e.g., Path Agnosticism, Co
 Review the current staged changes for compliance with project foundational mandates.
 
 ## Instructions
-1.  **Identify Mandates**: Locate and read the project's primary instruction files (e.g., `GEMINI.md`, `CLAUDE.md`, or `MEMORY.md`) to understand the foundational mandates.
+1.  **Identify Mandates**: Locate and read the project's primary instruction files (e.g., `AGENT.md`, `CLAUDE.md`, or `MEMORY.md`) to understand the foundational mandates.
 2.  **Diff Analysis**: Run `git diff --cached` to inspect the staged changes.
 3.  **Mandate Mapping**: Compare the diff against the identified mandates:
     *   **Path Agnosticism**: Check for hardcoded absolute paths; ensure use of environment variables or relative paths.

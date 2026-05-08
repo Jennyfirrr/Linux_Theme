@@ -319,11 +319,11 @@ if $INSTALL_DEPS; then
 
     # Global CLI tools (npm). Idempotent: only installs ones missing from PATH.
     #  - @google/gemini-cli      → `gemini`  (Google Gemini)
-    #  - @anthropic-ai/claude-code → `claude` (Anthropic Claude Code)
+    #  - @anthropic-ai.agent-code → .agent` (Anthropic Claude Code)
     if command -v npm &>/dev/null; then
         NPM_GLOBALS=()
         command -v gemini &>/dev/null || NPM_GLOBALS+=("@google/gemini-cli")
-        command -v claude &>/dev/null || NPM_GLOBALS+=("@anthropic-ai/claude-code")
+        command -v.agent &>/dev/null || NPM_GLOBALS+=("@anthropic-ai.agent-code")
         if [[ ${#NPM_GLOBALS[@]} -gt 0 ]]; then
             echo ""
             echo "Installing CLI tools (npm -g): ${NPM_GLOBALS[*]}"
@@ -331,7 +331,7 @@ if $INSTALL_DEPS; then
                 && echo "  Installed: ${NPM_GLOBALS[*]}" \
                 || echo "  npm install failed — see output above"
         else
-            echo "  Gemini CLI + Claude Code already installed"
+            echo "  AI Agent + Claude Code already installed"
         fi
     fi
 fi
@@ -655,9 +655,9 @@ EOF
 
     # Plug skills into the current project folder
     echo "Plugging AI skills into project..."
-    mkdir -p "$SCRIPT_DIR/.claude/commands"
+    mkdir -p "$SCRIPT_DIR/.agent/commands"
     for skill in "$SHARED_DIR/ai_skills/"*.md; do
-        cp "$skill" "$SCRIPT_DIR/.claude/commands/"
+        cp "$skill" "$SCRIPT_DIR/.agent/commands/"
     done
     echo "  + Project-level AI skills ready."
     fi

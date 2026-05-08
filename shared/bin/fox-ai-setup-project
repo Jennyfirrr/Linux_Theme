@@ -2,7 +2,7 @@
 # fox-ai-setup-project — Plug high-discipline AI skills into any workspace
 
 VAULT="$HOME/.local/share/foxml/ai_skills"
-TARGET_DIR=".claude/commands"
+TARGET_DIR=".agent/commands"
 USE_SYMLINK=true
 
 # Parse args
