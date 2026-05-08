@@ -1,0 +1,40 @@
+#!/bin/bash
+# fox-new-project — Bootstrap a new high-discipline coding workspace
+
+if [[ -z "$1" ]]; then
+    echo "Usage: fox-new-project <project-name>"
+    exit 1
+fi
+
+PROJECT_NAME="$1"
+
+if [[ -d "$PROJECT_NAME" ]]; then
+    echo "Error: Directory $PROJECT_NAME already exists."
+    exit 1
+fi
+
+mkdir -p "$PROJECT_NAME"
+cd "$PROJECT_NAME" || exit 1
+
+echo "🦊 Bootstrapping $PROJECT_NAME..."
+
+# Init git
+git init -q
+echo ".claude/" >> .gitignore
+
+# Create GEMINI.md
+cat <<EOF > GEMINI.md
+# $PROJECT_NAME — Project Mandates
+
+## Core Mandates
+- **Path Agnosticism**: Use standard environment variables or relative paths.
+- **Safety**: No hardcoded secrets.
+- **AI Protocol**: Use high-discipline commands (/readiness, /review, /ship).
+EOF
+
+# Plug in skills
+fox-ai-setup-project
+
+echo ""
+echo "✨ $PROJECT_NAME is ready for high-discipline development."
+echo "   Run: cd $PROJECT_NAME && opencode \"/readiness\""

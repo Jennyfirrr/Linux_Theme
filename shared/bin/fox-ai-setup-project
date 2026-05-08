@@ -1,0 +1,23 @@
+#!/bin/bash
+# fox-ai-setup-project — Plug FoxML AI skills into any workspace
+
+VAULT="$HOME/.local/share/foxml/ai_skills"
+TARGET_DIR=".claude/commands"
+
+if [[ ! -d "$VAULT" ]]; then
+    echo "Error: AI Skills vault not found at $VAULT"
+    echo "Please run your Linux_Theme installer to initialize the vault."
+    exit 1
+fi
+
+mkdir -p "$TARGET_DIR"
+
+echo "🔌 Plugging in high-discipline AI skills..."
+for skill in "$VAULT"/*.md; do
+    skill_name=$(basename "$skill")
+    # Use symlinks so updates to the vault propagate to all projects
+    ln -sf "$skill" "$TARGET_DIR/$skill_name"
+    echo "  ✓ $skill_name"
+done
+
+echo "✨ Project initialized with FoxML AI protocols."

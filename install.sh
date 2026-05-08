@@ -625,6 +625,11 @@ EOF
         ollama pull qwen2.5-coder:32b
         echo "  ✓ AI Models ready."
     fi
+
+    echo "Deploying AI Skills Vault..."
+    mkdir -p "$HOME/.local/share/foxml/ai_skills"
+    cp -r "$SHARED_DIR/ai_skills/"* "$HOME/.local/share/foxml/ai_skills/"
+    echo "  ✓ Vault initialized at ~/.local/share/foxml/ai_skills"
 fi
 
 # ─────────────────────────────────────────

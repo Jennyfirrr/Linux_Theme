@@ -125,6 +125,9 @@ SHARED_MAPPINGS=(
     "bin/fox-ai-log|~/.local/bin/fox-ai-log"
     "bin/fox-ai-quick|~/.local/bin/fox-ai-quick"
     "bin/fox-ai-find|~/.local/bin/fox-ai-find"
+    "bin/fox-ai-bench|~/.local/bin/fox-ai-bench"
+    "bin/fox-ai-setup-project|~/.local/bin/fox-ai-setup-project"
+    "bin/fox-new-project|~/.local/bin/fox-new-project"
 
     # Waybar config
     "waybar_config|~/.config/waybar/config.tmpl"

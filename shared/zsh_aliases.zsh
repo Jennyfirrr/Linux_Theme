@@ -58,8 +58,11 @@ alias ai-purge='fox-ai-purge'
 alias ai-log="fox-ai-log"
 alias ai-find="fox-ai-find"
 alias ai-quick="fox-ai-quick"
+alias ai-bench="fox-ai-bench"
 alias ai-swap='fox-ai-swap'
 alias ai-status='fox-ai-status'
+alias ai-init='fox-ai-setup-project'
+alias ai-new='fox-new-project'
 
 # ─── Functions ────────────────────────────────
 give() {

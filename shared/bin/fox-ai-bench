@@ -1,0 +1,48 @@
+#!/bin/bash
+# fox-ai-bench — Benchmark local Ollama models
+
+MODELS=("qwen2.5-coder:7b" "qwen2.5-coder:14b" "qwen2.5-coder:32b")
+PROMPT="Write a C++ function to merge two JSON objects using nlohmann/json."
+
+echo "🦊 FoxML AI Benchmark"
+echo "------------------------------------------------"
+printf "%-20s | %-15s | %-10s\n" "Model" "Tokens/sec" "VRAM Used"
+echo "------------------------------------------------"
+
+for model in "${MODELS[@]}"; do
+    if ! ollama list | grep -q "$model"; then
+        continue
+    fi
+
+    # Warm up (load model into memory)
+    ollama run "$model" "hi" > /dev/null 2>&1
+
+    # Get VRAM usage
+    VRAM_START=0
+    if command -v nvidia-smi &>/dev/null; then
+        VRAM_START=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits | tr -d ' ')
+    fi
+
+    # Run benchmark
+    START_TIME=$(date +%s%N)
+    # We use verbose mode to get token stats if possible, or just time it
+    RESPONSE=$(ollama run "$model" "$PROMPT" 2>&1)
+    END_TIME=$(date +%s%N)
+
+    # Calculate tokens (very rough estimate: 4 chars per token)
+    CHAR_COUNT=$(echo "$RESPONSE" | wc -c)
+    TOKENS=$(( CHAR_COUNT / 4 ))
+    DURATION_NS=$(( END_TIME - START_TIME ))
+    DURATION_SEC=$(awk "BEGIN {print $DURATION_NS / 1000000000}")
+    TPS=$(awk "BEGIN {print $TOKENS / $DURATION_SEC}")
+
+    VRAM_END=0
+    if command -v nvidia-smi &>/dev/null; then
+        VRAM_END=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits | tr -d ' ')
+    fi
+    VRAM_DIFF=$(( VRAM_END - VRAM_START ))
+    [[ $VRAM_DIFF -lt 0 ]] && VRAM_DIFF=0
+
+    printf "%-20s | %-15.2f | %-10d MB\n" "$model" "$TPS" "$VRAM_DIFF"
+done
+echo "------------------------------------------------"
