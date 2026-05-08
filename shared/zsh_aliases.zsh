@@ -52,20 +52,15 @@ alias flush='~/.contextai/src/flush_llm_cache.sh'
   fi
 }
 
-# FoxML AI Tool Aliases
-alias ai-commit='fox-ai-commit'
-alias ai-purge='fox-ai-purge'
-alias ai-log="fox-ai-log"
-alias ai-find="fox-ai-find"
-alias ai-quick="fox-ai-quick"
-alias ai-bench="fox-ai-bench"
-alias ai-swap='fox-ai-swap'
-alias ai-status='fox-ai-status'
-alias ai-init='fox-ai-setup-project'
-alias ai-new='fox-new-project'
-alias ai-distro='fox-distro-guide'
-alias ai-distro-build='fox-distro-build'
-alias ai-distro-flash='fox-distro-flash'
+# FoxML AI Tool Wrappers
+opencode() {
+  if ! systemctl is-active --quiet ollama; then
+    echo -e "\033[1;33m[Fox Brain is asleep. Waking up for OpenCode...]\033[0m"
+    sudo systemctl start ollama
+    sleep 2
+  fi
+  command opencode "$@"
+}
 
 # FoxML short-hand
 alias fask='fask'
