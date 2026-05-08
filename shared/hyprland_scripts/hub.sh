@@ -47,6 +47,8 @@ while true; do
 󰪚  Calculator
 󰱫  Emoji Picker
 󱉩  Vault (Passwords)
+󰀦  Panic Button
+󰒃  Security Audit
 󰐥  Power Menu
 󰖩  Network           󰇙  $wifi_status
 󰂯  Bluetooth         󰇙  $bt_status
@@ -83,6 +85,13 @@ EOF
         *"Vault (Passwords)"*)
             ~/.config/hypr/scripts/toggle_rofi.sh rofi-pass &
             exit 0
+            ;;
+        *"Panic Button"*)
+            ~/.config/hypr/scripts/panic.sh
+            exit 0
+            ;;
+        *"Security Audit"*)
+            kitty -e bash -c "sudo lynis audit system; echo -e '\nPress enter to close...'; read"
             ;;
         *"Power Menu"*) 
             ~/.config/hypr/scripts/powermenu.sh

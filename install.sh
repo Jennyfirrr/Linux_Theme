@@ -167,7 +167,7 @@ if $INSTALL_DEPS; then
 
     # Security hardening — only added when --secure is passed.
     if $INSTALL_SECURITY; then
-        PACMAN_PKGS+=(ufw fail2ban audit)
+        PACMAN_PKGS+=(ufw fail2ban audit lynis)
     fi
 
     # Performance — only added when --perf is passed.

@@ -916,7 +916,14 @@ install_vault() {
             echo "    • Password store already exists"
         fi
 
-        # 3. AUR helper check for rofi-pass-wayland
+        # 3. Git GPG Signing
+        if command -v git &>/dev/null; then
+            git config --global user.signingkey "$gpg_key"
+            git config --global commit.gpgsign true
+            echo "    ✓ Git configured to sign commits with key $gpg_key"
+        fi
+
+        # 4. AUR helper check for rofi-pass-wayland
         local aur=""
         command -v yay  &>/dev/null && aur="yay"
         [[ -z "$aur" ]] && command -v paru &>/dev/null && aur="paru"
