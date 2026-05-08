@@ -77,6 +77,18 @@ cd Linux_Theme
 # Specific theme
 ./install.sh FoxML_Classic
 
+# Hardened security (UFW, Fail2ban, Auditd, SSH hardening wizard)
+./install.sh FoxML_Classic --secure
+
+# High-precision time sync (Chrony) for trading logs
+./install.sh FoxML_Classic --perf
+
+# Privacy & DNS-over-HTTPS (encrypted DNS lookups)
+./install.sh FoxML_Classic --privacy
+
+# Secure Vault (GPG-encrypted 'pass' manager + Git signing)
+./install.sh FoxML_Classic --vault
+
 # With system dependencies (Arch packages, Oh My Zsh, zsh plugins)
 ./install.sh FoxML_Classic --deps
 

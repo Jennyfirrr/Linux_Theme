@@ -4,6 +4,33 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-07 — v1.5.7
+
+Performance, Privacy, and Vault pass. High-precision time, encrypted DNS, secure secret management, and Panic Button.
+
+### Security — Vault, Panic Button & Auditing
+- **Secure Vault (Pass)**: Integrated the `pass` (GPG-encrypted) password manager into the installer (`--vault`).
+    - **Automated GPG**: Automatically detects or generates a personal GPG key to bootstrap the vault.
+    - **SysHub Integration**: Added a "Vault (Passwords)" option to the Rofi Hub for instant searching/copying of secrets.
+    - **Git Signing**: Automatically configures Git to cryptographically sign all commits with your GPG key.
+- **The Panic Button**: Introduced a "Panic Button" script for instant system lockdown.
+    - **Total Wipe**: Clears clipboard history (cliphist/wl-copy), kills sensitive apps (nvim, rofi-pass), stops trading engines, and locks the screen.
+    - **Hotkeys**: Bound to **`Alt + Shift + K`** and available in the SysHub.
+- **Lynis Auditing**: Added `lynis` to the security toolset. A full system security audit can now be launched directly from the SysHub.
+- **Sudo Hardening**: Integrated a `NOPASSWD` sudoers drop-in for Waybar modules, enabling seamless security monitoring without password prompts.
+
+### Performance & Privacy — Chrony & DoH
+- **High-Precision Time (Chrony)**: Added the `--perf` flag to replace `systemd-timesyncd` with `chrony`. Provides sub-millisecond precision for trading engine logs and data correlation.
+- **Encrypted DNS (DoH)**: Added the `--privacy` flag to enable **DNS-over-HTTPS** via `systemd-resolved`. Encrypts all DNS queries to prevent ISP tracking/spoofing (works seamlessly on restricted dorm/public WiFi).
+- **Security Overwatch 2.0**:
+    - **Always Visible**: The security shield icon (`󰒃`) is now always visible on the Waybar when secure (glowing green).
+    - **Time Monitoring**: The shield now tracks `chronyd` status and alerts you if the system clock loses sync with atomic time.
+
+### UI — Hub Expansion
+- **SysHub 2.5**: Added "Vault", "Panic Button", and "Security Audit" entries to the primary Hub.
+
+---
+
 ## 2026-05-07 — v1.5.6
 
 Security hardening pass. Automated firewall, brute-force protection, and SSH hardening.
