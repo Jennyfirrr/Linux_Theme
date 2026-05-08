@@ -871,7 +871,22 @@ install_security() {
         echo "  ⚠ fail2ban package not found — run with --deps --secure"
     fi
 
-    # 3. SSH Hardening Wizard
+    # 3. Auditd (System Auditing)
+    if pacman -Qi audit &>/dev/null; then
+        if ! systemctl is-active --quiet auditd; then
+            echo "  Configuring Auditd..."
+            sudo systemctl enable --now auditd >/dev/null 2>&1
+            # Add basic watch rules
+            sudo auditctl -w /etc/passwd -p wa -k passwd_changes >/dev/null 2>&1
+            sudo auditctl -w /etc/shadow -p wa -k shadow_changes >/dev/null 2>&1
+            sudo auditctl -w /etc/ssh/sshd_config -p wa -k sshd_config_changes >/dev/null 2>&1
+            echo "    ✓ auditd enabled and watching sensitive files"
+        else
+            echo "  • auditd already active"
+        fi
+    fi
+
+    # 4. SSH Hardening Wizard
     if ! $ASSUME_YES; then
         echo ""
         echo "╭──────────────────────────────────────────────────────────────────╮"

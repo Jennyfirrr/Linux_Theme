@@ -161,7 +161,7 @@ if $INSTALL_DEPS; then
 
     # Security hardening — only added when --secure is passed.
     if $INSTALL_SECURITY; then
-        PACMAN_PKGS+=(ufw fail2ban)
+        PACMAN_PKGS+=(ufw fail2ban audit)
     fi
 
     # NVIDIA driver stack — only added when --nvidia is passed.
