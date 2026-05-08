@@ -879,15 +879,24 @@ install_security() {
             # Add basic watch rules
             sudo auditctl -w /etc/passwd -p wa -k passwd_changes >/dev/null 2>&1
             sudo auditctl -w /etc/shadow -p wa -k shadow_changes >/dev/null 2>&1
-            sudo auditctl -w /etc/ssh/sshd_config -p wa -k sshd_config_changes >/dev/null 2>&1
+            sudo auditctl -w /etc/ssh/sshd_config.d/ -p wa -k sshd_config_changes >/dev/null 2>&1
             echo "    ✓ auditd enabled and watching sensitive files"
         else
             echo "  • auditd already active"
         fi
     fi
 
-    # 4. SSH Hardening Wizard
-    if ! $ASSUME_YES; then
+    # 4. Waybar Sudoers (Seamless Overwatch)
+    local waybar_sudo="/etc/sudoers.d/99-foxml-waybar"
+    if [[ ! -f "$waybar_sudo" ]]; then
+        echo "  Configuring sudoers for Waybar Overwatch..."
+        echo "$USER ALL=(ALL) NOPASSWD: /usr/bin/ufw status, /usr/bin/fail2ban-client status *" | sudo tee "$waybar_sudo" >/dev/null
+        sudo chmod 440 "$waybar_sudo"
+        echo "    ✓ Sudoers rule added for UFW/Fail2ban status"
+    fi
+
+    # 5. SSH Hardening Wizard
+            if ! $ASSUME_YES; then
         echo ""
         echo "╭──────────────────────────────────────────────────────────────────╮"
         echo "│   SSH Hardening Wizard                                          │"
