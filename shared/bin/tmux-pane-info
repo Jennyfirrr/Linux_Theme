@@ -7,7 +7,7 @@ cmd="${2:-}"
 active="${3:-0}"
 
 # 1. Shortened Path (just the last two segments if long)
-# ~/code/Linux_Theme -> .../Linux_Theme
+# ~/code/FoxML_Workstation -> .../FoxML_Workstation
 short_path=$(echo "$path" | sed "s|^$HOME|~|")
 if [[ $(echo "$short_path" | tr -cd '/' | wc -c) -gt 2 ]]; then
     short_path=".../$(basename "$path")"

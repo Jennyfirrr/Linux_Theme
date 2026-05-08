@@ -1,4 +1,4 @@
-# FoxML Theme Hub — Agent Mandates
+# FoxML Workstation — Agent Mandates
 
 This file provides persistent instructions and architectural context for the AI Agent.
 

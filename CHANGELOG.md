@@ -616,7 +616,7 @@ First tagged release. The earthy palette is settled, the installer is one-comman
 - Added `noto-fonts`, `noto-fonts-cjk`, `noto-fonts-emoji` to `PACMAN_PKGS` so the welcome-banner cat (じ し ノ kana) and other Unicode glyphs that Hack Nerd Font doesn't cover fall back to Noto instead of rendering as tofu boxes
 
 ### Installer — One-Command Bootstrap
-- Added `bootstrap.sh` for `curl | bash` install on a fresh Arch+Hyprland laptop. Caches sudo upfront, installs `git`/`curl` if missing, clones the repo to `~/Linux_Theme` (or `git pull`s if already there), then runs `install.sh THEME --deps --yes`
+- Added `bootstrap.sh` for `curl | bash` install on a fresh Arch+Hyprland laptop. Caches sudo upfront, installs `git`/`curl` if missing, clones the repo to `~/FoxML_Workstation` (or `git pull`s if already there), then runs `install.sh THEME --deps --yes`
 - Added `-y` / `--yes` flag to `install.sh`. In yes-mode every `read -p` prompt is skipped, `pacman -S` runs with `--noconfirm`, oh-my-zsh installs unattended, and the theme defaults to `FoxML_Classic` if no name is given
 - `--yes` primes the sudo cache via `sudo -v` and keeps it alive in a background loop so dep install runs unattended end-to-end
 - Updated README Quick Start to lead with the one-liner; manual `git clone && ./install.sh` flow is documented as the read-before-running alternative

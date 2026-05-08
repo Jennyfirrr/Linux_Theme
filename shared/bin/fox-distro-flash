@@ -1,11 +1,11 @@
 #!/bin/bash
 # fox-distro-flash — Safe flashing utility for the FoxML ISO
 
-ISO_FILE="/home/caramel/code/Linux_Theme/distro/out/FoxML-OS-$(date +%Y.%m.%d)-x86_64.iso"
+ISO_FILE="/home/caramel/code/FoxML_Workstation/distro/out/FoxML-OS-$(date +%Y.%m.%d)-x86_64.iso"
 
 # Try to find the latest ISO if the dated one doesn't exist
 if [[ ! -f "$ISO_FILE" ]]; then
-    ISO_FILE=$(ls -t /home/caramel/code/Linux_Theme/distro/out/*.iso 2>/dev/null | head -n 1)
+    ISO_FILE=$(ls -t /home/caramel/code/FoxML_Workstation/distro/out/*.iso 2>/dev/null | head -n 1)
 fi
 
 if [[ -z "$ISO_FILE" ]]; then

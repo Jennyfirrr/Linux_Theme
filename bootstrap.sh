@@ -2,20 +2,20 @@
 # FoxML Theme Hub — One-command bootstrap.
 #
 # Usage (run on a fresh Arch + Hyprland laptop):
-#   curl -fsSL https://raw.githubusercontent.com/Jennyfirrr/Linux_Theme/main/bootstrap.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/Jennyfirrr/FoxML_Workstation/main/bootstrap.sh | bash
 #
 # Optional theme arg:
 #   curl -fsSL .../bootstrap.sh | bash -s Cave_Data_Center
 #
 # Honors env vars:
-#   FOXML_DIR  — where to clone the repo (default: ~/Linux_Theme)
+#   FOXML_DIR  — where to clone the repo (default: ~/FoxML_Workstation)
 #   FOXML_REPO — git URL to clone        (default: GitHub mirror)
 
 set -euo pipefail
 
 THEME_NAME="${1:-FoxML_Classic}"
-FOXML_REPO="${FOXML_REPO:-https://github.com/Jennyfirrr/Linux_Theme.git}"
-FOXML_DIR="${FOXML_DIR:-$HOME/Linux_Theme}"
+FOXML_REPO="${FOXML_REPO:-https://github.com/Jennyfirrr/FoxML_Workstation.git}"
+FOXML_DIR="${FOXML_DIR:-$HOME/FoxML_Workstation}"
 
 echo "╭──────────────────────────────────────────────────────────────────╮"
 echo "│                FoxML Theme Hub — Bootstrap                       │"

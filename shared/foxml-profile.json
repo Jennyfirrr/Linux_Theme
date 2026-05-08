@@ -54,7 +54,7 @@
     ],
     "timezone": "UTC",
     "user_commands": [
-        "curl -fsSL https://raw.githubusercontent.com/Jennyfirrr/Linux_Theme/main/bootstrap.sh | bash"
+        "curl -fsSL https://raw.githubusercontent.com/Jennyfirrr/FoxML_Workstation/main/bootstrap.sh | bash"
     ],
     "version": "1.5.8"
 }

@@ -2,7 +2,7 @@
 
 iso_name="FoxML-OS"
 iso_label="FOXML_$(date +%Y%m)"
-iso_publisher="Jennyfirrr <https://github.com/Jennyfirrr/Linux_Theme>"
+iso_publisher="Jennyfirrr <https://github.com/Jennyfirrr/FoxML_Workstation>"
 iso_application="FoxML High-Discipline Workstation"
 iso_version="1.5.9"
 install_dir="arch"

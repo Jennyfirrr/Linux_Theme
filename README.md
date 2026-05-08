@@ -1,6 +1,6 @@
-# FoxML Theme Hub
+# FoxML Workstation
 
-A template-based multi-theme hub for 24+ apps. Sharp corners, no rounded anything. One set of configs, any number of color schemes. Includes a themed login screen (greetd + regreet) that boots straight into Hyprland.
+A high-discipline, AI-powered development platform for senior engineers. 24+ apps themed, sharp corners, and a complete OS-level bootstrap engine.
 
 New to Linux? This runs on [Arch Linux](https://archlinux.org/) with the [Hyprland](https://hyprland.org/) Wayland compositor. If you're coming from Windows or macOS, [archinstall](https://wiki.archlinux.org/title/Archinstall) makes getting started much easier than the manual install process.
 
@@ -63,7 +63,7 @@ Run `./install.sh --deps` to install most of these automatically.
 **One-command workstation bootstrap** (fresh Arch + Hyprland — installs deps, clones repo, sets up AI Lab, GitHub workspace, and applies FoxML Classic):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Jennyfirrr/Linux_Theme/main/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Jennyfirrr/FoxML_Workstation/main/bootstrap.sh | bash
 ```
 
 This single command provides a complete, professional development environment out-of-the-box.
@@ -75,15 +75,15 @@ You can deploy FoxML as a complete, pre-configured operating system using the of
 1. Boot any official Arch Linux ISO.
 2. Run the following command to load the FoxML profile:
    ```bash
-   archinstall --config https://raw.githubusercontent.com/Jennyfirrr/Linux_Theme/main/shared/foxml-profile.json
+   archinstall --config https://raw.githubusercontent.com/Jennyfirrr/FoxML_Workstation/main/shared/foxml-profile.json
    ```
 This will automatically install the **linux-zen** kernel, NVIDIA drivers, and trigger the full workstation bootstrap on the first boot.
 
 **Manual install** (clone first if you want to read the scripts before running them):
 
 ```bash
-git clone https://github.com/Jennyfirrr/Linux_Theme.git
-cd Linux_Theme
+git clone https://github.com/Jennyfirrr/FoxML_Workstation.git
+cd FoxML_Workstation
 
 # Full Workstation Stack (AI + GitHub + Deps)
 ./install.sh FoxML_Classic --deps --ai --models --github --yes
