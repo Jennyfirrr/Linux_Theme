@@ -57,10 +57,9 @@ else
 fi
 
 # ─── Run installer non-interactively ────────────────────────────────
-# Auto-detect an NVIDIA discrete GPU and pass --nvidia so the dGPU
-# driver + Hyprland nvidia.conf get set up. No-ops on non-nvidia boxes,
-# so the same bootstrap line works everywhere.
-INSTALL_FLAGS=(--deps --yes)
+# Auto-detect an NVIDIA discrete GPU and pass --nvidia.
+# Defaults to a full AI-ready workstation setup.
+INSTALL_FLAGS=(--deps --ai --models --github --yes)
 for dev in /sys/bus/pci/devices/*/; do
     [[ "$(cat "$dev/vendor" 2>/dev/null)" == "0x10de" ]] || continue
     [[ "$(cat "$dev/class" 2>/dev/null)" == 0x03* ]] || continue

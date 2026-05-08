@@ -646,8 +646,9 @@ EOF
     # GitHub Workspace — opt-in
     # ─────────────────────────────────────────
     install_github_workspace() {
-    if $ASSUME_YES; then
-        echo "  • Skipping GitHub workspace setup (requires interaction)"
+    # If ASSUME_YES is on but --github wasn't passed, we skip.
+    # If --github WAS passed, we run it regardless of ASSUME_YES because it's a specific user request.
+    if $ASSUME_YES && ! $INSTALL_GITHUB; then
         return
     fi
 
@@ -658,8 +659,10 @@ EOF
     echo "│ This will create ~/code and clone all your public/private       │"
     echo "│ repositories. It uses 'gh' (GitHub CLI) for automation.         │"
     echo "╰──────────────────────────────────────────────────────────────────╯"
-    read -p "Set up GitHub workspace? [y/N] " -n 1 -r; echo ""
-    [[ ! $REPLY =~ ^[Yy]$ ]] && return
+    if ! $ASSUME_YES; then
+        read -p "Set up GitHub workspace? [y/N] " -n 1 -r; echo ""
+        [[ ! $REPLY =~ ^[Yy]$ ]] && return
+    fi
 
     # 1. Ensure gh is installed
     if ! command -v gh &>/dev/null; then
