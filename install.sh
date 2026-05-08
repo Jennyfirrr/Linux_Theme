@@ -630,6 +630,14 @@ EOF
     mkdir -p "$HOME/.local/share/foxml/ai_skills"
     cp -r "$SHARED_DIR/ai_skills/"* "$HOME/.local/share/foxml/ai_skills/"
     echo "  ✓ Vault initialized at ~/.local/share/foxml/ai_skills"
+
+    # Plug skills into the current project folder
+    echo "Plugging AI skills into project..."
+    mkdir -p "$SCRIPT_DIR/.claude/commands"
+    for skill in "$SHARED_DIR/ai_skills/"*.md; do
+        cp "$skill" "$SCRIPT_DIR/.claude/commands/"
+    done
+    echo "  ✓ Project-level AI skills ready."
 fi
 
 # ─────────────────────────────────────────

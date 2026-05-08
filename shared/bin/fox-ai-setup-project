@@ -1,23 +1,39 @@
 #!/bin/bash
-# fox-ai-setup-project — Plug FoxML AI skills into any workspace
+# fox-ai-setup-project — Plug high-discipline AI skills into any workspace
 
 VAULT="$HOME/.local/share/foxml/ai_skills"
 TARGET_DIR=".claude/commands"
+USE_SYMLINK=true
+
+# Parse args
+for arg in "$@"; do
+    case "$arg" in
+        --copy) USE_SYMLINK=false ;;
+    esac
+done
 
 if [[ ! -d "$VAULT" ]]; then
     echo "Error: AI Skills vault not found at $VAULT"
-    echo "Please run your Linux_Theme installer to initialize the vault."
+    echo "Please run your environment installer to initialize the vault."
     exit 1
 fi
 
 mkdir -p "$TARGET_DIR"
 
-echo "🔌 Plugging in high-discipline AI skills..."
+if $USE_SYMLINK; then
+    echo "🔌 Plugging in high-discipline AI skills (symlinks)..."
+else
+    echo "💾 Plugging in high-discipline AI skills (copies)..."
+fi
+
 for skill in "$VAULT"/*.md; do
     skill_name=$(basename "$skill")
-    # Use symlinks so updates to the vault propagate to all projects
-    ln -sf "$skill" "$TARGET_DIR/$skill_name"
+    if $USE_SYMLINK; then
+        ln -sf "$skill" "$TARGET_DIR/$skill_name"
+    else
+        cp "$skill" "$TARGET_DIR/$skill_name"
+    fi
     echo "  ✓ $skill_name"
 done
 
-echo "✨ Project initialized with FoxML AI protocols."
+echo "✨ Project initialized with high-discipline AI protocols."
