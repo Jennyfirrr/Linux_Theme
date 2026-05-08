@@ -44,9 +44,6 @@ while true; do
         -theme-str "inputbar {enabled: false;} window {location: north west; anchor: north west; x-offset: ${ROFI_X}px; y-offset: ${ROFI_Y}px; width: 35%;} listview {lines: 15;}"
 󰀻  Search Apps
 󰖲  Active Windows
-󰪚  Calculator
-󰱫  Emoji Picker
-   Quick AI Chat
 󱉩  Vault (Passwords)
 󰀦  Panic Button
 󰒃  Security Audit
@@ -56,7 +53,6 @@ while true; do
 󰓃  Audio             󰇙  $audio_status
 󰖔  Night Light       󰇙  $nl_status
 󱑙  Idle Inhibitor    󰇙  $idle_status
-󰸉  Next Wallpaper
 󰚚  Sync Theme to Wallpaper
 󰈋  Color Picker
 🦊  System Cleanup
@@ -73,18 +69,6 @@ EOF
             ;;
         *"Active Windows"*)
             ~/.config/hypr/scripts/toggle_rofi.sh rofi -show window -kb-row-up "k,Up" -kb-row-down "j,Down" -kb-accept-entry "l,Return" -kb-cancel "Escape,h" -theme-str 'inputbar {enabled: false;}' &
-            exit 0
-            ;;
-        *"Calculator"*)
-            ~/.config/hypr/scripts/toggle_rofi.sh rofi -show calc -modi calc -no-show-match -no-sort -kb-row-up "k,Up" -kb-row-down "j,Down" -kb-accept-entry "l,Return" &
-            exit 0
-            ;;
-        *"Emoji Picker"*)
-            ~/.config/hypr/scripts/toggle_rofi.sh rofi -show emoji -modi emoji -kb-row-up "k,Up" -kb-row-down "j,Down" -kb-accept-entry "l,Return" &
-            exit 0
-            ;;
-        *"Quick AI Chat"*)
-            fox-ai-quick &
             exit 0
             ;;
         *"Vault (Passwords)"*)
@@ -119,7 +103,6 @@ EOF
             fi
             ;;
         *"Idle Inhibitor"*) ~/.config/hypr/scripts/toggle_dpms.sh ;;
-        *"Next Wallpaper"*) ~/.config/hypr/scripts/rotate_wallpaper.sh --cycle ;;
         *"Sync Theme to Wallpaper"*)
             current_wp=$(swww query | grep 'currently displaying' | awk '{print $NF}')
             if [[ -f "$current_wp" ]]; then
