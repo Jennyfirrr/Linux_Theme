@@ -131,6 +131,9 @@ SHARED_MAPPINGS=(
     "bin/fox-distro-guide|~/.local/bin/fox-distro-guide"
     "bin/fox-distro-build|~/.local/bin/fox-distro-build"
     "bin/fox-distro-flash|~/.local/bin/fox-distro-flash"
+    "bin/findex|~/.local/bin/findex"
+    "bin/fask|~/.local/bin/fask"
+    "bin/fhelp|~/.local/bin/fhelp"
 
     # Distro profiles
     "foxml-profile.json|~/.local/share/foxml/distro/foxml-profile.json"

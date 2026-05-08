@@ -1,6 +1,24 @@
 # FoxML Workstation
 
-A high-discipline, AI-powered development platform for senior engineers. 24+ apps themed, sharp corners, and a complete OS-level bootstrap engine.
+A high-discipline, AI-powered development platform for senior engineers. 24+ apps themed, sharp corners, and a complete OS-level bootstrap engine with a built-in Semantic Intelligence Layer.
+
+## Fox Intelligence Layer (RAG)
+
+The workstation features a native, C++ powered semantic intelligence layer that gives your environment a "memory" of your codebase.
+
+| Command | Role |
+|---------|------|
+| `fask` | **Semantic Assistant**: Ask questions about the project (RAG). |
+| `findex` | **Project Indexer**: Generate semantic embeddings for your code. |
+| `fcommit` | **Semantic Commit**: AI-analyzed high-discipline commits. |
+| `fstatus` | **System Health**: Monitor AI stack, VRAM, and project drift. |
+| `fproject` | **Bootstrap**: Create a new project with AGENT/INVARIANTS. |
+| `fhelp` | **Interactive Docs**: Deep-dive help for the entire suite. |
+
+> Run `fhelp` for the full command reference and usage examples.
+
+### Project Awareness
+The environment is project-aware. Whenever you `cd` into a directory containing an `AGENT.md`, the shell automatically exports project context, scoping your AI tools (`fask`, `findex`, etc.) to that specific workspace instantly.
 
 New to Linux? This runs on [Arch Linux](https://archlinux.org/) with the [Hyprland](https://hyprland.org/) Wayland compositor. If you're coming from Windows or macOS, [archinstall](https://wiki.archlinux.org/title/Archinstall) makes getting started much easier than the manual install process.
 

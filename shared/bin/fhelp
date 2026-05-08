@@ -1,0 +1,206 @@
+#!/bin/bash
+# fhelp — Interactive help and documentation for FoxML Intelligence Layer
+
+CMD="$1"
+
+show_general() {
+    echo -e "\033[1;33m🦊 FoxML Intelligence Layer — Command Reference\033[0m"
+    echo "----------------------------------------------------"
+    printf "  \033[1;32m%-12s\033[0m %s\n" "findex" "Index project for semantic search (RAG)"
+    printf "  \033[1;32m%-12s\033[0m %s\n" "fask" "Ask AI about the project (semantic answer)"
+    printf "  \033[1;32m%-12s\033[0m %s\n" "fcommit" "Semantic git commit (AI analyzed)"
+    printf "  \033[1;32m%-12s\033[0m %s\n" "fstatus" "Show AI health and project drift"
+    printf "  \033[1;32m%-12s\033[0m %s\n" "fbench" "Benchmark local AI model performance"
+    printf "  \033[1;32m%-12s\033[0m %s\n" "ffind" "Semantic-ish file/code search"
+    printf "  \033[1;32m%-12s\033[0m %s\n" "flog" "AI-augmented git log"
+    printf "  \033[1;32m%-12s\033[0m %s\n" "fpurge" "Purge AI context and local caches"
+    printf "  \033[1;32m%-12s\033[0m %s\n" "fquick" "Make a quick WIP checkpoint commit"
+    printf "  \033[1;32m%-12s\033[0m %s\n" "fswap" "Interactive theme switcher"
+    printf "  \033[1;32m%-12s\033[0m %s\n" "finit" "Plug AI skills into a project"
+    printf "  \033[1;32m%-12s\033[0m %s\n" "fproject" "Bootstrap a new high-discipline project"
+    printf "  \033[1;32m%-12s\033[0m %s\n" "fdistro" "FoxML OS installation & build guide"
+    printf "  \033[1;32m%-12s\033[0m %s\n" "fbuild" "Build a custom FoxML Arch ISO"
+    printf "  \033[1;32m%-12s\033[0m %s\n" "fflash" "Flash a FoxML ISO to a USB drive"
+    printf "  \033[1;32m%-12s\033[0m %s\n" "fhelp" "Show this help menu"
+
+    echo -e "Use \033[1;34mfhelp <command>\033[0m for detailed usage and examples."
+    echo "Project context is auto-detected if AGENT.md is present."
+}
+
+case "$CMD" in
+    findex)
+        echo -e "\033[1;32mfindex\033[0m — Project Indexer"
+        echo "-----------------------------------"
+        echo "Description:"
+        echo "  Crawl the current project and generate mathematical embeddings"
+        echo "  for all source files (.md, .cpp, .sh, .conf, .lua, .css, .json)."
+        echo "  Uses the 'nomic-embed-text' model via Ollama."
+        echo ""
+        echo "Usage:"
+        echo "  findex"
+        echo ""
+        echo "Details:"
+        echo "  Saves meaning vectors to .foxml_index.json. Run this after"
+        echo "  major code changes to keep your AI context fresh."
+        ;;
+    fask)
+        echo -e "\033[1;32mfask\033[0m — Semantic Assistant"
+        echo "-----------------------------------"
+        echo "Description:"
+        echo "  Asks a question about the codebase. Performs a high-speed"
+        echo "  vector similarity search (RAG) to find the top 5 relevant files,"
+        echo "  then uses them as context for the AI's answer."
+        echo ""
+        echo "Usage:"
+        echo "  fask <your question>"
+        echo ""
+        echo "Examples:"
+        echo "  fask how do I add a new app to the theme mappings?"
+        echo "  fask explain the logic in install.sh"
+        echo "  fask find all instances of hardcoded home paths"
+        ;;
+    fcommit)
+        echo -e "\033[1;32mfcommit\033[0m — Semantic Commit"
+        echo "-----------------------------------"
+        echo "Description:"
+        echo "  Analyzes your staged changes (git diff --staged) and uses"
+        echo "  AI to write a high-discipline, technical commit message."
+        echo ""
+        echo "Usage:"
+        echo "  fcommit"
+        echo ""
+        echo "Examples:"
+        echo "  git add install.sh && fcommit"
+        ;;
+    fstatus)
+        echo -e "\033[1;32mfstatus\033[0m — System & Project Health"
+        echo "-----------------------------------"
+        echo "Description:"
+        echo "  Reports on the health of the AI stack (Ollama models, VRAM)"
+        echo "  and checks for project 'drift' or missing invariants."
+        echo ""
+        echo "Usage:"
+        echo "  fstatus"
+        ;;
+    fbench)
+        echo -e "\033[1;32mfbench\033[0m — AI Benchmark"
+        echo "-----------------------------------"
+        echo "Description:"
+        echo "  Tests your local hardware (GPU/VRAM) against various model"
+        echo "  sizes (7B, 14B, 32B) to determine optimal tokens-per-second."
+        echo ""
+        echo "Usage:"
+        echo "  fbench"
+        ;;
+    ffind)
+        echo -e "\033[1;32mffind\033[0m — Semantic Search"
+        echo "-----------------------------------"
+        echo "Description:"
+        echo "  A semantically-aware search. Uses AI to expand your query"
+        echo "  into technical keywords before searching the filesystem."
+        echo ""
+        echo "Usage:"
+        echo "  ffind <query>"
+        echo ""
+        echo "Examples:"
+        echo "  ffind \"where is the window rule logic?\""
+        echo "  ffind \"login screen configuration\""
+        ;;
+    flog)
+        echo -e "\033[1;32mflog\033[0m — Augmented Log"
+        echo "-----------------------------------"
+        echo "Description:"
+        echo "  Enhances the git log with AI-generated summaries of the"
+        echo "  major architectural changes between commits."
+        echo ""
+        echo "Usage:"
+        echo "  flog"
+        ;;
+    fpurge)
+        echo -e "\033[1;32mfpurge\033[0m — Cache Purge"
+        echo "-----------------------------------"
+        echo "Description:"
+        echo "  Clears local AI caches, prompt history, and the semantic index."
+        echo "  Useful for 'resetting' a project's context."
+        echo ""
+        echo "Usage:"
+        echo "  fpurge"
+        ;;
+    fquick)
+        echo -e "\033[1;32mfquick\033[0m — Checkpoint Commit"
+        echo "-----------------------------------"
+        echo "Description:"
+        echo "  Creates a 'WIP' checkpoint commit with a timestamp and a"
+        echo "  brief automated summary of what changed."
+        echo ""
+        echo "Usage:"
+        echo "  fquick"
+        ;;
+    fswap)
+        echo -e "\033[1;32mfswap\033[0m — Theme Swapper"
+        echo "-----------------------------------"
+        echo "Description:"
+        echo "  Launches the interactive theme switcher. Renders all templates"
+        echo "  and applies them to the system in one shot."
+        echo ""
+        echo "Usage:"
+        echo "  fswap"
+        ;;
+    finit)
+        echo -e "\033[1;32mfinit\033[0m — Project Init"
+        echo "-----------------------------------"
+        echo "Description:"
+        echo "  Scaffolds an existing project with FoxML AI protocols,"
+        echo "  creating .agent/ and linking the high-discipline skills vault."
+        echo ""
+        echo "Usage:"
+        echo "  finit"
+        ;;
+    fproject)
+        echo -e "\033[1;32mfproject\033[0m — New Project Bootstrap"
+        echo "-----------------------------------"
+        echo "Description:"
+        echo "  Creates a new directory and bootstraps a high-discipline"
+        echo "  development environment from scratch. Includes AGENT.md,"
+        echo "  INVARIANTS.md, and pre-configured AI skills."
+        echo ""
+        echo "Usage:"
+        echo "  fproject <project-name>"
+        echo ""
+        echo "Examples:"
+        echo "  fproject my-new-api"
+        ;;
+    fdistro)
+        echo -e "\033[1;32mfdistro\033[0m — FoxML OS Guide"
+        echo "-----------------------------------"
+        echo "Description:"
+        echo "  Interactive guide for building and deploying FoxML as a"
+        echo "  standalone operating system using the official ISO builder."
+        echo ""
+        echo "Usage:"
+        echo "  fdistro"
+        ;;
+    fbuild)
+        echo -e "\033[1;32mfbuild\033[0m — ISO Builder"
+        echo "-----------------------------------"
+        echo "Description:"
+        echo "  Triggers the archiso build process to generate a bootable"
+        echo "  FoxML Arch Linux ISO including all pre-rendered themes."
+        echo ""
+        echo "Usage:"
+        echo "  fbuild"
+        ;;
+    fflash)
+        echo -e "\033[1;32mfflash\033[0m — USB Flasher"
+        echo "-----------------------------------"
+        echo "Description:"
+        echo "  Safely flashes a generated FoxML ISO to a USB drive."
+        echo "  Includes safety checks to prevent overwriting system disks."
+        echo ""
+        echo "Usage:"
+        echo "  fflash"
+        ;;
+    *)
+        show_general
+        ;;
+esac

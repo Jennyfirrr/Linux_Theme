@@ -67,6 +67,24 @@ alias ai-distro='fox-distro-guide'
 alias ai-distro-build='fox-distro-build'
 alias ai-distro-flash='fox-distro-flash'
 
+# FoxML short-hand
+alias fask='fask'
+alias findex='findex'
+alias fcommit='fox-ai-commit'
+alias fstatus='fox-ai-status'
+alias ffind='fox-ai-find'
+alias flog='fox-ai-log'
+alias fpurge='fox-ai-purge'
+alias fquick='fox-ai-quick'
+alias fswap='fox-ai-swap'
+alias finit='fox-ai-setup-project'
+alias fproject='fox-new-project'
+alias fbench='fox-ai-bench'
+alias fdistro='fox-distro-guide'
+alias fbuild='fox-distro-build'
+alias fflash='fox-distro-flash'
+alias fhelp='fhelp'
+
 # ─── Functions ────────────────────────────────
 give() {
   echo "Yeeting $1 to desktop.."

@@ -446,6 +446,25 @@ if $RENDER_ONLY; then
 fi
 
 # ─────────────────────────────────────────
+# Compile FoxML Intelligence Layer (C++)
+# ─────────────────────────────────────────
+if [[ -d "$SCRIPT_DIR/src/fox-intel" ]]; then
+    echo "Compiling FoxML Intelligence Layer (C++)..."
+    (
+        set -e
+        cd "$SCRIPT_DIR/src/fox-intel"
+        # Ensure json.hpp is present (fallback if not already there)
+        if [[ ! -f "json.hpp" ]]; then
+            curl -sLO https://github.com/nlohmann/json/releases/latest/download/json.hpp
+        fi
+        make clean &>/dev/null
+        make -j"$(nproc)"
+        cp findex fask "$SHARED_DIR/bin/"
+        echo "  + Intelligence Layer compiled and deployed to shared/bin/"
+    ) || echo "  ! Intelligence Layer build failed — ensure g++ and libcurl are installed."
+fi
+
+# ─────────────────────────────────────────
 # Backup and copy helper
 # ─────────────────────────────────────────
 backup_and_copy() {

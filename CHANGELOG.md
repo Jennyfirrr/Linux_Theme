@@ -4,6 +4,26 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-08 — v2.0.0
+
+Fox Intelligence Layer. Transitioned from a theme repository to an AI-Integrated Workstation. High-performance C++ Semantic RAG, project-aware shell, and unified command suite.
+
+### Intelligence — Fox Intelligence Layer (RAG)
+- **C++ Core**: Implemented `findex` and `fask` in high-performance C++ using `libcurl` and `nlohmann/json`. Replaces previous experimental Bash/Python scripts.
+- **Semantic Indexing**: `findex` generates mathematical meaning vectors (embeddings) for all project files via the `nomic-embed-text` model.
+- **RAG Engine**: `fask` performs native vector similarity search to build project-specific context before answering user questions.
+- **`fhelp`**: New interactive documentation system with deep-dive help, technical details, and usage examples for all tools.
+
+### Shell — Project Awareness & Ergonomics
+- **Auto-Context**: Added `chpwd` hooks to `zsh` for automatic detection of FoxML-enabled projects (via `AGENT.md`). Exports `$FOXML_PROJECT_ROOT` and scopes AI tools instantly.
+- **Unified "f" Suite**: Implemented ergonomic aliases for all AI and distro tools (`fcommit`, `fstatus`, `flog`, `fbench`, `fproject`, `fdistro`, etc.) removing the `fox-ai-` prefix friction.
+- **Project Bootstrapping**: `fproject` (alias for `fox-new-project`) now creates high-discipline workspaces with `AGENT.md` and `INVARIANTS.md` out-of-the-box.
+
+### Infrastructure
+- **Installer Integration**: `install.sh` now automatically compiles the C++ Intel Layer and manages `json.hpp` dependency.
+
+---
+
 ## 2026-05-07 — v1.5.9
 
 FoxML OS & ISO Pipeline. Complete operating system specification, automated ISO build suite, and hardware-agnostic AI scaling.
