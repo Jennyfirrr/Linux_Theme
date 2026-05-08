@@ -43,7 +43,7 @@ fi
 
 if [[ ${#warnings[@]} -gt 0 ]]; then
     # Show different icons based on severity
-    icon="󰒃"
+    icon="󰀦"
     [[ "$class" == "critical" ]] && icon="󰀦"
     
     text="$icon SECURITY"
@@ -53,5 +53,6 @@ if [[ ${#warnings[@]} -gt 0 ]]; then
     done
     echo "{\"text\": \"$text\", \"tooltip\": \"$tooltip\", \"class\": \"$class\"}"
 else
-    echo ""
+    # System is secure
+    echo "{\"text\": \"󰒃\", \"tooltip\": \"Security Overwatch:\\n  • System is SECURE\", \"class\": \"secure\"}"
 fi
