@@ -608,15 +608,20 @@ fi
 # AI Development Tools — opt-in
 # ─────────────────────────────────────────
 if $INSTALL_AI || $INSTALL_MODELS; then
-    echo ""
-    if ! command -v ollama &>/dev/null; then
-        echo "Installing Ollama..."
-        curl -fsSL https://ollama.com/install.sh | sh
-    else
-        echo "Ollama already installed."
-    fi
+echo ""
+if ! command -v ollama &>/dev/null; then
+    echo "Installing Ollama..."
+    curl -fsSL https://ollama.com/install.sh | sh
+else
+    echo "Ollama already installed."
+fi
 
-    if $INSTALL_AI; then
+# Ensure embedding model is present for RAG
+echo "Pulling embedding model (nomic-embed-text)..."
+ollama pull nomic-embed-text
+
+if $INSTALL_AI; then
+
         echo "Installing OpenCode CLI..."
         curl -fsSL https://opencode.ai/install | bash
 
