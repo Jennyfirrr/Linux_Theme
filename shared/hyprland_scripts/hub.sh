@@ -46,6 +46,7 @@ while true; do
 󰖲  Active Windows
 󰪚  Calculator
 󰱫  Emoji Picker
+󱉩  Vault (Passwords)
 󰐥  Power Menu
 󰖩  Network           󰇙  $wifi_status
 󰂯  Bluetooth         󰇙  $bt_status
@@ -77,6 +78,10 @@ EOF
             ;;
         *"Emoji Picker"*)
             ~/.config/hypr/scripts/toggle_rofi.sh rofi -show emoji -modi emoji -kb-row-up "k,Up" -kb-row-down "j,Down" -kb-accept-entry "l,Return" &
+            exit 0
+            ;;
+        *"Vault (Passwords)"*)
+            ~/.config/hypr/scripts/toggle_rofi.sh rofi-pass &
             exit 0
             ;;
         *"Power Menu"*) 

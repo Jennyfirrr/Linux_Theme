@@ -41,6 +41,18 @@ else
     [[ "$class" != "critical" ]] && class="warning"
 fi
 
+# 4. Time Sync (Chrony)
+if systemctl is-active --quiet chronyd; then
+    # Check if we are actually synced
+    if ! chronyc tracking | grep -q "Leap status     : Normal"; then
+        warnings+=("Time is UNSYNCED")
+        [[ "$class" != "critical" ]] && class="warning"
+    fi
+else
+    warnings+=("Chrony is INACTIVE")
+    [[ "$class" != "critical" ]] && class="warning"
+fi
+
 if [[ ${#warnings[@]} -gt 0 ]]; then
     # Show different icons based on severity
     icon="󰀦"

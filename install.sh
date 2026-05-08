@@ -21,6 +21,9 @@ source "$SCRIPT_DIR/render.sh"
 THEME_NAME=""
 INSTALL_DEPS=false
 INSTALL_SECURITY=false
+INSTALL_PERF=false
+INSTALL_PRIVACY=false
+INSTALL_VAULT=false
 INSTALL_NVIDIA=false
 INSTALL_XGBOOST=false
 ASSUME_YES=false
@@ -31,6 +34,9 @@ for arg in "$@"; do
     case "$arg" in
         --deps) INSTALL_DEPS=true ;;
         --secure) INSTALL_SECURITY=true ;;
+        --perf) INSTALL_PERF=true ;;
+        --privacy) INSTALL_PRIVACY=true ;;
+        --vault) INSTALL_VAULT=true ;;
         --nvidia) INSTALL_NVIDIA=true ;;
         --xgboost) INSTALL_XGBOOST=true ;;
         --render-only) RENDER_ONLY=true ;;
@@ -162,6 +168,16 @@ if $INSTALL_DEPS; then
     # Security hardening — only added when --secure is passed.
     if $INSTALL_SECURITY; then
         PACMAN_PKGS+=(ufw fail2ban audit)
+    fi
+
+    # Performance — only added when --perf is passed.
+    if $INSTALL_PERF; then
+        PACMAN_PKGS+=(chrony)
+    fi
+
+    # Vault — only added when --vault is passed.
+    if $INSTALL_VAULT; then
+        PACMAN_PKGS+=(pass)
     fi
 
     # NVIDIA driver stack — only added when --nvidia is passed.
@@ -534,6 +550,33 @@ if $INSTALL_SECURITY; then
     echo ""
     echo "Configuring security hardening..."
     install_security
+fi
+
+# ─────────────────────────────────────────
+# Performance — opt-in
+# ─────────────────────────────────────────
+if $INSTALL_PERF; then
+    echo ""
+    echo "Configuring performance tuning..."
+    install_performance
+fi
+
+# ─────────────────────────────────────────
+# Privacy — opt-in
+# ─────────────────────────────────────────
+if $INSTALL_PRIVACY; then
+    echo ""
+    echo "Configuring privacy (DoH)..."
+    install_privacy
+fi
+
+# ─────────────────────────────────────────
+# Vault — opt-in
+# ─────────────────────────────────────────
+if $INSTALL_VAULT; then
+    echo ""
+    echo "Configuring secure vault..."
+    install_vault
 fi
 
 # ─────────────────────────────────────────

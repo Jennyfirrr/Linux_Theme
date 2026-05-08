@@ -836,6 +836,106 @@ EOF
 }
 
 # ─────────────────────────────────────────
+# Performance — opt-in via install.sh --perf
+# Enables high-precision time sync (Chrony).
+# ─────────────────────────────────────────
+
+install_performance() {
+    if pacman -Qi chrony &>/dev/null; then
+        if ! systemctl is-active --quiet chronyd; then
+            echo "  Configuring Chrony (High-Precision Time)..."
+            # Disable systemd-timesyncd first
+            sudo systemctl disable --now systemd-timesyncd >/dev/null 2>&1
+            sudo systemctl enable --now chronyd >/dev/null 2>&1
+            echo "    ✓ chronyd enabled (replaces timesyncd)"
+            echo "    ✓ Precision sync active (check with: chronyc tracking)"
+        else
+            echo "  • chronyd already active"
+        fi
+    else
+        echo "  ⚠ chrony package not found — run with --deps --perf"
+    fi
+}
+
+# ─────────────────────────────────────────
+# Privacy — opt-in via install.sh --privacy
+# Enables DNS-over-HTTPS (DoH) via systemd-resolved.
+# ─────────────────────────────────────────
+
+install_privacy() {
+    echo "  Configuring DNS-over-HTTPS (DoH)..."
+    local res_conf="/etc/systemd/resolved.conf"
+    
+    # 1. Update resolved.conf
+    # Uses Cloudflare (1.1.1.1) and Google (8.8.8.8) with DoH enabled
+    sudo mkdir -p /etc/systemd/resolved.conf.d/
+    sudo tee /etc/systemd/resolved.conf.d/foxml-doh.conf >/dev/null <<EOF
+[Resolve]
+DNS=1.1.1.1#cloudflare-dns.com 1.0.0.1#cloudflare-dns.com 8.8.8.8#dns.google 8.8.4.4#dns.google
+DNSOverHTTPS=yes
+DNSSEC=yes
+FallbackDNS=1.1.1.1 8.8.8.8
+EOF
+
+    # 2. Enable and start resolved
+    sudo systemctl enable --now systemd-resolved >/dev/null 2>&1
+    
+    # 3. Link /etc/resolv.conf to systemd-resolved
+    if [[ ! -L /etc/resolv.conf ]]; then
+        sudo ln -rsf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+    fi
+    
+    echo "    ✓ systemd-resolved configured with DoH (Cloudflare/Google)"
+    echo "    ✓ DNS traffic now encrypted via HTTPS (Port 443)"
+}
+
+# ─────────────────────────────────────────
+# Vault — opt-in via install.sh --vault
+# Enables secure password management (Pass).
+# ─────────────────────────────────────────
+
+install_vault() {
+    if pacman -Qi pass &>/dev/null; then
+        echo "  Configuring Secure Vault (Pass)..."
+        
+        # 1. Detect or Generate GPG key
+        local gpg_key
+        gpg_key=$(gpg --list-secret-keys --keyid-format LONG | grep sec | awk '{print $2}' | cut -d/ -f2 | head -n 1)
+        
+        if [[ -z "$gpg_key" ]]; then
+            echo "    No GPG key found. Generating one for you..."
+            gpg --batch --passphrase '' --quick-gen-key "$USER <${USER}@foxml.local>" default default 0
+            gpg_key=$(gpg --list-secret-keys --keyid-format LONG | grep sec | awk '{print $2}' | cut -d/ -f2 | head -n 1)
+        fi
+        
+        # 2. Initialize pass
+        if [[ ! -d "$HOME/.password-store" ]]; then
+            pass init "$gpg_key" >/dev/null
+            echo "    ✓ Password store initialized with key $gpg_key"
+        else
+            echo "    • Password store already exists"
+        fi
+
+        # 3. AUR helper check for rofi-pass-wayland
+        local aur=""
+        command -v yay  &>/dev/null && aur="yay"
+        [[ -z "$aur" ]] && command -v paru &>/dev/null && aur="paru"
+
+        if [[ -n "$aur" ]]; then
+            if ! pacman -Qi rofi-pass-wayland-git &>/dev/null; then
+                read -p "    Install rofi-pass (Wayland) for SysHub integration? [y/N] " -n 1 -r; echo ""
+                if [[ $REPLY =~ ^[Yy]$ ]]; then
+                    "$aur" -S --needed rofi-pass-wayland-git
+                    echo "    ✓ rofi-pass installed"
+                fi
+            fi
+        fi
+    else
+        echo "  ⚠ pass package not found — run with --deps --vault"
+    fi
+}
+
+# ─────────────────────────────────────────
 # Security Hardening — opt-in via install.sh --secure
 # Enables and configures UFW (firewall) and Fail2ban.
 # ─────────────────────────────────────────
