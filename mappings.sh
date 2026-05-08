@@ -836,6 +836,122 @@ EOF
 }
 
 # ─────────────────────────────────────────
+# Security Hardening — opt-in via install.sh --secure
+# Enables and configures UFW (firewall) and Fail2ban.
+# ─────────────────────────────────────────
+
+install_security() {
+    # 1. UFW (Uncomplicated Firewall)
+    if pacman -Qi ufw &>/dev/null; then
+        if ! systemctl is-active --quiet ufw; then
+            echo "  Configuring UFW..."
+            sudo ufw default deny incoming >/dev/null
+            sudo ufw default allow outgoing >/dev/null
+            sudo ufw allow ssh >/dev/null
+            # y| ensures it doesn't pause for confirmation
+            echo "y" | sudo ufw enable >/dev/null
+            sudo systemctl enable --now ufw >/dev/null 2>&1
+            echo "    ✓ UFW enabled (Deny incoming, Allow outgoing/ssh)"
+        else
+            echo "  • UFW already active"
+        fi
+    else
+        echo "  ⚠ ufw package not found — run with --deps --secure"
+    fi
+
+    # 2. Fail2ban (Brute-force protection)
+    if pacman -Qi fail2ban &>/dev/null; then
+        if ! systemctl is-active --quiet fail2ban; then
+            sudo systemctl enable --now fail2ban >/dev/null 2>&1
+            echo "    ✓ fail2ban service enabled"
+        else
+            echo "  • fail2ban already active"
+        fi
+    else
+        echo "  ⚠ fail2ban package not found — run with --deps --secure"
+    fi
+
+    # 3. SSH Hardening Wizard
+    if ! $ASSUME_YES; then
+        echo ""
+        echo "╭──────────────────────────────────────────────────────────────────╮"
+        echo "│   SSH Hardening Wizard                                          │"
+        echo "├──────────────────────────────────────────────────────────────────┤"
+        echo "│ This will configure a custom port and disable password login.   │"
+        echo "│ WARNING: Ensure you have SSH keys set up before proceeding.    │"
+        echo "╰──────────────────────────────────────────────────────────────────╯"
+        read -p "Run SSH hardening wizard? [y/N] " -n 1 -r; echo ""
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            local sshd_conf_dir="/etc/ssh/sshd_config.d"
+            local hardening_conf="${sshd_conf_dir}/50-foxml-hardening.conf"
+            sudo mkdir -p "$sshd_conf_dir"
+
+            # 1. Custom Port
+            read -p "  Enter custom SSH port [default: 22]: " custom_port
+            custom_port=${custom_port:-22}
+            
+            # 2. Key Check & Import
+            local has_keys=false
+            [[ -f "$HOME/.ssh/authorized_keys" ]] && has_keys=true
+            
+            if ! $has_keys; then
+                echo "  No ~/.ssh/authorized_keys found."
+                read -p "  Import public keys from GitHub? (Enter username or leave blank to skip): " gh_user
+                if [[ -n "$gh_user" ]]; then
+                    mkdir -p "$HOME/.ssh"
+                    chmod 700 "$HOME/.ssh"
+                    if curl -fsSL "https://github.com/${gh_user}.keys" >> "$HOME/.ssh/authorized_keys"; then
+                        chmod 600 "$HOME/.ssh/authorized_keys"
+                        echo "    ✓ Imported keys from GitHub (${gh_user})"
+                        has_keys=true
+                    else
+                        echo "    ⚠ Failed to fetch keys for user: ${gh_user}"
+                    fi
+                fi
+            fi
+
+            local disable_pass="yes"
+            if $has_keys; then
+                read -p "  Disable password authentication? (Keys detected) [y/N] " -n 1 -r; echo ""
+                [[ $REPLY =~ ^[Yy]$ ]] && disable_pass="no"
+            else
+                echo "  ⚠ No authorized_keys found. Forcing 'PasswordAuthentication yes' to prevent lockout."
+                disable_pass="yes"
+            fi
+
+            # 3. Apply Config
+            sudo tee "$hardening_conf" >/dev/null <<EOF
+# FoxML Security Hardening
+Port $custom_port
+PasswordAuthentication $disable_pass
+PubkeyAuthentication yes
+EOF
+            echo "    ✓ SSH config written to $hardening_conf"
+
+            # 4. Update UFW
+            if [[ "$custom_port" != "22" ]]; then
+                sudo ufw allow "$custom_port/tcp" >/dev/null
+                sudo ufw delete allow 22 >/dev/null
+                echo "    ✓ UFW updated: Allowed $custom_port, Blocked 22"
+            fi
+
+            # 5. Restart SSH
+            sudo systemctl restart sshd
+            echo "    ✓ sshd restarted"
+            
+            if [[ "$disable_pass" == "no" ]]; then
+                echo ""
+                echo "  🎉 SSH is now LOCKED DOWN to keys-only on port $custom_port."
+            else
+                echo ""
+                echo "  ⚠ SSH is on port $custom_port, but password login is still ENABLED."
+                echo "    Add your key to ~/.ssh/authorized_keys to disable passwords later."
+            fi
+        fi
+    fi
+}
+
+# ─────────────────────────────────────────
 # Special update handlers (pull system → templates)
 # ─────────────────────────────────────────
 

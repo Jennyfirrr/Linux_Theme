@@ -1,7 +1,7 @@
 #!/bin/bash
 # FoxML Theme Hub — Installer
 # Renders templates with theme palette, copies to system
-# Usage: ./install.sh [theme_name] [--deps] [--nvidia] [--xgboost] [-y|--yes]
+# Usage: ./install.sh [theme_name] [--deps] [--secure] [--nvidia] [--xgboost] [-y|--yes]
 
 set -e
 
@@ -20,6 +20,7 @@ source "$SCRIPT_DIR/render.sh"
 # ─────────────────────────────────────────
 THEME_NAME=""
 INSTALL_DEPS=false
+INSTALL_SECURITY=false
 INSTALL_NVIDIA=false
 INSTALL_XGBOOST=false
 ASSUME_YES=false
@@ -29,6 +30,7 @@ DEFAULT_THEME="FoxML_Classic"
 for arg in "$@"; do
     case "$arg" in
         --deps) INSTALL_DEPS=true ;;
+        --secure) INSTALL_SECURITY=true ;;
         --nvidia) INSTALL_NVIDIA=true ;;
         --xgboost) INSTALL_XGBOOST=true ;;
         --render-only) RENDER_ONLY=true ;;
@@ -156,6 +158,11 @@ if $INSTALL_DEPS; then
         # for click-to-switch handlers
         power-profiles-daemon python-gobject
     )
+
+    # Security hardening — only added when --secure is passed.
+    if $INSTALL_SECURITY; then
+        PACMAN_PKGS+=(ufw fail2ban)
+    fi
 
     # NVIDIA driver stack — only added when --nvidia is passed.
     # nvidia-open-dkms is the kernel module (rebuilds on kernel updates
@@ -518,6 +525,15 @@ if $INSTALL_NVIDIA; then
     echo ""
     echo "Configuring NVIDIA full-session setup..."
     install_nvidia
+fi
+
+# ─────────────────────────────────────────
+# Security Hardening — opt-in
+# ─────────────────────────────────────────
+if $INSTALL_SECURITY; then
+    echo ""
+    echo "Configuring security hardening..."
+    install_security
 fi
 
 # ─────────────────────────────────────────

@@ -4,6 +4,23 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-07 — v1.5.6
+
+Security hardening pass. Automated firewall, brute-force protection, and SSH hardening.
+
+### Security — Automated Hardening & SSH Wizard
+- **New `--secure` Installer Flag**: Added an opt-in `--secure` flag to `install.sh` that automates system-level security hardening.
+- **Automated Firewall (UFW)**: The installer now configures `ufw` with a "Deny-by-Default" policy, explicitly allowing only the SSH port and outgoing traffic.
+- **Brute-Force Protection (Fail2ban)**: Integrated `fail2ban` into the installation flow to automatically block IP addresses attempting brute-force attacks.
+- **Interactive SSH Hardening Wizard**: Added a comprehensive wizard to `mappings.sh` that safely guides the user through:
+    - **Custom SSH Port**: Configures a non-standard port (e.g., 5125) to reduce bot visibility and log spam.
+    - **Automated Key Import**: Offers to fetch public keys directly from GitHub (`github.com/username.keys`) to simplify SSH key setup.
+    - **Passwordless Auth**: Safely disables `PasswordAuthentication` only after verifying that SSH keys are present, preventing accidental lockouts.
+- **Clean Configuration**: Hardening settings are written to `/etc/ssh/sshd_config.d/50-foxml-hardening.conf`, preserving the integrity of the main system `sshd_config` and ensuring settings survive OS updates.
+- **Firewall/SSH Sync**: The script automatically updates UFW rules when a custom SSH port is selected, ensuring the firewall and SSH daemon stay in lockstep.
+
+---
+
 ## 2026-05-07 — v1.5.5
 
 A stability + UX pass. Hyprland 0.54.3 config errors resolved, Rofi popups seamlessly integrated with Waybar, and installer deployment logic fixed.
