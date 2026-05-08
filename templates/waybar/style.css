@@ -56,6 +56,7 @@ window#waybar > box {
 #memory,
 #custom-disk,
 #custom-gpu,
+#custom-ai_status,
 #power-profiles-daemon,
 #idle_inhibitor,
 #custom-clock,
@@ -148,6 +149,22 @@ window#waybar > box {
 
 #custom-security.critical {
     color: #{{RED}};
+}
+
+#custom-ai_status {
+    color: @lavender;
+}
+
+#custom-ai_status.fast {
+    color: #{{GREEN_BRIGHT}};
+}
+
+#custom-ai_status.smart {
+    color: @lavender;
+}
+
+#custom-ai_status.expert {
+    color: @peach;
 }
 
 #custom-net_speed {
