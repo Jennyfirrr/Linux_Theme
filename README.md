@@ -56,6 +56,15 @@ Dark theme with earthy, muted tones — warm peach, dusty rose, sage, and wheat 
 - **AGENT.md** — Architectural mandates and refactor notes for the AI Agent.
 - **.agent/commands/** — Project-specific AI skills and protocols.
 
+### OpenCode — Local AI Coding Agent
+
+The `--ai` flag installs and configures [OpenCode](https://opencode.ai/) as a fully local Claude-Code-style TUI backed by Ollama. The installer wires it up end-to-end:
+
+- **FoxML theme** — palette-driven custom theme (`templates/opencode/foxml.json`) rendered through the same `{{TOKEN}}` system as every other config. Swap the active palette via `swap.sh` and the OpenCode theme re-renders to match.
+- **Multi-model picker** — provider config is generated from `ollama list`, so every model you've pulled (1.5B/3B/7B/14B/32B/70B per tier) appears in the in-app picker.
+- **Skill discovery** — `skills.paths` is populated by globbing `~/code/*/claude-skills/`; any workspace with `SKILL.md` files (Linux_Theme + private repos) gets wired in automatically.
+- **Auto-wake** — `opencode` is shell-wrapped to start the Ollama daemon on demand if it isn't running.
+
 ### Key Dependencies
 
 | Package | Purpose |
@@ -81,7 +90,7 @@ Run `./install.sh --deps` to install most of these automatically.
 **One-command workstation bootstrap** (fresh Arch + Hyprland — installs deps, clones repo, sets up AI Lab, GitHub workspace, and applies FoxML Classic):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Jennyfirrr/FoxML_Workstation/main/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Jennyfirrr/Linux_Theme/main/bootstrap.sh | bash
 ```
 
 This single command provides a complete, professional development environment out-of-the-box.
@@ -93,15 +102,15 @@ You can deploy FoxML as a complete, pre-configured operating system using the of
 1. Boot any official Arch Linux ISO.
 2. Run the following command to load the FoxML profile:
    ```bash
-   archinstall --config https://raw.githubusercontent.com/Jennyfirrr/FoxML_Workstation/main/shared/foxml-profile.json
+   archinstall --config https://raw.githubusercontent.com/Jennyfirrr/Linux_Theme/main/shared/foxml-profile.json
    ```
 This will automatically install the **linux-zen** kernel, NVIDIA drivers, and trigger the full workstation bootstrap on the first boot.
 
 **Manual install** (clone first if you want to read the scripts before running them):
 
 ```bash
-git clone https://github.com/Jennyfirrr/FoxML_Workstation.git
-cd FoxML_Workstation
+git clone https://github.com/Jennyfirrr/Linux_Theme.git
+cd Linux_Theme
 
 # Full Workstation Stack (AI + GitHub + Deps)
 ./install.sh FoxML_Classic --deps --ai --models --github --yes

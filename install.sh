@@ -624,29 +624,13 @@ if $INSTALL_AI; then
 
         echo "Installing OpenCode CLI..."
         curl -fsSL https://opencode.ai/install | bash
-
-        echo "Configuring OpenCode for local Ollama..."
-        mkdir -p "$HOME/.config/opencode"
-        cat <<EOF > "$HOME/.config/opencode/opencode.json"
-{
-  "provider": {
-    "ollama": {
-      "npm": "@ai-sdk/openai-compatible",
-      "name": "Ollama (Local)",
-      "options": {
-        "baseURL": "http://localhost:11434/v1"
-      }
-    }
-  },
-  "model": "ollama/qwen2.5-coder:7b"
-}
-EOF
-        echo "  AI Tools setup complete."
+        echo "  AI Tools binary installed."
     fi
 
     if $INSTALL_MODELS; then
         echo "Detecting hardware for optimal AI model stack..."
-        source "$SHARED_DIR/bin/fox-hw-info"
+        # fox-hw-info echoes KEY=value lines; eval to actually set the vars in this shell.
+        eval "$(bash "$SHARED_DIR/bin/fox-hw-info")"
         echo "  RAM: ${RAM_GB}GB, VRAM: ${VRAM_GB}GB (Tier: $TIER)"
 
         case "$TIER" in
@@ -671,6 +655,101 @@ EOF
         esac
         echo "  + AI Models ready."
     fi
+
+    # OpenCode config gen is deferred — defined as a function here, called at
+    # the end of install.sh after GitHub clones land so skill-path discovery
+    # can see the freshly-cloned workspaces on a brand-new machine.
+    configure_opencode() {
+        echo "Configuring OpenCode (theme + multi-model picker + skill discovery)..."
+        mkdir -p "$HOME/.config/opencode"
+
+        # Discover installed Ollama models for the picker
+        local INSTALLED_MODELS=()
+        if command -v ollama &>/dev/null; then
+            while IFS= read -r m; do
+                [ -n "$m" ] && [ "$m" != "nomic-embed-text" ] && INSTALLED_MODELS+=("$m")
+            done < <(ollama list 2>/dev/null | awk 'NR>1 && $1 != "" {print $1}')
+        fi
+        if [ ${#INSTALLED_MODELS[@]} -eq 0 ]; then
+            INSTALLED_MODELS=(qwen2.5-coder:7b)
+        fi
+
+        local MODELS_JSON=""
+        for m in "${INSTALLED_MODELS[@]}"; do
+            [ -n "$MODELS_JSON" ] && MODELS_JSON+=","
+            MODELS_JSON+=$(printf '"%s":{"name":"%s"}' "$m" "$m")
+        done
+
+        # Discover skill dirs by globbing local workspaces. Only paths that
+        # actually exist (and contain at least one SKILL.md) get wired in —
+        # keeps private skills local without naming any private repo here.
+        local SKILL_PATHS=()
+        for d in "$HOME"/code/*/claude-skills; do
+            [ -d "$d" ] || continue
+            if find "$d" -name SKILL.md -print -quit 2>/dev/null | grep -q .; then
+                SKILL_PATHS+=("$d")
+            fi
+        done
+        local SKILL_PATHS_JSON=""
+        for p in "${SKILL_PATHS[@]}"; do
+            [ -n "$SKILL_PATHS_JSON" ] && SKILL_PATHS_JSON+=","
+            SKILL_PATHS_JSON+=$(printf '"%s"' "$p")
+        done
+
+        # Default model: prefer 7b if installed, else first available
+        local DEFAULT_MODEL="ollama/${INSTALLED_MODELS[0]}"
+        for m in "${INSTALLED_MODELS[@]}"; do
+            if [ "$m" = "qwen2.5-coder:7b" ]; then
+                DEFAULT_MODEL="ollama/qwen2.5-coder:7b"
+                break
+            fi
+        done
+
+        cat <<EOF > "$HOME/.config/opencode/opencode.json"
+{
+  "\$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama (Local)",
+      "options": {
+        "baseURL": "http://localhost:11434/v1"
+      },
+      "models": {${MODELS_JSON}}
+    }
+  },
+  "model": "${DEFAULT_MODEL}",
+  "skills": {
+    "paths": [${SKILL_PATHS_JSON}]
+  }
+}
+EOF
+        # Theme persistence lives in tui.json (separate schema). OpenCode
+        # auto-migrates a top-level "theme" out of opencode.json into here on
+        # first launch — we write it directly so a fresh install boots themed.
+        cat <<EOF > "$HOME/.config/opencode/tui.json"
+{
+  "\$schema": "https://opencode.ai/tui.json",
+  "theme": "foxml"
+}
+EOF
+        echo "  + Theme: foxml (custom, palette-driven — re-run install.sh or render.sh after a palette swap to refresh)"
+        echo "  + Models exposed to picker: ${#INSTALLED_MODELS[@]}  (default: $DEFAULT_MODEL)"
+        echo "  + Skill workspaces wired: ${#SKILL_PATHS[@]}"
+
+        # Project-local override so this repo always sees its own skills,
+        # plus any other workspaces present on the same machine.
+        mkdir -p "$SCRIPT_DIR/.opencode"
+        cat <<EOF > "$SCRIPT_DIR/.opencode/opencode.json"
+{
+  "\$schema": "https://opencode.ai/config.json",
+  "skills": {
+    "paths": [${SKILL_PATHS_JSON}]
+  }
+}
+EOF
+        echo "  + Project-local OpenCode config: $SCRIPT_DIR/.opencode/opencode.json"
+    }
 
     echo "Deploying AI Skills Vault..."
     mkdir -p "$HOME/.local/share/foxml/ai_skills"
@@ -763,6 +842,15 @@ EOF
 
     if $INSTALL_GITHUB; then
     install_github_workspace
+    fi
+
+    # ─────────────────────────────────────────
+    # OpenCode JSON config — runs LAST so skill-path discovery sees any
+    # workspaces that the GitHub clone step just brought down. Safe to call
+    # whenever --ai is set; idempotent on re-runs.
+    # ─────────────────────────────────────────
+    if $INSTALL_AI; then
+        configure_opencode
     fi
 
     # ─────────────────────────────────────────

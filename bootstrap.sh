@@ -8,14 +8,17 @@
 #   curl -fsSL .../bootstrap.sh | bash -s Cave_Data_Center
 #
 # Honors env vars:
-#   FOXML_DIR  — where to clone the repo (default: ~/FoxML_Workstation)
+#   FOXML_DIR  — where to clone the repo (default: ~/code/Linux_Theme)
 #   FOXML_REPO — git URL to clone        (default: GitHub mirror)
+#
+# The repo lands inside ~/code/ alongside everything --github clones, so a
+# fresh box ends up with one consolidated workspace at ~/code/.
 
 set -euo pipefail
 
 THEME_NAME="${1:-FoxML_Classic}"
-FOXML_REPO="${FOXML_REPO:-https://github.com/Jennyfirrr/FoxML_Workstation.git}"
-FOXML_DIR="${FOXML_DIR:-$HOME/FoxML_Workstation}"
+FOXML_REPO="${FOXML_REPO:-https://github.com/Jennyfirrr/Linux_Theme.git}"
+FOXML_DIR="${FOXML_DIR:-$HOME/code/Linux_Theme}"
 
 echo "╭──────────────────────────────────────────────────────────────────╮"
 echo "│                FoxML Theme Hub — Bootstrap                       │"

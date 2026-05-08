@@ -77,6 +77,10 @@ TEMPLATE_MAPPINGS=(
     # which jq-merges into the user's settings.json to preserve security.auth.
     "gemini/settings.json|AGENT_DIR/settings.json"
 
+    # OpenCode TUI theme — palette-driven; deploy as a custom theme that
+    # opencode.json references via "theme": "foxml".
+    "opencode/foxml.json|~/.config/opencode/themes/foxml.json"
+
     # Git (delta pager — included from ~/.gitconfig, doesn't touch user identity)
     "git/delta.gitconfig|~/.config/git/delta-foxml.gitconfig"
 

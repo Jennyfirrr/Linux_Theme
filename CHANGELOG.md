@@ -4,6 +4,27 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-08 — v2.1.0
+
+OpenCode integration: palette-driven theming, multi-model picker, automatic skill discovery, and consolidated single-command bootstrap.
+
+### OpenCode — First-class integration
+- **FoxML custom theme** — added `templates/opencode/foxml.json` using the standard `{{TOKEN}}` system. Renders through `render.sh` like every other config; swapping palettes via `swap.sh` re-themes OpenCode automatically. Maps secondary text to `WHEAT` (matching Gemini CLI's warm feel) and uses `NVIM_BG_HL` for input bg to avoid the plum-tinted default.
+- **Multi-model picker** — `configure_opencode()` queries `ollama list` and writes every installed model into `provider.ollama.models`, so the in-app picker shows them all instead of the single hard-coded default.
+- **Skill discovery** — `skills.paths` is populated by globbing `~/code/*/claude-skills/`; any workspace with `SKILL.md` files (public + private) is auto-wired without naming any private repo in the public installer.
+- **`tui.json` theme persistence** — installer writes both `opencode.json` and `tui.json`. OpenCode auto-migrates `theme` between files on first launch; writing both directly means a fresh-PC install boots themed without an in-app step.
+- **Project-local config** — installer drops `.opencode/opencode.json` in the repo so the project-local skill paths are always picked up regardless of where the user invokes opencode from.
+
+### Bootstrap — Consolidated single-command install
+- **`~/code/Linux_Theme` clone target** — `bootstrap.sh` now clones into `~/code/Linux_Theme` instead of `~/FoxML_Workstation`, eliminating the duplicate clone that happened when `--github` was on (it would otherwise clone everything *including* the workstation repo into `~/code/`). One workspace, one location.
+- **Deferred OpenCode config** — `configure_opencode()` runs *after* the GitHub block so skill-path discovery sees freshly-cloned private workspaces on a brand-new machine.
+
+### Fixes
+- **Tier detection bug** — `source "$SHARED_DIR/bin/fox-hw-info"` only echoed values without setting them, so `$TIER` was always empty and `--models` silently fell through the `case` without pulling anything. Replaced with `eval "$(bash ...)"` which actually populates the vars.
+- **Empty skill scaffolds removed** — deleted five empty subdirs in `claude-skills/` (`dust`, `foxlib-promotion`, `ml-audit`, `plan-check`, `sync-workspace`) that misled OpenCode's skill scanner. The actual skill content lives in a separate workspace and is wired in via the path glob.
+
+---
+
 ## 2026-05-08 — v2.0.0
 
 Fox Intelligence Layer. Transitioned from a theme repository to an AI-Integrated Workstation. High-performance C++ Semantic RAG, project-aware shell, and unified command suite.
