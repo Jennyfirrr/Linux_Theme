@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <future>
 #include <mutex>
+#include <thread>
 #include "json.hpp"
 #include <curl/curl.h>
 
@@ -90,7 +91,19 @@ int main(int argc, char* argv[]) {
 
     std::vector<float> query_vec = get_embedding(query);
     if (query_vec.empty()) {
-        std::cerr << "Failed to connect to Ollama or get embedding." << std::endl;
+        std::cout << "\033[1;33m[Fox Brain is asleep. Waking up...]\033[0m" << std::endl;
+        system("sudo systemctl start ollama");
+        // Give it a moment to boot the port
+        int retries = 5;
+        while (retries--) {
+            query_vec = get_embedding(query);
+            if (!query_vec.empty()) break;
+            std::this_thread::sleep_for(std::chrono::milliseconds(800));
+        }
+    }
+
+    if (query_vec.empty()) {
+        std::cerr << "🦊 Fox Brain failed to wake up. Try running 'f-on' manually." << std::endl;
         return 1;
     }
 

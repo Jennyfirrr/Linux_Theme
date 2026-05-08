@@ -6,6 +6,7 @@
 #include <future>
 #include <mutex>
 #include <chrono>
+#include <thread>
 #include "json.hpp"
 #include <curl/curl.h>
 
@@ -55,7 +56,15 @@ struct FileTask {
 int main() {
     auto start_time = std::chrono::high_resolution_clock::now();
     
-    // Pre-flight check
+    // Pre-flight check: ensure Ollama is running
+    int check = system("ollama list &>/dev/null");
+    if (check != 0) {
+        std::cout << "\033[1;33m[Fox Brain is asleep. Waking up...]\033[0m" << std::endl;
+        system("sudo systemctl start ollama");
+        std::this_thread::sleep_for(std::chrono::seconds(2)); // Wait for service to initialize
+    }
+
+    // Ensure embedding model exists
     if (system("ollama list | grep -q nomic-embed-text") != 0) {
         std::cout << "Model not found. Pulling now..." << std::endl;
         system("ollama pull nomic-embed-text");
