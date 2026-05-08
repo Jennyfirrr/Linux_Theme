@@ -56,6 +56,8 @@ alias flush='~/.contextai/src/flush_llm_cache.sh'
 alias ai-commit='fox-ai-commit'
 alias ai-purge='fox-ai-purge'
 alias ai-log="fox-ai-log"
+alias ai-find="fox-ai-find"
+alias ai-quick="fox-ai-quick"
 alias ai-swap='fox-ai-swap'
 alias ai-status='fox-ai-status'
 

@@ -12,31 +12,40 @@ fi
 MODEL_TAG=$(grep '"model"' "$CONFIG_FILE" | cut -d: -f3 | tr -d '", ')
 
 # Determine icon and label
+VRAM_INFO=""
+if command -v nvidia-smi &>/dev/null; then
+    VRAM_RAW=$(nvidia-smi --query-gpu=memory.used,memory.total --format=csv,noheader,nounits | tr -d ' ')
+    VRAM_USED=${VRAM_RAW%,*}
+    VRAM_TOTAL=${VRAM_RAW#*,}
+    VRAM_PERCENT=$(( VRAM_USED * 100 / VRAM_TOTAL ))
+    VRAM_INFO=" (VRAM: ${VRAM_PERCENT}%)"
+fi
+
 case "$MODEL_TAG" in
     "7b")
         ICON="󰚩"
-        LABEL="7B"
+        LABEL="7B$VRAM_INFO"
         CLASS="fast"
         TOOLTIP="Qwen 7B (Fast / Low VRAM)"
         ;;
     "14b")
         ICON="󰚩"
-        LABEL="14B"
+        LABEL="14B$VRAM_INFO"
         CLASS="smart"
         TOOLTIP="Qwen 14B (Smart / Balanced)"
         ;;
     "32b")
         ICON="󰚩"
-        LABEL="32B"
+        LABEL="32B$VRAM_INFO"
         CLASS="expert"
         TOOLTIP="Qwen 32B (Expert / Heavy)"
         ;;
     *)
         ICON="󰚩"
-        LABEL="UNK"
+        LABEL="UNK$VRAM_INFO"
         CLASS="unknown"
         TOOLTIP="Model: $MODEL_TAG"
         ;;
 esac
 
-echo "{\"text\": \"$ICON $LABEL\", \"tooltip\": \"$TOOLTIP\", \"class\": \"$CLASS\"}"
+echo "{\"text\": \"$ICON $LABEL\", \"tooltip\": \"$TOOLTIP$VRAM_INFO\", \"class\": \"$CLASS\"}"

@@ -46,6 +46,7 @@ while true; do
 󰖲  Active Windows
 󰪚  Calculator
 󰱫  Emoji Picker
+󰚩  Quick AI Chat
 󱉩  Vault (Passwords)
 󰀦  Panic Button
 󰒃  Security Audit
@@ -80,6 +81,10 @@ EOF
             ;;
         *"Emoji Picker"*)
             ~/.config/hypr/scripts/toggle_rofi.sh rofi -show emoji -modi emoji -kb-row-up "k,Up" -kb-row-down "j,Down" -kb-accept-entry "l,Return" &
+            exit 0
+            ;;
+        *"Quick AI Chat"*)
+            fox-ai-quick &
             exit 0
             ;;
         *"Vault (Passwords)"*)

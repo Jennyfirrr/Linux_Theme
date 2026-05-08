@@ -1,0 +1,41 @@
+#!/bin/bash
+# ai-find — Semantic-ish code search using local Ollama
+
+if [[ -z "$1" ]]; then
+    echo "Usage: ai-find \"your search query\""
+    exit 1
+fi
+
+QUERY="$1"
+MODEL="qwen2.5-coder:14b"
+if ! ollama list | grep -q "14b"; then
+    MODEL="qwen2.5-coder:7b"
+fi
+
+# Step 1: Generate keywords from the semantic query
+echo "🔍 Analyzing search intent..."
+KEYWORDS=$(ollama run "$MODEL" "Given the search query: '$QUERY', return a space-separated list of the 3-5 most important technical keywords or function names that would likely appear in a Linux theme management codebase to satisfy this query. Return ONLY the keywords.")
+
+echo "🔎 Searching for: $KEYWORDS"
+
+# Step 2: Use grep to find candidate files
+CANDIDATES=$(grep -rlE "${KEYWORDS// /|}" . --exclude-dir=.git --exclude-dir=rendered --exclude=CHANGELOG.md | head -n 15)
+
+if [[ -z "$CANDIDATES" ]]; then
+    echo "❌ No candidates found."
+    exit 1
+fi
+
+# Step 3: Let AI rank and explain the results
+echo "🧠 Ranking results..."
+PROMPT="I am searching for: '$QUERY'.
+Here are the contents of relevant files found in the project. 
+Identify which file(s) and specific lines are most relevant to my query and explain why.
+
+Files:
+$CANDIDATES
+
+Context:
+$(for f in $CANDIDATES; do echo "--- FILE: $f ---"; head -n 50 "$f"; done)"
+
+ollama run "$MODEL" "$PROMPT"

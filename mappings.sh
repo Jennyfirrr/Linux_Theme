@@ -123,6 +123,8 @@ SHARED_MAPPINGS=(
     "bin/fox-ai-commit|~/.local/bin/fox-ai-commit"
     "bin/fox-ai-purge|~/.local/bin/fox-ai-purge"
     "bin/fox-ai-log|~/.local/bin/fox-ai-log"
+    "bin/fox-ai-quick|~/.local/bin/fox-ai-quick"
+    "bin/fox-ai-find|~/.local/bin/fox-ai-find"
 
     # Waybar config
     "waybar_config|~/.config/waybar/config.tmpl"

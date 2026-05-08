@@ -1,0 +1,38 @@
+#!/bin/bash
+# fox-ai-quick — Rofi-based quick AI chat
+
+# Ensure we have the model switcher logic
+CONFIG_FILE="$HOME/.config/opencode/opencode.json"
+MODEL_TAG="7b"
+if [[ -f "$CONFIG_FILE" ]]; then
+    MODEL_TAG=$(grep '"model"' "$CONFIG_FILE" | cut -d: -f3 | tr -d '", ')
+fi
+MODEL="qwen2.5-coder:$MODEL_TAG"
+
+# Get question from Rofi
+QUESTION=$(rofi -dmenu -p "󰚩 Ask AI ($MODEL_TAG)" -theme-str 'window {width: 40%;} listview {enabled: false;}')
+
+if [[ -z "$QUESTION" ]]; then
+    exit 0
+fi
+
+# Show thinking notification
+notify-send "󰚩 AI Thinking..." "$QUESTION" -t 3000
+
+# Run AI and show result in a small Kitty window
+# We use a temp file to store the response
+TMP_FILE=$(mktemp)
+echo "󰚩 AI Response ($MODEL_TAG):" > "$TMP_FILE"
+echo "-----------------------------------" >> "$TMP_FILE"
+echo "Question: $QUESTION" >> "$TMP_FILE"
+echo "" >> "$TMP_FILE"
+
+ollama run "$MODEL" "$QUESTION" >> "$TMP_FILE" 2>&1
+
+# Display in a floating terminal
+kitty --class="ai_quick" --title="AI Quick Response" \
+    -o "initial_window_width=800" -o "initial_window_height=500" \
+    -o "remember_window_size=no" \
+    sh -c "cat '$TMP_FILE' | bat --language markdown --style plain; echo -e '\n[Press Enter to close]'; read"
+
+rm -f "$TMP_FILE"
