@@ -38,6 +38,27 @@ alias cb='cliphist list | fzf --height=40% --border --prompt="clipboard > " | cl
 alias @recall='~/.contextai/src/recall_with_context.sh'
 alias flush='~/.contextai/src/flush_llm_cache.sh'
 
+# Natural Language to Bash (e.g. ?? "find all jpg files")
+??() {
+  local prompt="$*"
+  local model="qwen2.5-coder:7b"
+  echo "🤔 Thinking..."
+  local cmd=$(ollama run "$model" "Return ONLY the linux command (no explanation, no markdown) to do the following: $prompt")
+  echo -e "\n\033[1;32m$cmd\033[0m\n"
+  read -p "Run this command? [y/N] " -n 1 -r
+  echo ""
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    eval "$cmd"
+  fi
+}
+
+# FoxML AI Tool Aliases
+alias ai-commit='fox-ai-commit'
+alias ai-purge='fox-ai-purge'
+alias ai-log="fox-ai-log"
+alias ai-swap='fox-ai-swap'
+alias ai-status='fox-ai-status'
+
 # ─── Functions ────────────────────────────────
 give() {
   echo "Yeeting $1 to desktop.."

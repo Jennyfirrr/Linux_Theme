@@ -11,6 +11,7 @@
   "modules-center": [],
 
   "modules-right": [
+    "custom/ai_status",
     "custom/security",
     "custom/net_speed",
     "custom/cpu",
@@ -115,6 +116,14 @@
     "format": "🦊",
     "tooltip": "Launcher",
     "on-click": "~/.config/hypr/scripts/toggle_rofi.sh rofi -show drun -kb-row-up \"k,Up\" -kb-row-down \"j,Down\" -kb-accept-entry \"l,Return\""
+  },
+
+  "custom/ai_status": {
+    "exec": "~/.local/bin/fox-ai-status",
+    "return-type": "json",
+    "interval": 2,
+    "tooltip": true,
+    "on-click": "~/.local/bin/fox-ai-swap"
   },
 
   "custom/security": {

@@ -1,0 +1,19 @@
+#!/bin/bash
+# fox-ai-purge — Free up VRAM/RAM by stopping Ollama
+
+echo "🦊 Purging AI models from memory..."
+
+if command -v systemctl &>/dev/null; then
+    sudo systemctl stop ollama
+    echo "✓ Ollama service stopped. VRAM cleared."
+    
+    read -p "Restart Ollama? (Needed to run models again) [y/N] " -n 1 -r
+    echo ""
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        sudo systemctl start ollama
+        echo "✓ Ollama service restarted (and empty)."
+    fi
+else
+    pkill ollama
+    echo "✓ Ollama process killed."
+fi

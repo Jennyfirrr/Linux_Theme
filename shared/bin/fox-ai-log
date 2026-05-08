@@ -1,0 +1,38 @@
+#!/bin/bash
+# fox-ai-log — Analyze logs or errors using local Ollama
+
+if [[ -z "$1" ]] && [[ -t 0 ]]; then
+    echo "Usage: some_command 2>&1 | fox-ai-log"
+    echo "       fox-ai-log error.log"
+    exit 1
+fi
+
+LOG_CONTENT=""
+if [[ ! -t 0 ]]; then
+    LOG_CONTENT=$(cat)
+else
+    LOG_CONTENT=$(cat "$1")
+fi
+
+if [[ -z "$LOG_CONTENT" ]]; then
+    echo "Error: No log content provided."
+    exit 1
+fi
+
+# Use 14b for reasoning
+MODEL="qwen2.5-coder:14b"
+if ! ollama list | grep -q "14b"; then
+    MODEL="qwen2.5-coder:7b"
+fi
+
+echo "Analyzing logs with $MODEL..."
+
+PROMPT="You are a senior Linux systems engineer and C++ developer. Analyze the following log/error output. 
+1. Identify the root cause.
+2. Provide a specific, actionable fix.
+3. If it's a compilation error, explain the C++ concept involved.
+
+Log Output:
+$LOG_CONTENT"
+
+ollama run "$MODEL" "$PROMPT"

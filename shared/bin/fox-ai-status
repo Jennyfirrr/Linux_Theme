@@ -1,0 +1,42 @@
+#!/bin/bash
+# FoxML AI Status — Waybar module for OpenCode model status
+
+CONFIG_FILE="$HOME/.config/opencode/opencode.json"
+
+if [[ ! -f "$CONFIG_FILE" ]]; then
+    echo '{"text": "󰚩 OFF", "tooltip": "OpenCode config not found", "class": "offline"}'
+    exit 0
+fi
+
+# Extract model tag (e.g., 7b, 14b, 32b)
+MODEL_TAG=$(grep '"model"' "$CONFIG_FILE" | cut -d: -f3 | tr -d '", ')
+
+# Determine icon and label
+case "$MODEL_TAG" in
+    "7b")
+        ICON="󰚩"
+        LABEL="7B"
+        CLASS="fast"
+        TOOLTIP="Qwen 7B (Fast / Low VRAM)"
+        ;;
+    "14b")
+        ICON="󰚩"
+        LABEL="14B"
+        CLASS="smart"
+        TOOLTIP="Qwen 14B (Smart / Balanced)"
+        ;;
+    "32b")
+        ICON="󰚩"
+        LABEL="32B"
+        CLASS="expert"
+        TOOLTIP="Qwen 32B (Expert / Heavy)"
+        ;;
+    *)
+        ICON="󰚩"
+        LABEL="UNK"
+        CLASS="unknown"
+        TOOLTIP="Model: $MODEL_TAG"
+        ;;
+esac
+
+echo "{\"text\": \"$ICON $LABEL\", \"tooltip\": \"$TOOLTIP\", \"class\": \"$CLASS\"}"

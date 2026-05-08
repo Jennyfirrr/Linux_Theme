@@ -4,6 +4,37 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-07 — v1.5.8
+
+AI Lab Integration. Local LLM workspace, terminal superpowers, and real-time AI monitoring.
+
+### AI — Local LLM Workspace (Ollama & OpenCode)
+- **New `--ai` & `--models` Flags**: Added comprehensive AI bootstrapping to `install.sh`.
+    - **`--ai`**: Installs Ollama, OpenCode CLI, and configures them for local-first development.
+    - **`--models`**: Automates the pulling of the **Qwen2.5-Coder stack (7B, 14B, 32B)**, providing a ready-to-code environment in minutes.
+- **Model Switcher (`ai-swap`)**: A new interactive script to toggle between local models. Optimized for 32GB RAM/4GB VRAM hardware.
+- **AI Purge (`ai-purge`)**: A one-click utility to flush models from VRAM/RAM, freeing up system resources for gaming or heavy browser work.
+
+### Neovim — AI-Powered IDE
+- **CodeCompanion.nvim**: Integrated for inline code generation and workspace chat. Pointed natively to local Ollama.
+- **Avante.nvim (Local)**: Reconfigured the Cursor-style AI sidebar to use local Qwen models instead of cloud APIs.
+- **AI Keybinds**: Added a full suite of keybinds:
+    - `<leader>ci`: Inline AI prompt.
+    - `<leader>ca`: Toggle AI chat.
+    - `<leader>cc`: AI Actions menu (Refactor, Explain, Fix).
+
+### Terminal — AI Superpowers
+- **Natural Language Terminal (`??`)**: A new alias to turn natural language into validated Linux commands (e.g., `?? "find all large logs and delete them"`).
+- **AI Commits (`ai-commit`)**: Automatically generates professional Conventional Commit messages based on staged git diffs.
+- **AI Log Analysis (`ai-log`)**: A pipeable utility to feed complex errors or logs to the AI for instant root-cause analysis and fixes.
+
+### UI — Real-time AI Monitoring
+- **Waybar AI Status**: Added a live `󰚩` status module to the bar.
+    - **Visual Feedback**: Displays the active model name (7B/14B/32B).
+    - **Quick Toggle**: Clicking the module opens the model switcher menu.
+
+---
+
 ## 2026-05-07 — v1.5.7
 
 Performance, Privacy, and Vault pass. High-precision time, encrypted DNS, secure secret management, and Panic Button.

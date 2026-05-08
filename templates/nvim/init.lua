@@ -496,6 +496,43 @@ local plugins = {
 
   -- === AI ===
 
+  -- CodeCompanion (Inline AI, Chat, and Agents using local Ollama)
+  {
+    "olimorris/codecompanion.nvim",
+    dependencies = {
+      "nvim-lua/plenary.nvim",
+      "nvim-treesitter/nvim-treesitter",
+    },
+    config = function()
+      require("codecompanion").setup({
+        adapters = {
+          ollama = function()
+            return require("codecompanion.adapters").extend("ollama", {
+              schema = {
+                model = {
+                  default = "qwen2.5-coder:14b", -- Default to 14b for smart logic
+                },
+              },
+            })
+          end,
+        },
+        strategies = {
+          chat = { adapter = "ollama" },
+          inline = { adapter = "ollama" },
+          agent = { adapter = "ollama" },
+        },
+        display = {
+          chat = {
+            window = {
+              layout = "vertical", -- Vertical split for chat
+              width = 0.4,
+            },
+          },
+        },
+      })
+    end,
+  },
+
   -- Copilot (inline ghost-text completions)
   {
     "zbirenbaum/copilot.lua",
@@ -539,10 +576,13 @@ local plugins = {
       "zbirenbaum/copilot.lua",
     },
     opts = {
-      provider = "copilot",
-      providers = {
-        copilot = {
-          model = "claude-sonnet-4",
+      provider = "ollama",
+      vendors = {
+        ollama = {
+          __inherited_from = "openai",
+          api_key_name = "",
+          endpoint = "http://localhost:11434/v1",
+          model = "qwen2.5-coder:7b",
         },
       },
       behaviour = {
@@ -1885,6 +1925,12 @@ map("n", "<leader>ac", "<cmd>AvanteChat<cr>", { desc = "Avante chat" })
 map("v", "<leader>ae", "<cmd>AvanteEdit<cr>", { desc = "Avante edit (selection)" })
 map("n", "<leader>ar", "<cmd>AvanteRefresh<cr>", { desc = "Avante refresh" })
 map("n", "<leader>aS", "<cmd>AvanteStop<cr>", { desc = "Avante stop" })
+
+-- AI (CodeCompanion)
+map({ "n", "v" }, "<leader>cc", "<cmd>CodeCompanionActions<cr>", { desc = "AI Actions (CodeCompanion)" })
+map({ "n", "v" }, "<leader>ca", "<cmd>CodeCompanionChat Toggle<cr>", { desc = "AI Chat Toggle" })
+map("v", "ga", "<cmd>CodeCompanionChat Add<cr>", { desc = "Add selection to AI chat" })
+map("n", "<leader>ci", "<cmd>CodeCompanion<cr>", { desc = "AI Inline (CodeCompanion)" })
 
 -- Lazygit
 map("n", "<leader>gg", "<cmd>LazyGit<cr>", { desc = "LazyGit" })

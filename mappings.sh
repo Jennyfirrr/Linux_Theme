@@ -118,6 +118,11 @@ SHARED_MAPPINGS=(
     "zsh_git.zsh|~/.config/zsh/git.zsh"
     "zsh_paths.zsh|~/.config/zsh/paths.zsh"
     "zsh_conda.zsh|~/.config/zsh/conda.zsh"
+    "bin/fox-ai-swap|~/.local/bin/fox-ai-swap"
+    "bin/fox-ai-status|~/.local/bin/fox-ai-status"
+    "bin/fox-ai-commit|~/.local/bin/fox-ai-commit"
+    "bin/fox-ai-purge|~/.local/bin/fox-ai-purge"
+    "bin/fox-ai-log|~/.local/bin/fox-ai-log"
 
     # Waybar config
     "waybar_config|~/.config/waybar/config.tmpl"

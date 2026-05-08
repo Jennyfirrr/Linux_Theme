@@ -26,6 +26,8 @@ INSTALL_PRIVACY=false
 INSTALL_VAULT=false
 INSTALL_NVIDIA=false
 INSTALL_XGBOOST=false
+INSTALL_AI=false
+INSTALL_MODELS=false
 ASSUME_YES=false
 RENDER_ONLY=false
 DEFAULT_THEME="FoxML_Classic"
@@ -39,6 +41,8 @@ for arg in "$@"; do
         --vault) INSTALL_VAULT=true ;;
         --nvidia) INSTALL_NVIDIA=true ;;
         --xgboost) INSTALL_XGBOOST=true ;;
+        --ai) INSTALL_AI=true ;;
+        --models) INSTALL_MODELS=true ;;
         --render-only) RENDER_ONLY=true ;;
         -y|--yes) ASSUME_YES=true ;;
         *) THEME_NAME="$arg" ;;
@@ -580,6 +584,50 @@ if $INSTALL_VAULT; then
 fi
 
 # ─────────────────────────────────────────
+# AI Development Tools — opt-in
+# ─────────────────────────────────────────
+if $INSTALL_AI || $INSTALL_MODELS; then
+    echo ""
+    if ! command -v ollama &>/dev/null; then
+        echo "Installing Ollama..."
+        curl -fsSL https://ollama.com/install.sh | sh
+    else
+        echo "Ollama already installed."
+    fi
+
+    if $INSTALL_AI; then
+        echo "Installing OpenCode CLI..."
+        curl -fsSL https://opencode.ai/install | bash
+
+        echo "Configuring OpenCode for local Ollama..."
+        mkdir -p "$HOME/.config/opencode"
+        cat <<EOF > "$HOME/.config/opencode/opencode.json"
+{
+  "provider": {
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama (Local)",
+      "options": {
+        "baseURL": "http://localhost:11434/v1"
+      }
+    }
+  },
+  "model": "ollama/qwen2.5-coder:7b"
+}
+EOF
+        echo "  ✓ AI Tools setup complete."
+    fi
+
+    if $INSTALL_MODELS; then
+        echo "Pulling Qwen Coder models (7B, 14B, 32B)..."
+        ollama pull qwen2.5-coder:7b
+        ollama pull qwen2.5-coder:14b
+        ollama pull qwen2.5-coder:32b
+        echo "  ✓ AI Models ready."
+    fi
+fi
+
+# ─────────────────────────────────────────
 # CPU throttling / power tuning — interactive wizard. Always offered at
 # the end of an interactive install; auto-skipped under -y.
 # ─────────────────────────────────────────
@@ -609,8 +657,11 @@ echo "  2. Restart Waybar/Dunst: ~/.config/hypr/scripts/start_waybar.sh & pkill 
 echo "  3. Open nvim and run :Lazy sync"
 echo "  4. Restart Firefox (enable userChrome in about:config)"
 echo "  5. Select 'Fox ML' theme in Cursor/VS Code"
+if $INSTALL_AI; then
+    echo "  6. OpenCode is ready: Run 'opencode' to start local AI development"
+fi
 if $INSTALL_NVIDIA; then
-    echo "  6. Reboot to load the nvidia kernel module"
+    echo "  7. Reboot to load the nvidia kernel module"
 fi
 echo ""
 
