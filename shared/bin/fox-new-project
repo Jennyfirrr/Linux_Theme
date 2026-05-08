@@ -29,12 +29,33 @@ cat <<EOF > AGENT.md
 ## Core Mandates
 - **Path Agnosticism**: Use standard environment variables or relative paths.
 - **Safety**: No hardcoded secrets.
-- **AI Protocol**: Use high-discipline commands (/readiness, /review, /ship).
+- **AI Protocol**: Use high-discipline commands (/readiness, /review, /ship, /context).
+
+## Architecture
+- Define your core architectural principles here.
 EOF
+
+# Create INVARIANTS.md
+cat <<EOF > INVARIANTS.md
+# $PROJECT_NAME Safety Invariants
+
+This file defines the Load-Bearing Assumptions of the project. Breaking these rules will lead to silent drift or system failure.
+
+## [I-01] Path Agnosticism
+- **Rule**: No hardcoded absolute paths.
+- **Standard**: Use XDG standards or relative paths.
+
+## [I-02] Test Coverage
+- **Rule**: Every new feature must include automated verification logic.
+EOF
+
+# Create initial CODE_MAP.md
+echo "# $PROJECT_NAME — Code Map" > CODE_MAP.md
+tree -L 2 >> CODE_MAP.md
 
 # Plug in skills
 fox-ai-setup-project
 
 echo ""
 echo "$PROJECT_NAME is ready for high-discipline development."
-echo "   Run: cd $PROJECT_NAME && opencode \"/readiness\""
+echo "   Run: cd $PROJECT_NAME && opencode \"/context\""
