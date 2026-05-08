@@ -1,0 +1,58 @@
+# --- Core System ---
+base
+linux-zen
+linux-zen-headers
+linux-firmware
+intel-ucode
+amd-ucode
+sudo
+networkmanager
+git
+curl
+wget
+vim
+neovim
+nano
+
+# --- X11/Wayland Base ---
+hyprland
+kitty
+waybar
+rofi-wayland
+mako
+dunst
+polkit-kde-agent
+
+# --- Drivers ---
+nvidia-open-dkms
+libva-nvidia-driver
+pipewire
+pipewire-alsa
+pipewire-pulse
+wireplumber
+
+# --- FoxML Specific ---
+zsh
+fzf
+eza
+bat
+yazi
+btop
+fd
+zoxide
+jq
+git-delta
+github-cli
+unzip
+nodejs
+npm
+tree-sitter-cli
+
+# --- Archiso specific ---
+arch-install-scripts
+refind
+grub
+efibootmgr
+systemd-boot-dt-mg
+dosfstools
+mtools

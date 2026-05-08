@@ -129,6 +129,7 @@ SHARED_MAPPINGS=(
     "bin/fox-ai-setup-project|~/.local/bin/fox-ai-setup-project"
     "bin/fox-new-project|~/.local/bin/fox-new-project"
     "bin/fox-distro-guide|~/.local/bin/fox-distro-guide"
+    "bin/fox-distro-build|~/.local/bin/fox-distro-build"
 
     # Distro profiles
     "foxml-profile.json|~/.local/share/foxml/distro/foxml-profile.json"

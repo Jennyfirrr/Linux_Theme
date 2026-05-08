@@ -1,0 +1,19 @@
+#!/bin/bash
+# FoxML ISO Build Script
+# Requires: sudo pacman -S archiso
+
+if ! command -v mkarchiso &>/dev/null; then
+    echo "Error: 'archiso' package not found."
+    echo "Run: sudo pacman -S archiso"
+    exit 1
+fi
+
+BUILD_DIR="./build"
+OUT_DIR="./out"
+
+mkdir -p "$BUILD_DIR" "$OUT_DIR"
+
+echo "Building FoxML OS ISO..."
+sudo mkarchiso -v -w "$BUILD_DIR" -o "$OUT_DIR" .
+
+echo "Build complete. ISO is in $OUT_DIR"
