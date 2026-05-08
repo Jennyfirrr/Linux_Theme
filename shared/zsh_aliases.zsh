@@ -65,6 +65,7 @@ alias ai-init='fox-ai-setup-project'
 alias ai-new='fox-new-project'
 alias ai-distro='fox-distro-guide'
 alias ai-distro-build='fox-distro-build'
+alias ai-distro-flash='fox-distro-flash'
 
 # ─── Functions ────────────────────────────────
 give() {

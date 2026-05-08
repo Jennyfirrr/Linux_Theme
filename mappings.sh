@@ -130,6 +130,7 @@ SHARED_MAPPINGS=(
     "bin/fox-new-project|~/.local/bin/fox-new-project"
     "bin/fox-distro-guide|~/.local/bin/fox-distro-guide"
     "bin/fox-distro-build|~/.local/bin/fox-distro-build"
+    "bin/fox-distro-flash|~/.local/bin/fox-distro-flash"
 
     # Distro profiles
     "foxml-profile.json|~/.local/share/foxml/distro/foxml-profile.json"
