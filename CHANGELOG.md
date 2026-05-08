@@ -6,14 +6,24 @@ All notable changes to the Fox ML theme.
 
 ## 2026-05-07 — v1.5.9
 
-FoxML OS. Complete operating system specification via `archinstall` profiles.
+FoxML OS & ISO Pipeline. Complete operating system specification, automated ISO build suite, and hardware-agnostic AI scaling.
 
 ### Distro — FoxML OS Experience
-- **`archinstall` Profile**: Created `shared/foxml-profile.json` allowing for a fully automated OS installation using the official Arch Linux installer.
-- **Kernel Optimization**: Defaults to the **linux-zen** kernel for superior desktop responsiveness and workstation performance.
-- **Hardware-Ready**: Pre-configures NVIDIA drivers, Pipewire audio, and NetworkManager out of the box.
-- **Bootstrapped**: The profile automatically triggers the FoxML one-command bootstrap at the end of the installation process.
-- **Distro Guide**: Added `ai-distro` (`fox-distro-guide`) to provide instant instructions on how to deploy the OS experience.
+- **`archinstall` Profile**: Created `shared/foxml-profile.json` for fully automated OS deployment with **linux-zen** kernel and pre-configured hardware drivers.
+- **ISO Build Suite**: Added `distro/` infrastructure (`profiledef.sh`, `packages.x86_64`) to package FoxML as a standalone bootable ISO.
+- **`ai-distro-build`**: New utility to automate the creation of the FoxML-OS image.
+- **`ai-distro-flash`**: New safety-first utility to flash the FoxML ISO to a USB drive with system-drive protection.
+- **`ai-distro`**: Distro Guide utility for instant deployment instructions.
+
+### AI — Hardware-Agnostic Scaling
+- **`fox-hw-info`**: Implemented dynamic hardware detection. The system now categorizes itself into **Lite**, **Standard**, or **Pro** tiers based on actual RAM/VRAM.
+- **Dynamic Stack**: `--models` now pulls a curated stack (e.g., 7B/14B/32B for Standard) optimized for the user's detected hardware.
+- **Context-Aware Switcher**: `ai-swap` now dynamically labels model choices (Safe/Balanced/Heavy) based on detected system capacity.
+
+### Maintenance & Safety
+- **Universal Commands**: Generalized all `/slash` commands in `.claude/commands/` for use in any project.
+- **Improved Backups**: Refined `backup_and_copy` logic to ensure system configs are safely versioned before being overwritten.
+- **Emoji Purge**: Stripped emojis from installer and CLI tools for a high-discipline, professional terminal experience.
 
 ---
 

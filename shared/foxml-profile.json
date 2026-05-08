@@ -5,6 +5,24 @@
     },
     "bootloader": "systemd-boot",
     "desktop-environment": "hyprland",
+    "disk_layouts": [
+        {
+            "device": "/dev/sda",
+            "partitions": [
+                {
+                    "boot": true,
+                    "mountpoint": "/boot",
+                    "size": "1GiB",
+                    "type": "primary"
+                },
+                {
+                    "mountpoint": "/",
+                    "size": "100%",
+                    "type": "primary"
+                }
+            ]
+        }
+    ],
     "hostname": "foxml-workstation",
     "kernels": [
         "linux-zen",

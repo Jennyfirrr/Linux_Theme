@@ -49,6 +49,9 @@ Dark theme with earthy, muted tones — warm peach, dusty rose, sage, and wheat 
 | `zsh`, `oh-my-zsh` | Shell |
 | `neovim` | Editor (with 30+ plugins) |
 
+> [!NOTE]
+> The FoxML installer and bootstrap script have been significantly tested and are considered stable for Arch Linux. However, as with any automated system deployment, edge cases may exist depending on specific hardware configurations.
+
 Run `./install.sh --deps` to install most of these automatically.
 
 ## Quick Start
