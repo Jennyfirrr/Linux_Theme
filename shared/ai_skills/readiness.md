@@ -3,9 +3,9 @@ name: readiness
 description: Verify a plan before coding starts. Walks the 17-item high-discipline pre-coding protocol.
 ---
 
-# /readiness — Pre-Coding Gate
-
-Verify a plan file against the 17-item high-discipline protocol. Output a report with GREEN/YELLOW/RED verdicts.
+## Instructions
+*   **Research**: Use **`fask`** to research existing patterns or "Symmetry/Parity" logic across the codebase before evaluating the plan.
+*   **Protocol**: Verify the plan file against the 17-item high-discipline protocol. Output a report with GREEN/YELLOW/RED verdicts.
 
 ## The 17-Item Protocol
 
