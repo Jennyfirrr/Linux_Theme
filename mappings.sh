@@ -310,6 +310,14 @@ PKGJSON
         echo "    command = \"Hyprland -c /etc/greetd/hyprland.conf\""
     fi
 
+    # KEYBINDS.md — deployed to ~/.local/share/foxml/ so fox-cheatsheet
+    # can find it on installed systems without depending on the repo path.
+    if [[ -f "$SCRIPT_DIR/KEYBINDS.md" ]]; then
+        mkdir -p "$HOME/.local/share/foxml"
+        cp "$SCRIPT_DIR/KEYBINDS.md" "$HOME/.local/share/foxml/KEYBINDS.md"
+        echo "  KEYBINDS.md → ~/.local/share/foxml/"
+    fi
+
     # Wallpapers (image files only — skip README etc.)
     if [[ -d "$SCRIPT_DIR/shared/wallpapers" ]]; then
         mkdir -p ~/.wallpapers

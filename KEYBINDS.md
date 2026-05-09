@@ -477,6 +477,7 @@ Shows indent guides automatically. No keybinds.
 | Key | Action |
 |-----|--------|
 | `ALT + Shift + D` | **FoxML SysHub** (rofi-driven launcher: power, BT, Wi-Fi, wallpapers, themes, apps) |
+| `ALT + /` | **Cheatsheet** — searchable keybind picker (parses this file). Enter copies the combo to clipboard. |
 | `ALT + Tab` | Cycle focus through **floating** windows only |
 | `ALT + Ctrl + Tab` | Cycle focus through **tiled** windows only |
 | `ALT + Shift + Tab` | Cycle focus through **all** windows in reverse |

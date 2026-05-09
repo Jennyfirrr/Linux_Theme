@@ -1,6 +1,19 @@
 configuration {
   modi: "drun,run,window";
   show-icons: true;
+  /* Vim-flavored navigation. Bare j/k stay free for search filtering;
+     Ctrl+J / Ctrl+K nav rows without leaving the search bar. */
+  kb-row-up:    "Up,Control+k,Control+p";
+  kb-row-down:  "Down,Control+j,Control+n";
+  kb-page-prev: "Page_Up,Control+u";
+  kb-page-next: "Page_Down,Control+d";
+  /* Ctrl+w deletes a word back, like vim/readline */
+  kb-remove-word-back: "Control+w";
+  /* Ctrl+/ clears the input — searching from scratch */
+  kb-clear-line: "Control+slash";
+  /* Resolve default-conflict — rofi 1.7+ refuses overlapping binds */
+  kb-remove-to-eol: "";
+  kb-accept-entry: "Return,KP_Enter";
 }
 
 * {
