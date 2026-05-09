@@ -369,6 +369,8 @@ JSON
         cp "$rendered_dir/regreet/regreet.css" ~/.config/regreet/regreet.css
         cp "$SCRIPT_DIR/shared/regreet.toml" ~/.config/regreet/regreet.toml
         cp "$SCRIPT_DIR/shared/greetd_hyprland.conf" ~/.config/regreet/hyprland.conf
+        cp "$SCRIPT_DIR/shared/greetd_select_monitor.sh" ~/.config/regreet/select-monitor.sh
+        chmod +x ~/.config/regreet/select-monitor.sh
         echo "  ReGreet staged to ~/.config/regreet/ (install_greetd will deploy)"
     fi
 
@@ -939,7 +941,7 @@ install_greetd() {
     fi
 
     local staged="$HOME/.config/regreet"
-    if [[ ! -f "$staged/regreet.css" || ! -f "$staged/regreet.toml" || ! -f "$staged/hyprland.conf" ]]; then
+    if [[ ! -f "$staged/regreet.css" || ! -f "$staged/regreet.toml" || ! -f "$staged/hyprland.conf" || ! -f "$staged/select-monitor.sh" ]]; then
         echo "  Staged regreet files missing in $staged — skipping"
         return
     fi
@@ -958,11 +960,13 @@ install_greetd() {
     fi
 
     sudo install -d /etc/greetd /usr/share/wallpapers
-    sudo install -m 644 "$staged/regreet.css"     /etc/greetd/regreet.css
-    sudo install -m 644 "$staged/regreet.toml"    /etc/greetd/regreet.toml
-    sudo install -m 644 "$staged/hyprland.conf"   /etc/greetd/hyprland.conf
-    sudo install -m 644 "$wall_src"               "$wall_path"
+    sudo install -m 644 "$staged/regreet.css"      /etc/greetd/regreet.css
+    sudo install -m 644 "$staged/regreet.toml"     /etc/greetd/regreet.toml
+    sudo install -m 644 "$staged/hyprland.conf"    /etc/greetd/hyprland.conf
+    sudo install -m 755 "$staged/select-monitor.sh" /etc/greetd/select-monitor.sh
+    sudo install -m 644 "$wall_src"                "$wall_path"
     echo "  regreet css/toml/hyprland.conf → /etc/greetd/"
+    echo "  monitor selector → /etc/greetd/select-monitor.sh"
     echo "  login wallpaper → $wall_path"
 
     # /etc/greetd/config.toml — only rewrite if it's still the stock default

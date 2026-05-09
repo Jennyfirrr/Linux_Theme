@@ -4,6 +4,38 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-09 — v2.4.4
+
+Tmux ergonomics + greetd monitor portability.
+
+### Tmux — pop-session UX (`prefix + m`, `prefix + M`)
+- **Pre-size the placeholder session** — the old `tmux new-session -d -s "$sess"` ran at the default 80×24 before `move-window -k` swapped in the popped window. On `switch-client` the window snapped to the real client size, firing SIGWINCH at any TUI inside (nvim, btop, lazygit) and producing a visible redraw flash. New session now passes `-x #{client_width} -y #{client_height}` so the placeholder matches from the start; popped panes attach without resize.
+- **Race-free, descriptive session names** — was `sess_$(date +%s)` (second-resolution, opaque, collides if `m` fires twice in the same second). Now `pop-${pane_current_command}-$$` for `m` and `kpop-${pane_current_command}-$$` for `M` (e.g. `pop-nvim-19421` / `kpop-btop-19422`), so `prefix + s` listings tell you what each popped session is and the PID suffix prevents collision.
+- **Confirmation message held longer** — `display-message -d 2000` (was the default ~750ms) so the new session name stays readable long enough to remember.
+
+### Tmux — global ergonomics
+- **`default-terminal "tmux-256color"`** — properly advertises italics/undercurl to apps inside tmux. Pairs with the existing `terminal-features ",*:24-bit:RGB"` for true color.
+- **`allow-passthrough on`** — kitty graphics protocol now reaches apps through tmux. Image previews in nvim image plugins, yazi, ranger, etc. start working inside tmux sessions instead of breaking silently.
+- **`detach-on-destroy previous`** — exiting the last pane of a popped session now drops you back to your previous session instead of detaching the client to a bare shell. Natural pair for the `m`/`M` pop bindings.
+- **`aggressive-resize on`** — when two clients on different sessions share a window (which happens with the kitty-pop binding), tmux only resizes for the client actively viewing it. Cuts redraw thrash in the popped kitty when the source kitty is a different size.
+- **`set-titles on`** + `"tmux: #S → #W"` — propagates current session/window into the kitty title bar so the kitty window list shows what each tmux is doing.
+
+### Tmux — copy mode + sync panes
+- **Mouse drag-end → wl-copy** (`bind -T copy-mode-vi MouseDragEnd1Pane send -X copy-pipe-no-clear "wl-copy"`) — selecting with the mouse now copies to the Wayland clipboard on drag-release without exiting copy mode. Previously mouse selection went nowhere wl-pastable; you had to switch to vi-mode and `v`+`y`.
+- **`Y` copy-line** and **`r` rectangle-toggle** in `copy-mode-vi` — whole-line yank and block selection, matching vi expectations.
+- **`prefix + e` synchronize-panes toggle** — mirror keystrokes to every pane in the current window. One key on, one key off; useful for multi-host SSH or "do this everywhere" moments.
+
+### Tmux — pane-border-format optimization
+- **Halved `tmux-pane-info` fork rate** — the format previously inlined the helper script call inside both branches of `#{?pane_active,...,...}`, so each pane border refresh ran the script twice (active styling, then inactive). Refactored to call once and wrap the styling around it. Halves the fork count per status refresh on dense layouts.
+
+### Greetd — monitor portability
+- **New `shared/greetd_select_monitor.sh`** — runs inside the minimal Hyprland greeter session before regreet starts. Walks `hyprctl monitors`, finds the first internal panel by name pattern (`eDP*`/`LVDS*`/`DSI*`), and disables every other connected output via `hyprctl keyword monitor "$m,disable"`. On desktops with no internal display it's a no-op — every monitor stays live and Hyprland's default order applies.
+- **Why this exists** — the greeter Hyprland session is its own minimal config (`/etc/greetd/hyprland.conf`), totally separate from the user's daily Hyprland. Without per-monitor rules, the wildcard `monitor = , preferred, auto, 1` enabled every connected output without applying any rotation, so on a setup with a portrait-rotated external the greeter would land on the sideways monitor unrotated. Hardcoding monitor names per-host doesn't survive other users cloning the repo, so the runtime heuristic handles it.
+- **`shared/greetd_hyprland.conf`** — `exec-once` now invokes `/etc/greetd/select-monitor.sh` before regreet.
+- **`mappings.sh`**: `install_specials` stages `select-monitor.sh` to `~/.config/regreet/` alongside the css/toml/hyprland.conf; `install_greetd` requires the staged script (existence check refuses to deploy without it) and `sudo install`s it to `/etc/greetd/select-monitor.sh` mode 755.
+
+---
+
 ## 2026-05-09 — v2.4.3
 
 ### Fixes
