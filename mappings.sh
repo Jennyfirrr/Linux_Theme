@@ -241,9 +241,15 @@ PKGJSON
     # Claude CLI — ensure notification hooks are present in ~/.claude/settings.json
     local claude_settings="$HOME/.claude/settings.json"
     if command -v claude &>/dev/null || [[ -d "$HOME/.claude" ]]; then
+        # Capture current palette colors for injection into the Claude heredoc
+        # Since this is shell code, we can use the variables sourced from palette.sh
+        local c_primary="#${PRIMARY:-c4956e}"
+        local c_secondary="#${SECONDARY:-b8967a}"
+        local c_accent="#${ACCENT:-8a9a7a}"
+
         mkdir -p "$HOME/.claude"
         if [[ ! -f "$claude_settings" ]]; then
-            cat > "$claude_settings" << 'EOF'
+            cat > "$claude_settings" << EOF
 {
   "theme": "dark",
   "hooks": {
@@ -253,7 +259,7 @@ PKGJSON
         "hooks": [
           {
             "type": "command",
-            "command": "notify-send -u low -i dialog-information 'Claude turn complete' 'Ready for next message'"
+            "command": "notify-send -u low -i dialog-information 'Claude' '<b><span foreground=\"$c_accent\">Turn complete</span></b> — Ready for next message'"
           }
         ]
       }
@@ -264,7 +270,7 @@ PKGJSON
         "hooks": [
           {
             "type": "command",
-            "command": "INPUT=$(cat); DESC=$(echo \"$INPUT\" | jq -r '.subagent.description // .description // \"subagent\"' 2>/dev/null || echo subagent); STATUS=$(echo \"$INPUT\" | jq -r '.subagent.status // .status // \"done\"' 2>/dev/null || echo done); notify-send -u normal -i dialog-information 'Claude subagent done' \"$DESC — $STATUS\""
+            "command": "INPUT=\\$(cat); DESC=\\$(echo \"\\\$INPUT\" | jq -r '.subagent.description // .description // \"subagent\"' 2>/dev/null || echo subagent); STATUS=\\$(echo \"\\\$INPUT\" | jq -r '.subagent.status // .status // \"done\"' 2>/dev/null || echo done); notify-send -u normal -i dialog-information 'Claude Subagent' \"<b><span foreground=\\\"$c_primary\\\">\\\$DESC</span></b> — \\\$STATUS\""
           }
         ]
       }
@@ -274,11 +280,12 @@ PKGJSON
 EOF
             echo "  Claude settings (hooks) created"
         elif command -v jq &>/dev/null; then
-            # Add hooks if missing
+            # Add/Update hooks with current theme colors
             local tmp_claude; tmp_claude="$(mktemp)"
-            if jq '.hooks.Stop |= (if . == null then [{"matcher":"","hooks":[{"type":"command","command":"notify-send -u low -i dialog-information \"Claude turn complete\" \"Ready for next message\""}]}] else . end) | .hooks.SubagentStop |= (if . == null then [{"matcher":"","hooks":[{"type":"command","command":"INPUT=$(cat); DESC=$(echo \"$INPUT\" | jq -r \".subagent.description // .description // \\\"subagent\\\"\" 2>/dev/null || echo subagent); STATUS=$(echo \"$INPUT\" | jq -r \".subagent.status // .status // \\\"done\\\"\" 2>/dev/null || echo done); notify-send -u normal -i dialog-information \"Claude subagent done\" \"$DESC — $STATUS\""}]}] else . end)' "$claude_settings" > "$tmp_claude" 2>/dev/null; then
+            if jq --arg c_acc "$c_accent" --arg c_pri "$c_primary" \
+                '.hooks.Stop = [{"matcher":"","hooks":[{"type":"command","command":"notify-send -u low -i dialog-information \"Claude\" \"<b><span foreground=\\\"\" + $c_acc + \"\\\">Turn complete</span></b> — Ready for next message\""}]}] | .hooks.SubagentStop = [{"matcher":"","hooks":[{"type":"command","command":"INPUT=$(cat); DESC=$(echo \"$INPUT\" | jq -r \".subagent.description // .description // \\\"subagent\\\"\" 2>/dev/null || echo subagent); STATUS=$(echo \"$INPUT\" | jq -r \".subagent.status // .status // \\\"done\\\"\" 2>/dev/null || echo done); notify-send -u normal -i dialog-information \"Claude Subagent\" \"<b><span foreground=\\\"\" + $c_pri + \"\\\">$DESC</span></b> — $STATUS\""}]}]' "$claude_settings" > "$tmp_claude" 2>/dev/null; then
                 mv "$tmp_claude" "$claude_settings"
-                echo "  Claude settings (hooks) verified"
+                echo "  Claude settings (hooks) verified & themed"
             else
                 rm -f "$tmp_claude"
             fi

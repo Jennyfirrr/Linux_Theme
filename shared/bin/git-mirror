@@ -1,0 +1,196 @@
+#!/usr/bin/env bash
+# git-mirror — sync any local directory to a private backup git repo.
+#
+# Generic backup tool. Reads per-project config files from
+# ~/.config/git-mirror/<name>.conf — each defines a SRC dir, a DST git
+# repo, and optional commit-label / remote / branch overrides. Mirrors
+# SRC → DST, auto-generates a structured commit message from the diff,
+# commits + pushes.
+#
+# Usage:
+#   git-mirror sync <name>          mirror project "name", auto commit msg
+#   git-mirror sync <name> "msg"    mirror with explicit commit message
+#   git-mirror list                 list configured projects
+#   git-mirror init <name>          generate a starter conf at
+#                                   ~/.config/git-mirror/<name>.conf
+#   git-mirror help                 print this help
+#
+# Per-project conf format (~/.config/git-mirror/<name>.conf, sourced as bash):
+#   SRC="$HOME/code/MyProject/data"     # required
+#   DST="$HOME/code/MyProject_Backup"   # required, must be a git repo
+#   LABEL="data"                        # optional, used in commit msg
+#   REMOTE="origin"                     # optional, default "origin"
+#   BRANCH="main"                       # optional, default "main"
+#   EXCLUDES=(".cache" "*.tmp")         # optional rsync excludes
+#
+# Behavior:
+#   * Mirror semantics — DST contents match SRC after sync. Files removed
+#     from SRC are removed from DST too (git history preserves them).
+#   * Uses rsync --delete if available; falls back to cp -a + find-prune.
+#   * Skips if no diff. Push fails surface clearly (auth, network, behind).
+#
+# Author: shared/bin in Linux_Theme. No project-specific assumptions.
+
+set -euo pipefail
+
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/git-mirror"
+
+usage() {
+    sed -n '2,/^$/p' "${BASH_SOURCE[0]}" | sed 's/^# \?//'
+    exit "${1:-0}"
+}
+
+die() {
+    echo "git-mirror: $*" >&2
+    exit 1
+}
+
+# ─── Mirror src → dst ─────────────────────────────────────────────
+# Args: $1 = src dir (no trailing slash), $2 = dst dir, $3+ = excludes
+do_mirror() {
+    local src="$1" dst="$2"
+    shift 2
+    local excludes=("$@")
+    [[ -d "$src" ]] || die "SRC dir doesn't exist: $src"
+    mkdir -p "$dst"
+    if command -v rsync >/dev/null 2>&1; then
+        local rsync_args=(-a --delete --exclude='.git/' --exclude='README.md' --exclude='.gitignore')
+        for ex in "${excludes[@]}"; do
+            rsync_args+=(--exclude="$ex")
+        done
+        rsync "${rsync_args[@]}" "$src/" "$dst/"
+    else
+        # Manual mirror: clear non-meta dirs first, then cp -a.
+        find "$dst" -mindepth 1 -maxdepth 1 \
+            ! -name '.git' ! -name 'README.md' ! -name '.gitignore' \
+            -exec rm -rf {} +
+        cp -a "$src/." "$dst/"
+        # Apply excludes post-copy (find-and-delete)
+        for ex in "${excludes[@]}"; do
+            find "$dst" -name "$ex" ! -path '*/.git/*' -exec rm -rf {} + 2>/dev/null || true
+        done
+    fi
+}
+
+# ─── Auto commit message ──────────────────────────────────────────
+auto_msg() {
+    local label="$1" repo="$2"
+    local n_added n_mod n_del
+    n_added=$(git -C "$repo" diff --cached --diff-filter=A --name-only | wc -l)
+    n_mod=$(git -C "$repo" diff --cached --diff-filter=M --name-only | wc -l)
+    n_del=$(git -C "$repo" diff --cached --diff-filter=D --name-only | wc -l)
+    local parts=()
+    [[ $n_added -gt 0 ]] && parts+=("+$n_added")
+    [[ $n_mod -gt 0 ]]   && parts+=("~$n_mod")
+    [[ $n_del -gt 0 ]]   && parts+=("-$n_del")
+    local summary
+    summary="$(IFS=' '; echo "${parts[*]}")"
+    [[ -z "$summary" ]] && summary="(no diff?)"
+    echo "$label: sync ($summary)"
+}
+
+# ─── Subcommands ──────────────────────────────────────────────────
+cmd_sync() {
+    local name="${1:-}"
+    [[ -n "$name" ]] || die "missing project name. Usage: git-mirror sync <name>"
+    local conf="$CONFIG_DIR/$name.conf"
+    [[ -f "$conf" ]] || die "no config: $conf — run: git-mirror init $name"
+
+    # Source config in a subshell-safe way; reset vars first.
+    SRC=""; DST=""; LABEL="$name"; REMOTE="origin"; BRANCH="main"
+    EXCLUDES=()
+    # shellcheck disable=SC1090
+    source "$conf"
+
+    [[ -n "$SRC" ]] || die "SRC unset in $conf"
+    [[ -n "$DST" ]] || die "DST unset in $conf"
+    [[ -d "$SRC" ]] || die "SRC dir doesn't exist: $SRC"
+    [[ -d "$DST/.git" ]] || die "DST is not a git repo: $DST (run 'git -C $DST init' or clone first)"
+
+    echo "[git-mirror] $name: $SRC -> $DST"
+    do_mirror "$SRC" "$DST" "${EXCLUDES[@]}"
+
+    git -C "$DST" add -A
+    if git -C "$DST" diff --quiet --cached; then
+        echo "[git-mirror] $name: already up to date — nothing to commit"
+        return 0
+    fi
+
+    local msg="${2:-}"
+    [[ -n "$msg" ]] || msg="$(auto_msg "$LABEL" "$DST")"
+    git -C "$DST" commit -m "$msg" >/dev/null
+    echo "[git-mirror] $name: committed: $msg"
+
+    if ! git -C "$DST" push "$REMOTE" "$BRANCH" 2>&1; then
+        die "$name: push failed. Possible: SSH key locked (run 'ssh-add'), remote ahead (run 'git -C $DST pull --ff-only'), no network."
+    fi
+    echo "[git-mirror] $name: pushed to $REMOTE/$BRANCH"
+}
+
+cmd_list() {
+    if [[ ! -d "$CONFIG_DIR" ]]; then
+        echo "(no configured projects — config dir doesn't exist: $CONFIG_DIR)"
+        return 0
+    fi
+    local found=0
+    for conf in "$CONFIG_DIR"/*.conf; do
+        [[ -f "$conf" ]] || continue
+        found=1
+        local name
+        name="$(basename "$conf" .conf)"
+        # Source in a subshell so we don't pollute current env
+        (
+            SRC=""; DST=""; LABEL="$name"
+            # shellcheck disable=SC1090
+            source "$conf"
+            printf "  %-30s %s -> %s\n" "$name" "${SRC/#$HOME/~}" "${DST/#$HOME/~}"
+        )
+    done
+    [[ $found -eq 1 ]] || echo "(no .conf files in $CONFIG_DIR)"
+}
+
+cmd_init() {
+    local name="${1:-}"
+    [[ -n "$name" ]] || die "missing name. Usage: git-mirror init <name>"
+    mkdir -p "$CONFIG_DIR"
+    local conf="$CONFIG_DIR/$name.conf"
+    if [[ -f "$conf" ]]; then
+        die "conf already exists: $conf"
+    fi
+    cat > "$conf" <<EOF
+# git-mirror config: $name
+# Edit values then run: git-mirror sync $name
+
+# REQUIRED — directory whose contents you want backed up
+SRC="\$HOME/code/EXAMPLE_PROJECT/data"
+
+# REQUIRED — target git repo (must already be cloned + remote set)
+DST="\$HOME/code/EXAMPLE_PROJECT_Backup"
+
+# OPTIONAL — commit message label (default = config name "$name")
+LABEL="$name"
+
+# OPTIONAL — remote name + branch (defaults: origin / main)
+REMOTE="origin"
+BRANCH="main"
+
+# OPTIONAL — extra rsync exclude patterns (in addition to .git/, README.md, .gitignore)
+EXCLUDES=(
+    # "*.tmp"
+    # ".cache"
+)
+EOF
+    echo "[git-mirror] created $conf"
+    echo "[git-mirror] edit it, then run: git-mirror sync $name"
+}
+
+# ─── Dispatch ─────────────────────────────────────────────────────
+cmd="${1:-help}"
+shift || true
+case "$cmd" in
+    sync)  cmd_sync "$@" ;;
+    list)  cmd_list "$@" ;;
+    init)  cmd_init "$@" ;;
+    help|--help|-h) usage 0 ;;
+    *) echo "unknown command: $cmd" >&2; usage 1 ;;
+esac
