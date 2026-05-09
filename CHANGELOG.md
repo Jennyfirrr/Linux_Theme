@@ -4,6 +4,15 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-08 — v2.2.5
+
+### Fixes
+- **Landscape wallpapers letterboxed on 16:9 screens** — the source landscape wallpapers were 3840×2655 (~3:2), so `awww --resize fit` (introduced in v2.2.0's per-monitor rewrite) drew the laptop's 16:9 panel with black bars on left and right.
+- **Resized source wallpapers to 3840×2160** — center-cropped via ImageMagick. All 5 landscape wallpapers in `shared/wallpapers/` are now exactly 16:9, so they fill any standard 16:9 panel without scaling artifacts and downscale cleanly to HiDPI.
+- **`rotate_wallpaper.sh` landscape default flipped from `fit` to `crop`** — `crop` scales-to-fill and trims overflow rather than letterboxing. With the new 16:9 sources this is a no-op on 16:9 panels, but on 16:10 / 21:9 / ultrawide screens it still fills cleanly. Portrait monitors still use `fit` against the pre-cropped 1080×1920 variants for a 1:1 match.
+
+---
+
 ## 2026-05-08 — v2.2.4
 
 ### Fixes

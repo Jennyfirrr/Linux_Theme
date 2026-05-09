@@ -116,13 +116,16 @@ if command -v hyprctl >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
         while IFS=$'\t' read -r name transform; do
             [[ -z "$name" ]] && continue
             mon_pick="$pick"
-            resize="fit"
+            # Landscape default: crop (scale-to-fill, trim overflow). Avoids
+            # black bars on monitors whose aspect doesn't match the source —
+            # wallpaper subjects are centered, so trimming is invisible.
+            resize="crop"
             if [[ "$transform" == "1" || "$transform" == "3" ]]; then
                 if [[ -f "$portrait_pick" ]]; then
+                    # Portrait variant is pre-cropped to the rotated logical
+                    # size — fit gives a 1:1 match with no scaling.
                     mon_pick="$portrait_pick"
                     resize="fit"
-                else
-                    resize="crop"
                 fi
             fi
             awww img -o "$name" "$mon_pick" \
