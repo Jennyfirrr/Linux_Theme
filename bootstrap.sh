@@ -2,7 +2,7 @@
 # FoxML Theme Hub — One-command bootstrap.
 #
 # Usage (run on a fresh Arch + Hyprland laptop):
-#   curl -fsSL https://raw.githubusercontent.com/Jennyfirrr/FoxML_Workstation/main/bootstrap.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/Jennyfirrr/Linux_Theme/main/bootstrap.sh | bash
 #
 # Optional theme arg:
 #   curl -fsSL .../bootstrap.sh | bash -s Cave_Data_Center
