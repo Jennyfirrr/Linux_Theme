@@ -4,6 +4,16 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-08 — v2.2.1
+
+Bug fixes and portability cleanup following v2.2.0.
+
+### Fixes
+- **Install silently aborted before `install_throttling`** — `_generate_portrait_wallpapers()` ended with `(( generated > 0 )) && echo …`, which returns 1 on every re-run after the first (when all portrait variants already exist). Under `set -e`, that made the function exit 1, which propagated out of the post-`configure_monitors` backstop block and aborted the script before the waybar restart and CPU throttling wizard ever ran. Replaced the `&&` form with an explicit `if/fi` and added `return 0` to lock the function's success contract.
+- **Stale `FoxML_Workstation` repo path** — both `bootstrap.sh`'s curl-pipe-bash documentation and `shared/foxml-profile.json`'s `user_commands` referenced the old repo name. Updated to `Linux_Theme` so the published one-liner actually resolves.
+
+---
+
 ## 2026-05-08 — v2.2.0
 
 Multi-monitor support: interactive layout picker, name-keyed Hyprland rules that survive undocking, secondary waybar for external displays, auto-generated portrait wallpapers, and a tmux keybind to pop a pane into its own kitty window for placement on a rotated monitor.

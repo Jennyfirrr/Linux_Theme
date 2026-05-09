@@ -495,7 +495,13 @@ _generate_portrait_wallpapers() {
         "$magick_bin" "$src" -resize "1920x1920^" -gravity center \
             -extent 1080x1920 "$out" 2>/dev/null && generated=$((generated + 1))
     done
-    (( generated > 0 )) && echo "  + ${generated} portrait wallpaper(s) generated"
+    if (( generated > 0 )); then
+        echo "  + ${generated} portrait wallpaper(s) generated"
+    fi
+    # Explicit success — the (( )) test returns 1 when no new files were
+    # generated (every re-run after the first), and `set -e` in install.sh
+    # would treat that as a failure and abort before install_throttling.
+    return 0
 }
 
 configure_monitors() {
