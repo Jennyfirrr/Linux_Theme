@@ -4,6 +4,21 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-09 — v2.4.8
+
+### `install_resolved_dnssec()` — diagnose and fix all three DNSSEC layers
+The v2.4.7 implementation only wrote a drop-in. That's not always enough — on real machines it left DNSSEC validation failures in place because the override was being beaten by either an explicit `DNSSEC=` in the main `resolved.conf` or a NetworkManager per-connection `connection.dnssec` setting. This pass audits and fixes all three places DNSSEC can be set:
+
+- **Main `/etc/systemd/resolved.conf`** — any active `DNSSEC=` line gets commented so the drop-in actually wins.
+- **`/etc/systemd/resolved.conf.d/00-foxml-dnssec.conf`** — drop-in is written/refreshed with `DNSSEC=no` (unchanged from v2.4.7).
+- **NetworkManager per-link override** — iterates every connection via `nmcli`, finds any with a non-default `connection.dnssec` value, and clears it (empty string = "inherit global"). NM's per-link DNSSEC beats the global resolved setting outright, so any `connection.dnssec=yes` would keep silent NTP failures going indefinitely regardless of what the drop-in says.
+
+After applying, restarts `systemd-resolved`, flushes caches, then verifies by resolving `2.arch.pool.ntp.org` (a known-unsigned zone). If verification still fails, surfaces a loud warning pointing at `resolvectl status` instead of leaving DNS silently broken.
+
+Idempotent at every step: skips main-conf edit if no DNSSEC line is active, skips drop-in write if already correct, skips NM modify if no connection has a non-default value, no-op altogether when `systemd-resolved` isn't the active resolver.
+
+---
+
 ## 2026-05-09 — v2.4.7
 
 ### systemd-resolved DNSSEC — fix silent NTP / DNS failures

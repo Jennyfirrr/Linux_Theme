@@ -956,21 +956,69 @@ install_resolved_dnssec() {
         return
     fi
 
-    local conf=/etc/systemd/resolved.conf.d/00-foxml-dnssec.conf
-    if [[ -f "$conf" ]] && grep -q '^DNSSEC=no' "$conf"; then
-        echo "  • DNSSEC override already in place, leaving as-is"
-        return
-    fi
-
     if ! sudo -v 2>/dev/null; then
         echo "  ⚠ sudo unavailable, skipping DNSSEC tweak"
         return
     fi
 
+    # DNSSEC can be set in three places that all need to agree before the
+    # drop-in actually takes effect. Audit + fix each:
+    #
+    #   1. /etc/systemd/resolved.conf       — main config; an explicit
+    #      DNSSEC=yes here can win against a drop-in in some load orders.
+    #   2. /etc/systemd/resolved.conf.d/    — drop-in directory; this is
+    #      where we write the override.
+    #   3. NetworkManager connection.dnssec — NM pushes per-link DNSSEC
+    #      settings to resolved that beat the global setting outright.
+    #      A connection with connection.dnssec=yes will keep failing
+    #      regardless of what resolved.conf says.
+
+    # 1. Main resolved.conf — comment out any explicit DNSSEC= line.
+    if [[ -f /etc/systemd/resolved.conf ]] && \
+       grep -qE '^[[:space:]]*DNSSEC=' /etc/systemd/resolved.conf; then
+        sudo sed -i 's/^\([[:space:]]*\)DNSSEC=/\1#DNSSEC=/' /etc/systemd/resolved.conf
+        echo "  commented active DNSSEC= line in /etc/systemd/resolved.conf"
+    fi
+
+    # 2. Drop-in.
+    local conf=/etc/systemd/resolved.conf.d/00-foxml-dnssec.conf
     sudo install -d /etc/systemd/resolved.conf.d
-    printf '[Resolve]\nDNSSEC=no\n' | sudo tee "$conf" >/dev/null
-    echo "  DNSSEC=no → $conf"
-    sudo systemctl restart systemd-resolved && echo "  systemd-resolved restarted"
+    if [[ ! -f "$conf" ]] || ! grep -q '^DNSSEC=no' "$conf"; then
+        printf '[Resolve]\nDNSSEC=no\n' | sudo tee "$conf" >/dev/null
+        echo "  DNSSEC=no → $conf"
+    fi
+
+    # 3. Clear NetworkManager per-connection DNSSEC overrides. Empty value
+    # means "inherit from systemd-resolved global." Iterates every
+    # connection NM knows about; cheap, idempotent, no-op when none have
+    # a non-default value.
+    if command -v nmcli >/dev/null 2>&1 && systemctl is-active --quiet NetworkManager 2>/dev/null; then
+        local cleared=0 uuid cur
+        while IFS= read -r uuid; do
+            [[ -z "$uuid" ]] && continue
+            cur=$(nmcli -t -g connection.dnssec connection show "$uuid" 2>/dev/null)
+            if [[ -n "$cur" && "$cur" != "--" && "$cur" != "default" ]]; then
+                sudo nmcli connection modify "$uuid" connection.dnssec "" 2>/dev/null && cleared=$((cleared+1))
+            fi
+        done < <(nmcli -t -f UUID connection show 2>/dev/null)
+        [[ "$cleared" -gt 0 ]] && echo "  cleared NetworkManager per-link DNSSEC on $cleared connection(s)"
+    fi
+
+    # Apply: restart resolved + flush caches so any stuck NXDOMAIN /
+    # validation failures don't linger.
+    sudo systemctl restart systemd-resolved 2>/dev/null
+    sudo resolvectl flush-caches 2>/dev/null
+    echo "  systemd-resolved restarted + cache flushed"
+
+    # Verify against a known-unsigned zone. If this still fails after all
+    # three layers were addressed, surface a loud warning instead of letting
+    # NTP/DNS silently break later.
+    if resolvectl query 2.arch.pool.ntp.org >/dev/null 2>&1; then
+        echo "  ✓ DNSSEC verified — unsigned zones resolve cleanly"
+    else
+        echo "  ⚠ DNSSEC fix applied but verification query still fails"
+        echo "    run 'resolvectl status' to inspect upstream / per-link state"
+    fi
 }
 
 # Extend gpg-agent's cached-passphrase TTL so agent-driven commits don't
