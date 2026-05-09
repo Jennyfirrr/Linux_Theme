@@ -45,21 +45,21 @@
         "matcher": "",
         "hooks": [
           {
-            "name": "notify-turn-complete",
+            "name": "foxml-turn-complete",
             "type": "command",
-            "command": "notify-send -u low -i dialog-information 'Gemini' '<b><span foreground=\"#{{PRIMARY}}\">Turn complete</span></b> — Ready for next message'"
+            "command": "~/.config/hypr/scripts/agent_notify.sh gemini stop"
           }
         ]
       }
     ],
-    "SubagentStop": [
+    "Notification": [
       {
         "matcher": "",
         "hooks": [
           {
-            "name": "notify-subagent-done",
+            "name": "foxml-needs-input",
             "type": "command",
-            "command": "INPUT=$(cat); DESC=$(echo \"$INPUT\" | jq -r '.subagent.description // .description // \"subagent\"' 2>/dev/null || echo subagent); STATUS=$(echo \"$INPUT\" | jq -r '.subagent.status // .status // \"done\"' 2>/dev/null || echo done); notify-send -u normal -i dialog-information 'Gemini Subagent' \"<b><span foreground='#{{SECONDARY}}'>$DESC</span></b> — $STATUS\""
+            "command": "~/.config/hypr/scripts/agent_notify.sh gemini notification"
           }
         ]
       }

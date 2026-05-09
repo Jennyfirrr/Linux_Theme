@@ -106,3 +106,24 @@
     highlight = "#{{ACCENT}}"
     format = "<b>%s</b>\n%b"
     timeout = 5
+
+# AI agents — primary accent for Claude, secondary for Gemini.
+# Critical-urgency entries (Notification hook = permission/input prompt)
+# still get the red border from urgency_critical above.
+[claude]
+    appname = Claude
+    background = "#{{BG_DUNST}}E6"
+    foreground = "#{{FG}}"
+    frame_color = "#{{PRIMARY}}99"
+    highlight = "#{{PRIMARY}}"
+    format = "<b>%s</b>\n%b"
+    timeout = 6
+
+[gemini]
+    appname = Gemini
+    background = "#{{BG_DUNST}}E6"
+    foreground = "#{{FG}}"
+    frame_color = "#{{ACCENT}}99"
+    highlight = "#{{ACCENT}}"
+    format = "<b>%s</b>\n%b"
+    timeout = 6

@@ -521,6 +521,11 @@ Shows indent guides automatically. No keybinds.
 | `fox-clean` | Zsh: system maintenance utility |
 | `fox-fingerprint` | Zsh: biometric setup automation |
 
+### AI Agents
+| Key | Action |
+|-----|--------|
+| `ALT + Shift + E` | **Agent triage** — pending Claude/Gemini notifications, hjkl, switches tmux to the originating pane. Hooks fire: turn complete (Stop/AfterAgent), subagent done (Claude SubagentStop), input/permission needed (Notification, critical urgency). |
+
 ### Windows
 | Key | Action |
 |-----|--------|

@@ -218,13 +218,20 @@ PKGJSON
         echo "  Bat cache rebuilt"
     fi
 
-    # AI Agent (Gemini) — merge the rendered config into the user's settings.json
+    # AI Agent (Gemini) — merge the rendered config into the user's settings.json.
+    # `.hooks` and `.ui` are *replaced* wholesale (not deep-merged) so a removed
+    # event (e.g. a previous install's bogus SubagentStop) doesn't linger; other
+    # top-level keys like `security` are preserved.
     local gemini_dir="${GEMINI_CONFIG_HOME:-$HOME/.gemini}"
     local gemini_settings="$gemini_dir/settings.json"
     if [[ -f "$rendered_dir/gemini/settings.json" ]]; then
         if [[ -f "$gemini_settings" ]]; then
             local tmp_settings; tmp_settings="$(mktemp)"
-            if jq -s '.[0] * .[1]' "$gemini_settings" "$rendered_dir/gemini/settings.json" > "$tmp_settings" 2>/dev/null; then
+            if jq --slurpfile new "$rendered_dir/gemini/settings.json" '
+                    . * $new[0]
+                    | .hooks = $new[0].hooks
+                    | .ui    = $new[0].ui
+                ' "$gemini_settings" > "$tmp_settings" 2>/dev/null; then
                 mv "$tmp_settings" "$gemini_settings"
                 echo "  Gemini settings (hooks + theme) merged"
             else
@@ -238,58 +245,52 @@ PKGJSON
         fi
     fi
 
-    # Claude CLI — ensure notification hooks are present in ~/.claude/settings.json
+    # Claude CLI — ensure Stop / SubagentStop / Notification hooks are wired
+    # in ~/.claude/settings.json. Hooks shell out to agent_notify.sh, which
+    # sources border_colors.sh at fire time — so a palette swap takes effect
+    # without re-running install.sh, and the embedded command is short enough
+    # to round-trip through jq cleanly.
     local claude_settings="$HOME/.claude/settings.json"
     if command -v claude &>/dev/null || [[ -d "$HOME/.claude" ]]; then
-        # Capture current palette colors for injection into the Claude heredoc
-        # Since this is shell code, we can use the variables sourced from palette.sh
-        local c_primary="#${PRIMARY:-c4956e}"
-        local c_secondary="#${SECONDARY:-b8967a}"
-        local c_accent="#${ACCENT:-8a9a7a}"
-
         mkdir -p "$HOME/.claude"
-        if [[ ! -f "$claude_settings" ]]; then
-            cat > "$claude_settings" << EOF
+
+        local hooks_json; hooks_json="$(mktemp)"
+        cat > "$hooks_json" << 'JSON'
 {
-  "theme": "dark",
   "hooks": {
     "Stop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "notify-send -u low -i dialog-information 'Claude' '<b><span foreground=\"$c_accent\">Turn complete</span></b> — Ready for next message'"
-          }
-        ]
-      }
+      {"matcher":"","hooks":[{"type":"command","command":"~/.config/hypr/scripts/agent_notify.sh claude stop"}]}
     ],
     "SubagentStop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "INPUT=\\$(cat); DESC=\\$(echo \"\\\$INPUT\" | jq -r '.subagent.description // .description // \"subagent\"' 2>/dev/null || echo subagent); STATUS=\\$(echo \"\\\$INPUT\" | jq -r '.subagent.status // .status // \"done\"' 2>/dev/null || echo done); notify-send -u normal -i dialog-information 'Claude Subagent' \"<b><span foreground=\\\"$c_primary\\\">\\\$DESC</span></b> — \\\$STATUS\""
-          }
-        ]
-      }
+      {"matcher":"","hooks":[{"type":"command","command":"~/.config/hypr/scripts/agent_notify.sh claude subagent"}]}
+    ],
+    "Notification": [
+      {"matcher":"","hooks":[{"type":"command","command":"~/.config/hypr/scripts/agent_notify.sh claude notification"}]}
     ]
   }
 }
-EOF
+JSON
+
+        if [[ ! -f "$claude_settings" ]]; then
+            if command -v jq &>/dev/null; then
+                jq '. + {theme: "dark"}' "$hooks_json" > "$claude_settings"
+            else
+                cp "$hooks_json" "$claude_settings"
+            fi
             echo "  Claude settings (hooks) created"
         elif command -v jq &>/dev/null; then
-            # Add/Update hooks with current theme colors
+            # Deep-merge: replaces .hooks.Stop / .hooks.SubagentStop /
+            # .hooks.Notification arrays wholesale, preserves everything else.
             local tmp_claude; tmp_claude="$(mktemp)"
-            if jq --arg c_acc "$c_accent" --arg c_pri "$c_primary" \
-                '.hooks.Stop = [{"matcher":"","hooks":[{"type":"command","command":"notify-send -u low -i dialog-information \"Claude\" \"<b><span foreground=\\\"\" + $c_acc + \"\\\">Turn complete</span></b> — Ready for next message\""}]}] | .hooks.SubagentStop = [{"matcher":"","hooks":[{"type":"command","command":"INPUT=$(cat); DESC=$(echo \"$INPUT\" | jq -r \".subagent.description // .description // \\\"subagent\\\"\" 2>/dev/null || echo subagent); STATUS=$(echo \"$INPUT\" | jq -r \".subagent.status // .status // \\\"done\\\"\" 2>/dev/null || echo done); notify-send -u normal -i dialog-information \"Claude Subagent\" \"<b><span foreground=\\\"\" + $c_pri + \"\\\">$DESC</span></b> — $STATUS\""}]}]' "$claude_settings" > "$tmp_claude" 2>/dev/null; then
+            if jq -s '.[0] * .[1]' "$claude_settings" "$hooks_json" > "$tmp_claude" 2>/dev/null; then
                 mv "$tmp_claude" "$claude_settings"
-                echo "  Claude settings (hooks) verified & themed"
+                echo "  Claude settings (hooks) merged"
             else
                 rm -f "$tmp_claude"
+                echo "  Claude merge failed (jq error), skipping"
             fi
         fi
+        rm -f "$hooks_json"
     fi
 
     # ~/.local/bin helpers (tmux pane-label, etc.) — referenced by configs but
@@ -504,6 +505,23 @@ EOF
             done
             echo "  systemd user timers enabled"
         fi
+    fi
+
+    # Reload the live notification daemon so the freshly-rendered [app-name=Claude]
+    # / [app-name=Gemini] rules are active without a relog. Hook config in
+    # ~/.claude/settings.json and ~/.gemini/settings.json is read by the agent
+    # processes at startup, so already-running agent sessions still need to be
+    # restarted to pick up new hooks — that part can't be fixed from here.
+    if pgrep -x mako >/dev/null 2>&1 && command -v makoctl >/dev/null 2>&1; then
+        makoctl reload &>/dev/null || true
+        echo "  mako reloaded"
+    fi
+    if pgrep -x dunst >/dev/null 2>&1; then
+        # dunst has no reload command; SIGUSR2 is a no-op, so kick it cleanly.
+        # killall is preferred so any running instance picks up the new config
+        # via the user's autostart.
+        killall -HUP dunst &>/dev/null || true
+        echo "  dunst reloaded (SIGHUP)"
     fi
 }
 

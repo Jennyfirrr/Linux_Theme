@@ -31,3 +31,15 @@ default-timeout=4000
 [app-name="com.spotify.Client"]
 border-color=#{{ACCENT}}66
 default-timeout=4000
+
+# AI agents — primary accent for Claude, secondary for Gemini, so a glance
+# tells you which agent is asking. Critical urgency (Notification hook,
+# i.e. permission/input prompts) still gets the red border from the
+# urgency=critical block above.
+[app-name=Claude]
+border-color=#{{PRIMARY}}99
+default-timeout=6000
+
+[app-name=Gemini]
+border-color=#{{ACCENT}}99
+default-timeout=6000
