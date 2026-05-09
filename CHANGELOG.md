@@ -4,6 +4,16 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-09 — v2.4.7
+
+### systemd-resolved DNSSEC — fix silent NTP / DNS failures
+- **New `install_resolved_dnssec()` in `mappings.sh`** — drops a `[Resolve] DNSSEC=no` snippet at `/etc/systemd/resolved.conf.d/00-foxml-dnssec.conf` and restarts `systemd-resolved`. Idempotent: skips if the override is already in place; no-op when `systemd-resolved` isn't the active resolver (NM-dnsmasq, custom resolvconf, etc.).
+- **Why DNSSEC=no instead of allow-downgrade** — `allow-downgrade` only relaxes when the upstream resolver explicitly signals "I don't speak DNSSEC." Many ISPs / recursive resolvers advertise DNSSEC support but return unsigned answers anyway, which `allow-downgrade` still rejects with `DNSSEC validation failed: no-signature`. The visible symptom is `chronyc sources` showing "8 sources with unknown address" forever and the system clock never syncing. `DNSSEC=no` is the only setting that actually fixes the upstream-says-yes-but-returns-unsigned case.
+- **Wired into `install.sh`** between `install_specials` and `install_gpg_agent_cache` (user-environment phase, runs once near install start so it's in effect before any later step that resolves names).
+- **Drop-in pattern** — uses `/etc/systemd/resolved.conf.d/` rather than editing the main `resolved.conf`, so future systemd package upgrades don't clobber the change.
+
+---
+
 ## 2026-05-09 — v2.4.6
 
 ### Fingerprint authentication for the greetd login screen

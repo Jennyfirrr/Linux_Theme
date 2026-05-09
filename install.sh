@@ -532,6 +532,15 @@ install_specials "$RENDERED_DIR"
 # generate.
 
 # ─────────────────────────────────────────
+# systemd-resolved DNSSEC — drop strict validation so zones with unsigned
+# upstream responses (NTP pool subdomains, smaller zones) don't break name
+# resolution. Without this, chronyd silently fails to sync the clock.
+# ─────────────────────────────────────────
+echo ""
+echo "Configuring systemd-resolved DNSSEC..."
+install_resolved_dnssec
+
+# ─────────────────────────────────────────
 # gpg-agent passphrase cache TTL — extends the default 10-min idle cache
 # so agent-driven commits don't re-prompt mid-session. No-op for users
 # who don't sign with GPG. Override duration via FOXML_GPG_CACHE_TTL.

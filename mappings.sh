@@ -934,6 +934,45 @@ install_catppuccin_cursor() {
 # Replaces the README's manual "sudo cp + tee" post-install dance.
 # ─────────────────────────────────────────
 
+# Disable systemd-resolved's DNSSEC enforcement so name resolution doesn't
+# silently fail on zones whose upstream DNS returns unsigned answers (most
+# NTP pool subdomains, plenty of smaller zones). In strict DNSSEC=yes mode
+# the resolver rejects those responses outright, so e.g. chronyd lands "8
+# sources with unknown address" and the system clock never syncs.
+#
+# DNSSEC=allow-downgrade isn't enough here: it only relaxes when upstream
+# explicitly signals "I don't speak DNSSEC." Many ISPs/recursive resolvers
+# advertise DNSSEC support but return unsigned answers anyway, which
+# allow-downgrade still rejects. DNSSEC=no is the only setting that fixes
+# the actual failure mode end-to-end.
+#
+# Drop-in at /etc/systemd/resolved.conf.d/ so future systemd package
+# upgrades don't clobber the change and the main resolved.conf is left
+# alone. No-op when systemd-resolved isn't the active resolver (NM-dnsmasq
+# setups, custom resolvconf, etc.).
+install_resolved_dnssec() {
+    if ! systemctl is-active --quiet systemd-resolved 2>/dev/null; then
+        echo "  • systemd-resolved not active, skipping DNSSEC tweak"
+        return
+    fi
+
+    local conf=/etc/systemd/resolved.conf.d/00-foxml-dnssec.conf
+    if [[ -f "$conf" ]] && grep -q '^DNSSEC=no' "$conf"; then
+        echo "  • DNSSEC override already in place, leaving as-is"
+        return
+    fi
+
+    if ! sudo -v 2>/dev/null; then
+        echo "  ⚠ sudo unavailable, skipping DNSSEC tweak"
+        return
+    fi
+
+    sudo install -d /etc/systemd/resolved.conf.d
+    printf '[Resolve]\nDNSSEC=no\n' | sudo tee "$conf" >/dev/null
+    echo "  DNSSEC=no → $conf"
+    sudo systemctl restart systemd-resolved && echo "  systemd-resolved restarted"
+}
+
 # Extend gpg-agent's cached-passphrase TTL so agent-driven commits don't
 # re-prompt every 10 minutes (gpg-agent default). Idempotent — leaves any
 # user-set TTL alone, only adds the keys if they're missing. No-op for
