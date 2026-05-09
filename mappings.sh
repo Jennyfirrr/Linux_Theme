@@ -934,6 +934,63 @@ install_catppuccin_cursor() {
 # Replaces the README's manual "sudo cp + tee" post-install dance.
 # ─────────────────────────────────────────
 
+# Extend gpg-agent's cached-passphrase TTL so agent-driven commits don't
+# re-prompt every 10 minutes (gpg-agent default). Idempotent — leaves any
+# user-set TTL alone, only adds the keys if they're missing. No-op for
+# users who don't sign commits with GPG.
+#
+# Override the cache duration with FOXML_GPG_CACHE_TTL=<seconds> when
+# invoking install.sh; defaults to 3600 (1h). Power users on personal
+# laptops may want 28800 (8h).
+install_gpg_agent_cache() {
+    if ! command -v gpg >/dev/null 2>&1; then
+        echo "  • gpg not installed, skipping gpg-agent cache TTL"
+        return
+    fi
+
+    # Only act if the user actually signs commits or has GPG secret keys.
+    local signs has_keys
+    signs=$(git config --global --get commit.gpgsign 2>/dev/null)
+    has_keys=$(gpg --list-secret-keys --with-colons 2>/dev/null | grep -c '^sec:')
+    if [[ "$signs" != "true" && "$has_keys" -eq 0 ]]; then
+        echo "  • commit.gpgsign=false and no GPG secret keys, skipping cache TTL"
+        return
+    fi
+
+    local ttl="${FOXML_GPG_CACHE_TTL:-3600}"
+    local conf="$HOME/.gnupg/gpg-agent.conf"
+    mkdir -p "$HOME/.gnupg" && chmod 700 "$HOME/.gnupg"
+
+    if [[ ! -f "$conf" ]]; then
+        cat > "$conf" <<EOF
+# Cache the signing-key passphrase so agent commits don't re-prompt every
+# 10 minutes (gpg-agent default). Override at install time with
+# FOXML_GPG_CACHE_TTL=<seconds>; current value: ${ttl}s.
+default-cache-ttl ${ttl}
+max-cache-ttl ${ttl}
+EOF
+        chmod 600 "$conf"
+        echo "  gpg-agent cache TTL → ${ttl}s (new ~/.gnupg/gpg-agent.conf)"
+    else
+        local touched=0
+        if ! grep -qE '^[[:space:]]*default-cache-ttl[[:space:]]' "$conf"; then
+            echo "default-cache-ttl ${ttl}" >> "$conf"
+            touched=1
+        fi
+        if ! grep -qE '^[[:space:]]*max-cache-ttl[[:space:]]' "$conf"; then
+            echo "max-cache-ttl ${ttl}" >> "$conf"
+            touched=1
+        fi
+        if [[ "$touched" -eq 1 ]]; then
+            echo "  gpg-agent cache TTL → ${ttl}s (appended to existing config)"
+        else
+            echo "  • gpg-agent.conf already has cache TTLs — leaving as-is"
+        fi
+    fi
+
+    gpgconf --reload gpg-agent 2>/dev/null && echo "  gpg-agent reloaded"
+}
+
 install_greetd() {
     if ! pacman -Qi greetd-regreet &>/dev/null; then
         echo "  • greetd-regreet not installed, skipping login-screen setup"

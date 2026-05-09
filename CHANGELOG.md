@@ -4,6 +4,17 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-09 — v2.4.5
+
+### gpg-agent passphrase cache TTL — agent-friendly commits
+- **New `install_gpg_agent_cache()` in `mappings.sh`** — extends the gpg-agent cached-passphrase TTL so agent-driven commits don't re-prompt every 10 minutes (the gpg-agent default). Idempotent: skips entirely if the user doesn't sign with GPG (`commit.gpgsign != true` and no secret keys), writes a fresh `~/.gnupg/gpg-agent.conf` if none exists, appends only the missing `default-cache-ttl` / `max-cache-ttl` keys if a config already exists, and leaves any user-set TTL alone. Ends with `gpgconf --reload gpg-agent` so the new value is live without a relog.
+- **Override at install time** with `FOXML_GPG_CACHE_TTL=<seconds> ./install.sh`. Default 3600 (1h) — conservative for the OOTB case. Power users on personal encrypted laptops can bump to 28800 (8h) for a friction-free work session; shared workstations should stay at the default or lower.
+- **`gnupg` added to the explicit pacman dep list** — was implicitly available via Arch's keyring deps but is now declared so the new function never hits a missing-binary path on minimal installs.
+- **Wired into `install.sh` between `install_specials` and `install_catppuccin_cursor`** — runs as part of the user-environment phase, before greetd's system-level (sudo) deploys. No `sudo` is ever invoked by this step; only writes to `~/.gnupg/`.
+- **What's not exposed** — the cache extension affects only the in-memory passphrase cache of the user's local gpg-agent process; no key material moves, no secrets touch disk or git, and the only repo artifact is the integer TTL value.
+
+---
+
 ## 2026-05-09 — v2.4.4
 
 Tmux ergonomics + greetd monitor portability.

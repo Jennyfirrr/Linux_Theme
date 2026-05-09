@@ -133,8 +133,10 @@ if $INSTALL_DEPS; then
         # Themed login screen — auto-configured by install_greetd() below
         greetd greetd-regreet
         # Secrets / keyring (gnome-keyring-daemon is started from autostart.conf;
-        # libsecret is the API most apps query, seahorse is the GUI manager)
-        gnome-keyring libsecret seahorse
+        # libsecret is the API most apps query, seahorse is the GUI manager).
+        # gnupg powers gpg-agent for git commit signing — install_gpg_agent_cache()
+        # extends its passphrase TTL so agent commits don't re-prompt every 10 min.
+        gnome-keyring libsecret seahorse gnupg
         # Editor + terminal + multiplexer
         neovim kitty tmux
         # Neovim runtime deps:
@@ -528,6 +530,15 @@ install_specials "$RENDERED_DIR"
 # sidecar — otherwise start_waybar.sh sees no SECONDARY_OUTPUTS and emits a
 # single-bar config, which wins over the multi-bar version a later run would
 # generate.
+
+# ─────────────────────────────────────────
+# gpg-agent passphrase cache TTL — extends the default 10-min idle cache
+# so agent-driven commits don't re-prompt mid-session. No-op for users
+# who don't sign with GPG. Override duration via FOXML_GPG_CACHE_TTL.
+# ─────────────────────────────────────────
+echo ""
+echo "Configuring gpg-agent passphrase cache..."
+install_gpg_agent_cache
 
 # ─────────────────────────────────────────
 # Catppuccin cursor (per-user fetch from GitHub releases).
