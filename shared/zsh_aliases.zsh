@@ -39,7 +39,10 @@ alias @recall='~/.contextai/src/recall_with_context.sh'
 alias flush='~/.contextai/src/flush_llm_cache.sh'
 
 # Natural Language to Bash (e.g. ?? "find all jpg files")
-??() {
+# Quoted name + `function` keyword — zsh treats bare ?? as a glob pattern
+# (matches any 2-char filename) and errors with "no matches found" while
+# sourcing if it can't be expanded against the cwd.
+function '??'() {
   local prompt="$*"
   local model="qwen2.5-coder:7b"
   echo "Thinking..."

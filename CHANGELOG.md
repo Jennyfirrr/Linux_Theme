@@ -4,6 +4,13 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-08 — v2.2.4
+
+### Fixes
+- **`source ~/.zshrc` errored with "no matches found: ??"** — `shared/zsh_aliases.zsh` line 42 defined a function named `??` (the natural-language-to-bash helper). zsh treats a bare `??` token as a glob pattern (any 2-character filename) and errored on every shell startup if the cwd had no matching files. Fixed by quoting the name and using the `function` keyword: `function '??'() { … }`.
+
+---
+
 ## 2026-05-08 — v2.2.3
 
 Documentation overhaul. Replaced stale planning prose and incorrect references with factual, current docs that match the actual repo layout. Also pruned tracked editor backups.
