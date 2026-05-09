@@ -991,6 +991,66 @@ EOF
     gpgconf --reload gpg-agent 2>/dev/null && echo "  gpg-agent reloaded"
 }
 
+# Enable fingerprint authentication for the greetd login screen on hosts
+# that have a fingerprint reader. Idempotent: leaves an existing pam_fprintd
+# line wherever the user already placed it; on first install, inserts a new
+# `auth sufficient pam_fprintd.so` as the first auth rule (so it short-
+# circuits before pam_unix prompts for a password).
+#
+# Reader detection uses fprintd-list, which queries libfprint and so covers
+# any bus type fprintd supports — USB, I2C, SPI hardwired sensors. Reads
+# /etc/pam.d/greetd without sudo (it's mode 644) so a sudo timeout during
+# the idempotency check can't be misread as "line missing" and trigger a
+# duplicate insert. `sudo -v` is called before any destructive write so the
+# function bails cleanly if auth times out instead of half-running.
+install_greetd_fingerprint() {
+    if [[ ! -f /etc/pam.d/greetd ]]; then
+        echo "  • /etc/pam.d/greetd missing (greetd not installed?), skipping fingerprint PAM"
+        return
+    fi
+    if ! command -v fprintd-list >/dev/null 2>&1; then
+        echo "  • fprintd not installed, skipping fingerprint PAM"
+        return
+    fi
+
+    # fprintd-list output starts with "found N devices" — N=0 means no
+    # usable reader on any bus libfprint understands. Empty awk output (no
+    # such line) also treats as no reader, so polkit denials and other
+    # fprintd errors fail safe.
+    local devs
+    devs=$(fprintd-list "$USER" 2>/dev/null | awk '/^found ([0-9]+) devices/{print $2; exit}')
+    if [[ -z "$devs" || "$devs" -eq 0 ]]; then
+        echo "  • no fingerprint reader detected, skipping fingerprint PAM"
+        return
+    fi
+
+    # /etc/pam.d/greetd is world-readable (mode 644). Reading without sudo
+    # means a sudo failure can't be confused with a grep miss.
+    if grep -qE '^[[:space:]]*auth[[:space:]]+sufficient[[:space:]]+pam_fprintd\.so' /etc/pam.d/greetd; then
+        echo "  • /etc/pam.d/greetd already enables pam_fprintd, leaving as-is"
+        return
+    fi
+
+    # Validate sudo before any destructive write so a missed fingerprint
+    # prompt aborts cleanly instead of leaving a half-applied edit.
+    if ! sudo -v 2>/dev/null; then
+        echo "  ⚠ sudo unavailable (timed out?), skipping fingerprint PAM — rerun installer to retry"
+        return
+    fi
+
+    sudo cp /etc/pam.d/greetd /etc/pam.d/greetd.foxml-bak
+    if grep -q '^#%PAM-1.0' /etc/pam.d/greetd; then
+        sudo sed -i '/^#%PAM-1.0/a auth      sufficient  pam_fprintd.so' /etc/pam.d/greetd
+    else
+        sudo sed -i '1i auth      sufficient  pam_fprintd.so' /etc/pam.d/greetd
+    fi
+    echo "  pam_fprintd.so → /etc/pam.d/greetd (login screen accepts fingerprint)"
+    echo "  • backup at /etc/pam.d/greetd.foxml-bak"
+    if ! fprintd-list "$USER" 2>/dev/null | grep -q '^ - #'; then
+        echo "  • no fingerprints enrolled for $USER yet — run: fprintd-enroll"
+    fi
+}
+
 install_greetd() {
     if ! pacman -Qi greetd-regreet &>/dev/null; then
         echo "  • greetd-regreet not installed, skipping login-screen setup"

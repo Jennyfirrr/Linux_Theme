@@ -555,6 +555,7 @@ if pacman -Qi greetd-regreet &>/dev/null; then
     echo ""
     echo "Configuring greetd login screen..."
     install_greetd
+    install_greetd_fingerprint
 fi
 
 # ─────────────────────────────────────────

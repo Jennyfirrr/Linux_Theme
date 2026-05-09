@@ -4,6 +4,16 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-09 — v2.4.6
+
+### Fingerprint authentication for the greetd login screen
+- **New `install_greetd_fingerprint()` in `mappings.sh`** — adds `auth sufficient pam_fprintd.so` as the first auth rule of `/etc/pam.d/greetd` on hosts with a fingerprint reader, so the login screen accepts fingerprint before falling back to password. Runs from `install.sh` immediately after `install_greetd` inside the `greetd-regreet` block.
+- **Bus-agnostic detection via `fprintd-list`** — uses libfprint's device enumeration rather than a sysfs-USB scan, so it covers USB internal sensors (Synaptics, Goodix, Validity), I2C/SPI hardwired readers (newer Lenovos), and anything else fprintd supports. If no devices are reported the function exits silently.
+- **Idempotent + crash-safe** — reads `/etc/pam.d/greetd` without `sudo` (the file is mode 644), so a missed sudo prompt during the idempotency check can't be misread as "line not present" and trigger a duplicate insert. `sudo -v` is invoked before any destructive write so the function bails cleanly on sudo timeout instead of half-applying. Backs up the original to `/etc/pam.d/greetd.foxml-bak` before modifying. Leaves an existing `pam_fprintd` line wherever the user already placed it.
+- **Enrollment hint** — if a reader is detected and PAM is configured but no fingerprints are enrolled for the current user, prints a one-line nudge to run `fprintd-enroll`. The installer never enrolls on the user's behalf — that's an interactive step requiring physical sensor input.
+
+---
+
 ## 2026-05-09 — v2.4.5
 
 ### gpg-agent passphrase cache TTL — agent-friendly commits
