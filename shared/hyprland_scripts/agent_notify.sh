@@ -70,6 +70,21 @@ if [[ "$src" == "gemini" && "$event" == "subagent" ]]; then
     [[ -z "$msg" ]] && msg="$tool_name"
 fi
 
+# Idle pings — both Claude Code and Gemini CLI fire Notification hooks for
+# real permission prompts ("Claude needs your permission to use Bash") AND
+# for after-N-seconds "waiting for your input" idle reminders. The idle
+# variant is noise during multi-pane work — same critical urgency as a
+# real prompt, but no action is required. Drop them at the source so they
+# don't notify or land in the rofi triage queue.
+if [[ "$event" == "notification" ]]; then
+    msg_lower="${msg,,}"
+    case "$msg_lower" in
+        *"waiting for your input"*|*"waiting for input"*|*"waiting for user input"*)
+            exit 0
+            ;;
+    esac
+fi
+
 [[ -z "$cwd" ]] && cwd="$PWD"
 project="$(basename "$cwd" 2>/dev/null)"
 [[ -z "$project" ]] && project="?"

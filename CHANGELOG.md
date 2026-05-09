@@ -4,6 +4,13 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-09 — v2.4.3
+
+### Fixes
+- **Suppress "waiting for your input" idle pings** — Claude Code and Gemini CLI both fire the `Notification` hook for two semantically different things: a real permission prompt (*"Claude needs your permission to use Bash"*) and a 60s-idle reminder (*"Claude is waiting for your input"*). Both came through with `urgency=critical`, indistinguishable. The idle variant is noise during multi-pane work — same red border, no action required. `agent_notify.sh` now matches the message body case-insensitively against `*waiting for {your,user,} input*` and exits silently before notifying or landing in the rofi triage queue. Real permission prompts pass through unchanged.
+
+---
+
 ## 2026-05-09 — v2.4.2
 
 ### Fixes
