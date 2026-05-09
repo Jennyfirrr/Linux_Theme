@@ -4,6 +4,36 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-09 — v2.4.0
+
+AI agent notification suite — themed Claude/Gemini hooks with multi-pane rofi triage. Crisp notifications.
+
+### Agent hooks
+- **New `shared/hyprland_scripts/agent_notify.sh`** — single themed `notify-send` + JSONL queue helper that all Claude Code / Gemini CLI hooks call. Reads hook payload from stdin; sources `~/.config/hypr/modules/border_colors.sh` at fire time so a palette swap takes effect without re-running install.sh. ERR trap + no `set -u` / `set -e` so a hook can never paint a "stop hook error" banner in the agent TUI; failures land in `$XDG_RUNTIME_DIR/foxml-agent-notify.log`.
+- **Claude `~/.claude/settings.json`** — Stop, SubagentStop, **Notification** hooks all routed through `agent_notify.sh`. The Notification hook (input/permission needed, critical urgency) is new — previously Claude permission prompts were silent.
+- **Gemini `~/.gemini/settings.json`** — `AfterAgent` and `Notification` hooks routed through `agent_notify.sh`. Dropped bogus `SubagentStop` block (Gemini CLI has no such event); leftover entries from prior installs get cleaned up by the new merge logic.
+- **`mappings.sh` Claude block** — replaced brittle inline-jq escaping with a heredoc → `jq -s '.[0] * .[1]'` deep-merge. Idempotent across re-runs.
+- **`mappings.sh` Gemini block** — merge now replaces `.hooks` and `.ui` wholesale (instead of pure deep-merge) so removed events don't linger from prior installs. Other top-level keys like `security` are preserved.
+
+### Triage UI
+- **New `shared/hyprland_scripts/agent_rofi.sh`** — centered rofi list of pending agent notifications. Markup-rows with theme-colored event glyphs (red Notification, secondary subagent, OK Stop). hjkl navigation. Selecting an entry tmux-routes to the originating pane (`switch-client` / `select-window` / `select-pane`) and removes the entry; "Clear all" first item. Permission prompts still answered in the agent TUI — this is a router, not a remote-control panel.
+- **`ALT + SHIFT + E`** opens it (`keybinds.conf`).
+- **`KEYBINDS.md`** — new "AI Agents" section.
+
+### Themed routing
+- **`templates/mako/config`** — `[app-name=Claude]` PRIMARY-tinted border, `[app-name=Gemini]` ACCENT-tinted border. `notify-send -a Claude/Gemini` triggers them.
+- **`templates/dunst/dunstrc`** — same pattern via `[claude]` / `[gemini]` rule blocks.
+- Critical urgency (Notification hook = permission/input prompt) keeps the red `urgency=critical` border on both daemons.
+- **`mappings.sh install_specials`** — reloads mako (`makoctl reload`) and dunst (`SIGHUP`) at the end so new app-name rules go live without a relog.
+
+### Crisp notifications
+- **`rules.conf` layerrule** — narrowed namespace match from `^(rofi|notifications|mako|dunst)$` to `^(rofi)$`. Mako/dunst layer surfaces are larger than the visible popup, so blur leaked across the border into adjacent windows (most visibly, kitty). Rofi is a single solid surface, so blur reads cleanly there.
+
+### Caveat
+- Already-running agent sessions need to be restarted to pick up new hooks — Claude Code and Gemini CLI both read `settings.json` once at startup, not per-turn.
+
+---
+
 ## 2026-05-09 — v2.3.0
 
 Polish + bootstrap pass — menu anchoring system, SSH auto-provisioning, post-install automation, CI scaffolding, runtime-dep cleanup, eww surface removal.
