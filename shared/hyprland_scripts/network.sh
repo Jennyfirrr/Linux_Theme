@@ -3,6 +3,9 @@
 # Simple Rofi Network Manager wrapper using nmcli
 # Matches FoxML sharp corners and earthy colors
 
+ROFI_ZONE="${ROFI_ZONE:-ne}"
+source ~/.config/hypr/scripts/_rofi_zone.sh
+
 msg="Select Network"
 # Get list of SSIDs
 options=$(nmcli -t -f SSID dev wifi list | grep -v '^--' | sort -u)
@@ -12,7 +15,7 @@ chosen=$(echo -e "$options" | rofi -dmenu -i -p "$msg" \
     -kb-row-down "j,Down" \
     -kb-accept-entry "l,Return" \
     -kb-cancel "Escape,h" \
-    -theme-str 'inputbar {enabled: false;} window {width: 30%;}')
+    -theme-str "$ROFI_POS_THEME inputbar {enabled: false;} window {width: 30%;}")
 
 if [[ -n "$chosen" ]]; then
     # Prompt for password if not a known connection

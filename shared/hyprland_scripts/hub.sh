@@ -4,9 +4,9 @@
 # A dynamic, status-aware control center for your earthy desktop
 # Uses faster status gathering to eliminate startup lag.
 
-# Ensure we have the positioning variables
-ROFI_X=${ROFI_X:-12}
-ROFI_Y=${ROFI_Y:-50}
+# SysHub anchors top-right by default (system menu zone).
+ROFI_ZONE="${ROFI_ZONE:-ne}"
+source ~/.config/hypr/scripts/_rofi_zone.sh
 
 while true; do
     # --- Gather System Status (High-Speed Path) ---
@@ -41,7 +41,7 @@ while true; do
         -kb-row-down "j,Down" \
         -kb-accept-entry "l,Return" \
         -kb-cancel "Escape,h" \
-        -theme-str "inputbar {enabled: false;} window {location: north west; anchor: north west; x-offset: ${ROFI_X}px; y-offset: ${ROFI_Y}px; width: 35%;} listview {lines: 15;}"
+        -theme-str "$ROFI_POS_THEME inputbar {enabled: false;} window {width: 35%;} listview {lines: 15;}"
 󰀻  Search Apps
 󰖲  Active Windows
 󱉩  Vault (Passwords)
@@ -104,7 +104,7 @@ EOF
             ;;
         *"Idle Inhibitor"*) ~/.config/hypr/scripts/toggle_dpms.sh ;;
         *"Sync Theme to Wallpaper"*)
-            current_wp=$(swww query | grep 'currently displaying' | awk '{print $NF}')
+            current_wp=$(awww query | grep 'currently displaying' | awk '{print $NF}')
             if [[ -f "$current_wp" ]]; then
                 ~/.config/hypr/scripts/generate_palette.sh "$current_wp"
             else

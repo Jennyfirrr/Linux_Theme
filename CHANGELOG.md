@@ -4,6 +4,46 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-09 — v2.3.0
+
+Polish + bootstrap pass — menu anchoring system, SSH auto-provisioning, post-install automation, CI scaffolding, runtime-dep cleanup, eww surface removal.
+
+### Rofi — per-modal anchor zones
+- **New `shared/hyprland_scripts/_rofi_zone.sh`** — sourceable helper resolving `ROFI_ZONE=nw|ne|center` into a `$ROFI_POS_THEME` rasi fragment. Per-modal nudge still honored via `ROFI_X` / `ROFI_Y`.
+- Each rofi-opening script self-classifies into a zone:
+  - **NE** (system menus): `hub.sh`, `network.sh`, `bluetooth.sh`, `audio_switcher.sh`, `powermenu.sh`
+  - **NW** (launcher): `toggle_rofi.sh`, `clipmanager.sh`, `fox-ai-quick`
+  - **Center** (reference): `fox-cheatsheet`
+- Replaces `north west` hardcodes scattered across 7 scripts. Spatial mapping now matches the macOS Control Center / Win11 Quick Settings pattern: status cluster top-right → control modal opens below it; workspace switcher top-left → launcher modal opens below it; cheatsheet has no spatial home so it centers.
+- `keybinds.conf` unchanged — scripts self-classify, no per-bind `ROFI_ZONE` prefix needed.
+
+### Bootstrap — SSH provisioning
+- **`install_github_workspace()` now generates `~/.ssh/id_ed25519` and uploads it via `gh ssh-key add`** if missing. Idempotent: skips keygen if the file exists; skips upload if `gh ssh-key list` already shows the pubkey. Auto-runs `gh auth refresh -s admin:public_key` when the gh token lacks the upload scope.
+- Without this, `git clone git@github.com:...` failed on fresh boxes after `bootstrap.sh` because no SSH key existed yet — the workspace-clone step itself succeeded over HTTPS, but subsequent SSH clones broke.
+
+### Install — post-install automation
+- **New `apply_post_install()` in `install.sh`** auto-applies what used to be a manual checklist:
+  - `hyprctl reload` (only inside an active Hyprland session)
+  - Waybar / Dunst restart (only if currently running)
+  - `nvim --headless +Lazy! sync +qa` (60s cap, only if nvim + lazy.nvim are present)
+  - Cursor / VS Code `workbench.colorTheme = "Fox ML"` via `jq` merge into `User/settings.json`
+- Each step self-skips when its precondition isn't met. Restart-Firefox stays manual (auto-restart kills open tabs).
+- **Dropped stale "ReGreet staged / To activate: sudo cp ..." block** in `install_specials()` — `install_greetd()` already auto-deploys to `/etc/greetd/`, so the manual instructions were misleading clutter.
+
+### CI + tests
+- **`.github/workflows/shellcheck.yml`** — runs `shellcheck --severity=error` on every shebang-detected bash/sh script in the repo on push and PR. Severity capped at error initially (only fails on real bugs); tighten to `warning` later.
+- **`tests/roundtrip.sh`** — codifies CONTRIBUTING.md's manual round-trip test. Refuses on dirty `templates/`, runs `./install.sh --render-only --yes` then `./update.sh`, fails if `git diff templates/` shows drift. Catches I-04 violations before push.
+
+### Deps — fresh-box runtime gaps closed
+- **Added** to `install_sys_deps`: `cloc`, `tree`, `rsync`, `shellcheck`, `ripgrep` (Core & CLI Tools), and `networkmanager`, `wireplumber`, `libnotify`, `upower`, `lm_sensors` (new "Networking + audio + notifications + power telemetry" line).
+- Without these explicit deps, fresh Arch boxes silently failed at runtime: `nmcli` (no NetworkManager), `wpctl` (no Wireplumber), `notify-send` (no libnotify) — every script that called these would no-op or break.
+
+### Cleanup
+- **Eww surface removed.** `templates/eww/` (eww.yuck + eww.scss + dir), `shared/hyprland_scripts/eww_action.sh`, `shared/hyprland_scripts/toggle_control_center.sh` deleted. `install.sh` AUR-eww install block, `mappings.sh` eww template mappings, `startup.sh` disabled-eww-daemon comment, and `README.md` eww row also removed. The eww control center turned out to need significant work to match the rofi syshub (no native hjkl, GTK keyboard nav only) and was never actually used; dropping it removes ~25 lines of dead code.
+- **`hub.sh:107` — `swww query` → `awww query`** in the "Sync Theme to Wallpaper" action. The theme installs `awww` (line 132 of `install.sh`) but the hub action was calling `swww query`, which silently returned nothing on this box, so the action did nothing.
+
+---
+
 ## 2026-05-08 — v2.2.5
 
 ### Fixes

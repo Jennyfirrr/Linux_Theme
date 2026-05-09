@@ -149,7 +149,12 @@ if $INSTALL_DEPS; then
         cmake
         # Core & CLI Tools
         base-devel zsh fzf eza bat yazi btop fd zoxide jq git-delta github-cli pacman-contrib rofi-calc rofi-emoji
-        lazygit ncspot cliphist
+        lazygit ncspot cliphist cloc tree rsync shellcheck ripgrep
+        # Networking + audio + notifications + power telemetry
+        # (wpctl/nmcli/notify-send/upower/sensors are called from scripts &
+        # waybar modules — without these explicit deps, fresh Arch boxes
+        # silently fail at runtime)
+        networkmanager wireplumber libnotify upower lm_sensors
         # unzip is needed by install_catppuccin_cursor (extracts the release zip)
         unzip
         # Screenshots + clipboard + media keys
@@ -289,23 +294,6 @@ if $INSTALL_DEPS; then
                 makepkg -si --noconfirm
             ) && AUR_HELPER="yay" || echo "  yay install failed"
             rm -rf "$YAY_DIR"
-        fi
-    fi
-
-    if [[ -n "$AUR_HELPER" ]]; then
-        echo "  AUR helper $AUR_HELPER found"
-
-        # Install Eww from AUR since it's not in official repos
-        if ! pacman -Qi eww &>/dev/null && ! pacman -Qi eww-git &>/dev/null; then
-            echo ""
-            echo "Installing Eww from AUR..."
-            if $ASSUME_YES; then
-                $AUR_HELPER -S --needed --noconfirm eww
-            else
-                read -p "  Install eww with $AUR_HELPER? [y/N] " -n 1 -r
-                echo ""
-                [[ $REPLY =~ ^[Yy]$ ]] && $AUR_HELPER -S --needed eww
-            fi
         fi
     fi
 
@@ -817,6 +805,31 @@ EOF
         [[ -n "$git_email" ]] && git config --global user.email "$git_email"
     fi
 
+    # 4b. SSH key for git@github.com:... clones (idempotent)
+    if [[ ! -f "$HOME/.ssh/id_ed25519" ]]; then
+        echo "    Generating SSH key (ed25519)..."
+        mkdir -p "$HOME/.ssh"
+        chmod 700 "$HOME/.ssh"
+        local ssh_email
+        ssh_email="$(git config --global user.email 2>/dev/null)"
+        ssh-keygen -t ed25519 -N "" -f "$HOME/.ssh/id_ed25519" \
+            -C "${ssh_email:-$gh_user@$(hostname)}" -q
+        echo "      Key: $HOME/.ssh/id_ed25519"
+    fi
+
+    # Upload pubkey to GitHub if not already registered there
+    local pubkey_body
+    pubkey_body="$(awk '{print $2}' "$HOME/.ssh/id_ed25519.pub")"
+    if ! gh ssh-key list 2>/dev/null | grep -qF "$pubkey_body"; then
+        if ! gh auth status 2>&1 | grep -q 'admin:public_key'; then
+            echo "    Refreshing gh auth to include admin:public_key scope..."
+            gh auth refresh -h github.com -s admin:public_key || true
+        fi
+        echo "    Uploading SSH key to GitHub..."
+        gh ssh-key add "$HOME/.ssh/id_ed25519.pub" --title "$(hostname)" \
+            || echo "    ! upload failed — run 'gh auth refresh -s admin:public_key' and retry"
+    fi
+
     # 5. Workspace Directory
     mkdir -p "$HOME/code"
     cd "$HOME/code" || return
@@ -912,14 +925,71 @@ echo ""
 echo "Active theme: $THEME_NAME"
 echo "Backups saved to: $BACKUP_DIR"
 echo ""
-echo "Post-install steps:"
-echo "  1. Reload Hyprland: hyprctl reload"
-echo "  2. Restart Waybar/Dunst: ~/.config/hypr/scripts/start_waybar.sh & pkill dunst && dunst &"
-echo "  3. Open nvim and run :Lazy sync"
-echo "  4. Restart Firefox (enable userChrome in about:config)"
-echo "  5. Select 'Fox ML' theme in Cursor/VS Code"
+
+# ─────────────────────────────────────────
+# Auto-apply post-install actions. Each step self-skips when its
+# precondition isn't met (no Hyprland session, waybar/dunst not running,
+# no nvim install, no jq, no Cursor/Code dir).
+# ─────────────────────────────────────────
+apply_post_install() {
+    echo "Applying post-install actions..."
+
+    # Hyprland reload — only inside an active Hyprland session
+    if [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]] && command -v hyprctl &>/dev/null; then
+        hyprctl reload >/dev/null 2>&1 && echo "  + Hyprland reloaded"
+    fi
+
+    # Waybar — restart if currently running so it picks up new config
+    if pgrep -x waybar >/dev/null && [[ -x "$HOME/.config/hypr/scripts/start_waybar.sh" ]]; then
+        pkill -x waybar 2>/dev/null || true
+        setsid -f "$HOME/.config/hypr/scripts/start_waybar.sh" >/dev/null 2>&1 || true
+        echo "  + Waybar restarted"
+    fi
+
+    # Dunst — restart if currently running so the new palette loads
+    if pgrep -x dunst >/dev/null; then
+        pkill -x dunst 2>/dev/null || true
+        setsid -f dunst >/dev/null 2>&1 || true
+        echo "  + Dunst restarted"
+    fi
+
+    # Nvim Lazy sync — headless plugin update (60s cap so it can't hang)
+    if command -v nvim &>/dev/null && [[ -d "$HOME/.local/share/nvim/lazy" ]]; then
+        echo "  Running nvim Lazy sync (headless, 60s cap)..."
+        if timeout 60 nvim --headless "+Lazy! sync" "+qa" >/dev/null 2>&1; then
+            echo "  + Nvim plugins synced"
+        else
+            echo "  ! Lazy sync didn't complete cleanly — run ':Lazy sync' manually"
+        fi
+    fi
+
+    # Cursor / VS Code — set workbench.colorTheme to "Fox ML" via jq merge
+    if command -v jq &>/dev/null; then
+        local ide_dir ide_root settings tmp
+        for ide_dir in "$HOME/.config/Cursor/User" "$HOME/.config/Code/User"; do
+            ide_root="${ide_dir%/User}"
+            [[ -d "$ide_root" ]] || continue
+            mkdir -p "$ide_dir"
+            settings="$ide_dir/settings.json"
+            [[ -f "$settings" ]] || echo '{}' > "$settings"
+            tmp="$(mktemp)"
+            if jq '. + {"workbench.colorTheme": "Fox ML"}' "$settings" > "$tmp" 2>/dev/null; then
+                mv "$tmp" "$settings"
+                echo "  + $(basename "$ide_root"): workbench.colorTheme = Fox ML"
+            else
+                rm -f "$tmp"
+            fi
+        done
+    fi
+}
+
+apply_post_install
+
+echo ""
+echo "Manual step (intentional):"
+echo "  - Restart Firefox to apply userChrome (auto-restart would kill open tabs)"
 if $INSTALL_AI; then
-    echo "  6. OpenCode is ready: Run 'opencode' to start local AI development"
+    echo "  - OpenCode is ready: run 'opencode' to start local AI development"
 fi
 if $INSTALL_GITHUB; then
     echo "  7. GitHub Workspace is ready: Your repos are in ~/code"

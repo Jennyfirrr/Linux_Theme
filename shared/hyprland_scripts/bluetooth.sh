@@ -3,13 +3,16 @@
 # Simple Rofi Bluetooth Manager wrapper using bluetoothctl
 # Matches FoxML sharp corners and earthy colors
 
+ROFI_ZONE="${ROFI_ZONE:-ne}"
+source ~/.config/hypr/scripts/_rofi_zone.sh
+
 msg="Bluetooth"
 
 # Get status
 POWER=$(bluetoothctl show | grep "Powered: yes" >/dev/null && echo "on" || echo "off")
 
 if [[ "$POWER" == "off" ]]; then
-    chosen=$(printf "󰂯  Power On\n󰗼  Exit" | rofi -dmenu -i -p "$msg" -theme-str 'window {width: 300px;}')
+    chosen=$(printf "󰂯  Power On\n󰗼  Exit" | rofi -dmenu -i -p "$msg" -theme-str "$ROFI_POS_THEME window {width: 300px;}")
     [[ "$chosen" == "󰂯  Power On" ]] && bluetoothctl power on
     exit 0
 fi
@@ -23,7 +26,7 @@ chosen=$(echo -e "$options" | rofi -dmenu -i -p "$msg" \
     -kb-row-down "j,Down" \
     -kb-accept-entry "l,Return" \
     -kb-cancel "Escape,h" \
-    -theme-str 'inputbar {enabled: false;} window {width: 30%;}')
+    -theme-str "$ROFI_POS_THEME inputbar {enabled: false;} window {width: 30%;}")
 
 case "$chosen" in
     "󰂲  Power Off") bluetoothctl power off ;;

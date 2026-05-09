@@ -64,8 +64,6 @@ TEMPLATE_MAPPINGS=(
     "zathura/zathurarc|~/.config/zathura/zathurarc"
 
     # Eww
-    "eww/eww.yuck|~/.config/eww/eww.yuck"
-    "eww/eww.scss|~/.config/eww/eww.scss"
 
     # Bat
     "bat/foxml.tmTheme|~/.config/bat/themes/Fox ML.tmTheme"
@@ -294,20 +292,15 @@ PKGJSON
         done
     fi
 
-    # ReGreet (login screen — requires sudo)
+    # ReGreet (login screen) — stage files for install_greetd() to consume.
+    # The actual sudo install to /etc/greetd/ happens in install_greetd()
+    # (called from install.sh after install_specials).
     if [[ -f "$rendered_dir/regreet/regreet.css" ]]; then
-        # Stage files where user can review them
         mkdir -p ~/.config/regreet
         cp "$rendered_dir/regreet/regreet.css" ~/.config/regreet/regreet.css
         cp "$SCRIPT_DIR/shared/regreet.toml" ~/.config/regreet/regreet.toml
         cp "$SCRIPT_DIR/shared/greetd_hyprland.conf" ~/.config/regreet/hyprland.conf
-        echo "  ReGreet staged to ~/.config/regreet/"
-        echo "  To activate:"
-        echo "    sudo cp ~/.config/regreet/regreet.{css,toml} /etc/greetd/"
-        echo "    sudo cp ~/.config/regreet/hyprland.conf /etc/greetd/hyprland.conf"
-        echo "    sudo cp ~/.wallpapers/foxml_earthy.jpg /usr/share/wallpapers/"
-        echo "  Then set greetd config.toml to:"
-        echo "    command = \"Hyprland -c /etc/greetd/hyprland.conf\""
+        echo "  ReGreet staged to ~/.config/regreet/ (install_greetd will deploy)"
     fi
 
     # KEYBINDS.md — deployed to ~/.local/share/foxml/ so fox-cheatsheet

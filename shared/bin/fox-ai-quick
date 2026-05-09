@@ -1,6 +1,10 @@
 #!/bin/bash
 # fox-ai-quick — Rofi-based quick AI chat
 
+# Launcher-style prompt — anchors top-left.
+ROFI_ZONE="${ROFI_ZONE:-nw}"
+source ~/.config/hypr/scripts/_rofi_zone.sh
+
 # Ensure we have the model switcher logic
 CONFIG_FILE="$HOME/.config/opencode/opencode.json"
 MODEL_TAG="7b"
@@ -10,7 +14,7 @@ fi
 MODEL="qwen2.5-coder:$MODEL_TAG"
 
 # Get question from Rofi
-QUESTION=$(rofi -dmenu -p "  Ask AI ($MODEL_TAG)" -theme-str 'window {width: 40%;} listview {enabled: false;}')
+QUESTION=$(rofi -dmenu -p "  Ask AI ($MODEL_TAG)" -theme-str "$ROFI_POS_THEME window {width: 40%;} listview {enabled: false;}")
 
 if [[ -z "$QUESTION" ]]; then
     exit 0

@@ -3,6 +3,9 @@
 # FoxML Audio Switcher
 # A themed Rofi menu to toggle between audio output devices
 
+ROFI_ZONE="${ROFI_ZONE:-ne}"
+source ~/.config/hypr/scripts/_rofi_zone.sh
+
 # Get list of sinks (id and name)
 # Format: "  * 54. Family 17h (Models 10h-1fh) HD Audio Controller Speaker [vol: 0.40]"
 sinks=$(wpctl status | grep -A 10 "Sinks:" | grep "\[vol:" | sed 's/^[[:space:]]*//')
@@ -28,7 +31,7 @@ chosen=$(echo -e "$options" | rofi -dmenu -i -p "Audio Output" \
     -kb-row-down "j,Down" \
     -kb-accept-entry "l,Return" \
     -kb-cancel "Escape,h" \
-    -theme-str 'inputbar {enabled: false;} window {width: 35%;}')
+    -theme-str "$ROFI_POS_THEME inputbar {enabled: false;} window {width: 35%;}")
 
 if [[ -n "$chosen" ]]; then
     # Extract name from selection

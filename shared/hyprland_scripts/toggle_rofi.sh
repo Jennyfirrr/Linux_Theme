@@ -1,32 +1,23 @@
 #!/bin/bash
 # FoxML Rofi Toggle & Positioning Wrapper
-# 1. Kills Rofi if already running (Toggle behavior).
-# 2. Injects dynamic positioning (ROFI_X, ROFI_Y) into the command.
-# 3. Executes the menu.
+# 1. Kills Rofi if already running (toggle behavior).
+# 2. For direct `rofi …` invocations, injects positioning derived from
+#    ROFI_ZONE (nw|ne|center) via _rofi_zone.sh. Default zone is `nw`
+#    (launcher cluster — drun, window list, etc.).
+# 3. For script invocations (e.g. hub.sh, network.sh), the script is
+#    expected to source _rofi_zone.sh itself; we just exec it.
 
 if pkill -x rofi; then
     exit 0
 fi
 
-# Fetch current offsets with fallbacks
-X=${ROFI_X:-12}
-Y=${ROFI_Y:-50}
+ROFI_ZONE="${ROFI_ZONE:-nw}"
+source ~/.config/hypr/scripts/_rofi_zone.sh
+export ROFI_ZONE ROFI_X ROFI_Y
 
-# Common theme overrides for the "dropdown" look
-# We append these to the command.
-THEME_STR="window {location: north west; anchor: north west; x-offset: ${X}px; y-offset: ${Y}px;}"
-
-# If the command is a direct Rofi call, we can append -theme-str.
-# If it's a script (like network.sh), that script needs to handle its own positioning 
-# or we just let it be. 
-# However, to keep it simple and robust, we check if the first arg is "rofi".
 if [[ "$1" == "rofi" ]]; then
-    # Insert -theme-str before other args to ensure it's picked up
-    cmd="$1"
-    shift
-    exec "$cmd" -theme-str "$THEME_STR" "$@"
+    cmd="$1"; shift
+    exec "$cmd" -theme-str "$ROFI_POS_THEME" "$@"
 else
-    # For scripts, we just exec them. Scripts like hub.sh already 
-    # use ROFI_X/ROFI_Y internally.
     exec "$@"
 fi

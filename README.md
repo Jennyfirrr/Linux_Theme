@@ -151,7 +151,6 @@ Adding a new theme = writing one `palette.sh` file. All app configs render from 
 | Firefox | `templates/firefox/` (2 files) | `<profile>/chrome/userChrome.css` |
 | Cursor / VS Code | `templates/cursor/` | `~/.cursor/extensions/foxml-theme/` |
 | Bat | `templates/bat/foxml.tmTheme` | `~/.config/bat/themes/Fox ML.tmTheme` |
-| Eww (widgets) | `templates/eww/` | `~/.config/eww/` |
 | Lazygit | `templates/lazygit/config.yml` | `~/.config/lazygit/config.yml` |
 | Git delta | `templates/git/delta.gitconfig` | `~/.config/git/delta-foxml.gitconfig` |
 | Gemini CLI | `templates/gemini/settings.json` | `~/.gemini/settings.json` (merged) |
