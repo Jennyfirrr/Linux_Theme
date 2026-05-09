@@ -477,7 +477,9 @@ Shows indent guides automatically. No keybinds.
 | Key | Action |
 |-----|--------|
 | `ALT + Shift + H` | **FoxML Hub** (Power, BT, Wi-Fi, Wallpapers) |
-| `ALT + Tab` | **App Switcher** (Rofi Window Search) |
+| `ALT + Tab` | Cycle focus through **floating** windows only |
+| `ALT + Ctrl + Tab` | Cycle focus through **tiled** windows only |
+| `ALT + Shift + Tab` | Cycle focus through **all** windows in reverse |
 | `ALT + Shift + R` | Reload Hyprland |
 | `ALT + Shift + X` | Power Menu (Themed Rofi) |
 | `ALT + V` | **Clipboard History** (Searchable Rofi) |

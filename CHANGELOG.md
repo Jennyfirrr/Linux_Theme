@@ -4,6 +4,20 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-08 — v2.2.2
+
+Floating-window focus binds + KEYBINDS doc cleanup.
+
+### Hyprland — Targeted window focus
+- **`ALT + Tab`** — `cyclenext, floating`. Cycles focus through *only* floating windows, skipping tiled ones. Useful when a floating Spotify scratchpad / terminal / picker is mixed in with tiled editor panes.
+- **`ALT + Ctrl + Tab`** — `cyclenext, tiled`. Inverse: cycles only the tiled stack. (Couldn't double up `$mainMod` since `$mainMod = ALT` makes `ALT+ALT+Tab` unfireable, so used CTRL as the second modifier.)
+- **`ALT + Shift + Tab`** — unchanged, still cycles all windows in reverse.
+
+### Docs
+- **`KEYBINDS.md` Core Workflow table** — replaced the stale `ALT + Tab → Rofi Window Search` entry that described a binding that was never actually present in `keybinds.conf`. Now matches reality.
+
+---
+
 ## 2026-05-08 — v2.2.1
 
 Bug fixes and portability cleanup following v2.2.0.
