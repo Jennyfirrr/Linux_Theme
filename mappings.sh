@@ -218,29 +218,77 @@ PKGJSON
         echo "  Bat cache rebuilt"
     fi
 
-    # AI Agent — merge the rendered ui block into the user's settings.json so
-    # security/auth keys are preserved. Falls back to a plain copy if the file
-    # doesn't exist yet, or if jq isn't available.
+    # AI Agent (Gemini) — merge the rendered config into the user's settings.json
+    # so security/auth keys are preserved.
     local gemini_dir="${GEMINI_CONFIG_HOME:-$HOME/.gemini}"
     local gemini_settings="$gemini_dir/settings.json"
     if [[ -f "$rendered_dir/gemini/settings.json" ]]; then
         if [[ -f "$gemini_settings" ]]; then
             local tmp_settings; tmp_settings="$(mktemp)"
+            # Merge while preserving existing top-level keys like 'security'
             if jq -s '.[0] * .[1]' "$gemini_settings" "$rendered_dir/gemini/settings.json" > "$tmp_settings" 2>/dev/null; then
                 mv "$tmp_settings" "$gemini_settings"
-                echo "  Agent theme merged"
+                echo "  Gemini settings (hooks + theme) merged"
             else
                 rm -f "$tmp_settings"
-                echo "  Agent merge failed, skipping"
+                echo "  Gemini merge failed, skipping"
             fi
         else
             mkdir -p "$(dirname "$gemini_settings")"
             cp "$rendered_dir/gemini/settings.json" "$gemini_settings"
-            echo "  Agent theme installed"
+            echo "  Gemini settings installed"
         fi
     fi
 
-    # ~/.local/bin helpers (tmux pane-label, etc.) — referenced by configs but
+    # Claude CLI — ensure notification hooks are present in ~/.claude/settings.json
+    local claude_settings="$HOME/.claude/settings.json"
+    if command -v claude &>/dev/null || [[ -d "$HOME/.claude" ]]; then
+        mkdir -p "$HOME/.claude"
+        if [[ ! -f "$claude_settings" ]]; then
+            cat > "$claude_settings" << 'EOF'
+    {
+    "theme": "dark",
+    "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "notify-send -u low -i dialog-information 'Claude turn complete' 'Ready for next message'"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); DESC=$(echo \"$INPUT\" | jq -r '.subagent.description // .description // \"subagent\"' 2>/dev/null || echo subagent); STATUS=$(echo \"$INPUT\" | jq -r '.subagent.status // .status // \"done\"' 2>/dev/null || echo done); notify-send -u normal -i dialog-information 'Claude subagent done' \"$DESC — $STATUS\""
+          }
+        ]
+      }
+    ]
+    }
+    }
+    EOF
+            echo "  Claude settings (hooks) created"
+        elif command -v jq &>/dev/null; then
+            # Add hooks if missing
+            local tmp_claude; tmp_claude="$(mktemp)"
+            if jq '.hooks.Stop |= (if . == null then [{"matcher":"","hooks":[{"type":"command","command":"notify-send -u low -i dialog-information \"Claude turn complete\" \"Ready for next message\""}]}] else . end) | .hooks.SubagentStop |= (if . == null then [{"matcher":"","hooks":[{"type":"command","command":"INPUT=$(cat); DESC=$(echo \"$INPUT\" | jq -r \".subagent.description // .description // \\\"subagent\\\"\" 2>/dev/null || echo subagent); STATUS=$(echo \"$INPUT\" | jq -r \".subagent.status // .status // \\\"done\\\"\" 2>/dev/null || echo done); notify-send -u normal -i dialog-information \"Claude subagent done\" \"$DESC — $STATUS\""}]}] else . end)' "$claude_settings" > "$tmp_claude" 2>/dev/null; then
+                mv "$tmp_claude" "$claude_settings"
+                echo "  Claude settings (hooks) verified"
+            else
+                rm -f "$tmp_claude"
+            fi
+        fi
+    fi
+
+    # ~/.local/bin helpers (tmux pane-label, etc.)
+ — referenced by configs but
     # too small for their own subdir; kept executable on copy.
     if [[ -d "$SCRIPT_DIR/shared/bin" ]]; then
         mkdir -p "$HOME/.local/bin"
@@ -1355,19 +1403,19 @@ update_specials() {
         echo "  Bat theme"
     fi
 
-    # AI Agent — pull only the ui block back into the template; keeping
-    # security/auth out of the captured template avoids leaking session creds
-    # into the repo on `update.sh`.
+    # AI Agent — pull config back into the template; keeping security/auth out
+    # of the captured template avoids leaking session creds into the repo.
     local gemini_dir="${GEMINI_CONFIG_HOME:-$HOME/.gemini}"
     local gemini_settings="$gemini_dir/settings.json"
     if [[ -f "$gemini_settings" ]]; then
-        local tmp_ui; tmp_ui="$(mktemp)"
-        if jq '{ui: .ui}' "$gemini_settings" > "$tmp_ui" 2>/dev/null; then
+        local tmp_captured; tmp_captured="$(mktemp)"
+        # Capture theme, hooks, and notifications but skip security
+        if jq '{ui: .ui, hooks: .hooks, hooksConfig: .hooksConfig, general: .general}' "$gemini_settings" > "$tmp_captured" 2>/dev/null; then
             mkdir -p "$template_dir/gemini"
-            sed "$sed_expr" "$tmp_ui" > "$template_dir/gemini/settings.json"
-            echo "  Agent theme"
+            sed "$sed_expr" "$tmp_captured" > "$template_dir/gemini/settings.json"
+            echo "  Gemini settings (captured hooks + theme)"
         fi
-        rm -f "$tmp_ui"
+        rm -f "$tmp_captured"
     fi
 
     # Hyprland scripts

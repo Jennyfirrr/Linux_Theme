@@ -990,6 +990,7 @@ echo "Manual step (intentional):"
 echo "  - Restart Firefox to apply userChrome (auto-restart would kill open tabs)"
 if $INSTALL_AI; then
     echo "  - OpenCode is ready: run 'opencode' to start local AI development"
+    echo "  - AI Notifications: Gemini and Claude will now notify you via Dunst/Mako when prompts finish"
 fi
 if $INSTALL_GITHUB; then
     echo "  7. GitHub Workspace is ready: Your repos are in ~/code"

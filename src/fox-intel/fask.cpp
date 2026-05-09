@@ -162,6 +162,9 @@ int main(int argc, char* argv[]) {
         curl_easy_perform(curl);
         std::cout << std::endl;
 
+        // Notify user when prompt is finished
+        system("notify-send -u low -i dialog-information 'Fox Assistant' 'Response complete.'");
+
         curl_easy_cleanup(curl);
         curl_slist_free_all(headers);
     }

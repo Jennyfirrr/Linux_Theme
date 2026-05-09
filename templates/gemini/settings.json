@@ -1,4 +1,36 @@
 {
+  "general": {
+    "enableNotifications": true
+  },
+  "hooksConfig": {
+    "enabled": true
+  },
+  "hooks": {
+    "AfterAgent": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "name": "notify-turn-complete",
+            "type": "command",
+            "command": "notify-send -u low -i dialog-information 'Gemini turn complete' 'Ready for next message'"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "name": "notify-subagent-done",
+            "type": "command",
+            "command": "INPUT=$(cat); DESC=$(echo \"$INPUT\" | jq -r '.subagent.description // .description // \"subagent\"' 2>/dev/null || echo subagent); STATUS=$(echo \"$INPUT\" | jq -r '.subagent.status // .status // \"done\"' 2>/dev/null || echo done); notify-send -u normal -i dialog-information 'Gemini subagent done' \"$DESC — $STATUS\""
+          }
+        ]
+      }
+    ]
+  },
   "ui": {
     "theme": "FoxML",
     "customThemes": {
