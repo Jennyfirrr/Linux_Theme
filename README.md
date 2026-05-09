@@ -1,31 +1,19 @@
-# FoxML Workstation
+# Linux_Theme (FoxML)
 
-A high-discipline, AI-powered development platform for senior engineers. 24+ apps themed, sharp corners, and a complete OS-level bootstrap engine with a built-in Semantic Intelligence Layer.
+Arch Linux + Hyprland theme + dotfiles for 25 apps. Configs live as templates with `{{COLOR}}` placeholders; each theme is one `palette.sh` file. `install.sh` renders templates into your real configs, `update.sh` pulls live edits back into templates, and `swap.sh` switches themes.
 
-## Fox Intelligence Layer (RAG)
+## Screenshots
 
-The workstation features a native, C++ powered semantic intelligence layer that gives your environment a "memory" of your codebase.
+![Terminal](shared/screenshots/terminal.png?v=2)
 
-| Command | Role |
-|---------|------|
-| `fask` | **Semantic Assistant**: Ask questions about the project (RAG). |
-| `findex` | **Project Indexer**: Generate semantic embeddings for your code. |
-| `fcommit` | **Semantic Commit**: AI-analyzed high-discipline commits. |
-| `fstatus` | **System Health**: Monitor AI stack, VRAM, and project drift. |
-| `fproject` | **Bootstrap**: Create a new project with AGENT/INVARIANTS. |
-| `fhelp` | **Interactive Docs**: Deep-dive help for the entire suite. |
+![Neovim](shared/screenshots/nvim.png?v=2)
 
-> Run `fhelp` for the full command reference and usage examples.
+![Neovim + Avante](shared/screenshots/nvim_avante.png?v=2)
 
-### Project Awareness
-The environment is project-aware. Whenever you `cd` into a directory containing an `AGENT.md`, the shell automatically exports project context, scoping your AI tools (`fask`, `findex`, etc.) to that specific workspace instantly.
-
-New to Linux? This runs on [Arch Linux](https://archlinux.org/) with the [Hyprland](https://hyprland.org/) Wayland compositor. If you're coming from Windows or macOS, [archinstall](https://wiki.archlinux.org/title/Archinstall) makes getting started much easier than the manual install process.
-
-## Theme
+## Themes
 
 ### [FoxML Classic](themes/FoxML_Classic/) (dark)
-Dark theme with earthy, muted tones — warm peach, dusty rose, sage, and wheat on a deep plum background.
+Earthy, muted: warm peach, dusty rose, sage, wheat on a deep plum background.
 
 | Role | Color | |
 |------|-------|-|
@@ -36,163 +24,114 @@ Dark theme with earthy, muted tones — warm peach, dusty rose, sage, and wheat 
 | Accent | `#8a9a7a` | Sage |
 | Surface | `#3a414b` | Slate |
 
-## Screenshots
+### [Cave Data Center](themes/Cave_Data_Center/)
+Alternate palette — see `themes/Cave_Data_Center/palette.sh`.
 
-![Terminal](shared/screenshots/terminal.png?v=2)
+## Requirements
 
-![Neovim](shared/screenshots/nvim.png?v=2)
-
-![Neovim + Avante](shared/screenshots/nvim_avante.png?v=2)
-
-## Prerequisites
-
-- **Arch Linux** (the installer uses `pacman` for dependencies)
-- **Hyprland** (Wayland compositor)
-- **greetd + regreet** (login screen — optional but included)
+- Arch Linux (the installer uses `pacman`)
+- Hyprland
 - `bash`, `git`, `sed`
-- Apps you want themed should already be installed, or use `--deps` to install them
+- The apps you want themed should already be installed, or pass `--deps` to install them.
 
-### Agent Mandates
-- **AGENT.md** — Architectural mandates and refactor notes for the AI Agent.
-- **.agent/commands/** — Project-specific AI skills and protocols.
+Optional: `greetd` + `greetd-regreet` for the themed login screen.
 
-### OpenCode — Local AI Coding Agent
+## Install
 
-The `--ai` flag installs and configures [OpenCode](https://opencode.ai/) as a fully local Claude-Code-style TUI backed by Ollama. The installer wires it up end-to-end:
-
-- **FoxML theme** — palette-driven custom theme (`templates/opencode/foxml.json`) rendered through the same `{{TOKEN}}` system as every other config. Swap the active palette via `swap.sh` and the OpenCode theme re-renders to match.
-- **Multi-model picker** — provider config is generated from `ollama list`, so every model you've pulled (1.5B/3B/7B/14B/32B/70B per tier) appears in the in-app picker.
-- **Skill discovery** — `skills.paths` is populated by globbing `~/code/*/claude-skills/`; any workspace with `SKILL.md` files (Linux_Theme + private repos) gets wired in automatically.
-- **Auto-wake** — `opencode` is shell-wrapped to start the Ollama daemon on demand if it isn't running.
-
-### Key Dependencies
-
-| Package | Purpose |
-|---------|---------|
-| `hyprland` | Wayland compositor |
-| `greetd`, `greetd-regreet` | Login manager + graphical greeter |
-| `kitty` | Terminal emulator |
-| `waybar` | Status bar |
-| `rofi-wayland` | App launcher |
-| `awww` | Wallpaper manager |
-| `hypridle`, `hyprlock` | Idle/lock screen |
-| `mako` or `dunst` | Notifications |
-| `zsh`, `oh-my-zsh` | Shell |
-| `neovim` | Editor (with 30+ plugins) |
-
-> [!NOTE]
-> The FoxML installer and bootstrap script have been significantly tested and are considered stable for Arch Linux. However, as with any automated system deployment, edge cases may exist depending on specific hardware configurations.
-
-Run `./install.sh --deps` to install most of these automatically.
-
-## Quick Start
-
-**One-command workstation bootstrap** (fresh Arch + Hyprland — installs deps, clones repo, sets up AI Lab, GitHub workspace, and applies FoxML Classic):
+One-liner — installs deps, clones the repo, applies FoxML Classic:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Jennyfirrr/Linux_Theme/main/bootstrap.sh | bash
 ```
 
-This single command provides a complete, professional development environment out-of-the-box.
-
-## FoxML OS — The Distro Experience
-
-You can deploy FoxML as a complete, pre-configured operating system using the official Arch Linux installer.
-
-1. Boot any official Arch Linux ISO.
-2. Run the following command to load the FoxML profile:
-   ```bash
-   archinstall --config https://raw.githubusercontent.com/Jennyfirrr/Linux_Theme/main/shared/foxml-profile.json
-   ```
-This will automatically install the **linux-zen** kernel, NVIDIA drivers, and trigger the full workstation bootstrap on the first boot.
-
-**Manual install** (clone first if you want to read the scripts before running them):
+To read the scripts before running, clone first:
 
 ```bash
 git clone https://github.com/Jennyfirrr/Linux_Theme.git
 cd Linux_Theme
 
-# Full Workstation Stack (AI + GitHub + Deps)
-./install.sh FoxML_Classic --deps --ai --models --github --yes
-
-# Interactive — shows available themes and prompts before each step
+# Interactive — lists themes and prompts before each step
 ./install.sh
 
-# Integrated AI Lab (Ollama, OpenCode, Qwen 7B/14B/32B models, AI Skills)
-./install.sh FoxML_Classic --ai --models
-
-# GitHub Workspace Automation (clones all your repos into ~/code)
-./install.sh FoxML_Classic --github
-
-# Hardened security (UFW, Fail2ban, Auditd, SSH hardening wizard)
-./install.sh FoxML_Classic --secure
-
-# High-precision time sync (Chrony) for trading logs
-./install.sh FoxML_Classic --perf
-
-# Privacy & DNS-over-HTTPS (encrypted DNS lookups)
-./install.sh FoxML_Classic --privacy
-
-# Secure Vault (GPG-encrypted 'pass' manager + Git signing)
-./install.sh FoxML_Classic --vault
-
-# With system dependencies (Arch packages, Oh My Zsh, zsh plugins)
-./install.sh FoxML_Classic --deps
-
-# Fully unattended (auto-yes every prompt; same defaults bootstrap.sh uses)
+# Apply a specific theme with system deps, no prompts
 ./install.sh FoxML_Classic --deps --yes
+```
 
-# Run the whole Wayland session on the discrete NVIDIA GPU (Optimus laptops).
-# Installs nvidia-open-dkms + linux-headers, sets MODULES in mkinitcpio,
-# adds nvidia_drm.modeset=1 to the kernel cmdline, and points Hyprland's
-# Aquamarine backend at the dGPU. Reboot afterwards. Requires systemd-boot
-# (other bootloaders print manual instructions).
-./install.sh FoxML_Classic --deps --nvidia
+### Install flags
 
-# Switch between themes (shows color previews)
+| Flag | What it does |
+|------|--------------|
+| `--deps` | Install Arch packages, Oh My Zsh, zsh plugins |
+| `--yes` | Auto-confirm every prompt |
+| `--ai` | Install Ollama + OpenCode TUI (see [AI layer](#ai-layer-optional)) |
+| `--models` | Pull Qwen models (7B/14B/32B) for the AI layer |
+| `--github` | Clone all your repos into `~/code` |
+| `--secure` | UFW + Fail2ban + Auditd + SSH hardening wizard |
+| `--perf` | Chrony for high-precision time sync |
+| `--privacy` | DNS-over-HTTPS |
+| `--vault` | GPG-encrypted `pass` manager + Git signing |
+| `--nvidia` | nvidia-open-dkms + Hyprland on dGPU (Optimus laptops) |
+
+`--nvidia` requires `systemd-boot`; other bootloaders print manual instructions. Reboot afterwards.
+
+### Archinstall profile
+
+Boot the Arch ISO and load FoxML directly:
+
+```bash
+archinstall --config https://raw.githubusercontent.com/Jennyfirrr/Linux_Theme/main/shared/foxml-profile.json
+```
+
+Installs `linux-zen`, NVIDIA drivers, and runs the bootstrap on first boot.
+
+## Switching themes
+
+```bash
 ./swap.sh
+```
 
-# Pull live system config edits back into templates
-# (replaces rendered colors with {{PLACEHOLDER}} tokens so your changes are preserved across themes)
+Interactive picker with color previews.
+
+## Editing configs
+
+Edit the templates in `templates/`, not your live configs. Templates use `{{TOKEN}}` placeholders; `install.sh` renders them with the active theme's colors.
+
+If you've already edited a live config and want to keep the changes:
+
+```bash
 ./update.sh
 ```
 
-## How It Works
+This reverse-renders your live configs back into templates, replacing rendered colors with `{{PLACEHOLDER}}` tokens so the edits survive theme swaps.
 
-Configs live as **templates** with `{{COLOR}}` placeholders. Each theme is just a `palette.sh` file defining ~60 color variables. At install time, the render engine fills in the placeholders and copies the result to your system.
+## How it works
 
 ```
-templates/                  <- config files with {{PLACEHOLDER}} tokens
-  kitty/kitty.conf            background #{{BG}}, foreground #{{PRIMARY}}, ...
-  nvim/init.lua               style = "{{NVIM_STYLE}}", colors with #{{RED}}, ...
-  waybar/style.css            @define-color bg #{{BG}}, rgba({{PRIMARY_R}}, ...), ...
-  zsh/.zshrc                  %F{{{ANSI_ACCENT1}}}, fg=#{{ZSH_SUGGEST}}, ...
-  hyprlock/hyprlock.conf      rgb({{PRIMARY_R}}, {{PRIMARY_G}}, {{PRIMARY_B}}), ...
-  regreet/regreet.css           background rgba({{BG_R}}, ...), color #{{PRIMARY}}, ...
-  ... (30+ files across 22+ app directories)
+templates/                 config files with {{PLACEHOLDER}} tokens
+  kitty/kitty.conf         background #{{BG}}, foreground #{{PRIMARY}}, ...
+  nvim/init.lua            colors with #{{RED}}, ...
+  waybar/style.css         @define-color bg #{{BG}}, ...
+  ...                      (30+ files across 25 app directories)
 
 themes/
   FoxML_Classic/
-    palette.sh              <- defines all colors for Classic
-    theme.conf              <- name, type=dark, description
-shared/                     <- non-color files copied as-is (keybinds, scripts, etc.)
+    palette.sh             ~60 color variables
+    theme.conf             name, type=dark, description
 
-render.sh                   <- template engine (hex, RGB, ANSI, metadata substitution)
-mappings.sh                 <- source -> destination file routing + special handlers
-install.sh                  <- renders templates + copies to system
-update.sh                   <- reverse-renders system configs back into templates
-swap.sh                     <- interactive theme switcher with color previews
+shared/                    non-color files copied as-is (keybinds, scripts)
+
+render.sh                  template engine (hex, RGB, ANSI, metadata)
+mappings.sh                source → destination routing + handlers
+install.sh                 renders templates → copies to system
+update.sh                  reverse-renders system configs → templates
+swap.sh                    interactive theme switcher
 ```
 
-**Adding a new theme** = writing one `palette.sh` file. All 23+ app configs are generated from templates.
+Adding a new theme = writing one `palette.sh` file. All app configs render from templates.
 
-**Editing a config** = edit the template, it applies to all themes. Run `./update.sh` to pull changes from your live system back into templates.
+## Themed apps
 
-## Themed Applications
-
-Every one of these gets its colors from the active theme's `palette.sh`:
-
-| App | Template | Installs To |
+| App | Template | Installs to |
 |-----|----------|-------------|
 | Hyprland | `templates/hyprland/theme.conf` | `~/.config/hypr/modules/theme.conf` |
 | Hyprlock | `templates/hyprlock/hyprlock.conf` | `~/.config/hypr/hyprlock.conf` |
@@ -200,7 +139,7 @@ Every one of these gets its colors from the active theme's `palette.sh`:
 | Kitty | `templates/kitty/kitty.conf` | `~/.config/kitty/kitty.conf` |
 | Waybar | `templates/waybar/style.css` | `~/.config/waybar/style.css` |
 | Tmux | `templates/tmux/.tmux.conf` | `~/.tmux.conf` |
-| Zsh | `templates/zsh/` (7 files) | `~/.zshrc` + `~/.config/zsh/` + caramel prompt |
+| Zsh | `templates/zsh/` (7 files) | `~/.zshrc` + `~/.config/zsh/` |
 | Rofi | `templates/rofi/glass.rasi` | `~/.config/rofi/glass.rasi` |
 | Dunst | `templates/dunst/dunstrc` | `~/.config/dunst/dunstrc` |
 | Mako | `templates/mako/config` | `~/.config/mako/config` |
@@ -211,54 +150,58 @@ Every one of these gets its colors from the active theme's `palette.sh`:
 | Yazi | `templates/yazi/theme.toml` | `~/.config/yazi/theme.toml` |
 | Zathura | `templates/zathura/zathurarc` | `~/.config/zathura/zathurarc` |
 | Firefox | `templates/firefox/` (2 files) | `<profile>/chrome/userChrome.css` |
-| Cursor/VS Code | `templates/cursor/` | `~/.cursor/extensions/foxml-theme/` |
+| Cursor / VS Code | `templates/cursor/` | `~/.cursor/extensions/foxml-theme/` |
 | Bat | `templates/bat/foxml.tmTheme` | `~/.config/bat/themes/Fox ML.tmTheme` |
-| ReGreet (login) | `templates/regreet/regreet.css` | `/etc/greetd/regreet.css` (via sudo) |
+| Eww (widgets) | `templates/eww/` | `~/.config/eww/` |
+| Lazygit | `templates/lazygit/config.yml` | `~/.config/lazygit/config.yml` |
+| Git delta | `templates/git/delta.gitconfig` | `~/.config/git/delta-foxml.gitconfig` |
+| Gemini CLI | `templates/gemini/settings.json` | `~/.gemini/settings.json` (merged) |
+| OpenCode | `templates/opencode/foxml.json` | `~/.config/opencode/themes/foxml.json` |
+| ReGreet (login) | `templates/regreet/regreet.css` | `/etc/greetd/regreet.css` (sudo) |
 
-## Shared (Non-Color) Files
+## Shared (non-color) files
 
-These are copied as-is regardless of theme — keybinds, scripts, layout configs:
+Copied as-is regardless of theme:
 
-| File | Description |
+| Path | Description |
 |------|-------------|
-| `shared/hyprland_modules/` | 12 Hyprland modules (keybinds, rules, monitors, scratchpads, etc.) |
-| `shared/hyprland_scripts/` | 12 helper scripts (lock, startup, yazi, fingerprint, etc.) |
+| `shared/hyprland_modules/` | 12 Hyprland modules (keybinds, rules, monitors, scratchpads) |
+| `shared/hyprland_scripts/` | 12 helper scripts (lock, startup, yazi, fingerprint) |
 | `shared/launchers/` | Toggle scripts for btop, yazi |
 | `shared/wallpapers/` | Wallpaper files |
 | `shared/nvim_lazy-lock.json` | Neovim plugin lock file |
 | `shared/nvim_ftplugin/` | Neovim filetype plugins |
 | `shared/rofi_config.rasi` | Rofi layout config |
 | `shared/waybar_config` | Waybar module/layout config |
-| `shared/gtk-{3,4}.0_settings.ini` | GTK settings (font, icon theme) |
 | `shared/zsh_aliases.zsh` | Shell aliases |
-| `shared/zsh_git.zsh` | Git workflow functions (gpush, gnew, gsave, gbr, etc.) |
+| `shared/zsh_git.zsh` | Git workflow functions |
 | `shared/zsh_paths.zsh` | PATH setup |
 | `shared/zsh_conda.zsh` | Conda/mamba init |
-| `shared/regreet.toml` | ReGreet greeter config (font, cursor, clock, env vars) |
-| `shared/greetd_hyprland.conf` | Minimal Hyprland config for the greeter session |
+| `shared/regreet.toml` | ReGreet greeter config |
+| `shared/greetd_hyprland.conf` | Minimal Hyprland session for the greeter |
 
-## Zsh / Shell
+## Zsh
 
-Templates in `templates/zsh/` include the full shell setup:
+`templates/zsh/` includes:
 
 | File | Description |
 |------|-------------|
-| `.zshrc` | Main config — Oh My Zsh, completions, fzf, tmux auto-attach |
-| `caramel.zsh-theme` | Custom prompt with gradient path, git, conda/venv, elapsed time |
+| `.zshrc` | Oh My Zsh, completions, fzf, tmux auto-attach |
+| `caramel.zsh-theme` | Custom prompt — gradient path, git, conda/venv, elapsed time |
 | `colors.zsh` | LS_COLORS and zsh-syntax-highlighting |
 | `welcome.zsh` | Terminal splash with system info and todo list |
 
-Requires: [Oh My Zsh](https://ohmyz.sh/), [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting), [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions), [eza](https://github.com/eza-community/eza), [bat](https://github.com/sharkdp/bat)
+Requires Oh My Zsh, zsh-syntax-highlighting, zsh-autosuggestions, eza, bat.
 
-### Git Workflow Functions
+### Git workflow functions
 
-`git.zsh` adds workflow shortcuts that complement the Oh My Zsh `git` plugin (which provides simple aliases like `gst`, `ga`, `gd`, `gco`). These chain multiple git commands into common workflows:
+`shared/zsh_git.zsh` adds shortcuts on top of the Oh My Zsh `git` plugin:
 
 | Command | What it does |
-|---------|-------------|
-| `gpush` | Push current branch — auto-sets upstream on first push |
-| `gnew [name]` | Create + switch to new branch (prompts for name if omitted) |
-| `gsave <msg>` | Stage all + commit in one shot |
+|---------|--------------|
+| `gpush` | Push current branch — sets upstream on first push |
+| `gnew [name]` | Create + switch to new branch |
+| `gsave <msg>` | Stage all + commit |
 | `gquick` | WIP checkpoint commit with timestamp |
 | `gundo` | Undo last commit, keep changes staged |
 | `gamend` | Fold new changes into last commit |
@@ -266,66 +209,110 @@ Requires: [Oh My Zsh](https://ohmyz.sh/), [zsh-syntax-highlighting](https://gith
 | `grecent` | List recent branches with relative timestamps |
 | `gsync` | Fetch + rebase current branch onto latest main |
 | `gclean` | Delete local branches already merged into main |
-| `gstash [msg]` | Named stash (no args = list stashes) |
+| `gstash [msg]` | Named stash (no args = list) |
 | `gpop` | fzf picker for which stash to pop |
-| `gtoday` | Show your commits from today |
+| `gtoday` | Your commits from today |
 | `gds` | Diff staged changes |
 
 ## Neovim
 
-See [`shared/nvim_NVIM-KEYBINDS.md`](shared/nvim_NVIM-KEYBINDS.md) for the complete keybind reference.
+See [`shared/nvim_NVIM-KEYBINDS.md`](shared/nvim_NVIM-KEYBINDS.md) for the full keybind reference.
 
-**AI integration:**
-- **copilot.lua** — inline ghost-text completions + copilot-cmp source (toggle with `<Space>Ci`)
-- **avante.nvim** — Cursor-style AI chat panel using Copilot provider (Claude Sonnet 4)
-- **claudecode.nvim** — Claude Code terminal integration (`<Space>Ct` toggle, `<Space>Cs` send selection)
+AI integration:
+- **copilot.lua** — inline ghost-text completions + copilot-cmp source (toggle `<Space>Ci`)
+- **avante.nvim** — Cursor-style chat panel via Copilot (Claude Sonnet 4)
+- **claudecode.nvim** — Claude Code terminal integration (`<Space>Ct`, `<Space>Cs`)
 
-**Highlights:** LSP via mason, DAP debugging, cmake-tools, neotest, lazygit, telescope, harpoon, neo-tree, treesitter, zen-mode
+Stack: LSP via mason, DAP, cmake-tools, neotest, lazygit, telescope, harpoon, neo-tree, treesitter, zen-mode.
 
-## Login Screen (greetd + regreet)
+## Multi-monitor
 
-The login screen is themed via regreet (a GTK4 greeter for greetd) running inside a minimal Hyprland session — no cage, no TTY flash.
+`./install.sh` runs `configure_monitors` near the end, which detects every output via `hyprctl monitors -j` and prompts for position (left / right / above / below the laptop) and orientation (landscape / portrait-left / portrait-right) per external monitor. The picker writes:
 
-`./install.sh --deps` installs `greetd` + `greetd-regreet` and `install_greetd()` auto-runs: it deploys regreet css/toml + the wallpaper to `/etc/greetd/` and `/usr/share/wallpapers/`, writes `/etc/greetd/config.toml` to launch Hyprland as the greeter, and enables the systemd unit. Idempotent — rerunning preserves a customized `config.toml`.
+- `~/.config/hypr/modules/monitors.conf` — name-keyed Hyprland rules. Unplugged monitors are silently skipped, so undocking just works; plugging the same external back in restores the saved layout.
+- `~/.config/foxml/monitor-layout.conf` — sidecar consumed by `start_waybar.sh` and `rotate_wallpaper.sh`.
 
-On first login, select your Hyprland session from the Session dropdown — regreet remembers it for next time.
+When a portrait output is detected, `_generate_portrait_wallpapers` uses ImageMagick to center-crop every landscape wallpaper into a `${name}_portrait.${ext}` variant (1080×1920). `rotate_wallpaper.sh` then applies per-monitor: portrait outputs get the variant; landscape outputs get the source.
 
-## Creating a New Theme
+External monitors get a stripped-down secondary waybar (workspaces + clock + fox/SysHub launcher) — main bar stays on the laptop. Single-monitor setups render the original full bar unchanged.
 
-1. Copy an existing palette: `cp themes/FoxML_Classic/palette.sh themes/My_Theme/palette.sh`
-2. Edit the colors in your new `palette.sh`
-3. Create `themes/My_Theme/theme.conf` with name/type/description
-4. Run `./install.sh My_Theme`
+Under `-y`, externals default to right-of-laptop landscape with no prompts.
 
-The palette defines ~60 variables across several categories:
-- **Core colors** — BG, FG, PRIMARY, SECONDARY, ACCENT, SURFACE + variants
-- **ANSI colors** — RED, GREEN, YELLOW, BLUE, CYAN + bright variants
-- **ANSI 256 codes** — terminal color indices for zsh prompts
-- **Tmux colors** — `colour216`-style tmux palette
+### Tmux: pop a pane to the portrait monitor
+
+`templates/tmux/.tmux.conf` defines two binds for moving panes between sessions:
+
+| Key | What it does |
+|-----|--------------|
+| `prefix + m` | Move current pane to a brand-new tmux session, auto-switch the client to it (same kitty window) |
+| `prefix + M` | Pop current pane to its **own** new kitty window (drag onto the portrait monitor) |
+
+`prefix + M` works by spawning `kitty --detach` with `env -u TMUX tmux attach`, so the new kitty actually attaches to the popped session instead of nesting back into the parent.
+
+## Login screen (greetd + regreet)
+
+regreet (a GTK4 greeter for greetd) runs inside a minimal Hyprland session — no cage, no TTY flash. `./install.sh --deps` installs `greetd` + `greetd-regreet` and `install_greetd()` deploys the css/toml + wallpaper, writes `/etc/greetd/config.toml`, and enables the systemd unit. Idempotent — rerunning preserves a customized `config.toml`.
+
+On first login, pick your Hyprland session from the dropdown — regreet remembers it.
+
+## AI layer (optional)
+
+Installed via `--ai`. Wraps Ollama + OpenCode (a Claude-Code-style local TUI):
+
+- **FoxML theme** — palette-driven OpenCode theme (`templates/opencode/foxml.json`) rendered through the same `{{TOKEN}}` system. Theme swaps re-render OpenCode too.
+- **Multi-model picker** — provider config generated from `ollama list`, so every pulled model appears in the picker.
+- **Skill discovery** — `skills.paths` populated by globbing `~/code/*/claude-skills/`.
+- **Auto-wake** — `opencode` is shell-wrapped to start the Ollama daemon on demand.
+
+Adds these shell commands:
+
+| Command | What it does |
+|---------|--------------|
+| `fask` | Ask questions about the project (RAG over indexed code) |
+| `findex` | Generate semantic embeddings for the current project |
+| `fcommit` | AI-analyzed commit messages |
+| `fstatus` | Monitor AI stack, VRAM, project drift |
+| `fproject` | Bootstrap a new project with `AGENT.md`/`INVARIANTS.md` |
+| `fhelp` | Full command reference |
+
+`cd`-ing into a directory containing an `AGENT.md` auto-exports project context, scoping `fask`/`findex` to that workspace.
+
+## Creating a new theme
+
+1. Copy a palette: `cp themes/FoxML_Classic/palette.sh themes/My_Theme/palette.sh`
+2. Edit the colors.
+3. Create `themes/My_Theme/theme.conf` with name/type/description.
+4. Run `./install.sh My_Theme`.
+
+The palette defines ~60 variables across:
+- **Core** — BG, FG, PRIMARY, SECONDARY, ACCENT, SURFACE + variants
+- **ANSI** — RED, GREEN, YELLOW, BLUE, CYAN + bright variants
+- **ANSI 256** — terminal color indices for zsh prompts
+- **Tmux** — `colour216`-style palette
 - **App overrides** — per-app background tweaks (dunst, spicetify, vencord)
-- **Font** — `FONT_FAMILY` sets the font across all templated apps (default: `Hack Nerd Font`)
-- **Metadata** — NVIM_STYLE, KITTY_BG_OPACITY, VSCODE_UI_THEME, etc.
+- **Font** — `FONT_FAMILY` (default `Hack Nerd Font`)
+- **Metadata** — NVIM_STYLE, KITTY_BG_OPACITY, VSCODE_UI_THEME
 
-### Changing the Font
+### Changing the font
 
-Set `FONT_FAMILY` in your theme's `palette.sh` to any installed Nerd Font:
+Set `FONT_FAMILY` in `palette.sh` to any installed Nerd Font:
 
 ```bash
-FONT_FAMILY="Hack Nerd Font"          # default — blocky, sturdy
+FONT_FAMILY="Hack Nerd Font"           # default — blocky, sturdy
 FONT_FAMILY="JetBrainsMono Nerd Font"  # clean, rounded
 FONT_FAMILY="IBM Plex Mono Nerd Font"  # industrial, wide
 ```
 
-This updates all templated configs (kitty, waybar, rofi, dunst, mako, hyprlock, regreet CSS, spicetify, zathura). Shared configs (GTK settings, regreet.toml, hyprland general) use the font directly — update those manually if switching fonts.
+This updates all templated configs. Shared configs (GTK settings, regreet.toml, hyprland general) reference the font directly — update those by hand if you switch.
 
 See `themes/FoxML_Classic/palette.sh` for the full variable list.
 
-## Post-Install
+## Post-install
 
 1. `hyprctl reload`
 2. Restart terminals/apps
 3. Firefox: enable `toolkit.legacyUserProfileCustomizations.stylesheets` in `about:config`
-4. Cursor: Select "Fox ML" in color theme picker
+4. Cursor: select "Fox ML" in the color theme picker
 
 ## License
 

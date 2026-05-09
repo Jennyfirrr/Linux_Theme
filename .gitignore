@@ -4,3 +4,18 @@
 
 # OpenCode Skills (Private)
 claude-skills/
+
+# Plans (Personal design and scratchpad)
+plans/
+
+# Editor backups — local safety nets, not for the repo
+*.bak
+*.bak[0-9]*
+*~
+
+# Render output — regenerated on every install
+rendered/
+
+# Compiled fox-intel binaries — install.sh rebuilds them
+src/fox-intel/fask
+src/fox-intel/findex

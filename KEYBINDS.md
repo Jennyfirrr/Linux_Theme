@@ -476,13 +476,15 @@ Shows indent guides automatically. No keybinds.
 ### Core Workflow
 | Key | Action |
 |-----|--------|
-| `ALT + Shift + H` | **FoxML Hub** (Power, BT, Wi-Fi, Wallpapers) |
+| `ALT + Shift + D` | **FoxML SysHub** (rofi-driven launcher: power, BT, Wi-Fi, wallpapers, themes, apps) |
 | `ALT + Tab` | Cycle focus through **floating** windows only |
 | `ALT + Ctrl + Tab` | Cycle focus through **tiled** windows only |
 | `ALT + Shift + Tab` | Cycle focus through **all** windows in reverse |
 | `ALT + Shift + R` | Reload Hyprland |
 | `ALT + Shift + X` | Power Menu (Themed Rofi) |
-| `ALT + V` | **Clipboard History** (Searchable Rofi) |
+| `ALT + Shift + K` | Panic kill — terminate runaway processes |
+| `ALT + V` | Clipboard History — text |
+| `ALT + Shift + V` | Clipboard History — images |
 
 ### Applications
 | Key | Action |
@@ -490,36 +492,33 @@ Shows indent guides automatically. No keybinds.
 | `ALT + Enter` | Terminal (Kitty + Tmux) |
 | `ALT + F` | Firefox |
 | `ALT + Shift + C` | Cursor (VS Code) |
-| `ALT + Shift + D` | Rofi App Launcher |
-| `ALT + Shift + V` | Steam |
-| `ALT + Shift + Y` | Yazi (File Manager) |
-| `ALT + Shift + T` | btop (Task Manager) |
+| `ALT + Shift + M` | Steam |
+| `ALT + Shift + Y` | Yazi (file manager) |
+| `ALT + Shift + T` | btop (task manager) |
 | `ALT + Shift + I` | Discord |
-| `ALT + Shift + O` | Screenshot (GUI Editor) |
+| `ALT + Shift + O` | Screenshot (GUI editor) |
 
 ### Music & Audio
 | Key | Action |
 |-----|--------|
-| `ALT + Shift + S` | Spotify (GUI) |
-| `ALT + Shift + M` | ncspot (Thermal-friendly Terminal Spotify) |
-| `ALT + Shift + A` | **Audio Output Switcher** (Device list) |
+| `ALT + Shift + A` | **Audio output switcher** (rofi device list) |
 | `Media Keys` | Play/Pause, Next, Prev, Stop |
 
 ### Connectivity
 | Key | Action |
 |-----|--------|
-| `ALT + Shift + B` | Bluetooth Manager (Rofi) |
-| `ALT + Shift + N` | Network/Wi-Fi Manager (Rofi) |
+| `ALT + Shift + B` | Bluetooth manager (rofi) |
+| `ALT + Shift + N` | Network / Wi-Fi manager (rofi) |
 
 ### Tools & Utilities
 | Key | Action |
 |-----|--------|
-| `ALT + Shift + P` | **Color Picker** (Copy Hex to clipboard) |
-| `ALT + Shift + L` | Toggle DPMS (Screen Sleep) |
-| `ALT + B` | Toggle Waybar Visibility |
-| `ALT + W` | Cycle Wallpaper (Fade transition) |
-| `fox-clean` | Zsh: System maintenance utility |
-| `fox-fingerprint` | Zsh: Biometric setup automation |
+| `ALT + Shift + P` | **Color picker** (copy hex to clipboard) |
+| `ALT + Shift + L` | Toggle DPMS (screen sleep) |
+| `ALT + B` | Toggle waybar visibility |
+| `ALT + W` | Cycle wallpaper (fade transition) |
+| `fox-clean` | Zsh: system maintenance utility |
+| `fox-fingerprint` | Zsh: biometric setup automation |
 
 ### Windows
 | Key | Action |
@@ -554,7 +553,8 @@ Shows indent guides automatically. No keybinds.
 | `Ctrl+a h/j/k/l` | Navigate panes |
 | `Ctrl+a H/J/K/L` | Resize panes |
 | `Ctrl+a q` | Show pane numbers |
-| `Ctrl+a m` | Move pane to new session |
+| `Ctrl+a m` | Move current pane to a new tmux session and auto-switch this client to it |
+| `Ctrl+a M` | Pop current pane into its **own** kitty window (drag to a portrait / second monitor) |
 | `Ctrl+a r` | Reload config |
 | `Ctrl+a [` | Enter copy mode |
 | `v` (copy mode) | Begin selection |

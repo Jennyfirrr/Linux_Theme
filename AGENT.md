@@ -1,23 +1,22 @@
-# FoxML Workstation — Agent Mandates
+# Linux_Theme — Agent Mandates
 
-This file provides persistent instructions and architectural context for the AI Agent.
+Persistent context for AI assistants working on this repo.
 
 ## Core Mandates
 
-- **Path Agnosticism**: All configuration mappings and special handlers must be path-agnostic. Use environment variables (e.g., `AGENT_CONFIG_HOME`, `XDG_CONFIG_HOME`) with appropriate fallbacks.
-- **Mapping Patterns**: New application configurations should be added to `TEMPLATE_MAPPINGS` in `mappings.sh`. If an application requires special logic (like JSON merging or complex path resolution), use a placeholder in the mapping (e.g., `AGENT_DIR`, `FIREFOX_PROFILE`) and implement the logic in `install_specials` and `update_specials`.
-- **No Hardcoded Home Paths**: Avoid using hardcoded `/home/user` or `~` in logic when an environment variable or standard placeholder is available.
-- **Hyprland Standard (v0.54+)**: All Hyprland configurations must use the unified `windowrule` keyword and the `col.active_border` property name. `windowrulev2` and `bordercolor` are strictly prohibited.
+- **Path Agnosticism** — All install/render logic must use `$HOME`, `$SCRIPT_DIR`, or `$XDG_CONFIG_HOME`. No hardcoded `/home/<user>` strings.
+- **Mapping Patterns** — New app configs are added to `TEMPLATE_MAPPINGS` in `mappings.sh`. If the app needs special install logic (JSON merging, sudo, extension installation), add a handler in `install_specials()` and gate the simple mapping with a continue-skip in the deploy loops.
+- **Hyprland v0.54+** — Use the unified `windowrule` keyword and `col.active_border` property name only. `windowrulev2` and `bordercolor` are prohibited (they silently break the theme).
+- **Backups before overwrites** — Use the `backup_and_copy` helper in `install.sh` for any file that already exists at the destination. Never overwrite a system file without a timestamped backup under `~/.theme_backups/`.
 
 ## Architecture
 
-- **Templates**: All application-specific styles should live in `templates/` using `{{PLACEHOLDER}}` tokens.
-- **Palettes**: Themes are defined as simple bash scripts in `themes/<name>/palette.sh`.
-- **Special Handlers**: Reserve these for logic that `backup_and_copy` cannot handle (e.g., merging JSON sections, installing extensions, rebuilding caches).
+- **Templates** — App-specific styles live in `templates/<app>/` and use `{{TOKEN}}` placeholders.
+- **Palettes** — Themes are bash scripts in `themes/<name>/palette.sh` defining ~60 color/metadata variables.
+- **Special Handlers** — Reserved for logic `backup_and_copy` can't handle: merging JSON sections, installing browser extensions, rebuilding caches, sudo operations.
+- **Multi-monitor** — `configure_monitors()` writes name-keyed Hyprland rules + a sidecar at `~/.config/foxml/monitor-layout.conf`. Downstream consumers (`start_waybar.sh`, `rotate_wallpaper.sh`) source the sidecar.
 
-## Future Refactor (C++)
+## See also
 
-The project is moving toward a compiled CLI tool (likely C++) to replace the aging Bash scripts.
-- **Consolidation**: The tool will replace `render.sh`, `install.sh`, `update.sh`, and `swap.sh`.
-- **JSON Handling**: Use `nlohmann/json` for native merging.
-- **Performance**: Prioritize data-oriented design and branchless patterns for templating efficiency.
+- [INVARIANTS.md](INVARIANTS.md) — load-bearing rules with explicit enforcement criteria
+- [CONTRIBUTING.md](CONTRIBUTING.md) — add-an-app and add-a-theme workflows

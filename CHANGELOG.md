@@ -4,6 +4,41 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-08 — v2.2.3
+
+Documentation overhaul. Replaced stale planning prose and incorrect references with factual, current docs that match the actual repo layout. Also pruned tracked editor backups.
+
+### README.md
+- Finalized the in-progress rewrite from "FoxML Workstation — high-discipline AI-powered platform" marketing prose to the plain reference-tone "Arch + Hyprland theme + dotfiles" framing.
+- Added the 5 themed apps that were missing from the table — `eww`, `lazygit`, `git delta`, `gemini`, `opencode`. Total now matches the 25 directories under `templates/`.
+- New **Multi-monitor** section documenting `configure_monitors`, the layout sidecar, name-keyed Hyprland rules, the secondary waybar, and portrait wallpaper auto-generation.
+- New **Tmux: pop a pane to the portrait monitor** subsection covering `prefix + m` and `prefix + M`.
+
+### CONTRIBUTING.md
+- Full rewrite. Old version documented a non-existent folder structure (`FoxML/btop/`, `FoxML/cursor/`…) and referenced `FoxML.md` (doesn't exist) and `update_file` (not a thing).
+- New version documents the actual layout (`templates/<app>/`, `themes/<theme>/`, `shared/`), the correct add-an-app flow via `TEMPLATE_MAPPINGS` in `mappings.sh`, when to add a special handler, and the round-trip test that catches missed `{{TOKEN}}`s.
+
+### AGENT.md / INVARIANTS.md
+- Removed the "Future C++ Refactor" planning sections from both files. That work isn't active and was leaking into agent context as if it were.
+- INVARIANTS.md gained `[I-05] Per-machine config preservation` documenting the `monitors.conf` skip-if-exists behavior.
+- AGENT.md picked up a Multi-monitor architecture note pointing at the layout sidecar.
+
+### KEYBINDS.md
+- Audited the Hyprland section against actual `keybinds.conf` and fixed several entries that documented bindings that don't exist or pointed at the wrong key:
+  - `ALT + Shift + H` → FoxML Hub: never bound. The hub is on `ALT + Shift + D`.
+  - `ALT + Shift + D` → Rofi App Launcher: there's no separate launcher; D is the hub.
+  - `ALT + Shift + V` → Steam: actually clipboard image picker. Steam is `ALT + Shift + M`.
+  - `ALT + Shift + M` → ncspot: actually Steam.
+  - `ALT + Shift + S` → Spotify: never bound, removed.
+- Added the missing entries: `ALT + Shift + V` (clipboard images), `ALT + Shift + K` (panic kill).
+- Tmux section: replaced the misleading "Move pane to new session" entry with the rewritten `prefix + m` (auto-switches client), added `prefix + M` (pops to own kitty window).
+
+### Repo hygiene
+- **Removed 5 tracked nvim backup files** — `templates/nvim/init.lua.bak{2..6}` had been accidentally committed despite CONTRIBUTING.md saying `.bak` files are local safety nets. They're gone now.
+- **`.gitignore`** — added `*.bak`, `*.bak[0-9]*`, `*~` (editor backups), and `rendered/` (regenerated on every install).
+
+---
+
 ## 2026-05-08 — v2.2.2
 
 Floating-window focus binds + KEYBINDS doc cleanup.
