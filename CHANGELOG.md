@@ -9,6 +9,7 @@ All notable changes to the Fox ML theme.
 ### Polish
 - **Subagent body color** — was `C_SECONDARY` (#b8967a, a muted tan that read near-white on warm palettes). Now `C_WARN` (yellow) in both `agent_notify.sh` body markup and `agent_rofi.sh` event glyphs. Three-color traffic-light split: Stop=green, Subagent=yellow, Notification=red.
 - **Gemini subagent parity** — Gemini CLI exposes no `SubagentStop` event, but subagents register as tools (built-in `codebase_investigator`, plus anything in `~/.gemini/agents/`). Added an `AfterTool` hook with an empty matcher; `agent_notify.sh` filters out the built-in primitives (`read_file`, `write_file`, `replace`, `run_shell_command`, `list_directory`, `search_file_content`, `glob`, `web_fetch`, `web_search`, `save_memory`, `read_many_files`) and any `mcp_*` tool, so only subagent invocations notify. Tool name is used as the body message so you can see *which* subagent finished. Custom subagents are auto-covered without us maintaining a regex.
+- **Auto-restart Firefox after userChrome deploy** — `install_specials` now sends Firefox a SIGTERM (so session restore writes), waits up to 10s for graceful exit, then relaunches via `setsid`. Tabs, form fields, and scroll positions come back on the restored session. Drops the "Manual step (intentional): Restart Firefox" line from the post-install summary.
 
 ---
 

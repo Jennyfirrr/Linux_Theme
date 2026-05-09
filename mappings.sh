@@ -186,6 +186,22 @@ install_specials() {
             printf '// FoxML theming\n%s\n' "$ff_pref" >> "$ff_userjs"
             echo "  Firefox user.js (legacy stylesheet pref)"
         fi
+
+        # Restart Firefox so the new userChrome/userContent loads. SIGTERM
+        # gives Firefox time to write session state; restore brings tabs,
+        # form fields, and scroll positions back on the next launch.
+        # Skipped silently if Firefox isn't running.
+        if pgrep -x firefox >/dev/null 2>&1; then
+            pkill -TERM -x firefox 2>/dev/null || true
+            # Wait up to 10s for graceful exit; bail out either way.
+            for _ in {1..20}; do
+                pgrep -x firefox >/dev/null 2>&1 || break
+                sleep 0.5
+            done
+            setsid -f firefox >/dev/null 2>&1 &
+            disown 2>/dev/null || true
+            echo "  Firefox restarted (session restore brings tabs back)"
+        fi
     else
         echo "  No Firefox profile found, skipping"
     fi
