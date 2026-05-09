@@ -1,36 +1,4 @@
 {
-  "general": {
-    "enableNotifications": true
-  },
-  "hooksConfig": {
-    "enabled": true
-  },
-  "hooks": {
-    "AfterAgent": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "name": "notify-turn-complete",
-            "type": "command",
-            "command": "notify-send -u low -i dialog-information 'Gemini' '<b><span foreground=\"#d4985a\">Turn complete</span></b> — Ready for next message'"
-          }
-        ]
-      }
-    ],
-    "SubagentStop": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "name": "notify-subagent-done",
-            "type": "command",
-            "command": "INPUT=$(cat); DESC=$(echo \"$INPUT\" | jq -r '.subagent.description // .description // \"subagent\"' 2>/dev/null || echo subagent); STATUS=$(echo \"$INPUT\" | jq -r '.subagent.status // .status // \"done\"' 2>/dev/null || echo done); notify-send -u normal -i dialog-information 'Gemini Subagent' \"<b><span foreground='#b8967a'>$DESC</span></b> — $STATUS\""
-          }
-        ]
-      }
-    ]
-  },
   "ui": {
     "theme": "FoxML",
     "customThemes": {
@@ -70,5 +38,37 @@
         }
       }
     }
+  },
+  "hooks": {
+    "AfterAgent": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "name": "notify-turn-complete",
+            "type": "command",
+            "command": "notify-send -u low -i dialog-information 'Gemini' '<b><span foreground=\"#d4985a\">Turn complete</span></b> — Ready for next message'"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "name": "notify-subagent-done",
+            "type": "command",
+            "command": "INPUT=$(cat); DESC=$(echo \"$INPUT\" | jq -r '.subagent.description // .description // \"subagent\"' 2>/dev/null || echo subagent); STATUS=$(echo \"$INPUT\" | jq -r '.subagent.status // .status // \"done\"' 2>/dev/null || echo done); notify-send -u normal -i dialog-information 'Gemini Subagent' \"<b><span foreground='#b8967a'>$DESC</span></b> — $STATUS\""
+          }
+        ]
+      }
+    ]
+  },
+  "hooksConfig": {
+    "enabled": true
+  },
+  "general": {
+    "enableNotifications": true
   }
 }
