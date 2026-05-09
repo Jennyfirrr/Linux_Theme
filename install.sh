@@ -541,6 +541,15 @@ echo "Configuring systemd-resolved DNSSEC..."
 install_resolved_dnssec
 
 # ─────────────────────────────────────────
+# One-shot clock correction — direct UDP/123 to Cloudflare NTP IP, no
+# DNS dependency. Fixes wedged clocks (multi-hour offsets) that chrony's
+# slew mode refuses to step. Skipped when chrony isn't installed.
+# ─────────────────────────────────────────
+echo ""
+echo "Synchronizing system clock..."
+install_clock_sync
+
+# ─────────────────────────────────────────
 # gpg-agent passphrase cache TTL — extends the default 10-min idle cache
 # so agent-driven commits don't re-prompt mid-session. No-op for users
 # who don't sign with GPG. Override duration via FOXML_GPG_CACHE_TTL.

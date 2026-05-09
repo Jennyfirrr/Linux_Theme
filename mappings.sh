@@ -1010,6 +1010,16 @@ install_resolved_dnssec() {
     sudo resolvectl flush-caches 2>/dev/null
     echo "  systemd-resolved restarted + cache flushed"
 
+    # NetworkManager pushes per-link DNSSEC to resolved at connection-up
+    # time; modifying connection.dnssec only updates the persistent
+    # profile, not the active link. Restart NM so cleared values actually
+    # propagate. Brief network blip (~3s) is acceptable mid-install.
+    if systemctl is-active --quiet NetworkManager 2>/dev/null; then
+        sudo systemctl restart NetworkManager 2>/dev/null
+        sleep 3
+        echo "  NetworkManager restarted (pushed DNSSEC=default to active links)"
+    fi
+
     # Verify against a known-unsigned zone. If this still fails after all
     # three layers were addressed, surface a loud warning instead of letting
     # NTP/DNS silently break later.
@@ -1019,6 +1029,60 @@ install_resolved_dnssec() {
         echo "  ⚠ DNSSEC fix applied but verification query still fails"
         echo "    run 'resolvectl status' to inspect upstream / per-link state"
     fi
+}
+
+# One-shot clock correction via Cloudflare NTP at a hardcoded IP. Bypasses
+# DNS entirely (no DNSSEC, no resolved, no chrony pool resolution) so the
+# system clock can jump to correct time even when name resolution is
+# wedged. chrony's normal slew mode won't fix a multi-hour offset because
+# it refuses to step beyond a small threshold; -q runs one synchronous
+# burst and exits, jumping the clock if needed. After this, ongoing chrony
+# sync handles drift normally.
+#
+# Cloudflare's time.cloudflare.com (162.159.200.1 / .123) is a stable,
+# globally-anycast NTP service. UDP/123 to a known IP — works on any
+# network where outbound NTP isn't firewalled, which covers virtually
+# every home/coffee-shop/corporate WiFi.
+#
+# Skipped if chrony isn't installed (no chronyd binary). Persists the
+# corrected time to the RTC so a power-off doesn't undo it.
+install_clock_sync() {
+    if ! command -v chronyd >/dev/null 2>&1; then
+        echo "  • chrony not installed, skipping one-shot clock sync"
+        return
+    fi
+    if ! sudo -v 2>/dev/null; then
+        echo "  ⚠ sudo unavailable, skipping clock sync"
+        return
+    fi
+
+    # Stop the daemon so chronyd -q doesn't fight an already-running
+    # instance for the NTP socket.
+    local was_running=0
+    if systemctl is-active --quiet chronyd 2>/dev/null; then
+        was_running=1
+        sudo systemctl stop chronyd
+    fi
+
+    # -q = one shot, set time, exit. -t 8 = give up after 8s if no
+    # response (port blocked, etc.). Try Cloudflare first, fall back to
+    # Google Public NTP if Cloudflare is unreachable.
+    local synced=0
+    if sudo chronyd -q -t 8 'server 162.159.200.1 iburst' 2>&1 | grep -q 'System clock'; then
+        synced=1
+        echo "  ✓ clock corrected via Cloudflare NTP (162.159.200.1)"
+    elif sudo chronyd -q -t 8 'server 216.239.35.0 iburst' 2>&1 | grep -q 'System clock'; then
+        synced=1
+        echo "  ✓ clock corrected via Google NTP (216.239.35.0)"
+    else
+        echo "  ⚠ one-shot NTP failed (UDP/123 may be blocked on this network)"
+    fi
+
+    if [[ "$synced" -eq 1 ]]; then
+        sudo hwclock --systohc 2>/dev/null && echo "  RTC updated to match"
+    fi
+
+    [[ "$was_running" -eq 1 ]] && sudo systemctl start chronyd 2>/dev/null
 }
 
 # Extend gpg-agent's cached-passphrase TTL so agent-driven commits don't

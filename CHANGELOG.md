@@ -4,6 +4,18 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-09 — v2.4.9
+
+### `install_resolved_dnssec()` — restart NetworkManager to actually push cleared per-link DNSSEC
+The v2.4.8 implementation cleared `connection.dnssec` on each NM connection profile but didn't restart NetworkManager, so the active links kept reporting `DNSSEC=yes/supported` to systemd-resolved. `nmcli connection modify` only touches the persistent profile — the live link inherits the new value at next connection-up. Added a `systemctl restart NetworkManager` (~3s blip, conditional on NM being active) after the modify loop so cleared values actually propagate to the running resolver state.
+
+### New `install_clock_sync()` — bypass DNS entirely for one-shot clock correction
+Chrony's normal slew mode refuses to step the clock past a small offset, so a system that's hours behind/ahead never catches up no matter how many NTP sources resolve. Added a one-shot synchronous correction that talks UDP/123 directly to Cloudflare NTP at a hardcoded IP (`162.159.200.1`), bypassing DNS, DNSSEC, and resolved entirely. Falls back to Google Public NTP (`216.239.35.0`) if Cloudflare is unreachable. Persists corrected time to the RTC via `hwclock --systohc` so a power-off doesn't undo it. Skipped when chrony isn't installed.
+
+Wired into `install.sh` immediately after `install_resolved_dnssec` (DNS fix first so chrony's normal sync starts working again, hardcoded-IP one-shot second so a wedged clock catches up regardless).
+
+---
+
 ## 2026-05-09 — v2.4.8
 
 ### `install_resolved_dnssec()` — diagnose and fix all three DNSSEC layers
