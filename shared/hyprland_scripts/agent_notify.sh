@@ -38,10 +38,12 @@ C_SECONDARY="${C_SECONDARY:-b8967a}"
 C_ACCENT="${C_ACCENT:-8a9a7a}"
 C_RED="${C_RED:-b05555}"
 C_OK="${C_OK:-7aab88}"
+C_WARN="${C_WARN:-c4b48a}"
 
 # Pull a usable message + cwd out of whatever shape the payload is in.
 msg=""
 cwd=""
+tool_name=""
 if [[ -n "$input" ]] && command -v jq >/dev/null 2>&1; then
     msg="$(printf '%s' "$input" | jq -r '
         .message //
@@ -50,7 +52,24 @@ if [[ -n "$input" ]] && command -v jq >/dev/null 2>&1; then
         empty
     ' 2>/dev/null)" || msg=""
     cwd="$(printf '%s' "$input" | jq -r '.cwd // empty' 2>/dev/null)" || cwd=""
+    tool_name="$(printf '%s' "$input" | jq -r '.tool_name // empty' 2>/dev/null)" || tool_name=""
 fi
+
+# Gemini ships no SubagentStop event — its closest analog is AfterTool,
+# which fires for *every* tool call. Filter out built-in primitives and
+# MCP tools so only subagent invocations notify. Subagents register as
+# tools under their own name, so anything outside this list is treated
+# as a subagent (covers the built-in codebase_investigator plus any
+# custom agent under ~/.gemini/agents/).
+if [[ "$src" == "gemini" && "$event" == "subagent" ]]; then
+    case "$tool_name" in
+        ""|read_file|write_file|replace|edit|run_shell_command|list_directory|ls|search_file_content|grep|glob|web_fetch|web_search|save_memory|read_many_files|mcp_*)
+            exit 0
+            ;;
+    esac
+    [[ -z "$msg" ]] && msg="$tool_name"
+fi
+
 [[ -z "$cwd" ]] && cwd="$PWD"
 project="$(basename "$cwd" 2>/dev/null)"
 [[ -z "$project" ]] && project="?"
@@ -79,7 +98,7 @@ case "$event" in
         urgency="normal"
         title="$src_label subagent · $project"
         body_text="${msg:-Subagent finished}"
-        body_color="$C_SECONDARY"
+        body_color="$C_WARN"
         ;;
     stop|*)
         urgency="low"

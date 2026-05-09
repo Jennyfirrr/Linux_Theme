@@ -22,6 +22,7 @@ C_SECONDARY="${C_SECONDARY:-b8967a}"
 C_ACCENT="${C_ACCENT:-8a9a7a}"
 C_RED="${C_RED:-b05555}"
 C_OK="${C_OK:-7aab88}"
+C_WARN="${C_WARN:-c4b48a}"
 
 queue_dir="${XDG_RUNTIME_DIR:-/tmp}"
 queue_file="$queue_dir/foxml-agent-queue.jsonl"
@@ -66,9 +67,9 @@ for (( raw=total-1; raw>=0; raw-- )); do
     esac
 
     case "$event" in
-        notification) ev_color="$C_RED";       ev_glyph="" ;;
-        subagent)     ev_color="$C_SECONDARY"; ev_glyph="" ;;
-        stop|*)       ev_color="$C_OK";        ev_glyph="" ;;
+        notification) ev_color="$C_RED";  ev_glyph="" ;;
+        subagent)     ev_color="$C_WARN"; ev_glyph="" ;;
+        stop|*)       ev_color="$C_OK";   ev_glyph="" ;;
     esac
 
     label="<span foreground=\"#${ev_color}\">${ev_glyph}</span>  <span foreground=\"#${src_color}\"><b>${src_label}</b></span> · ${project_e}"

@@ -52,6 +52,18 @@
         ]
       }
     ],
+    "AfterTool": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "name": "foxml-subagent-stop",
+            "type": "command",
+            "command": "~/.config/hypr/scripts/agent_notify.sh gemini subagent"
+          }
+        ]
+      }
+    ],
     "Notification": [
       {
         "matcher": "",
