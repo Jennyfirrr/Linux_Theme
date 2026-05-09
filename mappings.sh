@@ -144,6 +144,7 @@ SHARED_MAPPINGS=(
 
     # Waybar config
     "waybar_config|~/.config/waybar/config.tmpl"
+    "waybar_config_secondary|~/.config/waybar/config_secondary.tmpl"
 
     # ReGreet (login screen — needs sudo to install to /etc/greetd/)
     # "regreet.toml|/etc/greetd/regreet.toml"
@@ -283,6 +284,11 @@ PKGJSON
             local basename="$(basename "$mod")"
             [[ "$basename" == "theme.conf" ]] && continue   # theme.conf comes from templates
             [[ "$basename" == "nvidia.conf" ]] && continue  # opt-in, handled by install_nvidia()
+            # monitors.conf is per-machine — configure_monitors() writes it.
+            # Only seed the catch-all default on first run when the file is absent.
+            if [[ "$basename" == "monitors.conf" && -f "$HOME/.config/hypr/modules/monitors.conf" ]]; then
+                continue
+            fi
             cp "$mod" "$HOME/.config/hypr/modules/$basename"
             echo "  modules/$basename"
         done
@@ -445,6 +451,205 @@ PKGJSON
             done
             echo "  systemd user timers enabled"
         fi
+    fi
+}
+
+# ─────────────────────────────────────────
+# Multi-monitor setup — interactive picker for position + orientation.
+# Writes ~/.config/hypr/modules/monitors.conf (per-machine, name-keyed so
+# unplugged monitors are silently ignored) and a small sidecar at
+# ~/.config/foxml/monitor-layout.conf consumed by start_waybar.sh and
+# rotate_wallpaper.sh.
+# ─────────────────────────────────────────
+
+_generate_portrait_wallpapers() {
+    # Center-crop each landscape wallpaper into a 1080x1920 portrait variant.
+    # Idempotent: skips files that already have a _portrait sibling. Silent
+    # no-op if imagemagick isn't installed (rotate_wallpaper.sh falls back to
+    # awww --resize crop on the landscape source).
+    local wall_dir="${HOME}/.wallpapers"
+    [[ -d "$wall_dir" ]] || return 0
+
+    local magick_bin=""
+    command -v magick  >/dev/null 2>&1 && magick_bin="magick"
+    command -v convert >/dev/null 2>&1 && [[ -z "$magick_bin" ]] && magick_bin="convert"
+    [[ -z "$magick_bin" ]] && {
+        echo "  imagemagick not found — portrait wallpapers will use crop-fit on landscape"
+        return 0
+    }
+
+    local generated=0
+    for src in "$wall_dir"/*.{jpg,jpeg,png}; do
+        [[ -f "$src" ]] || continue
+        local base ext name out
+        base="$(basename "$src")"
+        ext="${base##*.}"
+        name="${base%.*}"
+        # Skip files that are already portrait variants
+        [[ "$name" == *_portrait ]] && continue
+        out="${wall_dir}/${name}_portrait.${ext}"
+        [[ -f "$out" ]] && continue
+        # Scale source so the smaller dimension is 1920 (preserves aspect),
+        # then center-crop to 1080x1920 — same math awww --resize crop would
+        # do at runtime, but pre-rendered so we don't rebuild on every fade.
+        "$magick_bin" "$src" -resize "1920x1920^" -gravity center \
+            -extent 1080x1920 "$out" 2>/dev/null && generated=$((generated + 1))
+    done
+    (( generated > 0 )) && echo "  + ${generated} portrait wallpaper(s) generated"
+}
+
+configure_monitors() {
+    if ! command -v hyprctl &>/dev/null; then
+        echo "  hyprctl not found — skipping monitor configuration"
+        return
+    fi
+    if ! command -v jq &>/dev/null; then
+        echo "  jq not installed — skipping monitor configuration"
+        return
+    fi
+
+    local monitors_json
+    monitors_json=$(hyprctl monitors -j 2>/dev/null) || {
+        echo "  Hyprland not running — skipping monitor configuration"
+        echo "  (Re-run install.sh from inside a Hyprland session to configure)"
+        return
+    }
+
+    local count
+    count=$(echo "$monitors_json" | jq 'length')
+
+    mkdir -p "$HOME/.config/foxml"
+    local layout="$HOME/.config/foxml/monitor-layout.conf"
+
+    if (( count <= 1 )); then
+        # Single monitor — clear any stale layout from a previous dock.
+        : > "$layout"
+        echo "PRIMARY=\"$(echo "$monitors_json" | jq -r '.[0].name // ""')\"" >> "$layout"
+        echo 'PORTRAIT_OUTPUTS=""' >> "$layout"
+        echo 'SECONDARY_OUTPUTS=""' >> "$layout"
+        return
+    fi
+
+    echo ""
+    echo "╭──────────────────────────────────────────────────────────────────╮"
+    echo "│   Multi-Monitor Setup                                            │"
+    echo "├──────────────────────────────────────────────────────────────────┤"
+    printf "│   Detected %d monitors:                                            \n" "$count"
+    echo "$monitors_json" | jq -r '.[] | "│     • \(.name)  \(.width)x\(.height)  — \(.description)"'
+    echo "╰──────────────────────────────────────────────────────────────────╯"
+
+    # Primary picker: prefer eDP-* (laptop panel), fall back to first listed.
+    local primary
+    primary=$(echo "$monitors_json" | jq -r '[.[] | select(.name | startswith("eDP"))] | .[0].name // empty')
+    [[ -z "$primary" ]] && primary=$(echo "$monitors_json" | jq -r '.[0].name')
+
+    if ! $ASSUME_YES; then
+        read -p "Configure layout interactively? [y/N] " -n 1 -r; echo ""
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo "  Skipping — current monitors.conf left as-is"
+            return
+        fi
+    fi
+
+    local primary_w primary_h
+    primary_w=$(echo "$monitors_json" | jq -r --arg n "$primary" '.[] | select(.name==$n) | .width')
+    primary_h=$(echo "$monitors_json" | jq -r --arg n "$primary" '.[] | select(.name==$n) | .height')
+
+    local rules="" portrait_outputs="" secondary_outputs=""
+    local externals
+    externals=$(echo "$monitors_json" | jq -r --arg p "$primary" '.[] | select(.name != $p) | .name')
+
+    # Read externals from FD 3 so the inner read prompts still hit stdin/tty.
+    while IFS= read -r -u 3 ext; do
+        [[ -z "$ext" ]] && continue
+        local ext_w ext_h
+        ext_w=$(echo "$monitors_json" | jq -r --arg n "$ext" '.[] | select(.name==$n) | .width')
+        ext_h=$(echo "$monitors_json" | jq -r --arg n "$ext" '.[] | select(.name==$n) | .height')
+
+        local pos="right" orient="landscape"
+
+        if ! $ASSUME_YES; then
+            echo ""
+            echo "  External: $ext  (${ext_w}x${ext_h})"
+            echo "    Position relative to ${primary}:"
+            echo "      [1] left   [2] right   [3] above   [4] below"
+            read -p "    Choice [2]: " p_choice
+            case "$p_choice" in
+                1) pos="left" ;;
+                3) pos="above" ;;
+                4) pos="below" ;;
+                *) pos="right" ;;
+            esac
+
+            echo "    Orientation:"
+            echo "      [1] landscape   [2] portrait, rotated left   [3] portrait, rotated right"
+            read -p "    Choice [1]: " o_choice
+            case "$o_choice" in
+                2) orient="portrait-left" ;;
+                3) orient="portrait-right" ;;
+                *) orient="landscape" ;;
+            esac
+        fi
+
+        # Effective dimensions (after rotation)
+        local eff_w="$ext_w" eff_h="$ext_h" transform=0
+        case "$orient" in
+            portrait-left)  eff_w="$ext_h"; eff_h="$ext_w"; transform=3 ;;  # 270°
+            portrait-right) eff_w="$ext_h"; eff_h="$ext_w"; transform=1 ;;  #  90°
+        esac
+
+        # Position relative to primary anchored at 0,0. Hyprland accepts
+        # negative coords, so we just compute and let it normalize visually.
+        local ext_x=0 ext_y=0
+        case "$pos" in
+            right) ext_x=$primary_w;       ext_y=$(( (primary_h - eff_h) / 2 )) ;;
+            left)  ext_x=$(( -eff_w ));    ext_y=$(( (primary_h - eff_h) / 2 )) ;;
+            above) ext_x=$(( (primary_w - eff_w) / 2 )); ext_y=$(( -eff_h )) ;;
+            below) ext_x=$(( (primary_w - eff_w) / 2 )); ext_y=$primary_h ;;
+        esac
+
+        if (( transform != 0 )); then
+            rules+="monitor = ${ext}, preferred, ${ext_x}x${ext_y}, 1, transform, ${transform}"$'\n'
+            portrait_outputs+="${ext} "
+        else
+            rules+="monitor = ${ext}, preferred, ${ext_x}x${ext_y}, 1"$'\n'
+        fi
+        secondary_outputs+="${ext} "
+    done 3<<< "$externals"
+
+    # Write monitors.conf
+    local conf="$HOME/.config/hypr/modules/monitors.conf"
+    {
+        echo "# ╭──────────────────────────────────────────────────────────────────╮"
+        echo "# │                          Monitors                                │"
+        echo "# ╰──────────────────────────────────────────────────────────────────╯"
+        echo "# Generated by install.sh — re-run to reconfigure."
+        echo "# Per-monitor rules below; if a monitor is unplugged, Hyprland"
+        echo "# silently ignores its rule. The catch-all at the bottom handles"
+        echo "# unknown displays at runtime."
+        echo ""
+        echo "monitor = ${primary}, preferred, 0x0, 1"
+        printf '%s' "$rules"
+        echo ""
+        echo "# Catch-all for any unknown/disconnected displays at runtime"
+        echo "monitor = , preferred, auto, 1"
+    } > "$conf"
+
+    # Write layout sidecar (consumed by start_waybar.sh and rotate_wallpaper.sh)
+    {
+        echo "# Auto-generated by install.sh"
+        echo "PRIMARY=\"${primary}\""
+        echo "PORTRAIT_OUTPUTS=\"${portrait_outputs% }\""
+        echo "SECONDARY_OUTPUTS=\"${secondary_outputs% }\""
+    } > "$layout"
+
+    echo ""
+    echo "  + monitors.conf written ($conf)"
+    echo "  + layout sidecar       ($layout)"
+
+    # Auto-generate portrait wallpapers if any output was rotated.
+    if [[ -n "$portrait_outputs" ]]; then
+        _generate_portrait_wallpapers
     fi
 }
 

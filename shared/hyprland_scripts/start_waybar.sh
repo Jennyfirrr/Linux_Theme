@@ -19,8 +19,11 @@ set -euo pipefail
 WAYBAR_DIR="${HOME}/.config/waybar"
 STYLE_TMPL="${WAYBAR_DIR}/style.css.tmpl"
 CONFIG_TMPL="${WAYBAR_DIR}/config.tmpl"
+CONFIG_SECONDARY_TMPL="${WAYBAR_DIR}/config_secondary.tmpl"
 STYLE_OUT="${WAYBAR_DIR}/style.css"
 CONFIG_OUT="${WAYBAR_DIR}/config"
+CONFIG_SECONDARY_OUT="${WAYBAR_DIR}/config_secondary"
+LAYOUT_FILE="${HOME}/.config/foxml/monitor-layout.conf"
 
 # Effective width of the primary (first listed) monitor.
 # `width / scale` is what waybar/Hyprland actually lay out against — a 4K
@@ -119,6 +122,32 @@ substitute() {
 
 [[ -f "$STYLE_TMPL"  ]] && substitute "$STYLE_TMPL"  "$STYLE_OUT"
 [[ -f "$CONFIG_TMPL" ]] && substitute "$CONFIG_TMPL" "$CONFIG_OUT"
+[[ -f "$CONFIG_SECONDARY_TMPL" ]] && substitute "$CONFIG_SECONDARY_TMPL" "$CONFIG_SECONDARY_OUT"
+
+# Multi-monitor: if the layout sidecar lists secondary outputs, merge the
+# substituted main + secondary configs into a single JSON array with per-bar
+# "output" fields. Main bar pinned to PRIMARY, secondary bar pinned to the
+# external monitor(s). Without a sidecar (single monitor), keep the single-
+# object config and let waybar render on whatever's connected.
+PRIMARY=""
+SECONDARY_OUTPUTS=""
+if [[ -f "$LAYOUT_FILE" ]]; then
+    # shellcheck disable=SC1090
+    source "$LAYOUT_FILE"
+fi
+
+if [[ -n "$SECONDARY_OUTPUTS" && -f "$CONFIG_OUT" && -f "$CONFIG_SECONDARY_OUT" && -n "$PRIMARY" ]] \
+    && command -v jq >/dev/null 2>&1; then
+    SEC_JSON=$(printf '%s\n' $SECONDARY_OUTPUTS | jq -R . | jq -s .)
+    MERGED=$(jq -n \
+        --slurpfile main "$CONFIG_OUT" \
+        --slurpfile sec  "$CONFIG_SECONDARY_OUT" \
+        --arg primary "$PRIMARY" \
+        --argjson secs "$SEC_JSON" \
+        '[ ($main[0] + {output: [$primary]}), ($sec[0] + {output: $secs}) ]') \
+        && echo "$MERGED" > "$CONFIG_OUT" \
+        || echo "  ! waybar multi-bar merge failed — falling back to single bar"
+fi
 
 # Calculate Rofi offsets for the launcher-integrated look.
 # Y: bottom of the bar (top margin + height).

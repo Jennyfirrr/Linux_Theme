@@ -4,6 +4,36 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-08 — v2.2.0
+
+Multi-monitor support: interactive layout picker, name-keyed Hyprland rules that survive undocking, secondary waybar for external displays, auto-generated portrait wallpapers, and a tmux keybind to pop a pane into its own kitty window for placement on a rotated monitor.
+
+### Multi-monitor — Interactive setup
+- **`configure_monitors()`** — new handler in `mappings.sh`. Detects every connected output via `hyprctl monitors -j`, then for each non-primary monitor prompts position (left/right/above/below) and orientation (landscape / portrait-left / portrait-right). Writes `~/.config/hypr/modules/monitors.conf` with name-keyed rules and a sidecar at `~/.config/foxml/monitor-layout.conf` consumed downstream by waybar and the wallpaper rotator.
+- **Portable per-machine layout** — rules are keyed on output name (`HDMI-A-1`, `eDP-1`, …); Hyprland silently ignores rules for absent outputs, so undocking just falls back to the catch-all `monitor = , preferred, auto, 1`. Plug the same external back in and the saved layout reapplies. Re-installing on a new dock setup re-prompts.
+- **Skip-if-exists for `monitors.conf`** — the shared modules deploy loop in `mappings.sh` no longer clobbers a per-machine `monitors.conf`. First-run still seeds the catch-all default.
+- **`-y` auto-pilot** — under non-interactive install, externals default to right-of-laptop landscape with no prompts.
+
+### Waybar — Secondary bar on external monitors
+- **`shared/waybar_config_secondary`** — new bar definition: `group/launcher` (fox + workspaces) plus `custom/clock`. Inherits the same height/style tokens as the main bar so the shaded container matches.
+- **Multi-bar render** — `start_waybar.sh` reads the layout sidecar; if `SECONDARY_OUTPUTS` is set, merges main + secondary configs into a JSON array via `jq`, with `output` keys pinning each bar to its monitor(s). Single-monitor path unchanged.
+- **Install-time render moved** — waybar render now runs *after* `configure_monitors` (was running before, which baked in a single-bar config that survived configuration). Install also bounces a running waybar so the new layout takes effect immediately instead of waiting for next session.
+
+### Wallpapers — Portrait-aware
+- **Auto-generated portrait variants** — `_generate_portrait_wallpapers()` uses ImageMagick to center-crop every landscape wallpaper to 1080×1920 (`scale-to-fill, then extent`) into `${name}_portrait.${ext}`. Idempotent. Called by `configure_monitors()` when a rotated output is detected, plus a backstop in `install.sh` that re-runs whenever the sidecar lists a portrait output (covers the case where ImageMagick was installed in the same run after the first detection pass).
+- **Per-monitor application** — `rotate_wallpaper.sh` now iterates `hyprctl monitors -j` and applies via `awww img -o <name>` per output. Rotated monitors prefer the `_portrait` variant with `--resize fit`; fall back to landscape source with `--resize crop` if no variant exists.
+- **`imagemagick` added to deps** — installed via `--deps` for the generator.
+
+### Tmux — Pop pane to its own kitty window
+- **`prefix + M`** — new bind in `templates/tmux/.tmux.conf`. Captures the broken-out pane's window ID via `break-pane -P -F`, moves it into a fresh tmux session (placeholder window killed via `move-window -k`), then spawns `kitty --detach` attached to it via `env -u TMUX tmux attach`. Unsetting `TMUX` is what makes the new kitty actually attach to the popped session instead of nesting/falling back to the parent — without it both kitty windows mirror the original session.
+- **`prefix + m` rewritten** — same mechanics as `M` (clean session, no placeholder), and now auto-`switch-client`s your existing kitty into the new session instead of leaving you on the old one wondering whether anything happened.
+
+### Fixes
+- **`@anthropic-ai.agent-code` → `@anthropic-ai/claude-code`** — install.sh's npm globals had a malformed package name (no slash between scope and name) and a broken `command -v.agent` check. Fixed to install `@anthropic-ai/claude-code` and check for `claude` on PATH.
+- **Compiled `fox-intel` binaries removed from tree** — `src/fox-intel/fask` and `findex` are build artifacts; `install.sh` already rebuilds them on every run, so they never belonged in version control.
+
+---
+
 ## 2026-05-08 — v2.1.0
 
 OpenCode integration: palette-driven theming, multi-model picker, automatic skill discovery, and consolidated single-command bootstrap.

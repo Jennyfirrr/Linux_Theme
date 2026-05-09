@@ -165,6 +165,9 @@ if $INSTALL_DEPS; then
         libutf8proc xsimd
         # Tools
         hyprpicker
+        # imagemagick — used by configure_monitors() to auto-crop landscape
+        # wallpapers into portrait variants when a rotated monitor is detected
+        imagemagick
         # Power profile switcher (waybar power-profiles-daemon module);
         # python-gobject is the optional dep that makes `powerprofilesctl` work
         # for click-to-switch handlers
@@ -318,12 +321,12 @@ if $INSTALL_DEPS; then
     fi
 
     # Global CLI tools (npm). Idempotent: only installs ones missing from PATH.
-    #  - @google/gemini-cli      → `gemini`  (Local or Cloud Agent)
-    #  - @anthropic-ai.agent-code → .agent` (Anthropic Claude Code)
+    #  - @google/gemini-cli       → `gemini` (Gemini CLI)
+    #  - @anthropic-ai/claude-code → `claude` (Anthropic Claude Code)
     if command -v npm &>/dev/null; then
         NPM_GLOBALS=()
         command -v gemini &>/dev/null || NPM_GLOBALS+=("@google/gemini-cli")
-        command -v.agent &>/dev/null || NPM_GLOBALS+=("@anthropic-ai.agent-code")
+        command -v claude &>/dev/null || NPM_GLOBALS+=("@anthropic-ai/claude-code")
         if [[ ${#NPM_GLOBALS[@]} -gt 0 ]]; then
             echo ""
             echo "Installing CLI tools (npm -g): ${NPM_GLOBALS[*]}"
@@ -331,7 +334,7 @@ if $INSTALL_DEPS; then
                 && echo "  Installed: ${NPM_GLOBALS[*]}" \
                 || echo "  npm install failed — see output above"
         else
-            echo "  AI Agent + Claude Code already installed"
+            echo "  Gemini CLI + Claude Code already installed"
         fi
     fi
 fi
@@ -530,17 +533,10 @@ echo ""
 echo "Installing special configs..."
 install_specials "$RENDERED_DIR"
 
-# ─────────────────────────────────────────
-# Render waybar at install time so the live style.css/config exist
-# immediately (without waiting for the next Hyprland session). The wrapper
-# detects the current monitor and substitutes size tokens into the .tmpl
-# files just deployed by the mappings loop.
-# ─────────────────────────────────────────
-if [[ -x "$HOME/.config/hypr/scripts/start_waybar.sh" ]]; then
-    echo ""
-    echo "Rendering waybar for current monitor..."
-    "$HOME/.config/hypr/scripts/start_waybar.sh" --render-only || true
-fi
+# Waybar render is deferred until after configure_monitors writes the layout
+# sidecar — otherwise start_waybar.sh sees no SECONDARY_OUTPUTS and emits a
+# single-bar config, which wins over the multi-bar version a later run would
+# generate.
 
 # ─────────────────────────────────────────
 # Catppuccin cursor (per-user fetch from GitHub releases).
@@ -851,6 +847,45 @@ EOF
     # ─────────────────────────────────────────
     if $INSTALL_AI; then
         configure_opencode
+    fi
+
+    # ─────────────────────────────────────────
+    # Multi-monitor layout — runs after configs are deployed so the
+    # generated monitors.conf overrides the freshly-installed default.
+    # Skipped automatically when only one display is connected or when
+    # hyprctl can't reach the IPC socket (installer run from a TTY).
+    # ─────────────────────────────────────────
+    echo ""
+    echo "Configuring monitors..."
+    configure_monitors
+
+    # Backstop: regenerate portrait wallpapers any time the sidecar lists a
+    # rotated output, regardless of whether the user re-ran the picker. Covers
+    # the case where imagemagick was installed in this same run (after the
+    # first configure_monitors pass) or a fresh wallpaper was added since.
+    if [[ -f "$HOME/.config/foxml/monitor-layout.conf" ]]; then
+        # shellcheck disable=SC1090
+        source "$HOME/.config/foxml/monitor-layout.conf"
+        if [[ -n "${PORTRAIT_OUTPUTS:-}" ]]; then
+            _generate_portrait_wallpapers
+        fi
+    fi
+
+    # Render waybar AFTER configure_monitors so start_waybar.sh sees the layout
+    # sidecar and emits a multi-bar config when secondary monitors are present.
+    # Then bounce the running waybar so the new config takes effect immediately
+    # (otherwise the bar already on screen keeps the pre-configure single-bar
+    # render until the next Hyprland session).
+    if [[ -x "$HOME/.config/hypr/scripts/start_waybar.sh" ]]; then
+        echo ""
+        echo "Rendering waybar for current monitor layout..."
+        "$HOME/.config/hypr/scripts/start_waybar.sh" --render-only || true
+        if pgrep -x waybar >/dev/null 2>&1; then
+            pkill -x waybar 2>/dev/null || true
+            setsid "$HOME/.config/hypr/scripts/start_waybar.sh" >/dev/null 2>&1 < /dev/null &
+            disown 2>/dev/null || true
+            echo "  + waybar restarted"
+        fi
     fi
 
     # ─────────────────────────────────────────

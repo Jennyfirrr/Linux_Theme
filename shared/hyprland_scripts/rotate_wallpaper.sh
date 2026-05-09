@@ -100,10 +100,46 @@ if ! awww query &>/dev/null; then
     done
 fi
 
-awww img "$pick" \
-    --transition-type fade \
-    --transition-duration 1 \
-    --transition-fps 60
+# Per-monitor wallpaper. If hyprctl is available, iterate each connected
+# monitor and apply with -o. For rotated outputs (transform 1/3) prefer a
+# pre-rendered portrait variant ({name}_portrait.{ext}) — install.sh's
+# configure_monitors() generates these via imagemagick. Falls back to
+# --resize crop on the landscape source if no portrait variant exists.
+applied_per_monitor=false
+if command -v hyprctl >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
+    monitors_json=$(hyprctl monitors -j 2>/dev/null || true)
+    if [[ -n "$monitors_json" && "$monitors_json" != "[]" ]]; then
+        applied_per_monitor=true
+        pick_ext="${pick##*.}"
+        pick_base="${pick%.*}"
+        portrait_pick="${pick_base}_portrait.${pick_ext}"
+        while IFS=$'\t' read -r name transform; do
+            [[ -z "$name" ]] && continue
+            mon_pick="$pick"
+            resize="fit"
+            if [[ "$transform" == "1" || "$transform" == "3" ]]; then
+                if [[ -f "$portrait_pick" ]]; then
+                    mon_pick="$portrait_pick"
+                    resize="fit"
+                else
+                    resize="crop"
+                fi
+            fi
+            awww img -o "$name" "$mon_pick" \
+                --resize "$resize" \
+                --transition-type fade \
+                --transition-duration 1 \
+                --transition-fps 60 || true
+        done < <(echo "$monitors_json" | jq -r '.[] | "\(.name)\t\(.transform)"')
+    fi
+fi
+
+if ! $applied_per_monitor; then
+    awww img "$pick" \
+        --transition-type fade \
+        --transition-duration 1 \
+        --transition-fps 60
+fi
 
 echo "rotated to $filename"
 command -v notify-send &>/dev/null && \
