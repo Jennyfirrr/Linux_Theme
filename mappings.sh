@@ -219,19 +219,17 @@ PKGJSON
     fi
 
     # AI Agent (Gemini) — merge the rendered config into the user's settings.json
-    # so security/auth keys are preserved.
     local gemini_dir="${GEMINI_CONFIG_HOME:-$HOME/.gemini}"
     local gemini_settings="$gemini_dir/settings.json"
     if [[ -f "$rendered_dir/gemini/settings.json" ]]; then
         if [[ -f "$gemini_settings" ]]; then
             local tmp_settings; tmp_settings="$(mktemp)"
-            # Merge while preserving existing top-level keys like 'security'
             if jq -s '.[0] * .[1]' "$gemini_settings" "$rendered_dir/gemini/settings.json" > "$tmp_settings" 2>/dev/null; then
                 mv "$tmp_settings" "$gemini_settings"
                 echo "  Gemini settings (hooks + theme) merged"
             else
                 rm -f "$tmp_settings"
-                echo "  Gemini merge failed, skipping"
+                echo "  Gemini merge failed (jq error), skipping"
             fi
         else
             mkdir -p "$(dirname "$gemini_settings")"
@@ -246,9 +244,9 @@ PKGJSON
         mkdir -p "$HOME/.claude"
         if [[ ! -f "$claude_settings" ]]; then
             cat > "$claude_settings" << 'EOF'
-    {
-    "theme": "dark",
-    "hooks": {
+{
+  "theme": "dark",
+  "hooks": {
     "Stop": [
       {
         "matcher": "",
@@ -271,9 +269,9 @@ PKGJSON
         ]
       }
     ]
-    }
-    }
-    EOF
+  }
+}
+EOF
             echo "  Claude settings (hooks) created"
         elif command -v jq &>/dev/null; then
             # Add hooks if missing
@@ -287,8 +285,7 @@ PKGJSON
         fi
     fi
 
-    # ~/.local/bin helpers (tmux pane-label, etc.)
- — referenced by configs but
+    # ~/.local/bin helpers (tmux pane-label, etc.) — referenced by configs but
     # too small for their own subdir; kept executable on copy.
     if [[ -d "$SCRIPT_DIR/shared/bin" ]]; then
         mkdir -p "$HOME/.local/bin"

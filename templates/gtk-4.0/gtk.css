@@ -9,8 +9,8 @@
 @define-color panel2    rgba({{SURFACE_R}},{{SURFACE_G}},{{SURFACE_B}},0.5);          /* slate glass */
 @define-color border    @accent;
 
-@define-color ok        #{{OK}};
-@define-color warn      #{{WARN}};
+@define-color ok        #{{GREEN_BRIGHT}};
+@define-color warn      #{{YELLOW}};
 @define-color info      #{{ACCENT}};                     /* lavender */
 @define-color danger    #{{SECONDARY}};                     /* pink */
 
@@ -133,10 +133,10 @@ scrollbar slider:hover { background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PR
 tooltip { background: @panel2; color: @fg; border: 1px solid @border; }
 
 /* ====== Infobars ====== */
-.info    { background: alpha(@info, 0.15);   border: 1px solid alpha(@info, 0.6); }
-.warning { background: alpha(@warn, 0.15);   border: 1px solid alpha(@warn, 0.6); }
-.error,.danger { background: alpha(@danger, 0.15); border: 1px solid alpha(@danger, 0.6); }
-.success { background: alpha(@ok, 0.15);     border: 1px solid alpha(@ok, 0.6); }
+.info    { background: alpha(@info, 0.15);   border: 1px solid alpha(@info, {{KITTY_BG_OPACITY}}); }
+.warning { background: alpha(@warn, 0.15);   border: 1px solid alpha(@warn, {{KITTY_BG_OPACITY}}); }
+.error,.danger { background: alpha(@danger, 0.15); border: 1px solid alpha(@danger, {{KITTY_BG_OPACITY}}); }
+.success { background: alpha(@ok, 0.15);     border: 1px solid alpha(@ok, {{KITTY_BG_OPACITY}}); }
 
 /* ====== Menus / Popovers ====== */
 popover, popover contents {

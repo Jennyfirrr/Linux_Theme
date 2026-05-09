@@ -424,6 +424,9 @@ if $RENDER_ONLY; then
         [[ "$basename" == "nvidia.conf" ]] && continue
         cp "$mod" ~/.config/hypr/modules/
     done
+
+    # Special handlers (AI settings, Firefox, etc.)
+    install_specials "$RENDERED_DIR"
     
     # Still run waybar render to pick up monitor scale
     if [[ -x "$HOME/.config/hypr/scripts/start_waybar.sh" ]]; then

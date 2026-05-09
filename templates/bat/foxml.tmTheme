@@ -117,7 +117,7 @@
       <key>name</key>
       <string>Boolean</string>
       <key>scope</key>
-      <string>constant.language.boolean, constant.language.true, constant.language.false</string>
+      <string>constant.language.boolean, constant.language.{{SHOW_WELCOME}}, constant.language.false</string>
       <key>settings</key>
       <dict>
         <key>foreground</key>
@@ -468,7 +468,7 @@
       <key>settings</key>
       <dict>
         <key>foreground</key>
-        <string>#a89a7a</string>
+        <string>#{{SAND}}</string>
       </dict>
     </dict>
 

@@ -16,33 +16,33 @@ vim.deprecate = function(name, alternative, version, plugin, backtrace)
 end
 
 -- Basics
-vim.opt.number = true
-vim.opt.relativenumber = true
-vim.opt.expandtab = true
+vim.opt.number = {{SHOW_WELCOME}}
+vim.opt.relativenumber = {{SHOW_WELCOME}}
+vim.opt.expandtab = {{SHOW_WELCOME}}
 vim.opt.shiftwidth = 2
 vim.opt.tabstop = 2
-vim.opt.termguicolors = true
+vim.opt.termguicolors = {{SHOW_WELCOME}}
 vim.opt.signcolumn = "yes:2"
-vim.opt.splitbelow = true
-vim.opt.splitright = true
+vim.opt.splitbelow = {{SHOW_WELCOME}}
+vim.opt.splitright = {{SHOW_WELCOME}}
 vim.opt.updatetime = 250
 vim.opt.scrolloff = 8
-vim.opt.smoothscroll = true
-vim.opt.cursorline = true
+vim.opt.smoothscroll = {{SHOW_WELCOME}}
+vim.opt.cursorline = {{SHOW_WELCOME}}
 vim.opt.guicursor = "n-v-c:block,i-ci-ve:ver25,r-cr:hor20,o:hor50"
 vim.opt.clipboard = "unnamedplus"
-vim.opt.autoread = true           -- reload files changed outside nvim
+vim.opt.autoread = {{SHOW_WELCOME}}           -- reload files changed outside nvim
 vim.opt.swapfile = false          -- no .swp clutter (git is the safety net)
-vim.opt.undofile = true           -- persistent undo across sessions
+vim.opt.undofile = {{SHOW_WELCOME}}           -- persistent undo across sessions
 vim.opt.writebackup = false       -- avoid "file changed" prompts from backup writes
-vim.opt.autowriteall = true       -- auto-save when switching buffers / leaving
+vim.opt.autowriteall = {{SHOW_WELCOME}}       -- auto-save when switching buffers / leaving
 
 -- FoxML palette (single source of truth)
 local P = {
   bg_deep   = "#{{BG_DARK}}",
   bg        = "#{{BG}}",
   bg_alt    = "#{{BG_ALT}}",
-  bg_hl     = "#{{NVIM_BG_HL}}",
+  bg_hl     = "#{{TMUX_ACTIVE_BG}}",
   sel       = "#{{NVIM_SEL}}",
   fg        = "#{{FG}}",
   fg_pastel = "#{{FG_PASTEL}}",
@@ -71,7 +71,7 @@ local P = {
   diff_chg  = "#{{DIFF_CHANGE}}",
   diff_del  = "#{{DIFF_DELETE}}",
   diff_txt  = "#{{DIFF_TEXT}}",
-  ts_ctx    = "#{{TREESITTER_CTX}}",
+  ts_ctx    = "#{{TMUX_ACTIVE_BG}}",
   none      = "none",
 }
 
@@ -104,13 +104,13 @@ local plugins = {
             "RainbowIndent4", "RainbowIndent5", "RainbowIndent6",
           },
         },
-        scope = { enabled = true, show_start = false, show_end = false },
+        scope = { enabled = {{SHOW_WELCOME}}, show_start = false, show_end = false },
       })
     end },
 
   -- Core editing
-  { "numToStr/Comment.nvim",               config = true },
-  { "windwp/nvim-autopairs",               config = true },
+  { "numToStr/Comment.nvim",               config = {{SHOW_WELCOME}} },
+  { "windwp/nvim-autopairs",               config = {{SHOW_WELCOME}} },
   { "folke/which-key.nvim",                event = "VeryLazy",
     opts = {} },
 
@@ -134,10 +134,10 @@ local plugins = {
       "MunifTanjim/nui.nvim",
     },
     opts = {
-      close_if_last_window = true,
+      close_if_last_window = {{SHOW_WELCOME}},
       popup_border_style = "rounded",
-      enable_git_status = true,
-      enable_diagnostics = true,
+      enable_git_status = {{SHOW_WELCOME}},
+      enable_diagnostics = {{SHOW_WELCOME}},
       window = {
         width = 45,
         mappings = {
@@ -150,9 +150,9 @@ local plugins = {
         },
       },
       filesystem = {
-        follow_current_file = { enabled = true },
-        use_libuv_file_watcher = true,
-        group_empty_dirs = true,
+        follow_current_file = { enabled = {{SHOW_WELCOME}} },
+        use_libuv_file_watcher = {{SHOW_WELCOME}},
+        group_empty_dirs = {{SHOW_WELCOME}},
         filtered_items = {
           visible = false,
           hide_dotfiles = false,
@@ -164,7 +164,7 @@ local plugins = {
         indent = {
           indent_size = 2,
           padding = 1,
-          with_markers = true,
+          with_markers = {{SHOW_WELCOME}},
           indent_marker = "│",
           last_indent_marker = "└",
         },
@@ -175,7 +175,7 @@ local plugins = {
         },
         name = {
           trailing_slash = false,
-          use_git_status_colors = true,
+          use_git_status_colors = {{SHOW_WELCOME}},
         },
         git_status = {
           symbols = {
@@ -204,7 +204,7 @@ local plugins = {
       options = {
         diagnostics = "nvim_lsp",
         offsets = {
-          { filetype = "neo-tree", text = "  File Explorer", text_align = "left", highlight = "Directory", separator = true },
+          { filetype = "neo-tree", text = "  File Explorer", text_align = "left", highlight = "Directory", separator = {{SHOW_WELCOME}} },
         },
         separator_style = "thin",
         show_buffer_close_icons = false,
@@ -213,7 +213,7 @@ local plugins = {
       highlights = {
         fill = { bg = P.bg_deep },
         background = { fg = P.comment, bg = P.bg_deep },
-        buffer_selected = { fg = P.fg, bg = P.bg, bold = true },
+        buffer_selected = { fg = P.fg, bg = P.bg, bold = {{SHOW_WELCOME}} },
         buffer_visible = { fg = P.comment, bg = P.bg_deep },
         separator = { fg = P.bg_hl, bg = P.bg_deep },
         separator_selected = { fg = P.bg_hl, bg = P.bg },
@@ -223,13 +223,13 @@ local plugins = {
         modified_selected = { fg = P.yellow, bg = P.bg },
         modified_visible = { fg = P.yellow, bg = P.bg_deep },
         tab = { fg = P.comment, bg = P.bg_deep },
-        tab_selected = { fg = P.peach, bg = P.bg, bold = true },
+        tab_selected = { fg = P.peach, bg = P.bg, bold = {{SHOW_WELCOME}} },
         tab_separator = { fg = P.bg_hl, bg = P.bg_deep },
         tab_separator_selected = { fg = P.bg_hl, bg = P.bg },
-        duplicate = { fg = P.comment, bg = P.bg_deep, italic = true },
-        duplicate_selected = { fg = P.fg, bg = P.bg, italic = true },
-        duplicate_visible = { fg = P.comment, bg = P.bg_deep, italic = true },
-        diagnostic_selected = { bold = true },
+        duplicate = { fg = P.comment, bg = P.bg_deep, italic = {{SHOW_WELCOME}} },
+        duplicate_selected = { fg = P.fg, bg = P.bg, italic = {{SHOW_WELCOME}} },
+        duplicate_visible = { fg = P.comment, bg = P.bg_deep, italic = {{SHOW_WELCOME}} },
+        diagnostic_selected = { bold = {{SHOW_WELCOME}} },
       },
     },
   },
@@ -238,7 +238,7 @@ local plugins = {
   {
     "lewis6991/gitsigns.nvim",
     opts = {
-      current_line_blame = true,
+      current_line_blame = {{SHOW_WELCOME}},
       current_line_blame_opts = { delay = 300, virt_text_pos = "eol" },
       current_line_blame_formatter = "  <author>, <author_time:%R> · <summary>",
     },
@@ -287,12 +287,12 @@ local plugins = {
   -- Projects
   {
     "coffebar/project.nvim",
-    pin = true,
+    pin = {{SHOW_WELCOME}},
     event = "VeryLazy",
     opts = {
       detection_methods = { "lsp", "pattern" },
       patterns = { ".git", "compile_commands.json", "CMakeLists.txt", "Makefile" },
-      silent_chdir = true,
+      silent_chdir = {{SHOW_WELCOME}},
     },
     config = function(_, opts)
       require("project_nvim").setup(opts)
@@ -321,12 +321,12 @@ local plugins = {
     ft = { "c", "cpp", "cmake" },
     dependencies = { "nvim-lua/plenary.nvim", "stevearc/overseer.nvim", "akinsho/toggleterm.nvim" },
     opts = {
-      cmake_use_preset = true,
-      cmake_regenerate_on_save = true,
+      cmake_use_preset = {{SHOW_WELCOME}},
+      cmake_regenerate_on_save = {{SHOW_WELCOME}},
       cmake_generate_options = { "-DCMAKE_EXPORT_COMPILE_COMMANDS=1" },
       cmake_compile_commands_options = { action = "soft_link", target = vim.uv.cwd() },
       -- preset DAP integration (we'll install codelldb via Mason)
-      cmake_dap_configuration = { name = "cpp", type = "codelldb", request = "launch", runInTerminal = true },
+      cmake_dap_configuration = { name = "cpp", type = "codelldb", request = "launch", runInTerminal = {{SHOW_WELCOME}} },
     },
   },
 
@@ -339,11 +339,11 @@ local plugins = {
       { "<F11>", function() require("dap").step_into() end, desc = "DAP Step Into" },
     },
   },
-  { "nvim-neotest/nvim-nio",             lazy = true },
+  { "nvim-neotest/nvim-nio",             lazy = {{SHOW_WELCOME}} },
   {
     "rcarriga/nvim-dap-ui",
     dependencies = { "mfussenegger/nvim-dap", "nvim-neotest/nvim-nio" },
-    lazy = true,
+    lazy = {{SHOW_WELCOME}},
     config = function()
       local dap, dapui = require("dap"), require("dapui")
       dapui.setup()
@@ -354,16 +354,16 @@ local plugins = {
   },
   {
     "jay-babu/mason-nvim-dap.nvim",
-    lazy = true,
+    lazy = {{SHOW_WELCOME}},
     opts = {
-      automatic_installation = true,
+      automatic_installation = {{SHOW_WELCOME}},
       ensure_installed = { "codelldb" },
     },
   },
   {
     "theHamsta/nvim-dap-virtual-text",
     dependencies = { "mfussenegger/nvim-dap", "nvim-treesitter/nvim-treesitter" },
-    lazy = true,
+    lazy = {{SHOW_WELCOME}},
     opts = {},
   },
 
@@ -417,7 +417,7 @@ local plugins = {
       })
     end,
   },
-  { "alfaix/neotest-gtest", lazy = true },
+  { "alfaix/neotest-gtest", lazy = {{SHOW_WELCOME}} },
 
   -- Treesitter textobjects (daf = delete a function, vac = select a class, etc.)
   {
@@ -446,8 +446,8 @@ local plugins = {
     event = { "BufReadPost", "BufWinEnter" },
     config = function()
       vim.g.beacon_size = 30
-      vim.g.beacon_fade = true
-      vim.g.beacon_shrink = true
+      vim.g.beacon_fade = {{SHOW_WELCOME}}
+      vim.g.beacon_shrink = {{SHOW_WELCOME}}
       vim.g.beacon_minimal_jump = 1
     end,
   },
@@ -540,8 +540,8 @@ local plugins = {
     event = "VeryLazy",
     opts = {
       suggestion = {
-        enabled = true,
-        auto_trigger = true,
+        enabled = {{SHOW_WELCOME}},
+        auto_trigger = {{SHOW_WELCOME}},
         debounce = 150,
         keymap = {
           accept = "<C-l>",       -- Ctrl+l to accept
@@ -554,7 +554,7 @@ local plugins = {
       },
       panel = { enabled = false },
       filetypes = {
-        ["*"] = true,
+        ["*"] = {{SHOW_WELCOME}},
         ["AvanteInput"] = false,
         ["Avante"] = false,
         ["."] = false,
@@ -587,9 +587,9 @@ local plugins = {
       },
       behaviour = {
         auto_suggestions = false,
-        auto_set_keymaps = true,
+        auto_set_keymaps = {{SHOW_WELCOME}},
         auto_add_current_file = false,
-        auto_apply_diff_after_generation = true,
+        auto_apply_diff_after_generation = {{SHOW_WELCOME}},
       },
       history = {
         max_tokens = 8192,
@@ -597,8 +597,8 @@ local plugins = {
       windows = {
         width = 30,
         sidebar_header = {
-          rounded = true,
-          include_model = true,
+          rounded = {{SHOW_WELCOME}},
+          include_model = {{SHOW_WELCOME}},
         },
       },
     },
@@ -619,7 +619,7 @@ local plugins = {
     lazy = false,
     opts = {
       dashboard = {
-        enabled = true,
+        enabled = {{SHOW_WELCOME}},
         preset = {
           header = [[
          /\_/\
@@ -640,7 +640,7 @@ local plugins = {
           },
         },
       },
-      notifier = { enabled = true, style = "minimal" },
+      notifier = { enabled = {{SHOW_WELCOME}}, style = "minimal" },
       indent = { enabled = false },
     },
   },
@@ -677,9 +677,9 @@ local plugins = {
     ft = { "c", "cpp" },
     opts = {
       inlay_hints = {
-        inline = true,
+        inline = {{SHOW_WELCOME}},
         only_current_line = false,
-        show_parameter_hints = true,
+        show_parameter_hints = {{SHOW_WELCOME}},
         parameter_hints_prefix = "← ",
         other_hints_prefix = "→ ",
         highlight = "Comment",
@@ -740,7 +740,7 @@ local plugins = {
     dependencies = { "nvim-lua/plenary.nvim" },
     keys = {
       { "<leader>sr", function() require("spectre").toggle() end, desc = "Search & Replace (Spectre)" },
-      { "<leader>sw", function() require("spectre").open_visual({ select_word = true }) end, desc = "Search current word" },
+      { "<leader>sw", function() require("spectre").open_visual({ select_word = {{SHOW_WELCOME}} }) end, desc = "Search current word" },
       { "<leader>sw", function() require("spectre").open_visual() end, desc = "Search selection", mode = "v" },
     },
   },
@@ -754,7 +754,7 @@ local plugins = {
     dependencies = { "MunifTanjim/nui.nvim" },
     opts = {
       cmdline = {
-        enabled = true,
+        enabled = {{SHOW_WELCOME}},
         view = "cmdline_popup",
         format = {
           cmdline = { pattern = "^:", icon = " ", lang = "vim" },
@@ -764,23 +764,23 @@ local plugins = {
           lua = { pattern = { "^:%s*lua%s+", "^:%s*lua%s*=%s*", "^:%s*=%s*" }, icon = " ", lang = "lua" },
         },
       },
-      messages = { enabled = true, view = "mini", view_search = "virtualtext" },
-      popupmenu = { enabled = true, backend = "nui" },
+      messages = { enabled = {{SHOW_WELCOME}}, view = "mini", view_search = "virtualtext" },
+      popupmenu = { enabled = {{SHOW_WELCOME}}, backend = "nui" },
       lsp = {
         override = {
-          ["vim.lsp.util.convert_input_to_markdown_lines"] = true,
-          ["vim.lsp.util.stylize_markdown"] = true,
-          ["cmp.entry.get_documentation"] = true,
+          ["vim.lsp.util.convert_input_to_markdown_lines"] = {{SHOW_WELCOME}},
+          ["vim.lsp.util.stylize_markdown"] = {{SHOW_WELCOME}},
+          ["cmp.entry.get_documentation"] = {{SHOW_WELCOME}},
         },
-        hover = { enabled = true },
-        signature = { enabled = true },
+        hover = { enabled = {{SHOW_WELCOME}} },
+        signature = { enabled = {{SHOW_WELCOME}} },
         progress = { enabled = false }, -- fidget handles this
       },
       presets = {
         bottom_search = false,
-        command_palette = true,
-        long_message_to_split = true,
-        lsp_doc_border = true,
+        command_palette = {{SHOW_WELCOME}},
+        long_message_to_split = {{SHOW_WELCOME}},
+        lsp_doc_border = {{SHOW_WELCOME}},
       },
     },
   },
@@ -793,12 +793,12 @@ local plugins = {
     opts = {
       filetypes = { "*", "!c", "!cpp", "!h" },
       user_default_options = {
-        RGB = true,
-        RRGGBB = true,
+        RGB = {{SHOW_WELCOME}},
+        RRGGBB = {{SHOW_WELCOME}},
         names = false,
-        RRGGBBAA = true,
-        css = true,
-        css_fn = true,
+        RRGGBBAA = {{SHOW_WELCOME}},
+        css = {{SHOW_WELCOME}},
+        css_fn = {{SHOW_WELCOME}},
         mode = "background",
         virtualtext = "  ",
       },
@@ -870,7 +870,7 @@ local plugins = {
   {
     "kevinhwang91/nvim-hlslens",
     event = "BufReadPost",
-    opts = { calm_down = true, nearest_only = true },
+    opts = { calm_down = {{SHOW_WELCOME}}, nearest_only = {{SHOW_WELCOME}} },
   },
 
 }
@@ -890,7 +890,7 @@ vim.opt.pumblend = 15
 -- FoxML custom colorscheme (no external theme dependency)
 -- ═══════════════════════════════════════════════════════════════
 local function apply_foxml_theme()
-  vim.o.background = "dark"
+  vim.o.background = "{{THEME_TYPE}}"
   vim.g.colors_name = "foxml"
 
   local hl = function(name, opts) vim.api.nvim_set_hl(0, name, opts) end
@@ -919,14 +919,14 @@ local function apply_foxml_theme()
   hl("NormalNC",     { fg = P.fg, bg = P.none })
   hl("NormalFloat",  { fg = P.fg, bg = P.bg })
   hl("FloatBorder",  { fg = P.peach, bg = P.none })
-  hl("FloatTitle",   { fg = P.peach, bg = P.none, bold = true })
+  hl("FloatTitle",   { fg = P.peach, bg = P.none, bold = {{SHOW_WELCOME}} })
   hl("CursorLine",  { bg = P.bg_hl })
   hl("CursorColumn", { bg = P.bg_hl })
   hl("ColorColumn",  { bg = P.bg_hl })
   hl("Visual",       { bg = P.sel })
   hl("VisualNOS",    { bg = P.sel })
   hl("LineNr",       { fg = P.surface })
-  hl("CursorLineNr", { fg = P.peach, bold = true })
+  hl("CursorLineNr", { fg = P.peach, bold = {{SHOW_WELCOME}} })
   hl("SignColumn",   { fg = P.surface, bg = P.none })
   hl("EndOfBuffer",  { fg = P.bg })
   hl("VertSplit",    { fg = P.yellow_br, bg = P.none })
@@ -935,15 +935,15 @@ local function apply_foxml_theme()
   hl("PmenuSel",     { bg = P.surface })
   hl("PmenuSbar",    { bg = P.bg_hl })
   hl("PmenuThumb",   { bg = P.comment })
-  hl("WildMenu",     { fg = P.bg, bg = P.peach, bold = true })
+  hl("WildMenu",     { fg = P.bg, bg = P.peach, bold = {{SHOW_WELCOME}} })
   hl("StatusLine",   { fg = P.warm, bg = P.none })
   hl("StatusLineNC", { fg = P.surface, bg = P.none })
   hl("TabLine",      { fg = P.comment, bg = P.bg_deep })
-  hl("TabLineSel",   { fg = P.peach, bg = P.bg_hl, bold = true })
+  hl("TabLineSel",   { fg = P.peach, bg = P.bg_hl, bold = {{SHOW_WELCOME}} })
   hl("TabLineFill",  { bg = P.bg_deep })
   hl("WinBar",       { fg = P.comment, bg = P.none })
   hl("WinBarNC",     { fg = P.surface, bg = P.none })
-  hl("Title",        { fg = P.peach, bold = true })
+  hl("Title",        { fg = P.peach, bold = {{SHOW_WELCOME}} })
   hl("Directory",    { fg = P.cyan })
   hl("Question",     { fg = P.green })
   hl("SpecialKey",   { fg = P.surface })
@@ -956,9 +956,9 @@ local function apply_foxml_theme()
   -- ── Search & Match ──
   hl("Search",       { fg = P.bg, bg = P.peach })
   hl("IncSearch",    { fg = P.bg, bg = P.pink })
-  hl("CurSearch",    { fg = P.bg, bg = P.peach, bold = true })
+  hl("CurSearch",    { fg = P.bg, bg = P.peach, bold = {{SHOW_WELCOME}} })
   hl("Substitute",   { fg = P.bg, bg = P.red })
-  hl("MatchParen",   { fg = P.pink, bold = true, underline = true })
+  hl("MatchParen",   { fg = P.pink, bold = {{SHOW_WELCOME}}, underline = {{SHOW_WELCOME}} })
 
   -- ── Fold ──
   hl("Folded",       { fg = P.comment, bg = P.bg_hl })
@@ -966,27 +966,27 @@ local function apply_foxml_theme()
 
   -- ── Messages ──
   hl("MsgArea",      { fg = P.warm, bg = P.bg_deep })
-  hl("WarningMsg",   { fg = P.wheat, bold = true })
-  hl("ErrorMsg",     { fg = P.clay, bold = true })
-  hl("ModeMsg",      { fg = P.peach, bold = true })
+  hl("WarningMsg",   { fg = P.wheat, bold = {{SHOW_WELCOME}} })
+  hl("ErrorMsg",     { fg = P.clay, bold = {{SHOW_WELCOME}} })
+  hl("ModeMsg",      { fg = P.peach, bold = {{SHOW_WELCOME}} })
   hl("MoreMsg",      { fg = P.green })
 
   -- ── Built-in syntax groups ──
-  hl("Comment",      { fg = P.comment, italic = true })
+  hl("Comment",      { fg = P.comment, italic = {{SHOW_WELCOME}} })
   hl("Constant",     { fg = P.peach })
   hl("String",       { fg = P.green })
   hl("Character",    { fg = P.green })
-  hl("Number",       { fg = P.yellow, bold = true })
-  hl("Boolean",      { fg = P.peach, bold = true })
-  hl("Float",        { fg = P.yellow, bold = true })
+  hl("Number",       { fg = P.yellow, bold = {{SHOW_WELCOME}} })
+  hl("Boolean",      { fg = P.peach, bold = {{SHOW_WELCOME}} })
+  hl("Float",        { fg = P.yellow, bold = {{SHOW_WELCOME}} })
   hl("Identifier",   { fg = P.fg })
   hl("Function",     { fg = P.peach })
-  hl("Statement",    { fg = P.pink, bold = true })
-  hl("Conditional",  { fg = P.pink, bold = true })
-  hl("Repeat",       { fg = P.pink, bold = true })
+  hl("Statement",    { fg = P.pink, bold = {{SHOW_WELCOME}} })
+  hl("Conditional",  { fg = P.pink, bold = {{SHOW_WELCOME}} })
+  hl("Repeat",       { fg = P.pink, bold = {{SHOW_WELCOME}} })
   hl("Label",        { fg = P.pink })
   hl("Operator",     { fg = P.pink })
-  hl("Keyword",      { fg = P.pink, bold = true })
+  hl("Keyword",      { fg = P.pink, bold = {{SHOW_WELCOME}} })
   hl("Exception",    { fg = P.pink })
   hl("PreProc",      { fg = P.cyan })
   hl("Include",      { fg = P.cyan })
@@ -1001,14 +1001,14 @@ local function apply_foxml_theme()
   hl("SpecialChar",  { fg = P.green })
   hl("Tag",          { fg = P.peach })
   hl("Delimiter",    { fg = P.peach })
-  hl("SpecialComment", { fg = P.comment, bold = true })
+  hl("SpecialComment", { fg = P.comment, bold = {{SHOW_WELCOME}} })
   hl("Debug",        { fg = P.red })
-  hl("Underlined",   { underline = true })
-  hl("Bold",         { bold = true })
-  hl("Italic",       { italic = true })
+  hl("Underlined",   { underline = {{SHOW_WELCOME}} })
+  hl("Bold",         { bold = {{SHOW_WELCOME}} })
+  hl("Italic",       { italic = {{SHOW_WELCOME}} })
   hl("Ignore",       {})
   hl("Error",        { fg = P.red })
-  hl("Todo",         { fg = P.bg, bg = P.yellow, bold = true })
+  hl("Todo",         { fg = P.bg, bg = P.yellow, bold = {{SHOW_WELCOME}} })
 
   -- ── Diagnostics ──
   hl("DiagnosticError",          { fg = P.clay })
@@ -1016,12 +1016,12 @@ local function apply_foxml_theme()
   hl("DiagnosticInfo",           { fg = P.peach })
   hl("DiagnosticHint",           { fg = P.green })
   hl("DiagnosticOk",             { fg = P.green })
-  hl("DiagnosticUnderlineError", { undercurl = true, sp = P.clay })
-  hl("DiagnosticUnderlineWarn",  { undercurl = true, sp = P.wheat })
-  hl("DiagnosticUnderlineInfo",  { undercurl = true, sp = P.peach })
-  hl("DiagnosticUnderlineHint",  { undercurl = true, sp = P.green })
-  hl("DiagnosticUnderlineOk",    { undercurl = true, sp = P.green })
-  hl("DiagnosticVirtualTextError", { fg = P.clay, bg = P.diff_del, bold = true })
+  hl("DiagnosticUnderlineError", { undercurl = {{SHOW_WELCOME}}, sp = P.clay })
+  hl("DiagnosticUnderlineWarn",  { undercurl = {{SHOW_WELCOME}}, sp = P.wheat })
+  hl("DiagnosticUnderlineInfo",  { undercurl = {{SHOW_WELCOME}}, sp = P.peach })
+  hl("DiagnosticUnderlineHint",  { undercurl = {{SHOW_WELCOME}}, sp = P.green })
+  hl("DiagnosticUnderlineOk",    { undercurl = {{SHOW_WELCOME}}, sp = P.green })
+  hl("DiagnosticVirtualTextError", { fg = P.clay, bg = P.diff_del, bold = {{SHOW_WELCOME}} })
   hl("DiagnosticVirtualTextWarn",  { fg = P.wheat, bg = P.diff_chg })
   hl("DiagnosticVirtualTextInfo",  { fg = P.peach })
   hl("DiagnosticVirtualTextHint",  { fg = P.green })
@@ -1029,10 +1029,10 @@ local function apply_foxml_theme()
   hl("DiagnosticSignWarn",        { fg = P.wheat })
   hl("DiagnosticSignInfo",        { fg = P.peach })
   hl("DiagnosticSignHint",        { fg = P.green })
-  hl("DiagnosticLineNrError",    { fg = P.clay, bold = true })
-  hl("DiagnosticLineNrWarn",     { fg = P.wheat, bold = true })
-  hl("DiagnosticLineNrInfo",     { fg = P.peach, bold = true })
-  hl("DiagnosticLineNrHint",     { fg = P.green, bold = true })
+  hl("DiagnosticLineNrError",    { fg = P.clay, bold = {{SHOW_WELCOME}} })
+  hl("DiagnosticLineNrWarn",     { fg = P.wheat, bold = {{SHOW_WELCOME}} })
+  hl("DiagnosticLineNrInfo",     { fg = P.peach, bold = {{SHOW_WELCOME}} })
+  hl("DiagnosticLineNrHint",     { fg = P.green, bold = {{SHOW_WELCOME}} })
   hl("DiagnosticLineError",     { bg = "#3d1a1a" })
   hl("DiagnosticLineWarn",      { bg = "#3d2e1a" })
   hl("DiagnosticLineInfo",      { bg = P.bg_hl })
@@ -1044,7 +1044,7 @@ local function apply_foxml_theme()
   hl("@variable.parameter",  { fg = P.yellow_br })
   hl("@variable.member",     { fg = P.green })
   hl("@constant",            { fg = P.yellow })
-  hl("@constant.builtin",    { fg = P.yellow, bold = true })
+  hl("@constant.builtin",    { fg = P.yellow, bold = {{SHOW_WELCOME}} })
   hl("@constant.macro",      { fg = P.yellow })
   hl("@module",              { fg = P.pink })
   hl("@string",              { fg = P.green })
@@ -1052,10 +1052,10 @@ local function apply_foxml_theme()
   hl("@string.regex",        { fg = P.cyan })
   hl("@string.special",      { fg = P.cyan })
   hl("@character",           { fg = P.green })
-  hl("@number",              { fg = P.yellow, bold = true })
-  hl("@number.float",        { fg = P.yellow, bold = true })
-  hl("@number.hex",          { fg = P.yellow, bold = true })
-  hl("@boolean",             { fg = P.peach, bold = true })
+  hl("@number",              { fg = P.yellow, bold = {{SHOW_WELCOME}} })
+  hl("@number.float",        { fg = P.yellow, bold = {{SHOW_WELCOME}} })
+  hl("@number.hex",          { fg = P.yellow, bold = {{SHOW_WELCOME}} })
+  hl("@boolean",             { fg = P.peach, bold = {{SHOW_WELCOME}} })
   hl("@type",                { fg = P.cyan })
   hl("@type.builtin",        { fg = P.cyan })
   hl("@type.definition",     { fg = P.cyan })
@@ -1070,33 +1070,33 @@ local function apply_foxml_theme()
   hl("@function.method.call", { fg = P.peach })
   hl("@constructor",         { fg = P.peach })
   hl("@operator",            { fg = P.lavender })
-  hl("@keyword",             { fg = P.pink, bold = true })
-  hl("@keyword.function",    { fg = P.pink, bold = true })
+  hl("@keyword",             { fg = P.pink, bold = {{SHOW_WELCOME}} })
+  hl("@keyword.function",    { fg = P.pink, bold = {{SHOW_WELCOME}} })
   hl("@keyword.operator",    { fg = P.pink })
-  hl("@keyword.return",      { fg = P.lavender, bold = true })
+  hl("@keyword.return",      { fg = P.lavender, bold = {{SHOW_WELCOME}} })
   hl("@keyword.import",      { fg = P.cyan })
-  hl("@keyword.conditional", { fg = P.pink, bold = true })
-  hl("@keyword.repeat",      { fg = P.pink, bold = true })
+  hl("@keyword.conditional", { fg = P.pink, bold = {{SHOW_WELCOME}} })
+  hl("@keyword.repeat",      { fg = P.pink, bold = {{SHOW_WELCOME}} })
   hl("@keyword.exception",   { fg = P.pink })
   hl("@punctuation",         { fg = P.fg })
   hl("@punctuation.bracket",  { fg = P.sand })
   hl("@punctuation.delimiter", { fg = P.peach })
   hl("@punctuation.special",  { fg = P.pink })
-  hl("@comment",             { fg = P.comment, italic = true })
-  hl("@comment.todo",        { fg = P.bg, bg = P.yellow, bold = true })
-  hl("@comment.note",        { fg = P.bg, bg = P.green, bold = true })
-  hl("@comment.warning",     { fg = P.bg, bg = P.yellow, bold = true })
-  hl("@comment.error",       { fg = P.bg, bg = P.red, bold = true })
+  hl("@comment",             { fg = P.comment, italic = {{SHOW_WELCOME}} })
+  hl("@comment.todo",        { fg = P.bg, bg = P.yellow, bold = {{SHOW_WELCOME}} })
+  hl("@comment.note",        { fg = P.bg, bg = P.green, bold = {{SHOW_WELCOME}} })
+  hl("@comment.warning",     { fg = P.bg, bg = P.yellow, bold = {{SHOW_WELCOME}} })
+  hl("@comment.error",       { fg = P.bg, bg = P.red, bold = {{SHOW_WELCOME}} })
   hl("@tag",                 { fg = P.peach })
   hl("@tag.attribute",       { fg = P.pink })
   hl("@tag.delimiter",       { fg = P.fg })
-  hl("@markup.heading",      { fg = P.peach, bold = true })
-  hl("@markup.italic",       { italic = true })
-  hl("@markup.strong",       { bold = true })
-  hl("@markup.strikethrough", { strikethrough = true })
-  hl("@markup.underline",    { underline = true })
-  hl("@markup.link",         { fg = P.cyan, underline = true })
-  hl("@markup.link.url",     { fg = P.cyan, underline = true })
+  hl("@markup.heading",      { fg = P.peach, bold = {{SHOW_WELCOME}} })
+  hl("@markup.italic",       { italic = {{SHOW_WELCOME}} })
+  hl("@markup.strong",       { bold = {{SHOW_WELCOME}} })
+  hl("@markup.strikethrough", { strikethrough = {{SHOW_WELCOME}} })
+  hl("@markup.underline",    { underline = {{SHOW_WELCOME}} })
+  hl("@markup.link",         { fg = P.cyan, underline = {{SHOW_WELCOME}} })
+  hl("@markup.link.url",     { fg = P.cyan, underline = {{SHOW_WELCOME}} })
   hl("@markup.raw",          { fg = P.green })
   hl("@markup.list",         { fg = P.pink })
 
@@ -1119,12 +1119,12 @@ local function apply_foxml_theme()
   hl("@lsp.type.member.c",      { link = "@variable.member" })
   hl("@lsp.type.member.cpp",    { link = "@variable.member" })
   hl("@lsp.type.namespace",     { fg = P.pink })
-  hl("@lsp.type.keyword",       { fg = P.pink, bold = true })
+  hl("@lsp.type.keyword",       { fg = P.pink, bold = {{SHOW_WELCOME}} })
   hl("@lsp.type.type",          { fg = P.cyan })
   hl("@lsp.type.typeParameter", { fg = P.cyan })
-  hl("@lsp.type.comment",       { fg = P.comment, italic = true })
-  hl("@lsp.mod.deprecated",     { strikethrough = true })
-  hl("@lsp.mod.readonly",       { bold = true })
+  hl("@lsp.type.comment",       { fg = P.comment, italic = {{SHOW_WELCOME}} })
+  hl("@lsp.mod.deprecated",     { strikethrough = {{SHOW_WELCOME}} })
+  hl("@lsp.mod.readonly",       { bold = {{SHOW_WELCOME}} })
   hl("@lsp.typemod.function.defaultLibrary", { fg = P.peach })
   hl("@lsp.typemod.variable.defaultLibrary", { fg = P.pink })
   hl("@lsp.typemod.variable.member",         { link = "@variable.member" })
@@ -1136,10 +1136,10 @@ local function apply_foxml_theme()
   hl("DiffChange",   { bg = P.diff_chg })
   hl("DiffDelete",   { bg = P.diff_del })
   hl("DiffText",     { bg = P.diff_txt })
-  hl("SpellBad",     { undercurl = true, sp = P.red })
-  hl("SpellCap",     { undercurl = true, sp = P.yellow })
-  hl("SpellRare",    { undercurl = true, sp = P.cyan })
-  hl("SpellLocal",   { undercurl = true, sp = P.green })
+  hl("SpellBad",     { undercurl = {{SHOW_WELCOME}}, sp = P.red })
+  hl("SpellCap",     { undercurl = {{SHOW_WELCOME}}, sp = P.yellow })
+  hl("SpellRare",    { undercurl = {{SHOW_WELCOME}}, sp = P.cyan })
+  hl("SpellLocal",   { undercurl = {{SHOW_WELCOME}}, sp = P.green })
 
   -- ── Plugin highlights ──
 
@@ -1151,16 +1151,16 @@ local function apply_foxml_theme()
   hl("TelescopePromptBorder",  { fg = P.pink })
   hl("TelescopeResultsBorder", { fg = P.peach })
   hl("TelescopePreviewBorder", { fg = P.green })
-  hl("TelescopePromptTitle",   { fg = P.bg, bg = P.pink, bold = true })
-  hl("TelescopeResultsTitle",  { fg = P.bg, bg = P.peach, bold = true })
-  hl("TelescopePreviewTitle",  { fg = P.bg, bg = P.green, bold = true })
+  hl("TelescopePromptTitle",   { fg = P.bg, bg = P.pink, bold = {{SHOW_WELCOME}} })
+  hl("TelescopeResultsTitle",  { fg = P.bg, bg = P.peach, bold = {{SHOW_WELCOME}} })
+  hl("TelescopePreviewTitle",  { fg = P.bg, bg = P.green, bold = {{SHOW_WELCOME}} })
 
   -- Snacks dashboard
-  hl("SnacksDashboardHeader",  { fg = P.pink, bold = true })
-  hl("SnacksDashboardKey",     { fg = P.peach, bold = true })
+  hl("SnacksDashboardHeader",  { fg = P.pink, bold = {{SHOW_WELCOME}} })
+  hl("SnacksDashboardKey",     { fg = P.peach, bold = {{SHOW_WELCOME}} })
   hl("SnacksDashboardDesc",    { fg = P.fg })
   hl("SnacksDashboardIcon",    { fg = P.green })
-  hl("SnacksDashboardFooter",  { fg = P.comment, italic = true })
+  hl("SnacksDashboardFooter",  { fg = P.comment, italic = {{SHOW_WELCOME}} })
 
   -- Git signs
   hl("GitSignsAdd",    { fg = P.green })
@@ -1168,22 +1168,22 @@ local function apply_foxml_theme()
   hl("GitSignsDelete", { fg = P.red })
 
   -- Flash.nvim
-  hl("FlashLabel",    { fg = P.bg, bg = P.peach, bold = true })
+  hl("FlashLabel",    { fg = P.bg, bg = P.peach, bold = {{SHOW_WELCOME}} })
   hl("FlashMatch",    { fg = P.fg, bg = P.bg_hl })
-  hl("FlashCurrent",  { fg = P.bg, bg = P.pink, bold = true })
+  hl("FlashCurrent",  { fg = P.bg, bg = P.pink, bold = {{SHOW_WELCOME}} })
   hl("FlashBackdrop", { fg = P.surface })
 
   -- Trouble.nvim
   hl("TroubleNormal",   { bg = P.bg_deep })
   hl("TroubleNormalNC", { bg = P.bg_deep })
   hl("TroubleText",     { fg = P.fg })
-  hl("TroubleCount",    { fg = P.bg, bg = P.peach, bold = true })
+  hl("TroubleCount",    { fg = P.bg, bg = P.peach, bold = {{SHOW_WELCOME}} })
   hl("TroubleFile",     { fg = P.peach })
   hl("TroubleFoldIcon", { fg = P.pink })
   hl("TroubleLocation", { fg = P.comment })
 
   -- Which-key
-  hl("WhichKey",          { fg = P.peach, bold = true })
+  hl("WhichKey",          { fg = P.peach, bold = {{SHOW_WELCOME}} })
   hl("WhichKeyGroup",     { fg = P.pink })
   hl("WhichKeyDesc",      { fg = P.fg })
   hl("WhichKeySeparator", { fg = P.surface })
@@ -1211,23 +1211,23 @@ local function apply_foxml_theme()
   hl("NeoTreeEndOfBuffer",   { fg = P.bg_deep, bg = P.bg_deep })
   hl("NeoTreeDirectoryName", { fg = P.peach })
   hl("NeoTreeDirectoryIcon", { fg = P.peach })
-  hl("NeoTreeRootName",      { fg = P.pink, bold = true })
+  hl("NeoTreeRootName",      { fg = P.pink, bold = {{SHOW_WELCOME}} })
   hl("NeoTreeFileName",      { fg = P.fg })
   hl("NeoTreeFileIcon",      { fg = P.fg })
-  hl("NeoTreeGitAdded",      { fg = "#6b9a7a" })
+  hl("NeoTreeGitAdded",      { fg = "#{{GREEN}}" })
   hl("NeoTreeGitModified",   { fg = "#b8a47a" })
   hl("NeoTreeGitDeleted",    { fg = "#a06060" })
   hl("NeoTreeGitUntracked",  { fg = "#a06060" })
-  hl("NeoTreeGitConflict",   { fg = P.red, bold = true })
+  hl("NeoTreeGitConflict",   { fg = P.red, bold = {{SHOW_WELCOME}} })
   hl("NeoTreeIndentMarker",  { fg = P.bg_hl })
   hl("NeoTreeWinSeparator",  { fg = P.bg_deep, bg = P.bg_deep })
   hl("NeoTreeCursorLine",    { bg = P.bg_hl })
-  hl("NeoTreeTitleBar",      { fg = P.bg, bg = P.peach, bold = true })
+  hl("NeoTreeTitleBar",      { fg = P.bg, bg = P.peach, bold = {{SHOW_WELCOME}} })
   hl("NeoTreeFloatBorder",   { fg = P.peach })
-  hl("NeoTreeFloatTitle",    { fg = P.peach, bold = true })
+  hl("NeoTreeFloatTitle",    { fg = P.peach, bold = {{SHOW_WELCOME}} })
 
   -- DAP UI
-  hl("DapUIScope",                   { fg = P.peach, bold = true })
+  hl("DapUIScope",                   { fg = P.peach, bold = {{SHOW_WELCOME}} })
   hl("DapUIType",                    { fg = P.pink })
   hl("DapUIValue",                   { fg = P.green })
   hl("DapUIVariable",                { fg = P.fg })
@@ -1237,14 +1237,14 @@ local function apply_foxml_theme()
   hl("DapUISource",                  { fg = P.pink })
   hl("DapUIBreakpointsPath",         { fg = P.peach })
   hl("DapUIBreakpointsInfo",         { fg = P.cyan })
-  hl("DapUIBreakpointsCurrentLine",  { fg = P.green, bold = true })
+  hl("DapUIBreakpointsCurrentLine",  { fg = P.green, bold = {{SHOW_WELCOME}} })
   hl("DapUIBreakpointsLine",         { fg = P.peach })
   hl("DapUIBreakpointsDisabledLine", { fg = P.surface })
   hl("DapUIDecoration",              { fg = P.peach })
   hl("DapUIWatchesEmpty",            { fg = P.surface })
   hl("DapUIWatchesValue",            { fg = P.green })
   hl("DapUIWatchesError",            { fg = P.red })
-  hl("DapUIModifiedValue",           { fg = P.yellow, bold = true })
+  hl("DapUIModifiedValue",           { fg = P.yellow, bold = {{SHOW_WELCOME}} })
   hl("DapUIFloatNormal",             { bg = P.bg_deep })
   hl("DapUIFloatBorder",             { fg = P.peach })
 
@@ -1262,7 +1262,7 @@ local function apply_foxml_theme()
   hl("AerialVariableIcon", { fg = P.fg })
 
   -- Diffview
-  hl("DiffviewFilePanelTitle",   { fg = P.peach, bold = true })
+  hl("DiffviewFilePanelTitle",   { fg = P.peach, bold = {{SHOW_WELCOME}} })
   hl("DiffviewFilePanelCounter", { fg = P.pink })
   hl("DiffviewFilePanelFileName", { fg = P.fg })
   hl("DiffviewNormal",           { bg = P.bg_deep })
@@ -1275,28 +1275,28 @@ local function apply_foxml_theme()
   hl("NeotestNamespace",    { fg = P.pink })
   hl("NeotestFile",         { fg = P.peach })
   hl("NeotestDir",          { fg = P.peach })
-  hl("NeotestAdapterName",  { fg = P.pink, bold = true })
-  hl("NeotestFocused",      { bold = true, underline = true })
+  hl("NeotestAdapterName",  { fg = P.pink, bold = {{SHOW_WELCOME}} })
+  hl("NeotestFocused",      { bold = {{SHOW_WELCOME}}, underline = {{SHOW_WELCOME}} })
   hl("NeotestIndent",       { fg = P.bg_hl })
   hl("NeotestExpandMarker", { fg = P.surface })
-  hl("NeotestWinSelect",    { fg = P.peach, bold = true })
+  hl("NeotestWinSelect",    { fg = P.peach, bold = {{SHOW_WELCOME}} })
 
   -- Harpoon
   hl("HarpoonWindow", { bg = P.bg_deep })
   hl("HarpoonBorder", { fg = P.peach })
 
   -- TODO comments
-  hl("TodoBgTODO", { fg = P.bg, bg = P.peach, bold = true })
+  hl("TodoBgTODO", { fg = P.bg, bg = P.peach, bold = {{SHOW_WELCOME}} })
   hl("TodoFgTODO", { fg = P.peach })
-  hl("TodoBgFIX",  { fg = P.bg, bg = P.red, bold = true })
+  hl("TodoBgFIX",  { fg = P.bg, bg = P.red, bold = {{SHOW_WELCOME}} })
   hl("TodoFgFIX",  { fg = P.red })
-  hl("TodoBgHACK", { fg = P.bg, bg = P.yellow, bold = true })
+  hl("TodoBgHACK", { fg = P.bg, bg = P.yellow, bold = {{SHOW_WELCOME}} })
   hl("TodoFgHACK", { fg = P.yellow })
-  hl("TodoBgNOTE", { fg = P.bg, bg = P.green, bold = true })
+  hl("TodoBgNOTE", { fg = P.bg, bg = P.green, bold = {{SHOW_WELCOME}} })
   hl("TodoFgNOTE", { fg = P.green })
-  hl("TodoBgWARN", { fg = P.bg, bg = P.yellow, bold = true })
+  hl("TodoBgWARN", { fg = P.bg, bg = P.yellow, bold = {{SHOW_WELCOME}} })
   hl("TodoFgWARN", { fg = P.yellow })
-  hl("TodoBgPERF", { fg = P.bg, bg = P.pink, bold = true })
+  hl("TodoBgPERF", { fg = P.bg, bg = P.pink, bold = {{SHOW_WELCOME}} })
   hl("TodoFgPERF", { fg = P.pink })
 
   -- Fidget
@@ -1306,21 +1306,21 @@ local function apply_foxml_theme()
   -- Treesitter context
   hl("TreesitterContext",           { bg = P.ts_ctx })
   hl("TreesitterContextLineNumber", { fg = P.peach })
-  hl("TreesitterContextBottom",     { underline = true, sp = P.bg_hl })
+  hl("TreesitterContextBottom",     { underline = {{SHOW_WELCOME}}, sp = P.bg_hl })
 
   -- Mason
-  hl("MasonHeader",             { fg = P.bg, bg = P.peach, bold = true })
+  hl("MasonHeader",             { fg = P.bg, bg = P.peach, bold = {{SHOW_WELCOME}} })
   hl("MasonHighlight",          { fg = P.peach })
   hl("MasonHighlightBlock",     { fg = P.bg, bg = P.peach })
-  hl("MasonHighlightBlockBold", { fg = P.bg, bg = P.peach, bold = true })
+  hl("MasonHighlightBlockBold", { fg = P.bg, bg = P.peach, bold = {{SHOW_WELCOME}} })
   hl("MasonMuted",              { fg = P.comment })
   hl("MasonMutedBlock",         { fg = P.bg, bg = P.surface })
 
   -- Lazy.nvim
-  hl("LazyH1",            { fg = P.bg, bg = P.peach, bold = true })
-  hl("LazyH2",            { fg = P.peach, bold = true })
+  hl("LazyH1",            { fg = P.bg, bg = P.peach, bold = {{SHOW_WELCOME}} })
+  hl("LazyH2",            { fg = P.peach, bold = {{SHOW_WELCOME}} })
   hl("LazyButton",        { bg = P.bg_hl })
-  hl("LazyButtonActive",  { fg = P.bg, bg = P.peach, bold = true })
+  hl("LazyButtonActive",  { fg = P.bg, bg = P.peach, bold = {{SHOW_WELCOME}} })
   hl("LazySpecial",       { fg = P.pink })
   hl("LazyComment",       { fg = P.comment })
   hl("LazyProgressDone",  { fg = P.peach })
@@ -1331,14 +1331,14 @@ local function apply_foxml_theme()
   hl("LazyReasonCmd",     { fg = P.green })
 
   -- Copilot
-  hl("CopilotSuggestion", { fg = P.comment, italic = true })
+  hl("CopilotSuggestion", { fg = P.comment, italic = {{SHOW_WELCOME}} })
   hl("CopilotAnnotation", { fg = P.surface })
 
   -- Beacon (cursor flash on jump)
   hl("BeaconDefault", { bg = P.peach })
 
   -- Gitsigns blame
-  hl("GitSignsCurrentLineBlame", { fg = P.surface, italic = true })
+  hl("GitSignsCurrentLineBlame", { fg = P.surface, italic = {{SHOW_WELCOME}} })
 
   -- Rainbow delimiters
   hl("RainbowDelimiterPeach",  { fg = P.peach })
@@ -1351,14 +1351,14 @@ local function apply_foxml_theme()
   -- Noice
   hl("NoiceCmdlinePopup",            { bg = P.bg_deep })
   hl("NoiceCmdlinePopupBorder",      { fg = P.peach })
-  hl("NoiceCmdlinePopupTitle",       { fg = P.peach, bold = true })
+  hl("NoiceCmdlinePopupTitle",       { fg = P.peach, bold = {{SHOW_WELCOME}} })
   hl("NoiceCmdlinePopupBorderSearch", { fg = P.yellow })
   hl("NoiceCmdlineIcon",             { fg = P.peach })
   hl("NoiceCmdlineIconSearch",       { fg = P.yellow })
   hl("NoicePopupmenu",               { bg = P.bg_deep })
   hl("NoicePopupmenuBorder",         { fg = P.peach })
   hl("NoicePopupmenuSelected",       { bg = P.bg_hl })
-  hl("NoicePopupmenuMatch",          { fg = P.peach, bold = true })
+  hl("NoicePopupmenuMatch",          { fg = P.peach, bold = {{SHOW_WELCOME}} })
   hl("NoiceMini",                    { bg = P.bg_deep })
   hl("NoiceFormatProgressDone",      { fg = P.bg, bg = P.peach })
   hl("NoiceFormatProgressTodo",      { fg = P.comment, bg = P.bg_hl })
@@ -1407,14 +1407,14 @@ local function apply_foxml_theme()
   hl("ScrollbarGitDelete",       { fg = P.red })
 
   -- hlslens
-  hl("HlSearchNear",     { fg = P.bg, bg = P.peach, bold = true })
+  hl("HlSearchNear",     { fg = P.bg, bg = P.peach, bold = {{SHOW_WELCOME}} })
   hl("HlSearchLens",     { fg = P.comment })
   hl("HlSearchLensNear", { fg = P.bg, bg = P.peach })
 
   -- Avante
-  hl("AvanteTitle",                        { fg = P.bg, bg = P.peach, bold = true })
+  hl("AvanteTitle",                        { fg = P.bg, bg = P.peach, bold = {{SHOW_WELCOME}} })
   hl("AvanteReversedTitle",                { fg = P.peach, bg = P.bg_deep })
-  hl("AvanteSubtitle",                     { fg = P.bg, bg = P.peach, bold = true })
+  hl("AvanteSubtitle",                     { fg = P.bg, bg = P.peach, bold = {{SHOW_WELCOME}} })
   hl("AvanteReversedSubtitle",             { fg = P.peach, bg = P.bg_deep })
   hl("AvanteThirdTitle",                   { fg = P.warm, bg = P.bg_hl })
   hl("AvanteReversedThirdTitle",           { fg = P.bg_hl, bg = P.bg_deep })
@@ -1423,20 +1423,20 @@ local function apply_foxml_theme()
   hl("AvanteSidebarWinHorizontalSeparator", { fg = P.bg_hl })
   hl("AvantePromptInput",                  { fg = P.fg, bg = P.bg_hl })
   hl("AvantePromptInputBorder",            { fg = P.peach, bg = P.bg_hl })
-  hl("AvanteInlineHint",                   { fg = P.peach, bg = P.bg_deep, bold = true })
+  hl("AvanteInlineHint",                   { fg = P.peach, bg = P.bg_deep, bold = {{SHOW_WELCOME}} })
   hl("AvantePopupHint",                    { fg = P.comment, bg = P.bg_deep })
-  hl("AvanteConfirmTitle",                 { fg = P.bg, bg = P.red, bold = true })
+  hl("AvanteConfirmTitle",                 { fg = P.bg, bg = P.red, bold = {{SHOW_WELCOME}} })
   hl("AvanteButtonDefault",               { fg = P.bg, bg = P.comment })
   hl("AvanteButtonDefaultHover",          { fg = P.bg, bg = P.green })
   hl("AvanteButtonPrimary",               { fg = P.bg, bg = P.warm })
   hl("AvanteButtonPrimaryHover",          { fg = P.bg, bg = P.peach })
   hl("AvanteButtonDanger",                { fg = P.bg, bg = P.warm })
   hl("AvanteButtonDangerHover",           { fg = P.bg, bg = P.red })
-  hl("AvanteToBeDeleted",                 { bg = "#3d1f23", strikethrough = true })
+  hl("AvanteToBeDeleted",                 { bg = "#3d1f23", strikethrough = {{SHOW_WELCOME}} })
   hl("AvanteToBeDeletedWOStrikethrough",  { bg = "#3d1f23" })
-  hl("AvanteConflictCurrent",             { bg = "#3d1f23", bold = true })
+  hl("AvanteConflictCurrent",             { bg = "#3d1f23", bold = {{SHOW_WELCOME}} })
   hl("AvanteConflictCurrentLabel",        { bg = "#4d2529" })
-  hl("AvanteConflictIncoming",            { bg = "#1a3328", bold = true })
+  hl("AvanteConflictIncoming",            { bg = "#1a3328", bold = {{SHOW_WELCOME}} })
   hl("AvanteConflictIncomingLabel",       { bg = "#1f3d2e" })
   hl("AvanteStateSpinnerGenerating",      { fg = P.bg, bg = P.pink })
   hl("AvanteStateSpinnerToolCalling",     { fg = P.bg, bg = P.peach })
@@ -1448,23 +1448,23 @@ local function apply_foxml_theme()
   hl("AvanteTaskRunning",                 { fg = P.pink })
   hl("AvanteTaskCompleted",               { fg = P.green })
   hl("AvanteTaskFailed",                  { fg = P.red })
-  hl("AvanteThinking",                    { fg = P.pink, italic = true })
+  hl("AvanteThinking",                    { fg = P.pink, italic = {{SHOW_WELCOME}} })
 
   -- Claude Code
   hl("ClaudeCodeNormal",    { fg = P.fg, bg = P.bg_deep })
   hl("ClaudeCodeBorder",    { fg = P.peach, bg = P.bg_deep })
-  hl("ClaudeCodeTitle",     { fg = P.bg, bg = P.peach, bold = true })
+  hl("ClaudeCodeTitle",     { fg = P.bg, bg = P.peach, bold = {{SHOW_WELCOME}} })
   hl("ClaudeCodeSeparator", { fg = P.bg_deep, bg = P.bg_deep })
 
   -- vim-illuminate (subtle earthy underline, not distracting)
   hl("IlluminatedWordText",  { bg = "#4a3528" })
   hl("IlluminatedWordRead",  { bg = "#4a3528" })
-  hl("IlluminatedWordWrite", { bg = "#4a3528", underline = true })
+  hl("IlluminatedWordWrite", { bg = "#4a3528", underline = {{SHOW_WELCOME}} })
 
   -- nvim-cmp
-  hl("CmpItemAbbrMatch",      { fg = P.peach, bold = true })
+  hl("CmpItemAbbrMatch",      { fg = P.peach, bold = {{SHOW_WELCOME}} })
   hl("CmpItemAbbrMatchFuzzy", { fg = P.peach })
-  hl("CmpItemAbbrDeprecated", { fg = P.surface, strikethrough = true })
+  hl("CmpItemAbbrDeprecated", { fg = P.surface, strikethrough = {{SHOW_WELCOME}} })
   hl("CmpItemKindFunction",   { fg = P.peach })
   hl("CmpItemKindMethod",     { fg = P.peach })
   hl("CmpItemKindVariable",   { fg = P.fg })
@@ -1482,7 +1482,7 @@ local function apply_foxml_theme()
   hl("CmpItemKindText",       { fg = P.comment })
   hl("CmpItemKindFile",       { fg = P.fg })
   hl("CmpItemKindFolder",     { fg = P.peach })
-  hl("CmpItemMenu",           { fg = P.comment, italic = true })
+  hl("CmpItemMenu",           { fg = P.comment, italic = {{SHOW_WELCOME}} })
 end
 
 apply_foxml_theme()
@@ -1508,8 +1508,8 @@ end, 100)
 
 -- Force solid background on sidebar/panel filetypes
 -- (uses vim.schedule so it runs AFTER plugins set their own winhighlight)
-local sidebar_fts = { ["neo-tree"] = true, ["Avante"] = true, ["AvanteInput"] = true,
-  ["AvantePrompt"] = true, ["Trouble"] = true, ["aerial"] = true, ["markdown"] = false }
+local sidebar_fts = { ["neo-tree"] = {{SHOW_WELCOME}}, ["Avante"] = {{SHOW_WELCOME}}, ["AvanteInput"] = {{SHOW_WELCOME}},
+  ["AvantePrompt"] = {{SHOW_WELCOME}}, ["Trouble"] = {{SHOW_WELCOME}}, ["aerial"] = {{SHOW_WELCOME}}, ["markdown"] = false }
 vim.api.nvim_create_autocmd({ "FileType", "BufWinEnter" }, {
   callback = function()
     vim.schedule(function()
@@ -1630,13 +1630,13 @@ require("nvim-treesitter.configs").setup({
   -- is passed (now needs `-- --no-bindings`), so the install errors out.
   -- Add it back when nvim-treesitter ships a compatible build script.
   ensure_installed = { "lua", "python", "c", "cpp", "bash", "json", "yaml", "markdown", "vim", "vimdoc", "java", "javadoc" },
-  highlight = { enable = true },
-  incremental_selection = { enable = true },
-  indent = { enable = true },
+  highlight = { enable = {{SHOW_WELCOME}} },
+  incremental_selection = { enable = {{SHOW_WELCOME}} },
+  indent = { enable = {{SHOW_WELCOME}} },
   textobjects = {
     select = {
-      enable = true,
-      lookahead = true,
+      enable = {{SHOW_WELCOME}},
+      lookahead = {{SHOW_WELCOME}},
       keymaps = {
         ["af"] = "@function.outer",
         ["if"] = "@function.inner",
@@ -1651,8 +1651,8 @@ require("nvim-treesitter.configs").setup({
       },
     },
     move = {
-      enable = true,
-      set_jumps = true,
+      enable = {{SHOW_WELCOME}},
+      set_jumps = {{SHOW_WELCOME}},
       goto_next_start = {
         ["]m"] = "@function.outer",
         ["]]"] = "@class.outer",
@@ -1665,7 +1665,7 @@ require("nvim-treesitter.configs").setup({
       },
     },
     swap = {
-      enable = true,
+      enable = {{SHOW_WELCOME}},
       swap_next = { ["<leader>sa"] = "@parameter.inner" },
       swap_previous = { ["<leader>sA"] = "@parameter.inner" },
     },
@@ -1690,7 +1690,7 @@ cmp.setup({
     ["<C-b>"] = cmp.mapping.scroll_docs(-4),
     ["<C-f>"] = cmp.mapping.scroll_docs(4),
     ["<C-Space>"] = cmp.mapping.complete(),
-    ["<CR>"] = cmp.mapping.confirm({ select = true }),
+    ["<CR>"] = cmp.mapping.confirm({ select = {{SHOW_WELCOME}} }),
     ["<Tab>"] = cmp.mapping(function(fallback)
       if cmp.visible() then
         cmp.select_next_item()
@@ -1729,7 +1729,7 @@ local on_attach    = function(_, bufnr)
   map("n", "<leader>ca", vim.lsp.buf.code_action, "Code Action")
   map("n", "[d", function() vim.diagnostic.jump({ count = -1 }) end, "Prev Diagnostic")
   map("n", "]d", function() vim.diagnostic.jump({ count = 1 }) end, "Next Diagnostic")
-  map("n", "<leader>f", function() vim.lsp.buf.format({ async = true }) end, "Format")
+  map("n", "<leader>f", function() vim.lsp.buf.format({ async = {{SHOW_WELCOME}} }) end, "Format")
 
   -- format on save (synchronous so it finishes before write)
   vim.api.nvim_create_autocmd("BufWritePre", {
@@ -1780,7 +1780,7 @@ lsp.config.texlab = {
       build = {
         executable = "latexmk",
         args = { "-pdf", "-interaction=nonstopmode", "-synctex=1", "%f" },
-        onSave = true,
+        onSave = {{SHOW_WELCOME}},
       },
     },
   },
@@ -1867,8 +1867,8 @@ map("n", "<leader>Ci", function()
     suggestion.teardown()
     vim.notify("Copilot: cmp menu mode", vim.log.levels.INFO)
   else
-    cfg.enabled = true
-    cfg.auto_trigger = true
+    cfg.enabled = {{SHOW_WELCOME}}
+    cfg.auto_trigger = {{SHOW_WELCOME}}
     suggestion.setup()
     vim.notify("Copilot: inline suggestions mode", vim.log.levels.INFO)
   end
@@ -1937,7 +1937,7 @@ map("n", "<leader>gg", "<cmd>LazyGit<cr>", { desc = "LazyGit" })
 
 -- Persistence (sessions)
 map("n", "<leader>qs", function() require("persistence").load() end, { desc = "Restore session (cwd)" })
-map("n", "<leader>ql", function() require("persistence").load({ last = true }) end, { desc = "Restore last session" })
+map("n", "<leader>ql", function() require("persistence").load({ last = {{SHOW_WELCOME}} }) end, { desc = "Restore last session" })
 map("n", "<leader>qd", function() require("persistence").stop() end, { desc = "Stop session recording" })
 
 -- Zen mode
@@ -2000,10 +2000,10 @@ map("n", "<A-j>", "<cmd>m .+1<cr>==", { desc = "Move line down" })
 map("n", "<A-k>", "<cmd>m .-2<cr>==", { desc = "Move line up" })
 
 -- Make file executable
-map("n", "<leader>X", "<cmd>!chmod +x %<cr>", { silent = true, desc = "Make file executable" })
+map("n", "<leader>X", "<cmd>!chmod +x %<cr>", { silent = {{SHOW_WELCOME}}, desc = "Make file executable" })
 
 -- Toggle diagnostic virtual text
-local diag_vt_enabled = true
+local diag_vt_enabled = {{SHOW_WELCOME}}
 map("n", "<leader>td", function()
   diag_vt_enabled = not diag_vt_enabled
   vim.diagnostic.config({ virtual_text = diag_vt_enabled })

@@ -36,12 +36,12 @@ set index-active-fg             "#{{FG}}"
 
 set recolor-lightcolor          "#{{BG}}"
 set recolor-{{THEME_TYPE}}color           "#{{FG}}"
-set recolor                     "true"
+set recolor                     "{{SHOW_WELCOME}}"
 set recolor-keephue             "false"
 
 # Appearance
 set font                        "{{FONT_FAMILY}} 11"
 set selection-clipboard         "clipboard"
-set window-title-basename       "true"
-set statusbar-home-tilde        "true"
+set window-title-basename       "{{SHOW_WELCOME}}"
+set statusbar-home-tilde        "{{SHOW_WELCOME}}"
 set guioptions                  "sv"

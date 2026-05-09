@@ -12,8 +12,8 @@
 	conflictStyle = zdiff3
 
 [delta]
-	navigate = true
-	line-numbers = true
+	navigate = {{SHOW_WELCOME}}
+	line-numbers = {{SHOW_WELCOME}}
 	side-by-side = false
 	syntax-theme = Fox ML
 
