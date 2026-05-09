@@ -81,30 +81,35 @@ if [[ -z "$ENTRIES" ]]; then
     exit 1
 fi
 
-# ───── Pipe to rofi (matches SysHub styling) ──────────────────────
-# Anchor top-left like the hub, but wider since rows are key + description.
-# Inputbar stays visible so you see what you're filtering on. Vim nav via
-# Ctrl+J / Ctrl+K (set in glass.rasi); bare j/k stay free for search.
+# ───── Pipe to rofi — SysHub-style modal (no inputbar, hjkl nav) ──
+# Inputbar hidden so the popup is pure scroll-through reference. Bare
+# j/k/h/l drive nav/cancel/accept exactly like the hub menu — same muscle
+# memory. (Tradeoff: you can't filter by typing letters that contain
+# h/j/k/l, but the section blocks make scrolling fast enough.)
 ROFI_THEME="${HOME}/.config/rofi/glass.rasi"
 ROFI_X="${ROFI_X:-12}"
 ROFI_Y="${ROFI_Y:-40}"
 
-THEME_STR="window {
+THEME_STR="inputbar {enabled: false;}
+window {
     location: north west; anchor: north west;
     x-offset: ${ROFI_X}px; y-offset: ${ROFI_Y}px;
     width: 50%;
 }
-listview { lines: 18; }
-inputbar { children: [prompt, entry]; }"
+listview { lines: 20; }"
 
 ROFI_ARGS=(
     -dmenu -i -no-custom -p "Cheatsheet"
-    -mesg "Type to search · Enter copies the key combo · Esc cancels"
+    -kb-row-up "k,Up"
+    -kb-row-down "j,Down"
+    -kb-accept-entry "l,Return"
+    -kb-cancel "Escape,h"
     -theme-str "$THEME_STR"
 )
 [[ -f "$ROFI_THEME" ]] && ROFI_ARGS=(-theme "$ROFI_THEME" "${ROFI_ARGS[@]}")
 
-# Display columns: KEY | description (section in tooltip via -mesg)
+# Display columns: KEY | description (section dropped from view to keep
+# the row clean; you can grep KEYBINDS.md if you need the section context)
 SELECTED="$(printf '%s\n' "$ENTRIES" \
     | awk -F'\t' '{print $1}' \
     | rofi "${ROFI_ARGS[@]}" \
