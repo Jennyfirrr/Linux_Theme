@@ -7,8 +7,13 @@ border-radius=0
 padding=12
 margin=12
 width=350
-max-visible=3
-default-timeout=5000
+# 6 lanes (was 3) so multi-pane agent bursts don't queue behind a long
+# critical popup. With max-visible=3 + critical timeout=15s, a single
+# "Claude needs input" notification holds a slot for 15s while subsequent
+# turn-completes and subagent-done events queue invisibly — they then
+# drip onto the screen seconds-to-minutes after the actual event.
+max-visible=6
+default-timeout=4000
 ignore-timeout=1
 icon-path=/usr/share/icons/{{MAKO_ICON_THEME}}
 
@@ -16,7 +21,7 @@ icon-path=/usr/share/icons/{{MAKO_ICON_THEME}}
 background-color=#{{BG}}E6
 text-color=#{{FG_DIM}}
 border-color=#{{SURFACE}}66
-default-timeout=3000
+default-timeout=2000
 
 [urgency=critical]
 background-color=#{{BG}}E6

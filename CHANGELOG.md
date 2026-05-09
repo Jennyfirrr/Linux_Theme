@@ -4,6 +4,13 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-09 — v2.4.2
+
+### Fixes
+- **Mako display queue overflowing during multi-agent bursts** — `max-visible=3` + `urgency=critical timeout=15s` meant a single "Claude needs input" popup held a lane for 15s while subsequent turn-completes and subagent-done events queued invisibly, dripping onto the screen seconds-to-minutes after the actual event (the hook fires on time; mako rate-limits the display). Bumped `max-visible` 3 → 6 and trimmed `default-timeout` 5s → 4s, `urgency=low` 3s → 2s. Critical stays 15s — you don't want a permission prompt expiring before you notice it.
+
+---
+
 ## 2026-05-09 — v2.4.1
 
 ### Polish
