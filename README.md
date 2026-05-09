@@ -38,23 +38,22 @@ Optional: `greetd` + `greetd-regreet` for the themed login screen.
 
 ## Install
 
-One-liner — installs deps, clones the repo, applies FoxML Classic:
-
+**New machine, walk-away install (one command, no clone needed):**
 ```bash
 curl -fsSL https://raw.githubusercontent.com/Jennyfirrr/Linux_Theme/main/bootstrap.sh | bash
 ```
+Caches sudo, installs git+curl, clones the repo to `~/code/Linux_Theme`, runs the full Fox ML setup (theme + deps + AI stack + GitHub workspace clone). One `gh auth login` prompt mid-flow, otherwise hands-off.
 
-To read the scripts before running, clone first:
-
+**Already cloned, painless one-command:**
 ```bash
-git clone https://github.com/Jennyfirrr/Linux_Theme.git
-cd Linux_Theme
+./setup            # full kitchen sink — theme + deps + AI + GitHub clone
+./setup-minimal    # theme + system deps only (no AI, no GitHub clone)
+```
 
-# Interactive — lists themes and prompts before each step
-./install.sh
-
-# Apply a specific theme with system deps, no prompts
-./install.sh FoxML_Classic --deps --yes
+**Already cloned, fine-grained control:**
+```bash
+./install.sh                                       # interactive, prompts at each step
+./install.sh FoxML_Classic --deps --yes            # specific flags, no prompts
 ```
 
 ### Install flags
