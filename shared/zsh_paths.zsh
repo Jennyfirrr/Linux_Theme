@@ -1,5 +1,6 @@
 # ─── PATH ────────────────────────────────────
 export PATH="$HOME/.local/bin:$PATH"
+[[ -d "$HOME/.opencode/bin" ]] && export PATH="$HOME/.opencode/bin:$PATH"
 typeset -U path PATH
 
 # ─── FoxML Project Awareness ──────────────────

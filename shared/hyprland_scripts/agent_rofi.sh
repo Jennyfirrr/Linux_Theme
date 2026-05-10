@@ -61,9 +61,10 @@ for (( raw=total-1; raw>=0; raw-- )); do
     target_e="$(pango_escape "$target")"
 
     case "$src" in
-        claude) src_color="$C_PRIMARY";   src_label="Claude" ;;
-        gemini) src_color="$C_ACCENT";    src_label="Gemini" ;;
-        *)      src_color="$C_SECONDARY"; src_label="${src:-?}" ;;
+        claude)   src_color="$C_PRIMARY";   src_label="Claude"   ;;
+        gemini)   src_color="$C_ACCENT";    src_label="Gemini"   ;;
+        opencode) src_color="$C_WARN";      src_label="OpenCode" ;;
+        *)        src_color="$C_SECONDARY"; src_label="${src:-?}" ;;
     esac
 
     case "$event" in

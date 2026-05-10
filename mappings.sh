@@ -314,20 +314,25 @@ PKGJSON
 }
 JSON
 
+        # dark-ansi routes Claude Code's UI through the terminal's ANSI
+        # palette, which kitty.conf already paints with the FoxML colors —
+        # so the TUI inherits the active theme without any per-element work.
         if [[ ! -f "$claude_settings" ]]; then
             if command -v jq &>/dev/null; then
-                jq '. + {theme: "dark"}' "$hooks_json" > "$claude_settings"
+                jq '. + {theme: "dark-ansi"}' "$hooks_json" > "$claude_settings"
             else
                 cp "$hooks_json" "$claude_settings"
             fi
-            echo "  Claude settings (hooks) created"
+            echo "  Claude settings (hooks + theme) created"
         elif command -v jq &>/dev/null; then
             # Deep-merge: replaces .hooks.Stop / .hooks.SubagentStop /
             # .hooks.Notification arrays wholesale, preserves everything else.
+            # Also force-sets theme to dark-ansi so re-runs migrate users who
+            # were created before the ansi flip (previous default was "dark").
             local tmp_claude; tmp_claude="$(mktemp)"
-            if jq -s '.[0] * .[1]' "$claude_settings" "$hooks_json" > "$tmp_claude" 2>/dev/null; then
+            if jq -s '.[0] * .[1] * {theme: "dark-ansi"}' "$claude_settings" "$hooks_json" > "$tmp_claude" 2>/dev/null; then
                 mv "$tmp_claude" "$claude_settings"
-                echo "  Claude settings (hooks) merged"
+                echo "  Claude settings (hooks + theme) merged"
             else
                 rm -f "$tmp_claude"
                 echo "  Claude merge failed (jq error), skipping"

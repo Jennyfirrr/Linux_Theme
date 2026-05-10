@@ -97,9 +97,10 @@ if [[ -n "${TMUX:-}" ]] && command -v tmux >/dev/null 2>&1; then
 fi
 
 case "$src" in
-    claude) src_label="Claude"; src_color="$C_PRIMARY" ;;
-    gemini) src_label="Gemini"; src_color="$C_ACCENT"  ;;
-    *)      src_label="$src";   src_color="$C_PRIMARY" ;;
+    claude)   src_label="Claude";   src_color="$C_PRIMARY" ;;
+    gemini)   src_label="Gemini";   src_color="$C_ACCENT"  ;;
+    opencode) src_label="OpenCode"; src_color="$C_WARN"    ;;
+    *)        src_label="$src";     src_color="$C_PRIMARY" ;;
 esac
 
 case "$event" in

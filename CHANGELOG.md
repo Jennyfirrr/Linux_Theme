@@ -4,6 +4,24 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-10 — v2.5.4
+
+### `install.sh --all` now produces a fully wired AI stack on a fresh box
+Closing the gaps between "AI deps installed" and "AI tools actually usable" so a single command stands up the whole stack:
+
+- **Pro tier model pull no longer aborts the installer.** `qwen2.5-coder:70b` doesn't exist on the Ollama registry — the family tops out at 32B — so any host with >32GB RAM hit `ollama pull` failure under `set -e` and aborted mid-install after the 14B/32B pulls had already succeeded. Pro tier now pulls 14B + 32B and stops there. Lite tier label corrected (`1B` → `1.5B`) to match the actual pulled tag.
+- **`~/.opencode/bin` joins PATH on shell start.** The opencode installer drops its binary at `~/.opencode/bin/opencode`, which wasn't on PATH — so the `opencode` zsh wrapper (which wakes ollama before delegating to the binary) failed with `command not found`. `shared/zsh_paths.zsh` now adds the dir conditionally on `[[ -d ]]`, so machines without opencode aren't affected. Re-deployed via the existing `SHARED_MAPPINGS` copy on every install run.
+- **Claude Code TUI inherits the FoxML palette via `dark-ansi`.** Claude only exposes a small set of named themes — none of them custom — but `dark-ansi` routes the whole UI through the terminal's ANSI color slots, which `kitty.conf` already paints with the FoxML palette. `mappings.sh` now writes `theme: "dark-ansi"` on first creation and force-merges it on the re-run path (previous default was `dark`), so existing users get migrated on their next `install.sh`.
+
+### Opencode source case in the notification triage scripts
+`agent_notify.sh` and `agent_rofi.sh` got a third source case so an opencode-tagged event would render in cream (`C_WARN`) and visually distinguish from Claude (peach) and Gemini (sage) in the rofi triage list. Smoke-tested by piping the same JSON shape claude/gemini hooks pass — entries land in the queue and rofi correctly.
+
+A matching opencode plugin to actually emit those events on `session.idle` / `permission.asked` is **pending**. The bare-function and `{ server: Plugin }` exports both load (the file is imported, confirmed via `module: evaluated` traces) but neither exported handler ever fires when the bus publishes `session.idle`. Opencode's plugin loader contract for unprefixed plugin files is more involved than the docs example suggests — likely needs explicit registration via `plugin: [...]` in opencode.json, or a different module shape. Deferred until the loader contract is figured out; the source case in the notification scripts is in place so wiring up the plugin later is a one-file change.
+
+End result: `./install.sh --all --yes` on a fresh Arch box now installs AI deps, configures opencode to auto-route to local Ollama (already true before this release), wires Claude + Gemini notifications, themes Claude's TUI to match, and doesn't blow up on >32GB hosts.
+
+---
+
 ## 2026-05-10 — v2.5.3
 
 ### `configure_monitors` — HiDPI scale picker per monitor

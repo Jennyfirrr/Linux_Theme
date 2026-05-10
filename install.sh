@@ -753,7 +753,7 @@ if $INSTALL_AI; then
 
         case "$TIER" in
             "lite")
-                echo "Pulling Lite Stack (1B, 3B, 7B)..."
+                echo "Pulling Lite Stack (1.5B, 3B, 7B)..."
                 ollama pull qwen2.5-coder:1.5b
                 ollama pull qwen2.5-coder:3b
                 ollama pull qwen2.5-coder:7b
@@ -765,10 +765,11 @@ if $INSTALL_AI; then
                 ollama pull qwen2.5-coder:32b
                 ;;
             "pro")
-                echo "Pulling Pro Stack (14B, 32B, 70B)..."
+                # qwen2.5-coder tops out at 32B on the Ollama registry. Larger
+                # hosts get the same coder ceiling — no broken 70B pull.
+                echo "Pulling Pro Stack (14B, 32B)..."
                 ollama pull qwen2.5-coder:14b
                 ollama pull qwen2.5-coder:32b
-                ollama pull qwen2.5-coder:70b
                 ;;
         esac
         echo "  + AI Models ready."
