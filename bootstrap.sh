@@ -60,9 +60,10 @@ else
 fi
 
 # ─── Run installer non-interactively ────────────────────────────────
-# Auto-detect an NVIDIA discrete GPU and pass --nvidia.
-# Defaults to a full AI-ready workstation setup.
-INSTALL_FLAGS=(--deps --ai --models --github --yes)
+# --full enables every opt-in module except --xgboost. NVIDIA detection
+# stays here because --full doesn't auto-detect — it'd be wrong to pull
+# the proprietary driver stack onto AMD/Intel-only boxes.
+INSTALL_FLAGS=(--full --yes)
 for dev in /sys/bus/pci/devices/*/; do
     [[ "$(cat "$dev/vendor" 2>/dev/null)" == "0x10de" ]] || continue
     [[ "$(cat "$dev/class" 2>/dev/null)" == 0x03* ]] || continue
