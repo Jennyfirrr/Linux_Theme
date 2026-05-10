@@ -392,7 +392,7 @@ if $RENDER_ONLY; then
         dest="${mapping##*|}"
         dest="${dest/#\~/$HOME}"
         [[ "$dest" == *"FIREFOX_PROFILE"* ]] && continue
-        [[ "$dest" == *"GEMINI_DIR"* ]] && continue
+        [[ "$dest" == *"AGENT_DIR"* ]] && continue
         if [[ -f "$RENDERED_DIR/$src" ]]; then
             mkdir -p "$(dirname "$dest")"
             cp "$RENDERED_DIR/$src" "$dest"
@@ -487,7 +487,7 @@ for mapping in "${TEMPLATE_MAPPINGS[@]}"; do
     [[ "$dest" == *"FIREFOX_PROFILE"* ]] && continue
 
     # Skip Agent config (handled by specials — needs jq merge to preserve auth keys)
-    [[ "$dest" == *"GEMINI_DIR"* ]] && continue
+    [[ "$dest" == *"AGENT_DIR"* ]] && continue
 
     # Skip if oh-my-zsh not installed (for caramel theme)
     [[ "$dest" == *".oh-my-zsh"* && ! -d "$HOME/.oh-my-zsh" ]] && continue
