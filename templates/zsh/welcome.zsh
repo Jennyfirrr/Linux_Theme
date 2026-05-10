@@ -18,7 +18,12 @@ function _caramel_welcome() {
   # full-width Japanese characters (˚ ˎ 。 、 〵 じ し ノ) that take
   # 2 visual columns each but only 1 width-unit to `echo`, so
   # fixed-space padding produces different visual offsets per row.
-  local dc=22
+  # Bumped from 22 → 25: some fonts render the cat ASCII slightly
+  # wider than spec (full-width treatment of `˚`/`ˎ` modifier letters),
+  # and a 25-column anchor leaves enough buffer that the date never
+  # collides with the cat tail no matter how the font expands the
+  # CJK + diacritic chars.
+  local dc=25
 
   local dots="\e[38;5;{{ANSI_ACCENT3}}m●${O} \e[38;5;{{ANSI_ACCENT2}}m●${O} \e[38;5;{{ANSI_ACCENT1}}m●${O} \e[38;5;{{ANSI_ACCENT4}}m●${O} \e[38;5;{{ANSI_ACCENT5}}m●${O} \e[38;5;{{ANSI_ACCENT2}}m●${O} \e[38;5;{{ANSI_ACCENT3}}m●${O} \e[38;5;{{ANSI_ACCENT1}}m●${O}"
 

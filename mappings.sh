@@ -688,9 +688,41 @@ configure_monitors() {
     echo "$monitors_json" | jq -r '.[] | "│     • \(.name)  \(.width)x\(.height)  — \(.description)"'
     echo "╰──────────────────────────────────────────────────────────────────╯"
 
-    # Primary picker: prefer eDP-* (laptop panel), fall back to first listed.
+    # Primary picker:
+    #   - If a laptop panel (eDP-*) is detected, use it (current behavior).
+    #     Override is rare; users plugging an external as primary on a
+    #     laptop is the exception, not the rule.
+    #   - Otherwise (desktop with multiple identical externals, or
+    #     non-eDP-named laptop), prompt the user to pick. Without this,
+    #     "primary" was whatever monitor jq listed first — non-deterministic
+    #     and frequently wrong on multi-output desktops.
     local primary
     primary=$(echo "$monitors_json" | jq -r '[.[] | select(.name | startswith("eDP"))] | .[0].name // empty')
+    if [[ -z "$primary" ]] && (( count > 1 )) && [[ -t 0 ]]; then
+        echo ""
+        echo "  No laptop panel detected — pick a primary monitor:"
+        local i=1
+        local -a all_names=()
+        while IFS= read -r n; do
+            [[ -z "$n" ]] && continue
+            all_names+=("$n")
+            local nw nh
+            nw=$(echo "$monitors_json" | jq -r --arg n "$n" '.[] | select(.name==$n) | .width')
+            nh=$(echo "$monitors_json" | jq -r --arg n "$n" '.[] | select(.name==$n) | .height')
+            echo "    [$i] $n  (${nw}x${nh})"
+            i=$((i+1))
+        done < <(echo "$monitors_json" | jq -r '.[].name')
+        local pri_choice=""
+        read -p "    Choice [1]: " pri_choice || true
+        if [[ "$pri_choice" =~ ^[0-9]+$ ]] \
+            && (( pri_choice >= 1 && pri_choice <= ${#all_names[@]} )); then
+            primary="${all_names[$((pri_choice-1))]}"
+        else
+            primary="${all_names[0]}"
+        fi
+    fi
+    # Last-resort fallback: still empty after the picker (no TTY desktop
+    # case) → first listed monitor, same as pre-picker behavior.
     [[ -z "$primary" ]] && primary=$(echo "$monitors_json" | jq -r '.[0].name')
 
     # TTY-gated rather than --yes-gated. Monitor layout has no sensible
