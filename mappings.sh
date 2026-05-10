@@ -149,6 +149,29 @@ SHARED_MAPPINGS=(
 )
 
 # ─────────────────────────────────────────
+# Shared interactive helpers
+# ─────────────────────────────────────────
+
+# Prompt the user with a yes/no question, returning 0 on Y/y and 1 on
+# anything else. Survives every input we've seen break naive read-based
+# prompts:
+#   * non-Y/N input (a digit, a word) — treated as "no", does not crash
+#   * EOF / no TTY (curl-bash) — treated as "no" without hanging
+#   * read failure under `set -e` — masked with `|| true` so a missing
+#     terminal doesn't abort the whole installer
+#
+# Use as `if foxml_prompt_yn "...prompt..."; then ...; fi`.
+foxml_prompt_yn() {
+    local prompt="$1" reply=""
+    if [[ ! -t 0 ]]; then
+        return 1
+    fi
+    read -p "$prompt" -n 1 -r reply 2>/dev/null || true
+    echo ""
+    [[ "$reply" =~ ^[Yy]$ ]]
+}
+
+# ─────────────────────────────────────────
 # Special install handlers
 # ─────────────────────────────────────────
 
@@ -638,9 +661,13 @@ configure_monitors() {
     primary=$(echo "$monitors_json" | jq -r '[.[] | select(.name | startswith("eDP"))] | .[0].name // empty')
     [[ -z "$primary" ]] && primary=$(echo "$monitors_json" | jq -r '.[0].name')
 
-    if ! $ASSUME_YES; then
-        read -p "Configure layout interactively? [y/N] " -n 1 -r; echo ""
-        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    # TTY-gated rather than --yes-gated. Monitor layout has no sensible
+    # auto-default — "is HDMI-A-1 to the left or the right of eDP-1?"
+    # genuinely needs a human. If we have a terminal, prompt; if we
+    # don't (curl-bash), fall through silently and use the right+landscape
+    # default per external (matches pre-fix behavior under --yes).
+    if [[ -t 0 ]]; then
+        if ! foxml_prompt_yn "Configure layout interactively? [y/N] "; then
             echo "  Skipping — current monitors.conf left as-is"
             return
         fi
@@ -663,12 +690,18 @@ configure_monitors() {
 
         local pos="right" orient="landscape"
 
-        if ! $ASSUME_YES; then
+        # Same TTY gate as the outer prompt — interactive prompts run
+        # whenever we have a terminal, regardless of --yes. The case
+        # statements have a wildcard default so any non-1/2/3/4 input
+        # silently falls back to the documented default rather than
+        # erroring out.
+        if [[ -t 0 ]]; then
             echo ""
             echo "  External: $ext  (${ext_w}x${ext_h})"
             echo "    Position relative to ${primary}:"
             echo "      [1] left   [2] right   [3] above   [4] below"
-            read -p "    Choice [2]: " p_choice
+            local p_choice="" o_choice=""
+            read -p "    Choice [2]: " p_choice 2>/dev/null || true
             case "$p_choice" in
                 1) pos="left" ;;
                 3) pos="above" ;;
@@ -678,7 +711,7 @@ configure_monitors() {
 
             echo "    Orientation:"
             echo "      [1] landscape   [2] portrait, rotated left   [3] portrait, rotated right"
-            read -p "    Choice [1]: " o_choice
+            read -p "    Choice [1]: " o_choice 2>/dev/null || true
             case "$o_choice" in
                 2) orient="portrait-left" ;;
                 3) orient="portrait-right" ;;
@@ -1020,13 +1053,28 @@ install_resolved_dnssec() {
         echo "  NetworkManager restarted (pushed DNSSEC=default to active links)"
     fi
 
-    # Verify against a known-unsigned zone. If this still fails after all
-    # three layers were addressed, surface a loud warning instead of letting
-    # NTP/DNS silently break later.
-    if resolvectl query 2.arch.pool.ntp.org >/dev/null 2>&1; then
-        echo "  ✓ DNSSEC verified — unsigned zones resolve cleanly"
+    # Verify with retries — the NetworkManager restart above triggers a
+    # ~3-10s reconnection window during which resolvectl queries can
+    # transiently fail even though the DNSSEC config is correct. Try the
+    # known-unsigned zone (the actual fix target), then fall back to a
+    # signed zone (archlinux.org — sanity check that resolved is alive
+    # at all). Only warn if both probe targets fail across three retries.
+    local probe_ok=0 probe_target=""
+    for probe_target in 2.arch.pool.ntp.org archlinux.org; do
+        local attempt
+        for attempt in 1 2 3; do
+            if resolvectl query "$probe_target" >/dev/null 2>&1; then
+                probe_ok=1
+                break 2
+            fi
+            sleep 2
+        done
+    done
+
+    if (( probe_ok == 1 )); then
+        echo "  ✓ DNSSEC verified ($probe_target resolved cleanly)"
     else
-        echo "  ⚠ DNSSEC fix applied but verification query still fails"
+        echo "  ⚠ DNSSEC fix applied but verification queries still fail"
         echo "    run 'resolvectl status' to inspect upstream / per-link state"
     fi
 }
@@ -1475,9 +1523,13 @@ _persist_cpupower() {
 }
 
 install_throttling() {
-    if $ASSUME_YES; then
+    # TTY-gated rather than --yes-gated — every step inside this wizard
+    # asks the user a hardware-specific question that doesn't have a
+    # sensible auto-default (governor name, frequency cap MHz, etc.).
+    # If we have a terminal, ask; if not (curl-bash), skip silently.
+    if [[ ! -t 0 ]]; then
         echo ""
-        echo "  • Throttling setup skipped (run without -y to configure)"
+        echo "  • Throttling setup skipped (no TTY for interactive wizard)"
         return
     fi
 
@@ -1488,8 +1540,7 @@ install_throttling() {
     echo "│ Configure max-frequency cap, Intel turbo, governor, and (on     │"
     echo "│ ThinkPads) the 'throttled' MSR fix. Each step is opt-in.        │"
     echo "╰──────────────────────────────────────────────────────────────────╯"
-    read -p "Configure CPU throttling now? [y/N] " -n 1 -r; echo ""
-    [[ ! $REPLY =~ ^[Yy]$ ]] && return
+    foxml_prompt_yn "Configure CPU throttling now? [y/N] " || return
 
     # Hardware detection
     local is_intel=false is_thinkpad=false
@@ -1514,8 +1565,7 @@ install_throttling() {
         [[ "$turbo_now" == "1" ]] && turbo_state="disabled"
         echo ""
         echo "  Intel Turbo Boost is currently: ${turbo_state}"
-        read -p "  Disable Intel turbo on every boot? [y/N] " -n 1 -r; echo ""
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
+        if foxml_prompt_yn "  Disable Intel turbo on every boot? [y/N] "; then
             sudo install -d /etc/tmpfiles.d
             sudo tee /etc/tmpfiles.d/disable-turbo.conf >/dev/null <<'EOF'
 # Re-applied on every boot by systemd-tmpfiles
@@ -1529,17 +1579,18 @@ EOF
 
     # ── 2. cpupower max frequency ─────────────────────────────────
     echo ""
-    read -p "  Cap CPU max frequency via cpupower? [y/N] " -n 1 -r; echo ""
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
+    if foxml_prompt_yn "  Cap CPU max frequency via cpupower? [y/N] "; then
         if ! pacman -Qi cpupower &>/dev/null; then
             echo "    Installing cpupower..."
             sudo pacman -S --needed --noconfirm cpupower
         fi
-        local hw_max_khz hw_max_mhz
+        local hw_max_khz hw_max_mhz max_mhz=""
         hw_max_khz=$(cat /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq 2>/dev/null || echo 0)
         hw_max_mhz=$((hw_max_khz / 1000))
         (( hw_max_mhz > 0 )) && echo "    Hardware max: ${hw_max_mhz} MHz"
-        read -p "    Cap max frequency in MHz (e.g. 2400, blank to skip): " max_mhz
+        # `|| true` so an EOF read (no TTY, redirected stdin) doesn't take
+        # down the whole installer under `set -e`. Empty input → skip.
+        read -p "    Cap max frequency in MHz (e.g. 2400, blank to skip): " max_mhz 2>/dev/null || true
         if [[ "$max_mhz" =~ ^[0-9]+$ ]] && (( max_mhz > 0 )); then
             local max_khz=$((max_mhz * 1000))
             if sudo cpupower frequency-set -u "${max_mhz}MHz" >/dev/null 2>&1; then
@@ -1561,7 +1612,8 @@ EOF
         if [[ -n "$available_gov" ]]; then
             echo ""
             echo "  Available governors: $available_gov"
-            read -p "  Set CPU governor (blank to skip): " governor
+            local governor=""
+            read -p "  Set CPU governor (blank to skip): " governor 2>/dev/null || true
             if [[ -n "$governor" ]]; then
                 # validate against the available list to avoid a confusing live-set failure
                 if [[ " $available_gov " == *" $governor "* ]]; then
@@ -1589,8 +1641,7 @@ EOF
         echo "  ThinkPad detected — 'throttled' applies an MSR-based undervolt"
         echo "  + thermal-cap fix, configured via /etc/throttled.conf."
         echo "  A documented sample lives at shared/throttled.conf."
-        read -p "  Install throttled from AUR? [y/N] " -n 1 -r; echo ""
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
+        if foxml_prompt_yn "  Install throttled from AUR? [y/N] "; then
             if ! pacman -Qi throttled &>/dev/null; then
                 if [[ -n "$aur" ]]; then
                     "$aur" -S --needed throttled
@@ -1796,15 +1847,21 @@ install_security() {
         echo "│ This will configure a custom port and disable password login.   │"
         echo "│ WARNING: Ensure you have SSH keys set up before proceeding.    │"
         echo "╰──────────────────────────────────────────────────────────────────╯"
-        read -p "Run SSH hardening wizard? [y/N] " -n 1 -r; echo ""
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
+        if foxml_prompt_yn "Run SSH hardening wizard? [y/N] "; then
             local sshd_conf_dir="/etc/ssh/sshd_config.d"
             local hardening_conf="${sshd_conf_dir}/50-foxml-hardening.conf"
             sudo mkdir -p "$sshd_conf_dir"
 
-            # 1. Custom Port
-            read -p "  Enter custom SSH port [default: 22]: " custom_port
+            # 1. Custom Port — validate numeric + valid range so a typo
+            # doesn't get spliced into sshd_config / `ufw allow` and brick
+            # remote access. Anything out of [1, 65535] falls back to 22.
+            local custom_port=""
+            read -p "  Enter custom SSH port [default: 22]: " custom_port 2>/dev/null || true
             custom_port=${custom_port:-22}
+            if ! [[ "$custom_port" =~ ^[0-9]+$ ]] || (( custom_port < 1 || custom_port > 65535 )); then
+                echo "    '$custom_port' is not a valid port number — falling back to 22"
+                custom_port=22
+            fi
             
             # 2. Key Check & Import
             local has_keys=false
@@ -1828,8 +1885,9 @@ install_security() {
 
             local disable_pass="yes"
             if $has_keys; then
-                read -p "  Disable password authentication? (Keys detected) [y/N] " -n 1 -r; echo ""
-                [[ $REPLY =~ ^[Yy]$ ]] && disable_pass="no"
+                if foxml_prompt_yn "  Disable password authentication? (Keys detected) [y/N] "; then
+                    disable_pass="no"
+                fi
             else
                 echo "  No authorized_keys found. Forcing 'PasswordAuthentication yes' to prevent lockout."
                 disable_pass="yes"

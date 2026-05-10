@@ -4,6 +4,33 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-10 — v2.5.1
+
+### Interactive wizards now run under `--yes` when a TTY is available
+The monitor and CPU-throttling wizards were gated by `if ! $ASSUME_YES; then ... fi`, so `bootstrap.sh --full --yes` (the new default curl-bash flow) would skip them entirely and either pick mediocre defaults (right + landscape per external monitor) or skip the whole power-tuning step. Both now gate on `[[ -t 0 ]]` instead — TTY-present means prompt, no-TTY (curl-bash piped from stdin) means skip silently. So:
+
+- A user running `./install.sh --full --yes` from a terminal gets the monitor layout picker and the throttling wizard interactively, because that's where they actually want input.
+- A user piping `bootstrap.sh | bash` gets the same auto-defaults as before — `read` against EOF returns empty, the case statements' wildcard branch handles it.
+
+### `foxml_prompt_yn` helper — defensive y/N reads
+Added a shared y/N prompt helper at the top of `mappings.sh` and migrated every `read -p "...[y/N]" -n 1 -r` + `[[ ! $REPLY =~ ^[Yy]$ ]] && return` pattern in `install_throttling`, `configure_monitors`, and the SSH hardening wizard to use it. The helper:
+
+- Returns 0 only on Y/y; **anything else (digit, word, EOF, no TTY) is treated as "no"** instead of falling through to a downstream error.
+- Wraps `read` with `2>/dev/null || true` so a missing terminal (curl-bash) doesn't trip `set -e` and abort the whole installer.
+- Returns 1 immediately when stdin isn't a TTY, so non-interactive runs don't hang waiting on input that'll never arrive.
+
+This was triggered by a reported crash where entering `2` at `Cap CPU max frequency via cpupower? [y/N]` broke the installer. Defensive reads everywhere matter more than tracking down whichever individual prompt was the culprit.
+
+### Numeric prompt validation
+- **SSH custom port** — the SSH hardening wizard accepted any text as the custom port and passed it straight to `sudo ufw allow "$custom_port/tcp"`, which under `set -e` would crash the installer on a typo *and* leave SSH in a half-configured state. Now validates `^[0-9]+$` and `1 ≤ port ≤ 65535`; non-numeric or out-of-range falls back to 22 with a warning instead of erroring out.
+- **CPU max frequency** — the `Cap max frequency in MHz` prompt already validated numeric input downstream, but the `read` itself had no `|| true` so an EOF stdin would crash. Added defensive guards on both the read and the validate-then-skip path.
+- **CPU governor** — same defensive pattern: `read … 2>/dev/null || true`, validate against `scaling_available_governors`, skip with a clear message on no-match.
+
+### `install_resolved_dnssec` — verify probe with retry + fallback target
+The verify probe at the end of `install_resolved_dnssec` (a single `resolvectl query 2.arch.pool.ntp.org` with no retry) was persistently failing post-install, even on machines where the DNSSEC fix was correctly applied. Cause: the NetworkManager restart earlier in the function triggers a several-second reconnection window during which `resolvectl` queries can transiently fail. Now retries up to 3 times with a 2-second sleep, and falls back from the unsigned probe target (`2.arch.pool.ntp.org`, the actual fix target) to a signed sanity-check zone (`archlinux.org`) if the unsigned target keeps failing — only emits the warning if both targets fail across all retries.
+
+---
+
 ## 2026-05-10 — v2.5.0
 
 ### `install.sh` self-update — pull origin/main and re-exec before doing any work
