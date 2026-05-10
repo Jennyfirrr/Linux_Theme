@@ -577,6 +577,31 @@ JSON
 # rotate_wallpaper.sh.
 # ─────────────────────────────────────────
 
+# Prompt for a HiDPI scale (1x / 1.25x / 1.5x / 2x) and echo the chosen
+# decimal + its *100 integer form on a single line, e.g. "1.5 150". The
+# *100 form is what configure_monitors uses for integer arithmetic when
+# dividing physical dimensions into logical (scaled) bounds — bash has
+# no native float math, and Hyprland's coordinate system is logical, not
+# physical (a 4K monitor at scale 2 occupies a 1920x1080 logical box
+# regardless of its 3840x2160 panel). Falls back silently to 1x on any
+# non-matching input, including blank / EOF / no TTY.
+_pick_scale() {
+    local s_choice=""
+    if [[ ! -t 0 ]]; then
+        echo "1 100"
+        return
+    fi
+    echo "    Scale (HiDPI):"                                    >&2
+    echo "      [1] 1x   [2] 1.25x   [3] 1.5x   [4] 2x"          >&2
+    read -p "    Choice [1]: " s_choice 2>/dev/null || true
+    case "$s_choice" in
+        2) echo "1.25 125" ;;
+        3) echo "1.5 150" ;;
+        4) echo "2 200" ;;
+        *) echo "1 100" ;;
+    esac
+}
+
 _generate_portrait_wallpapers() {
     # Center-crop each landscape wallpaper into a 1080x1920 portrait variant.
     # Idempotent: skips files that already have a _portrait sibling. Silent
@@ -680,19 +705,35 @@ configure_monitors() {
     primary_w=$(echo "$monitors_json" | jq -r --arg n "$primary" '.[] | select(.name==$n) | .width')
     primary_h=$(echo "$monitors_json" | jq -r --arg n "$primary" '.[] | select(.name==$n) | .height')
 
+    # Primary HiDPI scale — prompted up front so primary's logical
+    # bounds are correct before any external is anchored to it. On a
+    # 4K laptop panel you'd typically want 2x; on a 1080p panel, 1x.
+    local primary_scale primary_scale_x100
+    if [[ -t 0 ]]; then
+        echo ""
+        echo "  Primary: $primary  (${primary_w}x${primary_h})"
+    fi
+    local primary_scale_pair
+    primary_scale_pair="$(_pick_scale)"
+    primary_scale="${primary_scale_pair% *}"
+    primary_scale_x100="${primary_scale_pair#* }"
+    local primary_logical_w=$(( primary_w * 100 / primary_scale_x100 ))
+    local primary_logical_h=$(( primary_h * 100 / primary_scale_x100 ))
+
     local rules="" portrait_outputs="" secondary_outputs=""
     local externals
     externals=$(echo "$monitors_json" | jq -r --arg p "$primary" '.[] | select(.name != $p) | .name')
 
     # Track every placed monitor's bounds so subsequent externals can be
-    # anchored to it, not just to primary. Keyed by monitor name.
-    # Effective width/height are post-rotation (so a portrait external
-    # contributes a 1080-wide footprint to its right/left neighbors).
+    # anchored to it, not just to primary. Keyed by monitor name. Bounds
+    # are LOGICAL (post-rotation, post-scale) since Hyprland's coordinate
+    # system is logical — a 4K external at 2x scale occupies a 1920x1080
+    # box for the purposes of placing its neighbors.
     declare -A ANCHOR_X ANCHOR_Y ANCHOR_W ANCHOR_H
     ANCHOR_X[$primary]=0
     ANCHOR_Y[$primary]=0
-    ANCHOR_W[$primary]=$primary_w
-    ANCHOR_H[$primary]=$primary_h
+    ANCHOR_W[$primary]=$primary_logical_w
+    ANCHOR_H[$primary]=$primary_logical_h
     local placed=("$primary")
 
     # Read externals from FD 3 so the inner read prompts still hit stdin/tty.
@@ -757,12 +798,20 @@ configure_monitors() {
             esac
         fi
 
-        # Effective dimensions (after rotation)
+        # HiDPI scale — affects logical bounds, layout, and the rule.
+        local ext_scale_pair ext_scale ext_scale_x100
+        ext_scale_pair="$(_pick_scale)"
+        ext_scale="${ext_scale_pair% *}"
+        ext_scale_x100="${ext_scale_pair#* }"
+
+        # Effective dimensions (post-rotation, post-scale = logical bounds).
         local eff_w="$ext_w" eff_h="$ext_h" transform=0
         case "$orient" in
             portrait-left)  eff_w="$ext_h"; eff_h="$ext_w"; transform=3 ;;  # 270°
             portrait-right) eff_w="$ext_h"; eff_h="$ext_w"; transform=1 ;;  #  90°
         esac
+        eff_w=$(( eff_w * 100 / ext_scale_x100 ))
+        eff_h=$(( eff_h * 100 / ext_scale_x100 ))
 
         # Position relative to the chosen anchor's bounds. Hyprland accepts
         # negative coords, so we just compute and let it normalize visually.
@@ -778,10 +827,10 @@ configure_monitors() {
         esac
 
         if (( transform != 0 )); then
-            rules+="monitor = ${ext}, preferred, ${ext_x}x${ext_y}, 1, transform, ${transform}"$'\n'
+            rules+="monitor = ${ext}, preferred, ${ext_x}x${ext_y}, ${ext_scale}, transform, ${transform}"$'\n'
             portrait_outputs+="${ext} "
         else
-            rules+="monitor = ${ext}, preferred, ${ext_x}x${ext_y}, 1"$'\n'
+            rules+="monitor = ${ext}, preferred, ${ext_x}x${ext_y}, ${ext_scale}"$'\n'
         fi
         secondary_outputs+="${ext} "
 
@@ -804,7 +853,7 @@ configure_monitors() {
         echo "# silently ignores its rule. The catch-all at the bottom handles"
         echo "# unknown displays at runtime."
         echo ""
-        echo "monitor = ${primary}, preferred, 0x0, 1"
+        echo "monitor = ${primary}, preferred, 0x0, ${primary_scale}"
         printf '%s' "$rules"
         echo ""
         echo "# Catch-all for any unknown/disconnected displays at runtime"

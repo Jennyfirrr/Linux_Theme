@@ -4,6 +4,19 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-10 — v2.5.3
+
+### `configure_monitors` — HiDPI scale picker per monitor
+The wizard previously hardcoded scale `1` in every generated `monitor =` rule, which made 4K monitors (and especially 4K laptop panels) render text at microscopic native pixel size with no way to tell the installer "use 2x". Added a per-monitor scale prompt — `[1] 1x  [2] 1.25x  [3] 1.5x  [4] 2x` — covering both the primary monitor (asked up front, before the external loop) and each external (asked alongside position + orientation).
+
+Implementation notes:
+- **Bash has no float math, but Hyprland's coordinate system is logical.** Scale values are stored both as a decimal string (for the `monitors.conf` rule) and as `value × 100` integer (`125`, `150`, `200`) for the layout math. Logical width = `physical_w * 100 / scale_x100` — exact for the four supported steps.
+- **Anchor bounds are logical, not physical.** A 4K external at 2x scale contributes a 1920×1080 logical box to its right/left/above/below neighbors, so daisy-chained mixed-DPI layouts (1080p laptop + 4K@2x sidecar + 1440p above) compose correctly with no manual coordinate math.
+- **`_pick_scale` helper** routes its menu prompts to stderr and the chosen `decimal x100` pair to stdout, so it can be called via `$(...)` capture without polluting the captured value with the prompt text.
+- **Defaults preserve v2.5.2 behavior.** Blank input or any non-1/2/3/4 selection falls back to `1 100` — the same scale=1 that every previous wizard run produced. Existing setups don't shift unless the user explicitly picks a non-1 scale.
+
+---
+
 ## 2026-05-10 — v2.5.2
 
 ### `configure_monitors` — multi-anchor wizard for daisy-chained setups
