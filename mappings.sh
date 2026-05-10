@@ -166,7 +166,11 @@ foxml_prompt_yn() {
     if [[ ! -t 0 ]]; then
         return 1
     fi
-    read -p "$prompt" -n 1 -r reply 2>/dev/null || true
+    # NOTE: do NOT redirect stderr away from `read -p` — bash writes the
+    # prompt itself to stderr, so `2>/dev/null` would silently eat the
+    # question and leave the user staring at a blank screen wondering
+    # what to type.
+    read -p "$prompt" -n 1 -r reply || true
     echo ""
     [[ "$reply" =~ ^[Yy]$ ]]
 }
@@ -215,14 +219,14 @@ install_specials() {
         # form fields, and scroll positions back on the next launch.
         # Skipped silently if Firefox isn't running.
         if pgrep -x firefox >/dev/null 2>&1; then
-            pkill -TERM -x firefox 2>/dev/null || true
+            pkill -TERM -x firefox || true
             # Wait up to 10s for graceful exit; bail out either way.
             for _ in {1..20}; do
                 pgrep -x firefox >/dev/null 2>&1 || break
                 sleep 0.5
             done
             setsid -f firefox >/dev/null 2>&1 &
-            disown 2>/dev/null || true
+            disown || true
             echo "  Firefox restarted (session restore brings tabs back)"
         fi
     else
@@ -436,8 +440,8 @@ JSON
         echo "  cursor theme already present"
     fi
     if command -v gsettings &>/dev/null; then
-        gsettings set org.gnome.desktop.interface cursor-theme "$cursor_name" 2>/dev/null || true
-        gsettings set org.gnome.desktop.interface cursor-size 30 2>/dev/null || true
+        gsettings set org.gnome.desktop.interface cursor-theme "$cursor_name" || true
+        gsettings set org.gnome.desktop.interface cursor-size 30 || true
     fi
 
     # Icon theme — Papirus-Dark with Catppuccin Mocha Peach folders. The
@@ -460,7 +464,7 @@ JSON
         local cat_tmp; cat_tmp="$(mktemp -d)"
         if git clone --depth 1 --quiet \
                 https://github.com/catppuccin/papirus-folders.git "$cat_tmp/repo" 2>/dev/null; then
-            cp -r "$cat_tmp/repo/src/"* "$icons_dir/Papirus/" 2>/dev/null || true
+            cp -r "$cat_tmp/repo/src/"* "$icons_dir/Papirus/" || true
             echo "  Catppuccin folder palette injected"
         fi
         rm -rf "$cat_tmp"
@@ -482,7 +486,7 @@ JSON
         fi
 
         if command -v gsettings &>/dev/null; then
-            gsettings set org.gnome.desktop.interface icon-theme "Papirus-Dark" 2>/dev/null || true
+            gsettings set org.gnome.desktop.interface icon-theme "Papirus-Dark" || true
         fi
     fi
 
@@ -593,7 +597,7 @@ _pick_scale() {
     fi
     echo "    Scale (HiDPI):"                                    >&2
     echo "      [1] 1x   [2] 1.25x   [3] 1.5x   [4] 2x"          >&2
-    read -p "    Choice [1]: " s_choice 2>/dev/null || true
+    read -p "    Choice [1]: " s_choice || true
     case "$s_choice" in
         2) echo "1.25 125" ;;
         3) echo "1.5 150" ;;
@@ -770,7 +774,7 @@ configure_monitors() {
                     i=$((i+1))
                 done
                 local a_choice=""
-                read -p "    Choice [1]: " a_choice 2>/dev/null || true
+                read -p "    Choice [1]: " a_choice || true
                 if [[ "$a_choice" =~ ^[0-9]+$ ]] \
                     && (( a_choice >= 1 && a_choice <= ${#placed[@]} )); then
                     anchor="${placed[$((a_choice-1))]}"
@@ -780,7 +784,7 @@ configure_monitors() {
             echo "    Position relative to ${anchor}:"
             echo "      [1] left   [2] right   [3] above   [4] below"
             local p_choice="" o_choice=""
-            read -p "    Choice [2]: " p_choice 2>/dev/null || true
+            read -p "    Choice [2]: " p_choice || true
             case "$p_choice" in
                 1) pos="left" ;;
                 3) pos="above" ;;
@@ -790,7 +794,7 @@ configure_monitors() {
 
             echo "    Orientation:"
             echo "      [1] landscape   [2] portrait, rotated left   [3] portrait, rotated right"
-            read -p "    Choice [1]: " o_choice 2>/dev/null || true
+            read -p "    Choice [1]: " o_choice || true
             case "$o_choice" in
                 2) orient="portrait-left" ;;
                 3) orient="portrait-right" ;;
@@ -1687,7 +1691,7 @@ EOF
         (( hw_max_mhz > 0 )) && echo "    Hardware max: ${hw_max_mhz} MHz"
         # `|| true` so an EOF read (no TTY, redirected stdin) doesn't take
         # down the whole installer under `set -e`. Empty input → skip.
-        read -p "    Cap max frequency in MHz (e.g. 2400, blank to skip): " max_mhz 2>/dev/null || true
+        read -p "    Cap max frequency in MHz (e.g. 2400, blank to skip): " max_mhz || true
         if [[ "$max_mhz" =~ ^[0-9]+$ ]] && (( max_mhz > 0 )); then
             local max_khz=$((max_mhz * 1000))
             if sudo cpupower frequency-set -u "${max_mhz}MHz" >/dev/null 2>&1; then
@@ -1710,7 +1714,7 @@ EOF
             echo ""
             echo "  Available governors: $available_gov"
             local governor=""
-            read -p "  Set CPU governor (blank to skip): " governor 2>/dev/null || true
+            read -p "  Set CPU governor (blank to skip): " governor || true
             if [[ -n "$governor" ]]; then
                 # validate against the available list to avoid a confusing live-set failure
                 if [[ " $available_gov " == *" $governor "* ]]; then
@@ -1953,7 +1957,7 @@ install_security() {
             # doesn't get spliced into sshd_config / `ufw allow` and brick
             # remote access. Anything out of [1, 65535] falls back to 22.
             local custom_port=""
-            read -p "  Enter custom SSH port [default: 22]: " custom_port 2>/dev/null || true
+            read -p "  Enter custom SSH port [default: 22]: " custom_port || true
             custom_port=${custom_port:-22}
             if ! [[ "$custom_port" =~ ^[0-9]+$ ]] || (( custom_port < 1 || custom_port > 65535 )); then
                 echo "    '$custom_port' is not a valid port number — falling back to 22"
