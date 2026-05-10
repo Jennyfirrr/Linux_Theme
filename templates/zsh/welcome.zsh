@@ -40,12 +40,12 @@ function _caramel_welcome() {
     echo -e "         ${c1}/\\_/\\ ${O}\e[${rc}G${c1}█▀▀${O} ${c2}█▀█${O} ${c3}▀▄▀${O} ${c4}█▀▄▀█${O} ${c1}█${O}"
     echo -e "        ${c1}(${c3}˚${c1}ˎ ${c3}。${c1}7${O}\e[${dc}G${c1}${dow}${O}\e[${rc}G${c1}█▀ ${O} ${c2}█ █${O} ${c3} █ ${O} ${c4}█ ▀ █${O} ${c1}█${O}"
     echo -e "         ${c1}|、${c3}^${c1} 〵${O}\e[${dc}G${c2}${mon} ${dom}${O} ${DM}·${O} ${c4}${hr}:${min} ${ap}${O}\e[${rc}G${c1}▀  ${O} ${c2}▀▀▀${O} ${c3}▀ ▀${O} ${c4}▀   ▀${O} ${c1}▀▀▀${O}"
-    echo -e "            ${c1}じし${c3}ˍ${c1},)ノ${O}${theme_tag}\e[${drc}G${dots}"
+    echo -e "          ${c1}じし${c3}ˍ${c1},)ノ${O}${theme_tag}\e[${drc}G${dots}"
   else
     echo -e "         ${c1}/\\_/\\ ${O}"
     echo -e "        ${c1}(${c3}˚${c1}ˎ ${c3}。${c1}7${O}\e[${dc}G${c1}${dow}${O}"
     echo -e "         ${c1}|、${c3}^${c1} 〵${O}\e[${dc}G${c2}${mon} ${dom}${O} ${DM}·${O} ${c4}${hr}:${min} ${ap}${O}"
-    echo -e "            ${c1}じし${c3}ˍ${c1},)ノ${O}${theme_tag}"
+    echo -e "          ${c1}じし${c3}ˍ${c1},)ノ${O}${theme_tag}"
   fi
 
   # Todo items (max 3, only if ~/.todo exists and has content)
