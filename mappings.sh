@@ -567,7 +567,10 @@ JSON
 }
 
 # ─────────────────────────────────────────
-# Multi-monitor setup — interactive picker for position + orientation.
+# Multi-monitor setup — interactive picker for anchor + position +
+# orientation. Each external is anchored to primary OR any
+# previously-placed external, so daisy-chained setups (3+ monitors in a
+# row, stacked sidecars, etc.) compose correctly without overlapping.
 # Writes ~/.config/hypr/modules/monitors.conf (per-machine, name-keyed so
 # unplugged monitors are silently ignored) and a small sidecar at
 # ~/.config/foxml/monitor-layout.conf consumed by start_waybar.sh and
@@ -681,6 +684,17 @@ configure_monitors() {
     local externals
     externals=$(echo "$monitors_json" | jq -r --arg p "$primary" '.[] | select(.name != $p) | .name')
 
+    # Track every placed monitor's bounds so subsequent externals can be
+    # anchored to it, not just to primary. Keyed by monitor name.
+    # Effective width/height are post-rotation (so a portrait external
+    # contributes a 1080-wide footprint to its right/left neighbors).
+    declare -A ANCHOR_X ANCHOR_Y ANCHOR_W ANCHOR_H
+    ANCHOR_X[$primary]=0
+    ANCHOR_Y[$primary]=0
+    ANCHOR_W[$primary]=$primary_w
+    ANCHOR_H[$primary]=$primary_h
+    local placed=("$primary")
+
     # Read externals from FD 3 so the inner read prompts still hit stdin/tty.
     while IFS= read -r -u 3 ext; do
         [[ -z "$ext" ]] && continue
@@ -688,17 +702,41 @@ configure_monitors() {
         ext_w=$(echo "$monitors_json" | jq -r --arg n "$ext" '.[] | select(.name==$n) | .width')
         ext_h=$(echo "$monitors_json" | jq -r --arg n "$ext" '.[] | select(.name==$n) | .height')
 
-        local pos="right" orient="landscape"
+        local pos="right" orient="landscape" anchor="$primary"
 
         # Same TTY gate as the outer prompt — interactive prompts run
         # whenever we have a terminal, regardless of --yes. The case
-        # statements have a wildcard default so any non-1/2/3/4 input
+        # statements have a wildcard default so any non-numeric input
         # silently falls back to the documented default rather than
         # erroring out.
         if [[ -t 0 ]]; then
             echo ""
             echo "  External: $ext  (${ext_w}x${ext_h})"
-            echo "    Position relative to ${primary}:"
+
+            # Anchor selection — only prompted when more than one
+            # already-placed monitor is available. Default = primary.
+            # Skipped silently for the first external (only choice is
+            # primary anyway).
+            if (( ${#placed[@]} > 1 )); then
+                echo "    Position relative to which monitor:"
+                local i=1
+                for cand in "${placed[@]}"; do
+                    if [[ "$cand" == "$primary" ]]; then
+                        echo "      [$i] $cand (primary)"
+                    else
+                        echo "      [$i] $cand"
+                    fi
+                    i=$((i+1))
+                done
+                local a_choice=""
+                read -p "    Choice [1]: " a_choice 2>/dev/null || true
+                if [[ "$a_choice" =~ ^[0-9]+$ ]] \
+                    && (( a_choice >= 1 && a_choice <= ${#placed[@]} )); then
+                    anchor="${placed[$((a_choice-1))]}"
+                fi
+            fi
+
+            echo "    Position relative to ${anchor}:"
             echo "      [1] left   [2] right   [3] above   [4] below"
             local p_choice="" o_choice=""
             read -p "    Choice [2]: " p_choice 2>/dev/null || true
@@ -726,14 +764,17 @@ configure_monitors() {
             portrait-right) eff_w="$ext_h"; eff_h="$ext_w"; transform=1 ;;  #  90°
         esac
 
-        # Position relative to primary anchored at 0,0. Hyprland accepts
+        # Position relative to the chosen anchor's bounds. Hyprland accepts
         # negative coords, so we just compute and let it normalize visually.
+        local ax ay aw ah
+        ax=${ANCHOR_X[$anchor]}; ay=${ANCHOR_Y[$anchor]}
+        aw=${ANCHOR_W[$anchor]}; ah=${ANCHOR_H[$anchor]}
         local ext_x=0 ext_y=0
         case "$pos" in
-            right) ext_x=$primary_w;       ext_y=$(( (primary_h - eff_h) / 2 )) ;;
-            left)  ext_x=$(( -eff_w ));    ext_y=$(( (primary_h - eff_h) / 2 )) ;;
-            above) ext_x=$(( (primary_w - eff_w) / 2 )); ext_y=$(( -eff_h )) ;;
-            below) ext_x=$(( (primary_w - eff_w) / 2 )); ext_y=$primary_h ;;
+            right) ext_x=$(( ax + aw ));            ext_y=$(( ay + (ah - eff_h) / 2 )) ;;
+            left)  ext_x=$(( ax - eff_w ));         ext_y=$(( ay + (ah - eff_h) / 2 )) ;;
+            above) ext_x=$(( ax + (aw - eff_w) / 2 )); ext_y=$(( ay - eff_h )) ;;
+            below) ext_x=$(( ax + (aw - eff_w) / 2 )); ext_y=$(( ay + ah )) ;;
         esac
 
         if (( transform != 0 )); then
@@ -743,6 +784,13 @@ configure_monitors() {
             rules+="monitor = ${ext}, preferred, ${ext_x}x${ext_y}, 1"$'\n'
         fi
         secondary_outputs+="${ext} "
+
+        # Record this external's bounds so a later external can anchor to it.
+        ANCHOR_X[$ext]=$ext_x
+        ANCHOR_Y[$ext]=$ext_y
+        ANCHOR_W[$ext]=$eff_w
+        ANCHOR_H[$ext]=$eff_h
+        placed+=("$ext")
     done 3<<< "$externals"
 
     # Write monitors.conf

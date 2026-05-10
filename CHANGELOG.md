@@ -4,6 +4,21 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-10 — v2.5.2
+
+### `configure_monitors` — multi-anchor wizard for daisy-chained setups
+The wizard previously positioned every external relative to primary, which limited it to 5 monitors max (primary + one in each cardinal direction) and broke as soon as you wanted two monitors stacked side-by-side ("right of HDMI-A-1, not right of primary"). Two externals both placed to the right would overlap at the same x coordinate.
+
+Now each external can be anchored to **primary OR any previously-placed external**:
+- Per-monitor bounds (x, y, effective width/height post-rotation) are tracked in a bash associative array as the loop iterates.
+- When more than one monitor has already been placed, the wizard shows an "Anchor relative to which monitor:" sub-prompt listing every prior placement (with primary marked). Default = primary, non-numeric / out-of-range input falls back silently.
+- Position math (left/right/above/below) uses the anchor's bounds instead of always primary's, so `right of HDMI-A-1 anchored at x=1920` correctly computes ext_x = 1920 + anchor_width.
+- Portrait rotations contribute their post-rotation footprint (1080-wide instead of 1920-wide) to right/left neighbors automatically — the bounds tracker stores effective dimensions, not physical.
+
+The first external still skips the anchor prompt (only choice is primary, no point asking). For typical 2-3 monitor setups the UX is unchanged from v2.5.1; only when there are 3+ monitors does the anchor selector appear.
+
+---
+
 ## 2026-05-10 — v2.5.1
 
 ### Interactive wizards now run under `--yes` when a TTY is available
