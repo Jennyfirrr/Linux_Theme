@@ -76,6 +76,7 @@ export MANPAGER="sh -c 'col -bx | bat -l man -p'"
 
 # ─── fzf ──────────────────────────────────────
 source /usr/share/fzf/key-bindings.zsh
+FZF_COMPLETION_TRIGGER=''
 source /usr/share/fzf/completion.zsh
 export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
 export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
