@@ -1,7 +1,12 @@
 #!/bin/bash
 # FoxML Theme Hub — Installer
 # Renders templates with theme palette, copies to system
-# Usage: ./install.sh [theme_name] [--deps] [--secure] [--nvidia] [--xgboost] [-y|--yes]
+# Usage: ./install.sh [theme_name] [--deps] [--secure] [--perf] [--privacy]
+#                     [--vault] [--ai] [--models] [--github] [--nvidia]
+#                     [--xgboost] [--full|--all] [--render-only] [-y|--yes]
+#
+# --full / --all: enables every opt-in module except --xgboost.
+# FOXML_NO_UPDATE=1: skip the auto-update + re-exec at startup.
 
 set -e
 
@@ -11,6 +16,62 @@ TEMPLATES_DIR="$SCRIPT_DIR/templates"
 SHARED_DIR="$SCRIPT_DIR/shared"
 ACTIVE_FILE="$SCRIPT_DIR/.active-theme"
 BACKUP_DIR="$HOME/.theme_backups/foxml-backup-$(date +%Y%m%d-%H%M%S)"
+
+# ─────────────────────────────────────────
+# Self-update — pull latest installer from origin/main and re-exec
+# before doing any destructive work. Runs ahead of mappings.sh / render.sh
+# sourcing so the re-execed process picks up updated helpers too.
+#
+# Skip conditions (any one short-circuits to current version):
+#   - FOXML_NO_UPDATE=1 in env (explicit pin / offline / dev)
+#   - FOXML_UPDATED=1 in env (already re-execed, prevents loop)
+#   - SCRIPT_DIR isn't inside a git work tree (curl-bash from tarball)
+#   - HEAD isn't on main (don't auto-update arbitrary branches)
+#   - working tree dirty (don't clobber in-progress edits)
+#   - fetch fails within 15s (offline / GitHub down)
+#   - pull would require non-FF (local commits ahead)
+# ─────────────────────────────────────────
+foxml_self_update() {
+    [[ "${FOXML_NO_UPDATE:-0}" == "1" ]] && return
+    [[ "${FOXML_UPDATED:-0}"   == "1" ]] && return
+    git -C "$SCRIPT_DIR" rev-parse --is-inside-work-tree >/dev/null 2>&1 || return
+
+    local branch
+    branch="$(git -C "$SCRIPT_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null)"
+    if [[ "$branch" != "main" ]]; then
+        echo "  • installer on branch '$branch' (not main), skipping auto-update"
+        return
+    fi
+    if ! git -C "$SCRIPT_DIR" diff --quiet HEAD 2>/dev/null; then
+        echo "  • installer has uncommitted changes, skipping auto-update"
+        return
+    fi
+
+    echo "Checking for installer updates..."
+    if ! timeout 15 git -C "$SCRIPT_DIR" fetch --quiet origin main 2>/dev/null; then
+        echo "  • fetch failed (offline?), continuing with current version"
+        return
+    fi
+
+    local local_sha remote_sha
+    local_sha="$(git -C "$SCRIPT_DIR" rev-parse HEAD)"
+    remote_sha="$(git -C "$SCRIPT_DIR" rev-parse origin/main 2>/dev/null)"
+    if [[ -z "$remote_sha" || "$local_sha" == "$remote_sha" ]]; then
+        echo "  installer up-to-date ($(git -C "$SCRIPT_DIR" rev-parse --short HEAD))"
+        return
+    fi
+
+    echo "  Pulling updates: $(git -C "$SCRIPT_DIR" rev-parse --short HEAD) → $(git -C "$SCRIPT_DIR" rev-parse --short origin/main)"
+    if ! git -C "$SCRIPT_DIR" pull --ff-only --quiet origin main 2>/dev/null; then
+        echo "  ! non-fast-forward (local commits ahead?), continuing with current version"
+        return
+    fi
+
+    echo "  Installer updated, re-executing with new version..."
+    export FOXML_UPDATED=1
+    exec "$SCRIPT_DIR/install.sh" "$@"
+}
+foxml_self_update "$@"
 
 source "$SCRIPT_DIR/mappings.sh"
 source "$SCRIPT_DIR/render.sh"
@@ -45,6 +106,21 @@ for arg in "$@"; do
         --ai) INSTALL_AI=true ;;
         --models) INSTALL_MODELS=true ;;
         --github) INSTALL_GITHUB=true ;;
+        --full|--all)
+            # Flip every opt-in module on. --xgboost stays out — it's a
+            # heavy from-source build for a niche use case (training the
+            # bundled trading models) and would dominate install time
+            # for users who don't need it.
+            INSTALL_DEPS=true
+            INSTALL_SECURITY=true
+            INSTALL_PERF=true
+            INSTALL_PRIVACY=true
+            INSTALL_VAULT=true
+            INSTALL_NVIDIA=true
+            INSTALL_AI=true
+            INSTALL_MODELS=true
+            INSTALL_GITHUB=true
+            ;;
         --render-only) RENDER_ONLY=true ;;
         -y|--yes) ASSUME_YES=true ;;
         *) THEME_NAME="$arg" ;;
@@ -179,11 +255,16 @@ if $INSTALL_DEPS; then
         # python-gobject is the optional dep that makes `powerprofilesctl` work
         # for click-to-switch handlers
         power-profiles-daemon python-gobject
+        # ufw is always installed — install_ufw_baseline() applies a
+        # default-deny incoming firewall on every install, not just --secure.
+        # fail2ban / audit / lynis stay behind --secure (server-grade tools
+        # that are dead weight on a personal laptop with no public services).
+        ufw
     )
 
     # Security hardening — only added when --secure is passed.
     if $INSTALL_SECURITY; then
-        PACMAN_PKGS+=(ufw fail2ban audit lynis)
+        PACMAN_PKGS+=(fail2ban audit lynis)
     fi
 
     # Performance — only added when --perf is passed.
@@ -557,6 +638,26 @@ install_clock_sync
 echo ""
 echo "Configuring gpg-agent passphrase cache..."
 install_gpg_agent_cache
+
+# ─────────────────────────────────────────
+# Kernel hardening sysctls — auto-applied. Drop-in at
+# /etc/sysctl.d/99-foxml-hardening.conf, reversible by deleting the file.
+# Pure-win settings (kptr/dmesg restrict, syncookies, rp_filter, etc.) —
+# nothing that breaks normal desktop / dev workflows.
+# ─────────────────────────────────────────
+echo ""
+echo "Applying kernel hardening sysctls..."
+install_kernel_hardening
+
+# ─────────────────────────────────────────
+# UFW firewall baseline — auto-applied. Default deny incoming, allow
+# outgoing, conditional allow ssh only when sshd is actually enabled.
+# Skipped cleanly if ufw isn't installed; the --secure module's SSH
+# hardening wizard handles port-22 vs custom-port logic separately.
+# ─────────────────────────────────────────
+echo ""
+echo "Applying UFW firewall baseline..."
+install_ufw_baseline
 
 # ─────────────────────────────────────────
 # Catppuccin cursor (per-user fetch from GitHub releases).

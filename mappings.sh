@@ -1239,6 +1239,94 @@ install_github_gpg_signing() {
     install_gpg_agent_cache
 }
 
+# Default-deny incoming firewall baseline. Auto-applied (not behind
+# --secure) because it's pure-win on a personal laptop: blocks unsolicited
+# inbound, leaves outbound free, reversible with `sudo ufw disable`.
+#
+# Port 22 is only opened when sshd is actually enabled on this host —
+# otherwise punching it would leave a permissive rule pointing at a
+# nonexistent service. The `--secure` module's SSH hardening wizard
+# handles port-22-vs-custom-port logic separately.
+install_ufw_baseline() {
+    if ! command -v ufw >/dev/null 2>&1; then
+        echo "  • ufw not installed, skipping firewall baseline"
+        return
+    fi
+
+    if sudo ufw status 2>/dev/null | grep -q '^Status: active'; then
+        echo "  • UFW already active, leaving rules alone"
+        return
+    fi
+
+    echo "  Applying UFW baseline (deny incoming, allow outgoing)..."
+    sudo ufw --force reset >/dev/null 2>&1 || true
+    sudo ufw default deny incoming  >/dev/null
+    sudo ufw default allow outgoing >/dev/null
+
+    if systemctl is-enabled --quiet sshd 2>/dev/null \
+       || systemctl is-active  --quiet sshd 2>/dev/null; then
+        sudo ufw allow ssh >/dev/null
+        echo "    sshd detected — port 22 allowed"
+    fi
+
+    echo "y" | sudo ufw enable >/dev/null
+    sudo systemctl enable --now ufw >/dev/null 2>&1
+    echo "    UFW enabled"
+}
+
+# Kernel hardening sysctls. Auto-applied — drop-in at
+# /etc/sysctl.d/99-foxml-hardening.conf, reversible by deleting the file
+# and running `sudo sysctl --system`. Settings chosen for "pure-win on a
+# personal Arch+Hyprland laptop" — no server-only knobs, no settings
+# that break common dev workflows (Docker, eBPF tooling for non-root
+# users is the one we *do* tighten; if you need bpf as non-root, drop
+# the file or override in a 100-prefixed file).
+#
+# Notable choices:
+#   - kernel.kptr_restrict=2          hides kernel pointers in /proc
+#   - kernel.dmesg_restrict=1         only root reads dmesg
+#   - kernel.unprivileged_bpf_disabled=1   non-root can't load eBPF
+#   - kernel.yama.ptrace_scope=1      only parent process can ptrace
+#   - net.ipv4.tcp_syncookies=1       SYN-flood mitigation
+#   - net.ipv4.conf.*.rp_filter=1     reverse-path filter (anti-spoof)
+#   - net.ipv4.conf.*.log_martians=1  log packets with impossible src
+#   - fs.suid_dumpable=0              setuid procs don't core-dump
+install_kernel_hardening() {
+    local conf="/etc/sysctl.d/99-foxml-hardening.conf"
+    local desired
+    desired="$(cat <<'EOF'
+# FoxML kernel hardening — auto-applied by install.sh.
+# Reversible: `sudo rm /etc/sysctl.d/99-foxml-hardening.conf && sudo sysctl --system`.
+kernel.kptr_restrict             = 2
+kernel.dmesg_restrict            = 1
+kernel.unprivileged_bpf_disabled = 1
+kernel.yama.ptrace_scope         = 1
+net.ipv4.tcp_syncookies          = 1
+net.ipv4.conf.all.rp_filter      = 1
+net.ipv4.conf.default.rp_filter  = 1
+net.ipv4.conf.all.log_martians   = 1
+net.ipv4.conf.default.log_martians = 1
+fs.suid_dumpable                 = 0
+EOF
+)"
+
+    if [[ -f "$conf" ]] && diff -q <(printf '%s\n' "$desired") "$conf" >/dev/null 2>&1; then
+        echo "  • kernel hardening sysctls already in place"
+        return
+    fi
+
+    echo "  Writing kernel hardening sysctls to $conf..."
+    printf '%s\n' "$desired" | sudo tee "$conf" >/dev/null
+    sudo chmod 644 "$conf"
+    if sudo sysctl --system >/dev/null 2>&1; then
+        echo "    sysctl --system applied"
+    else
+        echo "  ! sysctl --system reported errors — review with 'sudo sysctl --system'"
+    fi
+}
+
+# Enable fingerprint authentication for the greetd login screen on hosts
+
 # Enable fingerprint authentication for the greetd login screen on hosts
 # that have a fingerprint reader. Idempotent: leaves an existing pam_fprintd
 # line wherever the user already placed it; on first install, inserts a new
@@ -1559,11 +1647,18 @@ install_privacy() {
     # 1. Update resolved.conf
     # Uses Cloudflare (1.1.1.1) and Google (8.8.8.8) with DoH enabled
     sudo mkdir -p /etc/systemd/resolved.conf.d/
+    # DNSSEC=no matches install_resolved_dnssec's auto-fix. The original
+    # DNSSEC=yes here silently re-introduced the v2.4.7 NTP-failure mode
+    # (resolvers that advertise DNSSEC support but return unsigned
+    # answers cause systemd-resolved to fail validation, which wedges
+    # chrony's source resolution). DoH still encrypts the query path —
+    # DNSSEC=yes only adds answer-validation, which is the part that
+    # was breaking. Keep DoH on, leave DNSSEC off.
     sudo tee /etc/systemd/resolved.conf.d/foxml-doh.conf >/dev/null <<EOF
 [Resolve]
 DNS=1.1.1.1#cloudflare-dns.com 1.0.0.1#cloudflare-dns.com 8.8.8.8#dns.google 8.8.4.4#dns.google
 DNSOverHTTPS=yes
-DNSSEC=yes
+DNSSEC=no
 FallbackDNS=1.1.1.1 8.8.8.8
 EOF
 

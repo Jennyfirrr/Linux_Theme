@@ -4,6 +4,35 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-10 — v2.5.0
+
+### `install.sh` self-update — pull origin/main and re-exec before doing any work
+Added a `foxml_self_update()` step that runs before mappings.sh / render.sh are sourced and before any user prompts or sudo. It fetches `origin/main`, fast-forward-pulls if behind, and re-execs `install.sh` so the new copy (including helper functions in mappings.sh) is what actually runs. The re-exec is guarded by `FOXML_UPDATED=1` so the second invocation skips the update step instead of looping.
+
+Skip conditions, each short-circuiting cleanly to "continue with current version":
+- `FOXML_NO_UPDATE=1` in env (explicit pin / offline / dev iteration on a local-only branch)
+- not inside a git work tree (someone curl-bashed it from a tarball)
+- HEAD not on `main` (don't auto-update arbitrary branches a developer is testing)
+- working tree dirty (don't clobber in-progress edits — caught by `git diff --quiet HEAD`)
+- `git fetch` fails within a 15-second timeout (offline / GitHub down)
+- pull would require a non-FF (local commits ahead of origin)
+
+### `--full` / `--all` flag — single-flag full-fat install
+`./install.sh --full` flips every opt-in module on at once: `--deps`, `--secure`, `--perf`, `--privacy`, `--vault`, `--ai`, `--models`, `--github`, `--nvidia`. `--xgboost` deliberately stays out — it's a heavy from-source build for the bundled trading models that would dominate install time for users who don't need it. Both `--full` and `--all` are accepted as the same alias.
+
+### Auto-applied security baseline (no flag required)
+Promoted from the opt-in `--secure` module to always-on, because they're pure-win on a personal Arch+Hyprland laptop and reversible-by-file-delete:
+
+- **`install_ufw_baseline()`** — default-deny incoming, allow outgoing, conditional `allow ssh` only when `sshd` is enabled or active. Idempotent (skips when UFW is already active so a user-customized ruleset isn't reset). `ufw` moved into the always-installed pacman list so the auto-baseline actually has the binary on a default install — `fail2ban` / `audit` / `lynis` stay behind `--secure` (server-grade tools that are dead weight on a personal laptop with no public services).
+- **`install_kernel_hardening()`** — drop-in at `/etc/sysctl.d/99-foxml-hardening.conf` setting `kernel.kptr_restrict=2`, `kernel.dmesg_restrict=1`, `kernel.unprivileged_bpf_disabled=1`, `kernel.yama.ptrace_scope=1`, `net.ipv4.tcp_syncookies=1`, `rp_filter=1` + `log_martians=1` on `all` and `default`, and `fs.suid_dumpable=0`. Only writes the file when its content differs from the desired value, so re-runs are quiet. Applies via `sysctl --system` immediately. Reversible by deleting the file and re-running `sudo sysctl --system`.
+
+Both run as part of the user-environment phase between `install_gpg_agent_cache` and `install_catppuccin_cursor`. Neither needs a flag — the only way to suppress them is to delete the drop-in / disable UFW manually.
+
+### `install_privacy()` DNSSEC fix — stop reintroducing the v2.4.7 NTP-failure mode
+The `--privacy` module's DoH config was writing `DNSSEC=yes`, which directly contradicted the auto `install_resolved_dnssec` drop-in's `DNSSEC=no`. Anyone running `--privacy` would re-introduce the exact "resolvers advertise DNSSEC but return unsigned answers → systemd-resolved fails validation → chrony NTP sources never resolve → clock never syncs" failure mode that v2.4.7 was written to fix. Changed to `DNSSEC=no` for consistency with the auto-fix; DoH still encrypts the query path (which is what the privacy claim rests on), DNSSEC=yes was only adding answer-validation, which was the part that broke.
+
+---
+
 ## 2026-05-10 — v2.4.10
 
 ### New `install_github_gpg_signing()` — generate + upload commit-signing key, end-to-end
