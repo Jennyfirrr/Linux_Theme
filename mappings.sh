@@ -1142,6 +1142,103 @@ EOF
     gpgconf --reload gpg-agent 2>/dev/null && echo "  gpg-agent reloaded"
 }
 
+# Generate a commit-signing GPG key, upload it to GitHub, and turn on
+# git's auto-sign config. Called from install_github_workspace after the
+# SSH key block so it can rely on `gh` already being installed and
+# authenticated. Idempotent — skips key generation if a usable secret
+# key already exists for the configured git email, and skips upload if
+# the public key body is already on GitHub.
+#
+# Key shape: ed25519 sign-only, no expiry. Pinentry will prompt for a
+# passphrase during generation (gpg-agent.conf cache TTL keeps it from
+# re-prompting mid-session). On non-interactive runs without a TTY,
+# generation is skipped with a hint.
+install_github_gpg_signing() {
+    if ! command -v gpg >/dev/null 2>&1; then
+        echo "  • gpg not installed, skipping commit-signing setup"
+        return
+    fi
+    if ! command -v gh >/dev/null 2>&1; then
+        echo "  • gh not installed, skipping commit-signing setup"
+        return
+    fi
+
+    local email name keyid
+    email="$(git config --global user.email 2>/dev/null)"
+    name="$(git config --global user.name 2>/dev/null)"
+    if [[ -z "$email" ]]; then
+        echo "  • git user.email unset, skipping commit-signing setup"
+        return
+    fi
+
+    # Look for an existing secret key that matches this email AND can
+    # sign (capability 's' on a non-revoked, non-expired key). gpg's
+    # colon format: fpr line right after a sec line gives the fingerprint.
+    keyid="$(gpg --list-secret-keys --with-colons "$email" 2>/dev/null \
+        | awk -F: '
+            $1=="sec" && $2!="r" && $2!="e" && index($12,"s") {found=1; next}
+            found && $1=="fpr" {print $10; exit}
+        ')"
+
+    if [[ -z "$keyid" ]]; then
+        if [[ ! -t 0 ]]; then
+            echo "  • no TTY for pinentry passphrase prompt, skipping GPG key generation"
+            echo "    Re-run interactively, or generate manually: gpg --quick-generate-key \"$name <$email>\" ed25519 sign 0"
+            return
+        fi
+        echo "    Generating ed25519 GPG signing key for $email..."
+        echo "    pinentry will prompt for a passphrase — this protects the key on disk."
+        # Fresh-bootstrap shells don't inherit the user's .zshrc, so
+        # pinentry-curses needs an explicit TTY hint to find the terminal.
+        export GPG_TTY="${GPG_TTY:-$(tty 2>/dev/null)}"
+        if ! gpg --quick-generate-key "$name <$email>" ed25519 sign 0; then
+            echo "  ! GPG key generation failed, skipping the rest of commit-signing setup"
+            return
+        fi
+        keyid="$(gpg --list-secret-keys --with-colons "$email" 2>/dev/null \
+            | awk -F: '$1=="fpr" {print $10; exit}')"
+        if [[ -z "$keyid" ]]; then
+            echo "  ! could not locate freshly-generated key, skipping upload"
+            return
+        fi
+        echo "      Key: $keyid"
+    else
+        echo "    Reusing existing GPG signing key: $keyid"
+    fi
+
+    # Upload pubkey to GitHub if not already registered there. The colon
+    # format from `gh gpg-key list` includes the full fingerprint, so a
+    # plain substring match is enough.
+    local pubkey
+    pubkey="$(gpg --armor --export "$keyid")"
+    if [[ -z "$pubkey" ]]; then
+        echo "  ! pubkey export empty, skipping upload"
+    elif gh gpg-key list 2>/dev/null | grep -qF "$keyid"; then
+        echo "    GPG key already on GitHub, skipping upload"
+    else
+        if ! gh auth status 2>&1 | grep -q 'write:gpg_key'; then
+            echo "    Refreshing gh auth to include write:gpg_key scope..."
+            gh auth refresh -h github.com -s write:gpg_key || true
+        fi
+        echo "    Uploading GPG key to GitHub..."
+        printf '%s\n' "$pubkey" | gh gpg-key add - --title "$(hostname)" \
+            || echo "    ! upload failed — run 'gh auth refresh -s write:gpg_key' and retry"
+    fi
+
+    # Configure git to auto-sign with this key. Only set fields that are
+    # missing so we don't clobber a power-user override.
+    git config --global user.signingkey "$keyid"
+    [[ -z "$(git config --global commit.gpgsign)" ]] && git config --global commit.gpgsign true
+    [[ -z "$(git config --global tag.gpgsign)" ]]    && git config --global tag.gpgsign true
+    echo "    git configured to sign commits + tags with $keyid"
+
+    # Re-run the cache TTL setup now that a signing key exists. On
+    # fresh-PC bootstrap, install_gpg_agent_cache runs earlier in the
+    # installer and short-circuits because no key was present yet —
+    # this second call lets it actually apply the TTL config.
+    install_gpg_agent_cache
+}
+
 # Enable fingerprint authentication for the greetd login screen on hosts
 # that have a fingerprint reader. Idempotent: leaves an existing pam_fprintd
 # line wherever the user already placed it; on first install, inserts a new

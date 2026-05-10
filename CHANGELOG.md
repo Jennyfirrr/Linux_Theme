@@ -4,6 +4,23 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-10 — v2.4.10
+
+### New `install_github_gpg_signing()` — generate + upload commit-signing key, end-to-end
+Bootstrapping a new PC previously stopped at SSH: the installer would generate `~/.ssh/id_ed25519` and upload it to GitHub for cloning, but commit signing was a separate manual chore (generate key, configure git, upload pubkey, refresh `gh` scope). Added an end-to-end function that handles all four steps, called from `install_github_workspace` immediately after the SSH-key block.
+
+- **Idempotent key discovery** — parses `gpg --list-secret-keys --with-colons "$email"` for a non-revoked, non-expired secret key with sign capability (`s` in field 12). Reuses an existing matching key if found; only generates when nothing usable matches the configured `git config user.email`.
+- **Key shape: ed25519 sign-only, no expiry** — `gpg --quick-generate-key "Name <email>" ed25519 sign 0`. Sign-only (no encryption subkey) keeps the key minimal for its single purpose. Pinentry prompts for a passphrase during generation; the existing `install_gpg_agent_cache` TTL keeps it from re-prompting mid-session.
+- **Idempotent upload** — exports armored pubkey, checks `gh gpg-key list` for the fingerprint, skips upload if already registered. Auto-refreshes `gh` auth to include `write:gpg_key` scope when missing.
+- **Auto-configures git** — sets `user.signingkey` to the new fingerprint, turns on `commit.gpgsign` and `tag.gpgsign` only if those keys aren't already set (preserves power-user overrides).
+
+### Fresh-PC bootstrap fixes uncovered by the new flow
+- **`GPG_TTY` exported defensively before key generation** — install.sh runs without the user's `.zshrc`, so pinentry-curses had no way to find the controlling terminal on a fresh machine. Now exports `GPG_TTY=$(tty)` if unset before invoking `gpg --quick-generate-key`.
+- **`install_gpg_agent_cache` re-invoked at the end of GPG setup** — the early `install_gpg_agent_cache` call at install.sh:559 short-circuits on a fresh PC because no signing key exists yet (its guard skips when `commit.gpgsign != true && no secret keys`). On a fresh-bootstrap machine the cache TTL would never have applied, so agent-driven commits would have re-prompted every 10 minutes. Fixed by calling `install_gpg_agent_cache` from inside `install_github_gpg_signing` after enabling `commit.gpgsign`, so the second call passes the guard and the TTL actually lands.
+- **Non-TTY guard** — if stdin isn't a TTY (CI, piped-in install), skips key generation with a hint to either re-run interactively or generate manually. Avoids hanging on a passphrase prompt that has no terminal to write to.
+
+---
+
 ## 2026-05-09 — v2.4.9
 
 ### `install_resolved_dnssec()` — restart NetworkManager to actually push cleared per-link DNSSEC

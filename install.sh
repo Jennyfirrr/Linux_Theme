@@ -863,6 +863,11 @@ EOF
             || echo "    ! upload failed — run 'gh auth refresh -s admin:public_key' and retry"
     fi
 
+    # 4c. GPG signing key — generates a passphrase-protected ed25519
+    # signing key, uploads it to GitHub, and turns on commit/tag auto-
+    # sign. Idempotent on re-runs.
+    install_github_gpg_signing
+
     # 5. Workspace Directory
     mkdir -p "$HOME/code"
     cd "$HOME/code" || return
