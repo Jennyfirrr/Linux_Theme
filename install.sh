@@ -553,15 +553,18 @@ backup_and_copy() {
         cp "$dest" "$backup_path" 2>/dev/null || true
     fi
     cp "$src" "$dest"
-    echo "  $(basename "$dest")"
 }
 
 # ─────────────────────────────────────────
 # Install rendered template files
 # ─────────────────────────────────────────
 echo ""
-echo "Installing themed configs..."
+total_tmpl=${#TEMPLATE_MAPPINGS[@]}
+cur_tmpl=0
 for mapping in "${TEMPLATE_MAPPINGS[@]}"; do
+    cur_tmpl=$((cur_tmpl + 1))
+    if command -v foxml_progress >/dev/null; then foxml_progress "$cur_tmpl" "$total_tmpl" "Installing themed configs"; else echo -ne "\rInstalling themed configs $cur_tmpl/$total_tmpl"; fi
+
     src="${mapping%%|*}"
     dest="${mapping##*|}"
     dest="${dest/#\~/$HOME}"
@@ -579,13 +582,18 @@ for mapping in "${TEMPLATE_MAPPINGS[@]}"; do
         backup_and_copy "$RENDERED_DIR/$src" "$dest"
     fi
 done
+echo ""
 
 # ─────────────────────────────────────────
 # Install shared (non-color) files
 # ─────────────────────────────────────────
 echo ""
-echo "Installing shared configs..."
+total_shared=${#SHARED_MAPPINGS[@]}
+cur_shared=0
 for mapping in "${SHARED_MAPPINGS[@]}"; do
+    cur_shared=$((cur_shared + 1))
+    if command -v foxml_progress >/dev/null; then foxml_progress "$cur_shared" "$total_shared" "Installing shared configs"; else echo -ne "\rInstalling shared configs $cur_shared/$total_shared"; fi
+
     src="${mapping%%|*}"
     dest="${mapping##*|}"
     dest="${dest/#\~/$HOME}"
@@ -595,10 +603,10 @@ for mapping in "${SHARED_MAPPINGS[@]}"; do
     elif [[ -d "$SHARED_DIR/$src" ]]; then
         # Handle directory entries (like nvim_ftplugin/cpp.lua)
         mkdir -p "$(dirname "$dest")"
-        cp "$SHARED_DIR/$src" "$dest"
-        echo "  $(basename "$dest")"
+        cp -a "$SHARED_DIR/$src/." "$dest/"
     fi
 done
+echo ""
 
 # ─────────────────────────────────────────
 # Special handlers
@@ -1149,3 +1157,4 @@ if lsusb | grep -qi "fingerprint"; then
     echo "╰──────────────────────────────────────────────────────────────────╯"
     echo ""
 fi
+i

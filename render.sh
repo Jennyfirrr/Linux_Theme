@@ -88,6 +88,26 @@ render_file() {
 }
 
 # ─────────────────────────────────────────
+# Progress bar helper (pacman-style)
+# ─────────────────────────────────────────
+foxml_progress() {
+    local current="$1"
+    local total="$2"
+    local label="$3"
+    
+    local width=30
+    local percent=$(( current * 100 / total ))
+    local filled=$(( current * width / total ))
+    local empty=$(( width - filled ))
+    
+    local bar=""
+    [[ $filled -gt 0 ]] && bar+=$(printf "%${filled}s" "" | tr ' ' '#')
+    [[ $empty -gt 0 ]] && bar+=$(printf "%${empty}s" "" | tr ' ' '-')
+    
+    printf "\r:: %-25s [%s] %3d%% (%d/%d)" "$label" "$bar" "$percent" "$current" "$total"
+}
+
+# ─────────────────────────────────────────
 # Render all templates
 # ─────────────────────────────────────────
 render_all() {
@@ -102,12 +122,24 @@ render_all() {
     local sed_expr
     sed_expr="$(build_sed_expr)"
 
-    # Process all template files
+    # Gather files
+    local template_files=()
     while IFS= read -r -d '' template; do
+        template_files+=("$template")
+    done < <(find "$template_dir" -type f -print0)
+
+    local total=${#template_files[@]}
+    local current=0
+
+    # Process all template files
+    for template in "${template_files[@]}"; do
+        current=$((current + 1))
         local rel="${template#$template_dir/}"
         local output="$output_dir/$rel"
+        foxml_progress "$current" "$total" "Rendering templates"
         render_file "$template" "$output" "$sed_expr"
-    done < <(find "$template_dir" -type f -print0)
+    done
+    echo "" # newline after progress bar
 }
 
 # ─────────────────────────────────────────

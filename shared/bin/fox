@@ -29,12 +29,20 @@ case "$1" in
         echo "FoxML CLI - Unified Theme Manager"
         echo "Usage: fox <command> [args]"
         echo ""
-        echo "Commands:"
+        echo "Core Commands:"
         echo "  install [theme]  Run the main installer (e.g., fox install FoxML_Classic --deps)"
         echo "  swap             Open the interactive theme switcher"
         echo "  update           Save current live config edits back into templates"
         echo "  rollback         Restore configs from a previous backup"
-        echo "  help             Show this help message"
+        echo ""
+        echo "Custom Tools (found in ~/.local/bin):"
+        for cmd in "$HOME/.local/bin/"fox-*; do
+            if [[ -x "$cmd" && "$(basename "$cmd")" != "fox-rollback" ]]; then
+                echo "  $(basename "$cmd")"
+            fi
+        done
+        echo ""
+        echo "Run 'fox help' to show this message again."
         ;;
     *)
         echo "Unknown command: $1"
