@@ -1084,7 +1084,9 @@ apply_post_install() {
 
     # Hyprland reload — only inside an active Hyprland session
     if [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]] && command -v hyprctl &>/dev/null; then
-        hyprctl reload >/dev/null 2>&1 && echo "  + Hyprland reloaded"
+        # Commented out by user request to prevent breaking portrait monitor configurations during install testing
+        # hyprctl reload >/dev/null 2>&1 && echo "  + Hyprland reloaded"
+        echo "  + Hyprland reload skipped (user requested)"
     fi
 
     # Waybar — restart if currently running so it picks up new config
