@@ -36,9 +36,22 @@ case "$1" in
         echo "  rollback         Restore configs from a previous backup"
         echo ""
         echo "Custom Tools (found in ~/.local/bin):"
-        for cmd in "$HOME/.local/bin/"fox-*; do
-            if [[ -x "$cmd" && "$(basename "$cmd")" != "fox-rollback" ]]; then
-                echo "  $(basename "$cmd")"
+        for cmd in "$HOME/.local/bin/"fox-* "$HOME/.local/bin/"fask "$HOME/.local/bin/"findex "$HOME/.local/bin/"fhelp; do
+            if [[ -x "$cmd" && -f "$cmd" && "$(basename "$cmd")" != "fox-rollback" && "$(basename "$cmd")" != "fox" ]]; then
+                base="$(basename "$cmd")"
+                desc=""
+                if [[ "$base" == "fask" ]]; then
+                    desc="Query the FoxML Intelligence Layer (AI model)"
+                elif [[ "$base" == "findex" ]]; then
+                    desc="Rebuild the vector index for AI semantic search"
+                else
+                    desc=$(sed -n '2p' "$cmd" 2>/dev/null | grep '^#' | sed -E 's/^#[[:space:]]*[^—-]+[—-]+[[:space:]]*//')
+                fi
+                if [[ -n "$desc" && "$desc" != "#"* ]]; then
+                    printf "  %-22s %s\n" "$base" "$desc"
+                else
+                    printf "  %-22s\n" "$base"
+                fi
             fi
         done
         echo ""
