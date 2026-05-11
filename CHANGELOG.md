@@ -4,6 +4,15 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-10 — v2.5.5
+
+### Unified `fox` CLI & Interactive Rollback System
+- **New `fox` unified command wrapper** — added a single `fox` CLI to `shared/bin/` (symlinked to `~/.local/bin/fox` on install). Replaces navigating the repo to run `./install.sh`, `./swap.sh`, and `./update.sh`. Users can now run `fox install`, `fox swap`, `fox update`, and `fox rollback` directly from any directory.
+- **Interactive `fox rollback` tool** — created `shared/bin/fox-rollback` to manage the automatic backups the installer makes in `~/.theme_backups/`. It lists all backups sorted by newest first with cleanly formatted timestamps. Selecting a backup instantly restores the `.config/`, `.zshrc`, `.tmux.conf` and other backed-up files directly into the home directory, and automatically reloads Hyprland.
+- Provides users with an easy "undo button" if an installation or customization breaks their setup.
+
+---
+
 ## 2026-05-10 — v2.5.4
 
 ### `install.sh --all` now produces a fully wired AI stack on a fresh box

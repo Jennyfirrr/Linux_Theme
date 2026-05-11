@@ -1,0 +1,64 @@
+#!/bin/bash
+# FoxML Theme Rollback Tool
+# Lists recent configuration backups and allows you to restore them.
+
+BACKUP_BASE_DIR="$HOME/.theme_backups"
+
+if [[ ! -d "$BACKUP_BASE_DIR" ]]; then
+    echo "No backups found in $BACKUP_BASE_DIR"
+    exit 0
+fi
+
+# Get list of backups sorted by newest first
+mapfile -t backups < <(find "$BACKUP_BASE_DIR" -maxdepth 1 -mindepth 1 -type d -name "foxml-backup-*" | sort -r)
+
+if [[ ${#backups[@]} -eq 0 ]]; then
+    echo "No backups found in $BACKUP_BASE_DIR"
+    exit 0
+fi
+
+echo "╭──────────────────────────────────────────────────────────────────╮"
+echo "│                      FoxML Theme Rollback                       │"
+echo "╰──────────────────────────────────────────────────────────────────╯"
+echo ""
+echo "Select a backup to restore to your home directory."
+echo "This will overwrite your current live configs with the backed-up versions."
+echo ""
+
+for i in "${!backups[@]}"; do
+    folder_name=$(basename "${backups[$i]}")
+    timestamp=${folder_name#foxml-backup-}
+    
+    # Format timestamp: YYYYMMDD-HHMMSS -> YYYY-MM-DD HH:MM:SS
+    formatted_time=$(echo "$timestamp" | sed -E 's/([0-9]{4})([0-9]{2})([0-9]{2})-([0-9]{2})([0-9]{2})([0-9]{2})/\1-\2-\3 \4:\5:\6/')
+    
+    echo "[$((i+1))] $formatted_time"
+done
+
+echo ""
+read -p "Select a backup to restore [1-${#backups[@]}] (q to quit): " choice
+
+if [[ "$choice" == "q" || "$choice" == "Q" ]]; then
+    echo "Cancelled."
+    exit 0
+fi
+
+if [[ "$choice" -ge 1 && "$choice" -le ${#backups[@]} ]] 2>/dev/null; then
+    selected_backup="${backups[$((choice-1))]}"
+    echo ""
+    echo "Restoring from: $(basename "$selected_backup")"
+    
+    # Copy contents, preserving structure, including hidden files
+    cp -a "$selected_backup/." "$HOME/"
+    
+    echo "Rollback complete."
+    
+    # Reload hyprland if it's running
+    if command -v hyprctl &>/dev/null; then
+        echo "Reloading Hyprland..."
+        hyprctl reload &>/dev/null || true
+    fi
+else
+    echo "Invalid selection."
+    exit 1
+fi
