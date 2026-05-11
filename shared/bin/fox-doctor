@@ -1,0 +1,232 @@
+#!/usr/bin/env bash
+# fox-doctor — diagnose nvim/Hyprland/Waybar config breakage, suggest fixes
+#
+# Usage: fox-doctor          # diagnose only
+#        fox-doctor --fix    # diagnose + offer to auto-fix detected issues
+#        fox-doctor --help
+
+set -u
+
+FIX_MODE=0
+for arg in "$@"; do
+    case "$arg" in
+        --fix)  FIX_MODE=1 ;;
+        --help|-h)
+            sed -n '2,5p' "$0" | sed 's/^# \?//'
+            exit 0
+            ;;
+        *) echo "unknown arg: $arg" >&2; exit 2 ;;
+    esac
+done
+
+red()    { printf '\033[31m%s\033[0m' "$1"; }
+yellow() { printf '\033[33m%s\033[0m' "$1"; }
+green()  { printf '\033[32m%s\033[0m' "$1"; }
+dim()    { printf '\033[2m%s\033[0m' "$1"; }
+
+FAILED=0
+WARNED=0
+FIX_NVIM_TS_MASTER=0  # set by check_nvim when the master-branch-on-0.12 pattern is detected
+
+section() { printf '\n%s\n' "$(dim "── $1 ──")"; }
+ok()   { printf '  %s %s\n' "$(green '+')" "$1"; }
+warn() { printf '  %s %s\n' "$(yellow '!')" "$1"; WARNED=$((WARNED+1)); }
+fail() { printf '  %s %s\n' "$(red 'X')" "$1"; FAILED=$((FAILED+1)); }
+hint() { printf '    %s\n' "$(dim "→ $1")"; }
+
+# Compare two dotted versions: returns 0 if $1 >= $2.
+version_ge() {
+    [[ "$(printf '%s\n%s\n' "$2" "$1" | sort -V | head -1)" == "$2" ]]
+}
+
+# Detect: lazy.nvim spec pins nvim-treesitter to the archived master branch.
+# Looks in the live config (~/.config/nvim) since that's what actually runs.
+treesitter_pinned_to_master() {
+    local cfg_dir="$HOME/.config/nvim"
+    [[ -d "$cfg_dir" ]] || return 1
+    grep -RqE 'nvim-treesitter[^"]*"[[:space:]]*,[[:space:]]*branch[[:space:]]*=[[:space:]]*"master"' "$cfg_dir" 2>/dev/null ||
+    grep -RqE '"nvim-treesitter/nvim-treesitter".*branch[[:space:]]*=[[:space:]]*"master"' "$cfg_dir" 2>/dev/null
+}
+
+check_nvim() {
+    section "Neovim"
+    if ! command -v nvim &>/dev/null; then
+        warn "nvim not installed (skipping)"
+        return
+    fi
+
+    local nvim_ver
+    nvim_ver="$(nvim --version | head -1 | awk '{print $2}' | sed 's/^v//')"
+    ok "nvim v$nvim_ver"
+
+    # The smoking gun: nvim ≥0.12 with nvim-treesitter pinned to master.
+    # master was archived; its injection queries break under 0.12's languagetree.
+    if version_ge "$nvim_ver" "0.12.0" && treesitter_pinned_to_master; then
+        fail "nvim ≥0.12 with nvim-treesitter pinned to archived master branch"
+        hint "this causes the 'attempt to call method range (nil)' crash"
+        if (( FIX_MODE )); then
+            hint "will offer auto-fix below"
+        else
+            hint "auto-fix available: fox doctor --fix"
+        fi
+        FIX_NVIM_TS_MASTER=1
+    fi
+
+    # Capture checkhealth output for the other heuristics.
+    local out
+    out="$(timeout 30 nvim --headless "+checkhealth" "+%print" "+qa" 2>&1 || true)"
+
+    if grep -q "attempt to call method 'range'" <<<"$out"; then
+        fail "treesitter parsers are stale (range nil error)"
+        hint "fix: nvim --headless '+TSUpdateSync' '+qa'"
+    fi
+
+    local err_count
+    err_count="$(grep -cE '^[^[:alnum:]]*ERROR' <<<"$out" || true)"
+    if [[ "$err_count" -gt 0 ]]; then
+        warn "$err_count ERROR line(s) in :checkhealth"
+        hint "run ':checkhealth' inside nvim for details"
+    else
+        ok ":checkhealth has no ERROR lines"
+    fi
+
+    local parser_dir="$HOME/.local/share/nvim/lazy/nvim-treesitter/parser"
+    if [[ -d "$parser_dir" ]]; then
+        local nvim_bin parser_count stale_count
+        nvim_bin="$(command -v nvim)"
+        parser_count="$(find "$parser_dir" -name '*.so' | wc -l)"
+        stale_count="$(find "$parser_dir" -name '*.so' ! -newer "$nvim_bin" | wc -l)"
+        if [[ "$parser_count" -gt 0 && "$stale_count" -eq "$parser_count" ]]; then
+            warn "all $parser_count treesitter parsers predate the nvim binary"
+            hint "fix: nvim --headless '+TSUpdateSync' '+qa'"
+        fi
+    fi
+}
+
+check_hyprland() {
+    section "Hyprland"
+    if ! command -v hyprctl &>/dev/null; then
+        warn "hyprctl not installed (skipping)"
+        return
+    fi
+    if [[ -z "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]]; then
+        warn "not inside an active Hyprland session (skipping config parse check)"
+        return
+    fi
+    local out
+    out="$(hyprctl reload 2>&1 || true)"
+    if grep -qiE 'error|invalid|unknown' <<<"$out"; then
+        fail "hyprctl reload reported issues"
+        printf '%s\n' "$out" | sed 's/^/    /'
+    else
+        ok "hyprctl reload clean"
+    fi
+}
+
+check_waybar() {
+    section "Waybar"
+    if ! command -v waybar &>/dev/null; then
+        warn "waybar not installed (skipping)"
+        return
+    fi
+    local cfg="$HOME/.config/waybar/config.jsonc"
+    [[ -f "$cfg" ]] || cfg="$HOME/.config/waybar/config"
+    if [[ ! -f "$cfg" ]]; then
+        warn "no waybar config found"
+        return
+    fi
+    local out
+    out="$(timeout 2 waybar -c "$cfg" 2>&1 || true)"
+    if grep -qiE 'error|parse' <<<"$out"; then
+        fail "waybar config parse errors"
+        printf '%s\n' "$out" | grep -iE 'error|parse' | head -5 | sed 's/^/    /'
+    else
+        ok "waybar config parses"
+    fi
+}
+
+# Auto-fix: downgrade nvim to latest 0.11.x + matching tree-sitter, pin both
+# in /etc/pacman.conf. Single sudo invocation. Bails on any failure.
+fix_nvim_ts_master() {
+    section "Auto-fix: downgrade nvim to 0.11.x + pin"
+
+    if ! command -v curl &>/dev/null; then
+        fail "curl required for auto-fix"
+        return 1
+    fi
+
+    echo "  Finding latest 0.11.x in Arch archive..."
+    local idx_nvim latest_nvim
+    idx_nvim="$(curl -sSL --max-time 15 'https://archive.archlinux.org/packages/n/neovim/' || true)"
+    latest_nvim="$(grep -oE 'neovim-0\.11\.[0-9]+-[0-9]+-x86_64\.pkg\.tar\.zst' <<<"$idx_nvim" | sort -V | tail -1)"
+    if [[ -z "$latest_nvim" ]]; then
+        fail "could not locate a 0.11.x nvim package in archive"
+        return 1
+    fi
+    echo "    → $latest_nvim"
+
+    echo "  Finding latest 0.25.x tree-sitter..."
+    local idx_ts latest_ts
+    idx_ts="$(curl -sSL --max-time 15 'https://archive.archlinux.org/packages/t/tree-sitter/' || true)"
+    latest_ts="$(grep -oE 'tree-sitter-0\.25\.[0-9]+-[0-9]+-x86_64\.pkg\.tar\.zst' <<<"$idx_ts" | sort -V | tail -1)"
+    if [[ -z "$latest_ts" ]]; then
+        fail "could not locate a 0.25.x tree-sitter package in archive"
+        return 1
+    fi
+    echo "    → $latest_ts"
+
+    local nvim_path="/tmp/$latest_nvim"
+    local ts_path="/tmp/$latest_ts"
+
+    echo "  Downloading..."
+    curl -sSL --max-time 60 -o "$nvim_path" "https://archive.archlinux.org/packages/n/neovim/$latest_nvim" || { fail "download failed: $latest_nvim"; return 1; }
+    curl -sSL --max-time 60 -o "$ts_path"   "https://archive.archlinux.org/packages/t/tree-sitter/$latest_ts" || { fail "download failed: $latest_ts"; return 1; }
+
+    echo
+    echo "  About to (one sudo prompt):"
+    echo "    - pacman -U $nvim_path"
+    echo "    - pacman -U $ts_path"
+    echo "    - add 'neovim' and 'tree-sitter' to IgnorePkg in /etc/pacman.conf"
+    echo
+    read -r -p "  Proceed? [y/N] " yn
+    [[ "$yn" =~ ^[Yy]$ ]] || { echo "  aborted."; return 1; }
+
+    sudo bash -s -- "$nvim_path" "$ts_path" <<'SUDO_SCRIPT' || { fail "sudo block failed"; return 1; }
+set -e
+pacman -U --noconfirm "$1" "$2"
+
+conf=/etc/pacman.conf
+if grep -qE '^IgnorePkg' "$conf"; then
+    grep -qE '^IgnorePkg[^=]*=.*\bneovim\b'      "$conf" || sed -i '/^IgnorePkg[^=]*=/ s/$/ neovim/'      "$conf"
+    grep -qE '^IgnorePkg[^=]*=.*\btree-sitter\b' "$conf" || sed -i '/^IgnorePkg[^=]*=/ s/$/ tree-sitter/' "$conf"
+else
+    sed -i 's/^#IgnorePkg.*$/IgnorePkg   = neovim tree-sitter/' "$conf"
+fi
+SUDO_SCRIPT
+
+    ok "downgraded: $(nvim --version | head -1)"
+    ok "pinned in /etc/pacman.conf: $(grep '^IgnorePkg' /etc/pacman.conf)"
+}
+
+echo "FoxML Doctor — config sanity checks"
+check_nvim
+check_hyprland
+check_waybar
+
+echo
+if (( FAILED > 0 )); then
+    printf '%s %d failed, %d warning(s)\n' "$(red 'Result:')" "$FAILED" "$WARNED"
+    status=1
+elif (( WARNED > 0 )); then
+    printf '%s %d warning(s)\n' "$(yellow 'Result:')" "$WARNED"
+    status=0
+else
+    printf '%s all checks passed\n' "$(green 'Result:')"
+    status=0
+fi
+
+if (( FIX_MODE )) && (( FIX_NVIM_TS_MASTER )); then
+    fix_nvim_ts_master || status=1
+fi
+
+exit "$status"

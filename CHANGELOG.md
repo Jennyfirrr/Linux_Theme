@@ -4,6 +4,19 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-11 — v2.5.6
+
+### `fox-doctor` diagnostic + `install.sh` treesitter parser rebuild
+Two changes addressing the class of nvim breakage where a Neovim version bump leaves treesitter parsers or plugin pins in an incompatible state. Triggered by hitting `attempt to call method 'range' (a nil value)` in `languagetree.lua` on Neovim 0.12.2 with `nvim-treesitter` pinned to the archived `master` branch.
+
+- **`install.sh` now rebuilds treesitter parsers after Lazy sync.** Added a `nvim --headless "+TSUpdateSync" "+qa"` call (120s cap) after the existing Lazy sync block. Stale `.so` parsers compiled against an older Neovim ABI produce `range`-nil errors and other latent crashes after a version bump; rebuilding them post-sync makes a parser ABI mismatch self-healing across installer runs. No-op when parsers are already fresh.
+- **New `shared/bin/fox-doctor` config sanity checker.** Auto-discovered by the `fox` CLI (copied to `~/.local/bin/` via the existing `shared/bin/*` loop in `install.sh:503`, so it shows up in `fox help` with no wrapper edits). Runs `:checkhealth` headless and surfaces ERROR lines, parses `hyprctl reload` output for errors, and dry-runs `waybar -c <cfg>` to catch config breakage. Reports pass/warn/fail with exit code matching.
+- **`fox-doctor --fix` for the nvim-0.12 + treesitter-master pattern.** Detects Neovim ≥0.12 with `branch = "master"` pinned in `~/.config/nvim`; if `--fix` is passed, downloads the latest 0.11.x neovim and matching 0.25.x tree-sitter from the Arch Linux Archive to `/tmp`, confirms with the user, then runs a single bundled `sudo` block: `pacman -U` for both packages plus an idempotent edit to add `neovim tree-sitter` to `IgnorePkg` in `/etc/pacman.conf` (handles "no line", "line exists missing one of the names", and "line already complete"). One fingerprint scan, fully reversible.
+
+Why this approach over migrating to `nvim-treesitter` `main`: the legacy `master`-branch `require("nvim-treesitter.configs").setup()` block in `templates/nvim/init.lua` configures `highlight`, `incremental_selection`, `indent`, and `textobjects.{select,move,swap}` keymaps. `main` drops `incremental_selection` and `indent` entirely and requires manual keymap wiring for textobjects, so migration would lose features. Pinning Neovim to 0.11.x keeps the existing config working unchanged and is reversible.
+
+---
+
 ## 2026-05-10 — v2.5.5
 
 ### Unified `fox` CLI & Interactive Rollback System

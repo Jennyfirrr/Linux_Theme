@@ -1111,6 +1111,18 @@ apply_post_install() {
         else
             echo "  ! Lazy sync didn't complete cleanly — run ':Lazy sync' manually"
         fi
+
+        # Rebuild treesitter parsers against current nvim ABI. Stale .so files
+        # from an older Neovim cause "attempt to call method 'range' (a nil
+        # value)" and similar errors after a Neovim version bump.
+        if [[ -d "$HOME/.local/share/nvim/lazy/nvim-treesitter" ]]; then
+            echo "  Rebuilding treesitter parsers (headless, 120s cap)..."
+            if timeout 120 nvim --headless "+TSUpdateSync" "+qa" >/dev/null 2>&1; then
+                echo "  + Treesitter parsers rebuilt"
+            else
+                echo "  ! TSUpdateSync didn't complete cleanly — run ':TSUpdateSync' manually"
+            fi
+        fi
     fi
 
     # Cursor / VS Code — set workbench.colorTheme to "Fox ML" via jq merge
