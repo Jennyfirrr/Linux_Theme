@@ -1347,11 +1347,19 @@ EOF
     else
         echo "  • coredump-disable already in place"
     fi
-    # Hard ulimit via /etc/security/limits.d.
+    # Hard ulimit via /etc/security/limits.d. Some Arch setups don't
+    # ship the limits.d directory pre-created (pam-limits is optional);
+    # mkdir -p first, then write. `|| true` so a failure here doesn't
+    # abort the installer — the systemd-coredump conf above is the
+    # main defense; the ulimit is belt-and-suspenders.
     local lim=/etc/security/limits.d/99-foxml-no-coredumps.conf
     if ! [[ -f "$lim" ]]; then
-        echo "* hard core 0" | sudo tee "$lim" >/dev/null
-        echo "  + /etc/security/limits.d hard core=0 (applies next login)"
+        sudo mkdir -p "$(dirname "$lim")" 2>/dev/null || true
+        if echo "* hard core 0" | sudo tee "$lim" >/dev/null 2>&1; then
+            echo "  + /etc/security/limits.d hard core=0 (applies next login)"
+        else
+            echo "  • /etc/security/limits.d not writable — skipping (systemd-coredump conf is primary)"
+        fi
     fi
     sudo systemctl daemon-reexec 2>/dev/null || true
 }
