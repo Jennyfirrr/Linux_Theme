@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# xdg-open — smart wrapper that handles the Firejail-Firefox collision.
+#
+# Default xdg-open invokes /usr/local/bin/firefox (which our install
+# symlinks to firejail). When Firefox is ALREADY running and a CLI
+# tool (gh, mailto handlers, link clicks from chat apps) calls
+# xdg-open, Firejail tries to start a SECOND wrapped Firefox process.
+# That second wrap fails on:
+#   • Firefox's internal user-namespace sandbox can't nest inside
+#     Firejail's user namespace (CanCreateUserNamespace EPERM)
+#   • Wayland socket access for the new firejail sandbox is denied
+#
+# Result: user sees errors + the URL never opens.
+#
+# Fix: if Firefox is already running, send the URL into the existing
+# instance via DBus / -new-tab, skipping Firejail entirely (it's
+# already in the same sandbox). Otherwise, fall through to the system
+# xdg-open so a fresh Firefox launches normally.
+#
+# Install: put this script in ~/.local/bin (in front of /usr/bin in
+# $PATH) and it intercepts every xdg-open call automatically.
+
+# If no args, defer to system xdg-open (it shows usage).
+if (( $# == 0 )); then
+    exec /usr/bin/xdg-open
+fi
+
+target="$1"
+
+# Probe: is the target a URL that Firefox handles?
+case "$target" in
+    http://*|https://*|mailto:*)
+        # Is Firefox already running?
+        if pgrep -x firefox >/dev/null 2>&1; then
+            # Use the existing instance. -new-tab is the standard
+            # remote-control flag; Firefox routes it via the
+            # remote-controllable agent already running. NO Firejail
+            # re-wrap, NO new sandbox attempt.
+            exec /usr/bin/firefox -new-tab "$target"
+        fi
+        # Firefox not running — let the system xdg-open start a fresh
+        # firejail-wrapped Firefox. That path is fine (no nesting).
+        ;;
+esac
+
+# Everything else (files, non-URL targets) — pass through.
+exec /usr/bin/xdg-open "$target"

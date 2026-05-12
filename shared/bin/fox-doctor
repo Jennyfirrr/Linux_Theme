@@ -404,6 +404,56 @@ check_multimonitor() {
     fi
 }
 
+check_known_interactions() {
+    # Catalog of known multi-tool interaction bugs that bite when a
+    # user is running this stack. Each entry: detect → explain → fix
+    # hint. --fix mode offers to apply the fix automatically.
+    section "Known-issue interactions"
+
+    # 1. Firejail-wrapped Firefox + xdg-open collision
+    # When Firefox is running AND /usr/local/bin/firefox → firejail,
+    # any tool that calls `xdg-open <url>` (gh, mailto, links from chat
+    # apps) hits a nested-sandbox failure. Fix: install an xdg-open
+    # wrapper in ~/.local/bin that routes URLs to the existing Firefox
+    # via -new-tab when one's already running.
+    local firejail_wrap=/usr/local/bin/firefox
+    local xdg_wrap="$HOME/.local/bin/xdg-open"
+    if [[ -L "$firejail_wrap" ]] && readlink "$firejail_wrap" | grep -q firejail; then
+        if [[ -x "$xdg_wrap" ]] && grep -q '^# xdg-open — smart wrapper' "$xdg_wrap" 2>/dev/null; then
+            ok "Firejail-Firefox-xdg-open wrapper installed (~/.local/bin/xdg-open)"
+        else
+            warn "Firejail wraps Firefox but no smart xdg-open shim — URLs from gh / chat / etc. will fail when Firefox is already running"
+            hint "fix:  install -m 0755 \"$SCRIPT_DIR/shared/bin/xdg-open\" \"$xdg_wrap\""
+            hint "(or:  fox doctor --fix)"
+            INTERACTIONS_NEED_FIX+=("xdg-open-wrapper")
+        fi
+    fi
+
+    # 2. fail2ban action.d/foxml-dispatch.conf parsing
+    # If fail2ban-client -t fails AND foxml-dispatch.conf is present,
+    # most likely the dispatch action's bash subshell tripped fail2ban's
+    # config parser. Detect + suggest revert.
+    if systemctl is-active --quiet fail2ban 2>/dev/null; then
+        :  # all good
+    elif [[ -f /etc/fail2ban/jail.local ]]; then
+        if sudo -n true 2>/dev/null && ! sudo fail2ban-client -t >/dev/null 2>&1; then
+            warn "fail2ban inactive AND config test fails — likely our dispatch action drop-in"
+            hint "diagnose: sudo fail2ban-client -t"
+            hint "quick revert: sudo rm /etc/fail2ban/action.d/foxml-dispatch.conf \\"
+            hint "              && sudo sed -i '/foxml-dispatch/d' /etc/fail2ban/jail.local \\"
+            hint "              && sudo systemctl restart fail2ban"
+            INTERACTIONS_NEED_FIX+=("fail2ban-dispatch")
+        fi
+    fi
+
+    # 3. Sudo cache cold — surface this loudly because half the other
+    # checks below silently skip when they can't ask root.
+    if ! sudo -n true 2>/dev/null; then
+        warn "sudo cache cold — several checks below will skip"
+        hint "re-prime once: sudo -v   then re-run: fox doctor"
+    fi
+}
+
 check_dev_security() {
     # Developer-side hardening that doesn't fit into host posture but
     # matters a lot when you maintain a public OSS repo (especially a
@@ -704,6 +754,8 @@ check_multimonitor
 check_security
 check_fox_tools
 check_dev_security
+declare -a INTERACTIONS_NEED_FIX=()
+check_known_interactions
 
 echo
 if (( FAILED > 0 )); then
@@ -756,6 +808,23 @@ if (( FIX_MODE )) && [[ -t 0 ]]; then
 
     systemctl --user is-active --quiet fox-proximity.service 2>/dev/null \
         || _offer "fox proximity (Bluetooth auto-lock)"     "fox-proximity --setup"
+
+    # Known-interaction auto-fixes.
+    for item in "${INTERACTIONS_NEED_FIX[@]:-}"; do
+        case "$item" in
+            xdg-open-wrapper)
+                _offer "xdg-open Firejail-Firefox wrapper" \
+                    "install -m 0755 \"$SCRIPT_DIR/shared/bin/xdg-open\" \"$HOME/.local/bin/xdg-open\" 2>/dev/null \
+                        || install -m 0755 \"$HOME/code/Linux_Theme/shared/bin/xdg-open\" \"$HOME/.local/bin/xdg-open\""
+                ;;
+            fail2ban-dispatch)
+                _offer "remove fail2ban foxml-dispatch action (fixes config-test failure)" \
+                    "sudo rm -f /etc/fail2ban/action.d/foxml-dispatch.conf \
+                        && sudo sed -i '/foxml-dispatch/d' /etc/fail2ban/jail.local \
+                        && sudo systemctl restart fail2ban"
+                ;;
+        esac
+    done
 
     echo
     echo "  (other opt-ins need physical hardware:  fox deadman / fox vpn import)"
