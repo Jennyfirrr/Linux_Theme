@@ -1,0 +1,236 @@
+#!/usr/bin/env bash
+# fox-dispatch — send a notification to your phone / Discord / Telegram.
+#
+# Generic alerting primitive used by every fox-* security hook
+# (tripwire, fail2ban actionban, USBGuard lock-screen blocks, etc).
+#
+# Config: ~/.config/foxml/dispatch.conf
+#   WEBHOOK_KIND=discord|telegram
+#   WEBHOOK_URL=...               # Discord: webhook URL
+#   TELEGRAM_BOT_TOKEN=...        # Telegram only
+#   TELEGRAM_CHAT_ID=...          # Telegram only
+#
+# Usage:
+#   fox dispatch "Title" "Body text"
+#   fox dispatch --setup          # interactive config wizard
+#   fox dispatch --test           # send a test ping
+#   echo "body" | fox dispatch "Title"
+#
+# Security: the config file is created 0600. The repo .gitignore must
+# never let this file (or anything under ~/.config/foxml/dispatch.*)
+# leak. fox-dispatch refuses to fire if the config has loose perms.
+
+set -u
+
+CONF_DIR="$HOME/.config/foxml"
+CONF="$CONF_DIR/dispatch.conf"
+LOG_DIR="${XDG_RUNTIME_DIR:-/tmp}/foxml-$USER"
+LOG="$LOG_DIR/dispatch.log"
+
+C_BOLD=$'\e[1m'
+C_DIM=$'\e[2m'
+C_GRN=$'\e[38;5;108m'
+C_YEL=$'\e[38;5;221m'
+C_RED=$'\e[38;5;167m'
+C_RST=$'\e[0m'
+
+usage() {
+    cat <<EOF
+${C_BOLD}fox dispatch${C_RST} — send a notification to your phone via webhook
+
+  fox dispatch "Title" "Body"   send a one-shot alert
+  fox dispatch --setup          configure a Discord or Telegram destination
+  fox dispatch --test           send a test ping
+  fox dispatch --status         show current config (URL masked)
+  echo body | fox dispatch "T"  body can come from stdin
+
+Examples:
+  fox dispatch "ssh-bruteforce"  "203.0.113.4 banned from 10 failed attempts"
+  fox dispatch "tripwire"        "PID 31234 (cat) read \$HOME/.tripwire"
+  fox dispatch "usb-blocked"     "Rubber Ducky inserted while screen locked"
+EOF
+}
+
+# ─── config + state ───────────────────────────────────────────────
+_load_conf() {
+    if [[ ! -f "$CONF" ]]; then
+        echo "${C_RED}no config at $CONF — run: fox dispatch --setup${C_RST}" >&2
+        return 1
+    fi
+    local mode
+    mode=$(stat -c '%a' "$CONF" 2>/dev/null)
+    if [[ "$mode" != "600" ]]; then
+        echo "${C_RED}$CONF has perms $mode — refusing (chmod 600 it)${C_RST}" >&2
+        return 1
+    fi
+    # Parse safely — same allowlist pattern as ghost-mode.sh.
+    WEBHOOK_KIND="" WEBHOOK_URL=""
+    TELEGRAM_BOT_TOKEN="" TELEGRAM_CHAT_ID=""
+    local k v
+    while IFS='=' read -r k v; do
+        k="${k##[[:space:]]}"; k="${k%%[[:space:]]}"
+        v="${v##[[:space:]]}"; v="${v%%[[:space:]]}"
+        v="${v#\"}"; v="${v%\"}"; v="${v#\'}"; v="${v%\'}"
+        case "$k" in
+            WEBHOOK_KIND)        WEBHOOK_KIND="$v" ;;
+            WEBHOOK_URL)         WEBHOOK_URL="$v" ;;
+            TELEGRAM_BOT_TOKEN)  TELEGRAM_BOT_TOKEN="$v" ;;
+            TELEGRAM_CHAT_ID)    TELEGRAM_CHAT_ID="$v" ;;
+        esac
+    done < "$CONF"
+    return 0
+}
+
+_log() {
+    mkdir -p "$LOG_DIR" 2>/dev/null
+    chmod 700 "$LOG_DIR" 2>/dev/null || true
+    printf '[%s] %s\n' "$(date -Iseconds)" "$*" >>"$LOG"
+}
+
+# ─── senders ──────────────────────────────────────────────────────
+_send_discord() {
+    local title="$1" body="$2"
+    local payload
+    # JSON-escape via jq if available, else basic-escape and pray.
+    if command -v jq >/dev/null 2>&1; then
+        payload=$(jq -nc --arg c "**$title**: $body" '{content: $c}')
+    else
+        local esc_t esc_b
+        esc_t="${title//\"/\\\"}"; esc_b="${body//\"/\\\"}"
+        esc_t="${esc_t//$'\n'/\\n}"; esc_b="${esc_b//$'\n'/\\n}"
+        payload="{\"content\": \"**${esc_t}**: ${esc_b}\"}"
+    fi
+    local rc
+    curl -sS -m 8 -o /dev/null -w '%{http_code}' \
+        -H "Content-Type: application/json" \
+        -X POST -d "$payload" "$WEBHOOK_URL" | grep -qE '^2[0-9]{2}$'
+    rc=$?
+    _log "discord rc=$rc title=$title"
+    return $rc
+}
+
+_send_telegram() {
+    local title="$1" body="$2"
+    local text="*${title}*%0A${body}"
+    local url="https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage"
+    local rc
+    curl -sS -m 8 -o /dev/null -w '%{http_code}' \
+        --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
+        --data-urlencode "text=${title}: ${body}" \
+        --data-urlencode "parse_mode=Markdown" \
+        "$url" | grep -qE '^2[0-9]{2}$'
+    rc=$?
+    _log "telegram rc=$rc title=$title"
+    return $rc
+}
+
+# ─── actions ──────────────────────────────────────────────────────
+act_setup() {
+    mkdir -p "$CONF_DIR" && chmod 700 "$CONF_DIR"
+    echo "${C_BOLD}fox dispatch — setup${C_RST}"
+    echo
+    echo "  [1] Discord (webhook URL — fastest setup)"
+    echo "  [2] Telegram (bot token + chat ID)"
+    local kind_choice
+    read -rp "  choose [1]: " kind_choice
+    kind_choice="${kind_choice:-1}"
+    case "$kind_choice" in
+        1)
+            echo
+            echo "  In Discord: Server Settings → Integrations → Webhooks → New Webhook"
+            echo "  Pick a channel only you can read. Copy the webhook URL."
+            local url
+            read -rp "  webhook URL: " url
+            if [[ ! "$url" =~ ^https://discord(app)?\.com/api/webhooks/ ]]; then
+                echo "${C_RED}that doesn't look like a Discord webhook URL${C_RST}" >&2
+                return 1
+            fi
+            ( umask 077
+              cat > "$CONF" <<EOF
+WEBHOOK_KIND=discord
+WEBHOOK_URL=$url
+EOF
+            )
+            chmod 600 "$CONF"
+            echo "${C_GRN}  ✓ saved to $CONF (perms 600)${C_RST}"
+            ;;
+        2)
+            echo
+            echo "  Talk to @BotFather on Telegram → /newbot → save the token"
+            echo "  Send your bot any message, then visit:"
+            echo "    https://api.telegram.org/bot<TOKEN>/getUpdates"
+            echo "  to find your chat_id."
+            local token chat
+            read -rp "  bot token:  " token
+            read -rp "  chat id:    " chat
+            ( umask 077
+              cat > "$CONF" <<EOF
+WEBHOOK_KIND=telegram
+TELEGRAM_BOT_TOKEN=$token
+TELEGRAM_CHAT_ID=$chat
+EOF
+            )
+            chmod 600 "$CONF"
+            echo "${C_GRN}  ✓ saved to $CONF (perms 600)${C_RST}"
+            ;;
+        *)  echo "${C_RED}unknown choice${C_RST}"; return 1 ;;
+    esac
+    echo
+    echo "  Sending a test ping…"
+    "$0" --test
+}
+
+act_test() {
+    _load_conf || return 1
+    act_send "fox-dispatch test" "If you can read this, alerts are wired up. Host: $(hostname). Time: $(date)."
+}
+
+act_status() {
+    if [[ ! -f "$CONF" ]]; then
+        echo "  no config — run: fox dispatch --setup"
+        return 1
+    fi
+    _load_conf || return 1
+    case "$WEBHOOK_KIND" in
+        discord)
+            local host
+            host=$(awk -F/ '{print $3}' <<<"$WEBHOOK_URL")
+            echo "  kind:     discord"
+            echo "  endpoint: ${host:-?}/api/webhooks/****"
+            ;;
+        telegram)
+            local masked="${TELEGRAM_BOT_TOKEN:0:6}…${TELEGRAM_BOT_TOKEN: -4}"
+            echo "  kind:     telegram"
+            echo "  token:    $masked"
+            echo "  chat_id:  $TELEGRAM_CHAT_ID"
+            ;;
+        *) echo "  kind:     unknown ('$WEBHOOK_KIND')" ;;
+    esac
+    echo "  log:      $LOG"
+}
+
+act_send() {
+    local title="${1:-fox-dispatch}"
+    local body="${2:-}"
+    # Stdin fallback for body (so pipelines work).
+    if [[ -z "$body" && ! -t 0 ]]; then
+        body=$(cat)
+    fi
+    _load_conf || return 1
+    case "$WEBHOOK_KIND" in
+        discord)  _send_discord  "$title" "$body" ;;
+        telegram) _send_telegram "$title" "$body" ;;
+        *) echo "${C_RED}unknown WEBHOOK_KIND='$WEBHOOK_KIND' — re-run --setup${C_RST}" >&2
+           return 1 ;;
+    esac
+}
+
+# ─── entry ────────────────────────────────────────────────────────
+case "${1:-}" in
+    -h|--help|help)  usage ;;
+    --setup)         act_setup ;;
+    --test)          act_test ;;
+    --status)        act_status ;;
+    "" )             usage; exit 1 ;;
+    *)               act_send "$1" "${2:-}" ;;
+esac

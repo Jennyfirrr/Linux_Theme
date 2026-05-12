@@ -918,6 +918,83 @@ install_keyring_full_components() {
     return 0
 }
 
+# Wire fail2ban + fox-bouncer to fox-dispatch so phone notifications fire
+# on:
+#   • fail2ban ban (network brute force attempt)
+#   • USBGuard BLOCK while screen is locked (evil-maid attempt)
+#
+# Both are idempotent — re-running just verifies state and re-applies
+# the action drop-in if missing. fox-bouncer runs as a user systemd
+# service; the fail2ban hook lives in /etc/fail2ban/action.d/.
+#
+# fox-dispatch itself reads ~/.config/foxml/dispatch.conf which is NOT
+# managed by the installer (it has the secret webhook URL). If absent,
+# the hooks fall back to notify-send (local notification) so they're
+# still useful even without phone alerts configured.
+install_dispatch_hooks() {
+    # 1. fail2ban action drop-in. fail2ban runs as root — it calls
+    # `sudo -u $USER fox-dispatch …` so the alert uses the user's webhook
+    # config. Tight env: only PATH inherited.
+    if pacman -Qi fail2ban &>/dev/null && command -v fox-dispatch >/dev/null 2>&1; then
+        local action="/etc/fail2ban/action.d/foxml-dispatch.conf"
+        if [[ ! -f "$action" ]] || ! grep -q '^# foxml-managed' "$action"; then
+            sudo tee "$action" >/dev/null <<EOF
+# foxml-managed — fires fox-dispatch on every fail2ban ban.
+# Revert: sudo rm $action and remove "action = foxml-dispatch" from jail.local.
+[Definition]
+actionban  = /bin/sh -c 'sudo -u ${USER} XDG_RUNTIME_DIR=/run/user/\$(id -u ${USER}) HOME=/home/${USER} /home/${USER}/.local/bin/fox-dispatch "ssh-brute" "<ip> banned from <name> after <failures> attempts (host: \$(hostname))"' || true
+actionunban = /bin/true
+[Init]
+EOF
+            echo "  + fail2ban action.d/foxml-dispatch.conf installed"
+        else
+            echo "  • fail2ban foxml-dispatch action already present"
+        fi
+
+        # Splice the action into jail.local's [sshd] section if not already.
+        local jail_local=/etc/fail2ban/jail.local
+        if [[ -f "$jail_local" ]] && ! grep -q '^action.*foxml-dispatch' "$jail_local"; then
+            # Append an action= line under [sshd]. fail2ban combines
+            # multiple action= lines so we don't trample the default.
+            sudo sed -i '/^\[sshd\]/a action = %(action_)s\n         foxml-dispatch' "$jail_local"
+            sudo systemctl reload fail2ban >/dev/null 2>&1 || true
+            echo "  + jail.local sshd → +foxml-dispatch action"
+        fi
+    else
+        echo "  • fail2ban or fox-dispatch missing — skipping ban-hook"
+    fi
+
+    # 2. fox-bouncer user service (USB-blocked-while-locked alerts).
+    if command -v fox-bouncer >/dev/null 2>&1; then
+        if systemctl --user is-enabled --quiet fox-bouncer.service 2>/dev/null; then
+            echo "  • fox-bouncer already enabled"
+        else
+            # Run the installer mode — drops the unit file + starts it.
+            fox-bouncer --install >/dev/null 2>&1 \
+                && echo "  + fox-bouncer.service enabled" \
+                || echo "  ! fox-bouncer install failed (run manually: fox-bouncer --install)"
+        fi
+    fi
+
+    # 3. Offer to configure fox-dispatch webhook if it's not set up yet.
+    # Only when at a TTY and not --yes — silent in unattended mode.
+    if [[ -t 0 ]] && ! ${ASSUME_YES:-false}; then
+        if [[ ! -f "$HOME/.config/foxml/dispatch.conf" ]]; then
+            echo ""
+            echo "  fox-dispatch (phone alerts) is not yet configured."
+            local _r
+            read -rp "  Set up Discord/Telegram webhook now? [y/N] " _r
+            if [[ "$_r" =~ ^[Yy]$ ]]; then
+                fox-dispatch --setup
+            else
+                echo "  • run later: fox dispatch --setup"
+            fi
+        else
+            echo "  • fox-dispatch webhook already configured"
+        fi
+    fi
+}
+
 install_ollama_hardening() {
     if ! systemctl list-unit-files 2>/dev/null | grep -q '^ollama\.service'; then
         echo "  • ollama.service not present — skipping ollama hardening"

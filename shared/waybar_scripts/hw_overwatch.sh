@@ -102,7 +102,9 @@ combined=""
 } > "$STATE"
 
 if [[ -n "$combined" ]]; then
-    # Rate-limit notify-send so a sustained anomaly doesn't spam.
+    # Rate-limit notify-send AND fox-dispatch so a sustained anomaly
+    # doesn't spam either channel. Same cooldown window for both — if
+    # we just sent a local notification, the phone alert is also stale.
     last=0
     [[ -f "$LAST_ALERT" ]] && last=$(cat "$LAST_ALERT" 2>/dev/null || echo 0)
     now=$(date +%s)
@@ -110,6 +112,14 @@ if [[ -n "$combined" ]]; then
         echo "$now" > "$LAST_ALERT"
         notify-send -u critical -t 8000 -a "overwatch" \
             "Hardware anomaly" "$combined" 2>/dev/null || true
+        # Phone alert via fox-dispatch when configured. Silent failure if
+        # the webhook config isn't present — local notify-send already
+        # covered the case.
+        if command -v fox-dispatch >/dev/null 2>&1 \
+           && [[ -f "$HOME/.config/foxml/dispatch.conf" ]]; then
+            fox-dispatch "overwatch anomaly" "$combined" >/dev/null 2>&1 &
+            disown
+        fi
     fi
     emit "⚠ overwatch" "$combined" "alert"
 else

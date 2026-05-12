@@ -72,6 +72,18 @@ case "$1" in
         shift
         exec fox-ports "$@"
         ;;
+    dispatch)
+        shift
+        exec fox-dispatch "$@"
+        ;;
+    tripwire)
+        shift
+        exec fox-tripwire "$@"
+        ;;
+    bouncer)
+        shift
+        exec fox-bouncer "$@"
+        ;;
     help|--help|-h|"")
         echo "FoxML CLI - Unified Theme Manager"
         echo "Usage: fox <command> [args]"
@@ -91,6 +103,9 @@ case "$1" in
         echo "  init <name>      Open workspace + tmux + nvim + index (one-touch project onboarding)"
         echo "  overwatch        Inspect/reset the waybar Hardware Overwatch baseline"
         echo "  ports            UFW port manager (list / listeners / audit / allow / deny / delete)"
+        echo "  dispatch         Send a notification to phone via Discord/Telegram webhook"
+        echo "  tripwire         Honeypot-file watcher (--install / --status / --uninstall)"
+        echo "  bouncer          USB-block alerts while screen locked (--install / --status)"
         echo ""
         echo "Custom Tools (found in ~/.local/bin):"
         for cmd in "$HOME/.local/bin/"fox-* "$HOME/.local/bin/"fask "$HOME/.local/bin/"findex "$HOME/.local/bin/"fhelp; do

@@ -1383,6 +1383,16 @@ if $INSTALL_APPARMOR; then
     install_apparmor
 fi
 
+# Phone-alert hooks (fail2ban actionban → dispatch, fox-bouncer for
+# USBGuard-while-locked). Runs whenever fail2ban + fox-dispatch are
+# present — wiring is idempotent. Offers an interactive --setup for
+# the webhook URL when there's a TTY and the config doesn't exist yet.
+if command -v fox-dispatch >/dev/null 2>&1; then
+    echo ""
+    foxml_section "Phone-alert wiring (dispatch / bouncer / fail2ban hook)"
+    install_dispatch_hooks
+fi
+
 # Always normalise gnome-keyring autostart. The systemd-generated
 # limited services (pkcs11+secrets only) win over our --components
 # flag if they grab the daemon name first; mask them so Hyprland's
