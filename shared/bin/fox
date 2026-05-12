@@ -84,6 +84,10 @@ case "$1" in
         shift
         exec fox-bouncer "$@"
         ;;
+    sec|security)
+        shift
+        exec fox-sec "$@"
+        ;;
     help|--help|-h|"")
         echo "FoxML CLI - Unified Theme Manager"
         echo "Usage: fox <command> [args]"
@@ -106,6 +110,7 @@ case "$1" in
         echo "  dispatch         Send a notification to phone via Discord/Telegram webhook"
         echo "  tripwire         Honeypot-file watcher (--install / --status / --uninstall)"
         echo "  bouncer          USB-block alerts while screen locked (--install / --status)"
+        echo "  sec              Unified security dashboard (alerts, posture, bans, listeners, failed auth)"
         echo ""
         echo "Custom Tools (found in ~/.local/bin):"
         for cmd in "$HOME/.local/bin/"fox-* "$HOME/.local/bin/"fask "$HOME/.local/bin/"findex "$HOME/.local/bin/"fhelp; do

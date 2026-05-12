@@ -63,7 +63,13 @@ if command -v ss >/dev/null 2>&1; then
         | sort -u)
     prev_listen=""
     if [[ -f "$STATE" ]]; then
-        prev_listen=$(awk '/^LISTEN:/{print substr($0,8)}' "$STATE")
+        # The persistence format joins lines with `|` so the snapshot
+        # fits on a single line. We have to split it back into newlines
+        # AND sort it the same way current_listen is sorted — otherwise
+        # `comm -23` sees one mega-line vs many lines and every current
+        # entry looks "new" on every tick, spamming notifications.
+        prev_listen=$(awk '/^LISTEN:/{print substr($0,8)}' "$STATE" \
+                      | tr '|' '\n' | grep -v '^$' | sort -u)
     fi
     new_lines=$(comm -23 <(echo "$current_listen") <(echo "$prev_listen") 2>/dev/null)
     if [[ -n "$new_lines" ]]; then
