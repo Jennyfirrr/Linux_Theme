@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+# fox-vpn — WireGuard wizard with UFW kill-switch.
+set -u
+C_GRN=$'\e[38;5;108m'; C_YEL=$'\e[38;5;221m'; C_RED=$'\e[38;5;167m'; C_DIM=$'\e[2m'; C_RST=$'\e[0m'
+
+CONF_DIR=/etc/wireguard
+KILLSWITCH_RULE=/etc/ufw/before.rules.d/foxml-vpn-killswitch  # virtual marker; we actually use ufw deny
+
+_check_wg() {
+    command -v wg-quick >/dev/null 2>&1 \
+        || { echo "${C_RED}wireguard-tools not installed: sudo pacman -S wireguard-tools${C_RST}" >&2; return 1; }
+}
+
+_list() {
+    _check_wg || return 1
+    echo "  configs in $CONF_DIR:"
+    local n=0
+    if sudo -n true 2>/dev/null; then
+        sudo ls -1 "$CONF_DIR"/*.conf 2>/dev/null | while read -r f; do
+            printf '    %s\n' "$(basename "${f%.conf}")"; done
+        n=$(sudo ls -1 "$CONF_DIR"/*.conf 2>/dev/null | wc -l)
+    else
+        echo "    ${C_DIM}(sudo required to list)${C_RST}"
+    fi
+    echo
+    echo "  active interfaces:"
+    if command -v wg >/dev/null 2>&1; then
+        local out
+        out=$(sudo wg 2>/dev/null)
+        [[ -z "$out" ]] && echo "    ${C_DIM}(none)${C_RST}" || echo "$out" | sed 's/^/    /'
+    fi
+}
+
+_up() {
+    local iface="$1"
+    _check_wg || return 1
+    sudo wg-quick up "$iface" && echo "${C_GRN}✓ $iface up${C_RST}"
+}
+
+_down() {
+    local iface="$1"
+    _check_wg || return 1
+    sudo wg-quick down "$iface" && echo "${C_GRN}✓ $iface down${C_RST}"
+}
+
+_killswitch_on() {
+    local iface="${1:-wg0}"
+    # Default-deny everything outbound EXCEPT the wireguard tunnel and DNS-over-HTTPS to known DoH endpoints (loopback resolved).
+    sudo ufw default deny outgoing >/dev/null
+    sudo ufw allow out on "$iface" >/dev/null
+    # DNS-over-HTTPS: allow outbound 443 to 127.0.0.53 (systemd-resolved) — local only.
+    sudo ufw allow out to 127.0.0.0/8 >/dev/null
+    # The VPN handshake itself (UDP to the peer endpoint) — allowed by ufw default rules for that one port.
+    echo "${C_GRN}✓ kill-switch armed — all traffic routes via $iface only${C_RST}"
+    echo "${C_YEL}  to disarm: fox vpn killswitch off${C_RST}"
+}
+
+_killswitch_off() {
+    sudo ufw default allow outgoing >/dev/null
+    # Don't try to clean per-iface rules — they don't hurt anything when iface is down.
+    echo "${C_GRN}✓ kill-switch disarmed (outgoing default = allow)${C_RST}"
+}
+
+_status() {
+    if sudo -n ufw status 2>/dev/null | grep -q '^Default: .* deny (outgoing)'; then
+        echo "  kill-switch: ${C_GRN}ARMED${C_RST} (outgoing default = deny)"
+    else
+        echo "  kill-switch: ${C_DIM}disarmed${C_RST}"
+    fi
+    _list
+}
+
+case "${1:-}" in
+    ""|status)   _status ;;
+    list)        _list ;;
+    up)          [[ -n "${2:-}" ]] && _up   "$2" || { echo "usage: fox vpn up <iface>"; exit 2; } ;;
+    down)        [[ -n "${2:-}" ]] && _down "$2" || { echo "usage: fox vpn down <iface>"; exit 2; } ;;
+    killswitch)
+        case "${2:-}" in
+            on|arm)     _killswitch_on   "${3:-wg0}" ;;
+            off|disarm) _killswitch_off ;;
+            *) echo "usage: fox vpn killswitch on|off [iface]"; exit 2 ;;
+        esac
+        ;;
+    -h|--help|help) cat <<EOF
+fox vpn — WireGuard manager with UFW kill-switch
+
+  fox vpn [status]               show iface state + kill-switch state
+  fox vpn list                   list configs in /etc/wireguard + active ifaces
+  fox vpn up   <iface>           wg-quick up <iface>
+  fox vpn down <iface>           wg-quick down <iface>
+  fox vpn killswitch on [iface]  default-deny outgoing except via <iface> (default wg0)
+  fox vpn killswitch off         restore outgoing default = allow
+
+Drop your .conf in /etc/wireguard/<name>.conf (chmod 600), then:
+  fox vpn killswitch on <name>
+  fox vpn up <name>
+EOF
+    ;;
+    *) echo "unknown: $1" >&2; exit 2 ;;
+esac

@@ -100,6 +100,26 @@ case "$1" in
         shift
         exec fox-usb "$@"
         ;;
+    jail)
+        shift
+        exec fox-jail "$@"
+        ;;
+    mac)
+        shift
+        exec fox-mac "$@"
+        ;;
+    vault)
+        shift
+        exec fox-vault "$@"
+        ;;
+    fingerprint|fp)
+        shift
+        exec fox-fingerprint "$@"
+        ;;
+    vpn)
+        shift
+        exec fox-vpn "$@"
+        ;;
     sec|security)
         shift
         exec fox-sec "$@"
@@ -130,6 +150,11 @@ case "$1" in
         echo "  knock            Port knocking configurator + trigger (--setup / --status / --reveal)"
         echo "  deadman          USB-tethered panic trigger (--setup / --status / --disarm)"
         echo "  usb              USBGuard wrapper (list / pending / allow / block / refresh / watch)"
+        echo "  jail             Firejail manager (add/rm wrappers, list sandboxes, restart firefox)"
+        echo "  mac              NetworkManager MAC randomization (global + per-SSID overrides)"
+        echo "  vault            Password store (pass) wrapper — init / lock / audit"
+        echo "  fingerprint      fprintd wrapper — enroll / delete / test / status"
+        echo "  vpn              WireGuard manager + UFW kill-switch (up / down / killswitch)"
         echo "  sec              Unified security dashboard (alerts, posture, bans, listeners, failed auth)"
         echo ""
         echo "Custom Tools (found in ~/.local/bin):"

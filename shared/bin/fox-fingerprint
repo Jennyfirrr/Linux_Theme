@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+# fox-fingerprint — fprintd wrapper.
+set -u
+C_GRN=$'\e[38;5;108m'; C_YEL=$'\e[38;5;221m'; C_RED=$'\e[38;5;167m'; C_DIM=$'\e[2m'; C_RST=$'\e[0m'
+
+FINGERS=(right-index-finger right-thumb right-middle-finger left-index-finger left-thumb left-middle-finger)
+
+_check_fprintd() {
+    command -v fprintd-enroll >/dev/null 2>&1 \
+        || { echo "${C_RED}fprintd not installed: sudo pacman -S fprintd${C_RST}" >&2; return 1; }
+}
+
+_status() {
+    _check_fprintd || return 1
+    if systemctl is-active --quiet fprintd; then
+        echo "  service: ${C_GRN}active${C_RST}"
+    else
+        echo "  service: ${C_YEL}inactive (dbus-activated; fine)${C_RST}"
+    fi
+    echo "  enrolled fingers:"
+    local out
+    out=$(fprintd-list "$USER" 2>/dev/null)
+    if echo "$out" | grep -qE '#[0-9]'; then
+        echo "$out" | grep -E '#[0-9]' | sed 's/^/    /'
+    else
+        echo "    ${C_YEL}(none — enroll with: fox fingerprint enroll <name>)${C_RST}"
+    fi
+    if grep -q pam_fprintd /etc/pam.d/system-local-login 2>/dev/null; then
+        echo "  PAM:     ${C_GRN}spliced into system-local-login (fingerprint unlocks sudo)${C_RST}"
+    else
+        echo "  PAM:     ${C_YEL}not spliced (only fprintd CLI works; sudo needs password)${C_RST}"
+    fi
+}
+
+_enroll() {
+    _check_fprintd || return 1
+    local finger="${1:-right-index-finger}"
+    echo "${C_DIM}enrolling $finger — touch the reader several times when prompted${C_RST}"
+    fprintd-enroll -f "$finger" "$USER"
+}
+
+_delete() {
+    _check_fprintd || return 1
+    fprintd-delete "$USER" && echo "${C_GRN}✓ all enrolled fingers deleted${C_RST}"
+}
+
+_test() {
+    _check_fprintd || return 1
+    echo "${C_DIM}touch the reader (Ctrl-C to exit)...${C_RST}"
+    fprintd-verify "$USER"
+}
+
+_list_fingers() {
+    echo "Valid finger names for fox fingerprint enroll:"
+    for f in "${FINGERS[@]}"; do echo "  $f"; done
+}
+
+case "${1:-}" in
+    ""|status)   _status ;;
+    enroll)      _enroll "${2:-}" ;;
+    delete|del)  _delete ;;
+    test|verify) _test ;;
+    fingers)     _list_fingers ;;
+    -h|--help|help) cat <<EOF
+fox fingerprint — fprintd wrapper
+
+  fox fingerprint [status]    show service + enrolled fingers + PAM state
+  fox fingerprint enroll [F]  enroll finger F (default: right-index-finger)
+  fox fingerprint delete      delete all enrolled fingers
+  fox fingerprint test        verify a finger (Ctrl-C to exit)
+  fox fingerprint fingers     list valid finger names
+EOF
+    ;;
+    *) echo "unknown: $1" >&2; exit 2 ;;
+esac
