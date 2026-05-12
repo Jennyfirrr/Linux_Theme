@@ -202,7 +202,7 @@ install_specials() {
             if [[ -f "$rendered_dir/firefox/$css" ]]; then
                 mkdir -p "$ff_profile/chrome"
                 backup_and_copy "$rendered_dir/firefox/$css" "$ff_profile/chrome/$css"
-                echo "  Firefox $css"
+                command -v foxml_substep >/dev/null && foxml_substep "Firefox $css" || echo "  Firefox $css"
             fi
         done
         # Set the legacy stylesheet pref via user.js so userChrome/userContent
@@ -212,7 +212,7 @@ install_specials() {
         local ff_pref='user_pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);'
         if ! grep -qF 'toolkit.legacyUserProfileCustomizations.stylesheets' "$ff_userjs" 2>/dev/null; then
             printf '// FoxML theming\n%s\n' "$ff_pref" >> "$ff_userjs"
-            echo "  Firefox user.js (legacy stylesheet pref)"
+            command -v foxml_substep >/dev/null && foxml_substep "Firefox user.js (legacy stylesheet pref)" || echo "  Firefox user.js (legacy stylesheet pref)"
         fi
 
         # Restart Firefox so the new userChrome/userContent loads. SIGTERM
@@ -228,7 +228,7 @@ install_specials() {
             done
             setsid -f firefox >/dev/null 2>&1 &
             disown || true
-            echo "  Firefox restarted (session restore brings tabs back)"
+            command -v foxml_substep >/dev/null && foxml_substep "Firefox restarted (session restore brings tabs back)" || echo "  Firefox restarted (session restore brings tabs back)"
         fi
     else
         echo "  No Firefox profile found, skipping"
@@ -259,7 +259,7 @@ PKGJSON
     # Bat cache rebuild
     if command -v bat &>/dev/null; then
         bat cache --build &>/dev/null
-        echo "  Bat cache rebuilt"
+        command -v foxml_substep >/dev/null && foxml_substep "Bat cache rebuilt" || echo "  Bat cache rebuilt"
     fi
 
     # AI Agent (Gemini) — merge the rendered config into the user's settings.json.
@@ -277,7 +277,7 @@ PKGJSON
                     | .ui    = $new[0].ui
                 ' "$gemini_settings" > "$tmp_settings" 2>/dev/null; then
                 mv "$tmp_settings" "$gemini_settings"
-                echo "  Gemini settings (hooks + theme) merged"
+                command -v foxml_substep >/dev/null && foxml_substep "Gemini settings (hooks + theme) merged" || echo "  Gemini settings (hooks + theme) merged"
             else
                 rm -f "$tmp_settings"
                 echo "  Gemini merge failed (jq error), skipping"
@@ -285,7 +285,7 @@ PKGJSON
         else
             mkdir -p "$(dirname "$gemini_settings")"
             cp "$rendered_dir/gemini/settings.json" "$gemini_settings"
-            echo "  Gemini settings installed"
+            command -v foxml_substep >/dev/null && foxml_substep "Gemini settings installed" || echo "  Gemini settings installed"
         fi
     fi
 
@@ -324,7 +324,7 @@ JSON
             else
                 cp "$hooks_json" "$claude_settings"
             fi
-            echo "  Claude settings (hooks + theme) created"
+            command -v foxml_substep >/dev/null && foxml_substep "Claude settings (hooks + theme) created" || echo "  Claude settings (hooks + theme) created"
         elif command -v jq &>/dev/null; then
             # Deep-merge: replaces .hooks.Stop / .hooks.SubagentStop /
             # .hooks.Notification arrays wholesale, preserves everything else.
@@ -333,7 +333,7 @@ JSON
             local tmp_claude; tmp_claude="$(mktemp)"
             if jq -s '.[0] * .[1] * {theme: "dark-ansi"}' "$claude_settings" "$hooks_json" > "$tmp_claude" 2>/dev/null; then
                 mv "$tmp_claude" "$claude_settings"
-                echo "  Claude settings (hooks + theme) merged"
+                command -v foxml_substep >/dev/null && foxml_substep "Claude settings (hooks + theme) merged" || echo "  Claude settings (hooks + theme) merged"
             else
                 rm -f "$tmp_claude"
                 echo "  Claude merge failed (jq error), skipping"
@@ -572,7 +572,7 @@ JSON
             mkdir -p "$bat_dir"
             printf -- '--theme="Fox ML"\n' >> "$bat_dir/config"
         fi
-        echo "  bat --theme=\"Fox ML\""
+        command -v foxml_substep >/dev/null && foxml_substep "bat --theme=\"Fox ML\"" || echo "  bat --theme=\"Fox ML\""
     fi
 
     # delta — wire the rendered FoxML gitconfig in via [include] so the user's
@@ -596,7 +596,7 @@ JSON
         echo 'color_theme = "foxml"' > "$btop_conf"
         echo "  btop.conf created with FoxML theme"
     elif grep -qE '^color_theme\s*=\s*"foxml"' "$btop_conf"; then
-        echo "  btop already on FoxML theme"
+        command -v foxml_substep >/dev/null && foxml_substep "btop already on FoxML theme" || echo "  btop already on FoxML theme"
     elif grep -qE '^color_theme\s*=' "$btop_conf"; then
         sed -i -E 's|^(color_theme\s*=\s*).*|\1"foxml"|' "$btop_conf"
         echo "  btop color_theme → foxml"
@@ -642,7 +642,7 @@ JSON
     # restarted to pick up new hooks — that part can't be fixed from here.
     if pgrep -x mako >/dev/null 2>&1 && command -v makoctl >/dev/null 2>&1; then
         makoctl reload &>/dev/null || true
-        echo "  mako reloaded"
+        command -v foxml_substep >/dev/null && foxml_substep "mako reloaded" || echo "  mako reloaded"
     fi
     if pgrep -x dunst >/dev/null 2>&1; then
         # dunst has no reload command; SIGUSR2 is a no-op, so kick it cleanly.
@@ -1152,9 +1152,17 @@ install_etckeeper() {
 
     # Initialize /etc as a git repo if not already. etckeeper handles
     # both the init + the pacman hook (drops /etc/pacman.d/hooks/etckeeper.hook).
+    # The commit can fail with exit 128 when root has no git user.email
+    # set, or when there's no diff to commit on a clean re-run. Suppress
+    # both — the init alone is the useful work; subsequent pacman runs
+    # will commit organically via the hook.
     if [[ ! -d /etc/.git ]]; then
-        sudo etckeeper init >/dev/null 2>&1
-        sudo etckeeper commit "foxml: initial /etc snapshot" >/dev/null 2>&1
+        sudo etckeeper init >/dev/null 2>&1 || true
+        # Set a default git identity for root if missing (etckeeper commits
+        # as root and refuses without user.email).
+        sudo git -C /etc config user.email "etckeeper@$(hostname)" 2>/dev/null || true
+        sudo git -C /etc config user.name  "etckeeper" 2>/dev/null || true
+        sudo etckeeper commit "foxml: initial /etc snapshot" >/dev/null 2>&1 || true
         echo "  + etckeeper initialised /etc/.git"
     else
         echo "  • etckeeper already initialised in /etc"
@@ -3639,7 +3647,7 @@ update_specials() {
         for css in userChrome.css userContent.css; do
             if [[ -f "$ff_profile/chrome/$css" ]]; then
                 sed "$sed_expr" "$ff_profile/chrome/$css" > "$template_dir/firefox/$css"
-                echo "  Firefox $css"
+                command -v foxml_substep >/dev/null && foxml_substep "Firefox $css" || echo "  Firefox $css"
             fi
         done
     fi
