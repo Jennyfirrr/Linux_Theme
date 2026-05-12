@@ -2194,6 +2194,20 @@ install_resolved_dnssec() {
         echo "  • DNSSEC=$desired_val already configured  ${C_DIM:-}(change: fox dnssec 0/1/2)${C_RST:-}"
     fi
 
+    # Strip DNSSEC lines from sibling drop-ins so 00-foxml-dnssec.conf
+    # is the sole source of truth. systemd-resolved merges drop-ins
+    # in lexical order; without this cleanup, foxml-doh.conf's
+    # DNSSEC= line (added by install_privacy) would override the
+    # user's picked level above because it sorts later.
+    for sibling in /etc/systemd/resolved.conf.d/*.conf; do
+        [[ "$sibling" == "$conf" ]] && continue
+        [[ -f "$sibling" ]] || continue
+        if sudo grep -q '^DNSSEC=' "$sibling" 2>/dev/null; then
+            sudo sed -i '/^DNSSEC=/d' "$sibling"
+            echo "  • stripped redundant DNSSEC= from $sibling"
+        fi
+    done
+
     # 3. Clear NetworkManager per-connection DNSSEC overrides. Empty value
     # means "inherit from systemd-resolved global." Iterates every
     # connection NM knows about; cheap, idempotent, no-op when none have

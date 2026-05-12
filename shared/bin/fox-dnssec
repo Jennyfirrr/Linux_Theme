@@ -38,16 +38,20 @@ _set() {
     fi
 
     sudo install -d /etc/systemd/resolved.conf.d
-    # Update both drop-ins to keep them consistent.
-    for conf in "$CONF_DROPIN" "$CONF_DOH"; do
-        if [[ -f "$conf" ]]; then
-            sudo sed -i "s/^DNSSEC=.*/DNSSEC=${value}/" "$conf"
+    # Write the canonical drop-in.
+    printf '[Resolve]\nDNSSEC=%s\n' "$value" | sudo tee "$CONF_DROPIN" >/dev/null
+
+    # Strip DNSSEC= from EVERY other drop-in so this one wins
+    # unambiguously. systemd merges drop-ins in lexical order; any
+    # later-sorting file containing DNSSEC= would otherwise override
+    # the user's pick.
+    for sibling in /etc/systemd/resolved.conf.d/*.conf; do
+        [[ "$sibling" == "$CONF_DROPIN" ]] && continue
+        [[ -f "$sibling" ]] || continue
+        if sudo grep -q '^DNSSEC=' "$sibling" 2>/dev/null; then
+            sudo sed -i '/^DNSSEC=/d' "$sibling"
         fi
     done
-
-    # If 00-foxml-dnssec.conf doesn't exist yet, create it.
-    [[ -f "$CONF_DROPIN" ]] \
-        || printf '[Resolve]\nDNSSEC=%s\n' "$value" | sudo tee "$CONF_DROPIN" >/dev/null
 
     sudo systemctl restart systemd-resolved
     # Brief sanity probe — if resolution wedges, warn the user
