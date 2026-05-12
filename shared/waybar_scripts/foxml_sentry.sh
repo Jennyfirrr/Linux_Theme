@@ -158,18 +158,22 @@ _tooltip() {
     printf '%s' "${out//\"/\\\"}"
 }
 
+# Pango markup colours each glyph + count separately. Waybar custom
+# modules render the `text` field as pango by default — so the
+# warning triangle stays yellow, the shield stays green, the critical
+# icon stays red, even when the module's overall class is "critical"
+# (which the CSS uses for background tint + outer border colour).
+RED='#b05555'; YEL='#c4b48a'; GRN='#7aab88'; PEACH='#d4985a'; DIM='#8a8a8a'
+
 case "$class" in
     critical)
-        # Show critical count and active layers — both numbers matter
-        # so the user sees "something tripped" + "still N layers up".
-        text="󰀦 ${#crits[@]} · 🛡 ${#oks[@]}"
+        text="<span color='${RED}' weight='bold'>󰀦 ${#crits[@]}</span><span color='${DIM}'> · </span><span color='${GRN}'>🛡 ${#oks[@]}</span>"
         ;;
     warning)
-        text="⚠ ${#warns[@]} · 🛡 ${#oks[@]}"
+        text="<span color='${YEL}' weight='bold'>⚠ ${#warns[@]}</span><span color='${DIM}'> · </span><span color='${GRN}'>🛡 ${#oks[@]}</span>"
         ;;
     ok)
-        # Shield + count. At a glance: 25 layers covering me right now.
-        text="󰒃 ${#oks[@]}"
+        text="<span color='${GRN}' weight='bold'>󰒃 ${#oks[@]}</span>"
         ;;
 esac
 
