@@ -970,6 +970,8 @@ install_keyring_full_components() {
     local limited_units=(
         "app-gnome-keyring-pkcs11@autostart.service"
         "app-gnome-keyring-secrets@autostart.service"
+        "gnome-keyring-daemon.service"
+        "gnome-keyring-daemon.socket"
     )
     local masked=0
     for unit in "${limited_units[@]}"; do
@@ -991,6 +993,16 @@ install_keyring_full_components() {
     else
         echo "  • gnome-keyring limited autostart units already masked"
     fi
+
+    # Ensure `ssh` is not jailed by Firejail. The default Firejail profile for
+    # ssh isolates it from agents started in other shells and breaks
+    # ssh-askpass UI prompts (GTK Memfd errors).
+    if [[ -L "/usr/local/bin/ssh" ]] && readlink "/usr/local/bin/ssh" | grep -q firejail; then
+        if sudo rm "/usr/local/bin/ssh" 2>/dev/null; then
+            echo "  + de-jailed ssh (restored native access to agents + UI prompts)"
+        fi
+    fi
+
     return 0
 }
 

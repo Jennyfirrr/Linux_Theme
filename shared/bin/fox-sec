@@ -123,8 +123,11 @@ sec_posture() {
         fi
     fi
     # gnome-keyring autostart components
-    if [[ "$(systemctl --user is-enabled app-gnome-keyring-pkcs11@autostart.service 2>/dev/null)" == "masked" ]]; then
+    if [[ "$(systemctl --user is-enabled app-gnome-keyring-pkcs11@autostart.service 2>/dev/null)" == "masked" ]] && \
+       [[ "$(systemctl --user is-enabled gnome-keyring-daemon.service 2>/dev/null)" == "masked" ]]; then
         _ok "gnome-keyring limited components masked (SSH+GPG agent works)"
+    else
+        _warn "gnome-keyring limited components active (breaks SSH/GPG agents)"
     fi
 }
 

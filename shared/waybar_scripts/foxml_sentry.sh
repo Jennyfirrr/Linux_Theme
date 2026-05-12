@@ -75,6 +75,7 @@ fi
 
 # Keyring components
 [[ "$(systemctl --user is-enabled app-gnome-keyring-pkcs11@autostart.service 2>/dev/null)" == "masked" ]] \
+    && [[ "$(systemctl --user is-enabled gnome-keyring-daemon.service 2>/dev/null)" == "masked" ]] \
     && _bump ok "Keyring SSH+GPG agents"
 
 # DNS-over-HTTPS
