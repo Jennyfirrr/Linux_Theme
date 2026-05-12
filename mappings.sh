@@ -1644,8 +1644,11 @@ install_ufw_baseline() {
 
     if systemctl is-enabled --quiet sshd 2>/dev/null \
        || systemctl is-active  --quiet sshd 2>/dev/null; then
-        sudo ufw allow ssh >/dev/null
-        echo "    sshd detected — port 22 allowed"
+        # `limit` instead of `allow`: rate-limits brute force. UFW drops
+        # connections when the same source IP makes >6 attempts in 30s.
+        # Free win over `allow ssh` for the same port-22-open effect.
+        sudo ufw limit ssh >/dev/null
+        echo "    sshd detected — port 22 allowed with rate-limit (limit ssh)"
     fi
 
     echo "y" | sudo ufw enable >/dev/null
@@ -1681,10 +1684,36 @@ kernel.dmesg_restrict            = 1
 kernel.unprivileged_bpf_disabled = 1
 kernel.yama.ptrace_scope         = 1
 net.ipv4.tcp_syncookies          = 1
+# Mitigate TCP TIME_WAIT assassination (RFC 1337) — laptop is a client
+# so we generally don't care, but cheap defence with no downside.
+net.ipv4.tcp_rfc1337             = 1
+# Drop ICMP echoes to the broadcast address (Smurf amplification).
+net.ipv4.icmp_echo_ignore_broadcasts = 1
+# Bogus ICMP responses (RFC 1812 violations) — log but don't act.
+net.ipv4.icmp_ignore_bogus_error_responses = 1
 net.ipv4.conf.all.rp_filter      = 1
 net.ipv4.conf.default.rp_filter  = 1
 net.ipv4.conf.all.log_martians   = 1
 net.ipv4.conf.default.log_martians = 1
+# ICMP redirects: we are NOT a router. Don't accept routing updates
+# from the network; don't send them either. Both directions are
+# spoofing / MITM vectors that exist for legacy multi-NIC routers.
+net.ipv4.conf.all.accept_redirects     = 0
+net.ipv4.conf.default.accept_redirects = 0
+net.ipv4.conf.all.secure_redirects     = 0
+net.ipv4.conf.default.secure_redirects = 0
+net.ipv4.conf.all.send_redirects       = 0
+net.ipv4.conf.default.send_redirects   = 0
+# Source-routed packets — refuse. No legitimate use on a laptop, and
+# they let attackers force traffic through specific paths.
+net.ipv4.conf.all.accept_source_route     = 0
+net.ipv4.conf.default.accept_source_route = 0
+# IPv6 parity. accept_ra=1 (default) is left alone — needed for SLAAC
+# on normal IPv6 networks.
+net.ipv6.conf.all.accept_redirects     = 0
+net.ipv6.conf.default.accept_redirects = 0
+net.ipv6.conf.all.accept_source_route     = 0
+net.ipv6.conf.default.accept_source_route = 0
 fs.suid_dumpable                 = 0
 EOF
 )"
@@ -1702,6 +1731,220 @@ EOF
     else
         echo "  ! sysctl --system reported errors — review with 'sudo sysctl --system'"
     fi
+}
+
+# ─────────────────────────────────────────
+# Browser hardening — arkenfox user.js + Firefox-in-firejail.
+#
+# arkenfox is the de-facto Firefox hardening preset (telemetry off,
+# fingerprinting resistance on, sane third-party cookie defaults).
+# Latest user.js fetched from upstream and dropped into the user's
+# default-release profile. firejail's bundled firefox profile gets
+# auto-symlinked via `firecfg` so `firefox` runs sandboxed by default.
+# Idempotent: skips downloads if a recent arkenfox is already present,
+# and `firecfg` is a no-op when symlinks already exist.
+# ─────────────────────────────────────────
+install_browser_hardening() {
+    if ! command -v firefox >/dev/null 2>&1; then
+        echo "  • firefox not installed, skipping browser hardening"
+        return 0
+    fi
+
+    # 1. arkenfox user.js into the default-release profile (Firefox's
+    #    typical naming). If the user has multiple profiles, we touch
+    #    only the one Firefox uses by default.
+    local ff_dir="$HOME/.mozilla/firefox"
+    local profile=""
+    if [[ -d "$ff_dir" ]]; then
+        profile=$(find "$ff_dir" -maxdepth 1 -type d -name '*.default-release' | head -1)
+        [[ -z "$profile" ]] && profile=$(find "$ff_dir" -maxdepth 1 -type d -name '*.default' | head -1)
+    fi
+    if [[ -z "$profile" ]]; then
+        echo "  • Firefox profile not found — launch Firefox once, then re-run for arkenfox"
+    else
+        local user_js="$profile/user.js"
+        local overrides="$profile/user-overrides.js"
+        # Re-download if missing or older than 30 days. arkenfox tags
+        # quarterly; 30d is conservative.
+        local should_update=1
+        if [[ -f "$user_js" ]] && [[ $(find "$user_js" -mtime -30 2>/dev/null | wc -l) -gt 0 ]] \
+            && grep -q "arkenfox user.js" "$user_js" 2>/dev/null; then
+            should_update=0
+        fi
+        if (( should_update )); then
+            if curl -fsSL --max-time 30 \
+                https://raw.githubusercontent.com/arkenfox/user.js/master/user.js \
+                -o "$user_js.tmp" 2>/dev/null; then
+                mv "$user_js.tmp" "$user_js"
+                echo "  arkenfox user.js → $profile (Firefox will apply on next launch)"
+            else
+                echo "  ! arkenfox download failed — skipping (network issue?)"
+                rm -f "$user_js.tmp"
+            fi
+        else
+            echo "  • arkenfox user.js already up-to-date"
+        fi
+        # Drop a personal overrides file (empty by default) so the user
+        # has a clear place to relax specific arkenfox settings without
+        # editing user.js itself (which the next refresh would clobber).
+        if [[ ! -f "$overrides" ]]; then
+            cat > "$overrides" <<'EOF'
+// user-overrides.js — your personal overrides for arkenfox user.js.
+//
+// Anything you set here wins over the arkenfox defaults. Common
+// relaxations on a personal laptop:
+//
+//   user_pref("privacy.resistFingerprinting", false);  // breaks dark mode + screen scaling
+//   user_pref("browser.startup.page", 3);              // restore previous session
+//   user_pref("browser.search.suggest.enabled", true); // search suggestions
+//
+// See https://github.com/arkenfox/user.js/wiki/3.1-Overrides for the full list.
+EOF
+            echo "  user-overrides.js stub created (edit to relax arkenfox defaults)"
+        fi
+    fi
+
+    # 2. firejail symlinks for sandboxed browser launch. firecfg places
+    # /usr/local/bin/firefox -> /usr/bin/firejail, which intercepts
+    # `firefox` invocations and applies /etc/firejail/firefox.profile.
+    if command -v firejail >/dev/null 2>&1; then
+        if ! [[ -L /usr/local/bin/firefox ]] || ! readlink /usr/local/bin/firefox | grep -q firejail; then
+            sudo firecfg >/dev/null 2>&1 \
+                && echo "  firejail symlinks applied (firefox now runs sandboxed)"
+        else
+            echo "  • firejail already wired for firefox"
+        fi
+    fi
+
+    return 0
+}
+
+# ─────────────────────────────────────────
+# USBGuard — allow-list policy for USB devices.
+#
+# Auto-generates the initial policy from *currently connected* devices:
+# anything plugged in at install time is trusted (your built-in keyboard,
+# fingerprint reader, webcam, etc.). New devices plugged later are
+# blocked until explicitly allowed via `sudo usbguard allow-device <id>`.
+#
+# Tradeoff: this is the whole POINT of usbguard, but it can lock you out
+# of a freshly bought mouse/keyboard until you whitelist it. Pair with
+# the `usbguard list-devices` cheat to find IDs quickly.
+# ─────────────────────────────────────────
+install_usbguard() {
+    if ! command -v usbguard >/dev/null 2>&1; then
+        echo "  • usbguard not installed, skipping"
+        return 0
+    fi
+    local rules=/etc/usbguard/rules.conf
+    if [[ ! -s "$rules" ]]; then
+        echo "  Generating initial USBGuard policy from currently connected devices..."
+        sudo usbguard generate-policy | sudo tee "$rules" >/dev/null
+        sudo chmod 600 "$rules"
+        sudo chown root:root "$rules"
+        echo "    → $rules (trusts currently plugged USB devices)"
+    else
+        echo "  • USBGuard rules already present at $rules"
+    fi
+
+    # Allow current user to query and allow-device via the dbus IPC, so
+    # `usbguard list-devices` works without sudo and notifications can
+    # surface new-device prompts.
+    local conf=/etc/usbguard/usbguard-daemon.conf
+    if [[ -f "$conf" ]] && ! grep -qE "^IPCAllowedUsers=.*\b${USER}\b" "$conf"; then
+        sudo sed -i -E "s|^#?IPCAllowedUsers=.*|IPCAllowedUsers=root ${USER}|" "$conf"
+        echo "    IPC access granted to user ${USER}"
+    fi
+
+    if ! systemctl is-active --quiet usbguard; then
+        sudo systemctl enable --now usbguard >/dev/null 2>&1 \
+            && echo "    usbguard service enabled"
+    else
+        sudo systemctl reload usbguard >/dev/null 2>&1 || true
+        echo "  • usbguard already active (reloaded)"
+    fi
+    return 0
+}
+
+# ─────────────────────────────────────────
+# arch-audit — daily systemd-user timer that checks installed packages
+# against the Arch Linux security advisories. Failed audits push a
+# notify-send so you actually see the CVE list.
+# ─────────────────────────────────────────
+install_arch_audit() {
+    if ! command -v arch-audit >/dev/null 2>&1; then
+        echo "  • arch-audit not installed, skipping"
+        return 0
+    fi
+    local unit_dir="$HOME/.config/systemd/user"
+    mkdir -p "$unit_dir"
+
+    cat > "$unit_dir/foxml-arch-audit.service" <<'EOF'
+[Unit]
+Description=FoxML — daily arch-audit check against Arch Linux security advisories
+After=network-online.target
+
+[Service]
+Type=oneshot
+# -uf  : upgrades-only (only show advisories that have a fix available)
+# Falls through to notify-send when any CVE is open against an installed
+# package. Quiet when clean.
+ExecStart=/bin/sh -c '\
+    out=$(arch-audit -uf 2>/dev/null); \
+    if [ -n "$out" ]; then \
+        count=$(printf "%s" "$out" | wc -l); \
+        notify-send -u critical -t 30000 \
+            "arch-audit: $count package(s) with available fixes" \
+            "$(printf "%s" "$out" | head -10)"; \
+    fi'
+EOF
+
+    cat > "$unit_dir/foxml-arch-audit.timer" <<'EOF'
+[Unit]
+Description=Run arch-audit daily
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+RandomizedDelaySec=600
+
+[Install]
+WantedBy=timers.target
+EOF
+
+    systemctl --user daemon-reload >/dev/null 2>&1
+    systemctl --user enable --now foxml-arch-audit.timer >/dev/null 2>&1 \
+        && echo "  arch-audit daily timer enabled"
+    return 0
+}
+
+# ─────────────────────────────────────────
+# NetworkManager MAC randomization. Opt-in only (--mac-random) because
+# dorm / enterprise / captive-portal networks gatekeep on persistent
+# MAC addresses — randomization breaks those setups. Standard for
+# coffee-shop / hotel wifi protection though.
+# ─────────────────────────────────────────
+install_mac_random() {
+    local conf=/etc/NetworkManager/conf.d/00-foxml-mac-random.conf
+    sudo install -d /etc/NetworkManager/conf.d
+    sudo tee "$conf" >/dev/null <<'EOF'
+# foxml-managed — NetworkManager MAC randomization.
+# Reverts: sudo rm /etc/NetworkManager/conf.d/00-foxml-mac-random.conf
+[device]
+wifi.scan-rand-mac-address=yes
+
+[connection]
+wifi.cloned-mac-address=random
+ethernet.cloned-mac-address=random
+# Per-SSID stable identifier so each network gets a deterministic
+# (but unique) MAC. Prevents the network from churning ARP tables
+# every connection while still presenting a different MAC per SSID.
+connection.stable-id=${CONNECTION}/${BOOT}
+EOF
+    sudo systemctl reload NetworkManager 2>/dev/null || \
+        sudo systemctl restart NetworkManager 2>/dev/null || true
+    echo "  MAC randomization enabled (per-SSID stable, varies across networks)"
+    return 0
 }
 
 # Enable fingerprint authentication for the greetd login screen on hosts
@@ -2115,31 +2358,53 @@ install_vault() {
 # ─────────────────────────────────────────
 
 install_security() {
-    # 1. UFW (Uncomplicated Firewall)
+    # 1. UFW — defer to install_ufw_baseline so we share one source of
+    # truth for rules. The baseline applies deny-incoming / allow-outgoing
+    # and conditionally `ufw limit ssh` ONLY when sshd is actually enabled,
+    # which is what we want here too. The prior duplicate block opened
+    # port 22 unconditionally — bad on machines with no sshd.
     if pacman -Qi ufw &>/dev/null; then
-        if ! systemctl is-active --quiet ufw; then
-            echo "  Configuring UFW..."
-            sudo ufw default deny incoming >/dev/null
-            sudo ufw default allow outgoing >/dev/null
-            sudo ufw allow ssh >/dev/null
-            # y| ensures it doesn't pause for confirmation
-            echo "y" | sudo ufw enable >/dev/null
-            sudo systemctl enable --now ufw >/dev/null 2>&1
-            echo "    UFW enabled (Deny incoming, Allow outgoing/ssh)"
-        else
-            echo "  • UFW already active"
-        fi
+        install_ufw_baseline
     else
         echo "  ufw package not found — run with --deps --secure"
     fi
 
     # 2. Fail2ban (Brute-force protection)
     if pacman -Qi fail2ban &>/dev/null; then
+        # Write jail.local FIRST — the stock jail.conf ships with every
+        # jail disabled. Without this file, fail2ban runs but protects
+        # nothing (the classic "service enabled, doing nothing" trap).
+        # Idempotent: skips if a foxml-managed jail.local is already in
+        # place. We don't touch a user's pre-existing jail.local.
+        local jail_local=/etc/fail2ban/jail.local
+        if [[ ! -f "$jail_local" ]] || ! grep -q '^# foxml-managed' "$jail_local"; then
+            sudo tee "$jail_local" >/dev/null <<'EOF'
+# foxml-managed — auto-applied by install.sh --secure.
+# Delete this file to revert to the stock fail2ban defaults.
+[DEFAULT]
+bantime  = 1h
+findtime = 10m
+maxretry = 5
+backend  = systemd
+# Allow the loopback so localhost-spawned test traffic doesn't ban us.
+ignoreip = 127.0.0.1/8 ::1
+
+[sshd]
+enabled  = true
+port     = ssh
+filter   = sshd
+journalmatch = _SYSTEMD_UNIT=sshd.service
+EOF
+            echo "    fail2ban jail.local written (sshd jail enabled)"
+        fi
         if ! systemctl is-active --quiet fail2ban; then
             sudo systemctl enable --now fail2ban >/dev/null 2>&1
             echo "    fail2ban service enabled"
         else
-            echo "  • fail2ban already active"
+            # Reload so the newly-written jail.local takes effect on re-runs.
+            sudo systemctl reload fail2ban >/dev/null 2>&1 \
+                || sudo systemctl restart fail2ban >/dev/null 2>&1
+            echo "  • fail2ban already active (reloaded for new jail.local)"
         fi
     else
         echo "  fail2ban package not found — run with --deps --secure"
@@ -2147,16 +2412,35 @@ install_security() {
 
     # 3. Auditd (System Auditing)
     if pacman -Qi audit &>/dev/null; then
+        # Persistent watch rules. Previous version called `auditctl -w`
+        # at runtime which DOESN'T survive reboot — auditctl writes to
+        # the running kernel only. Rules in /etc/audit/rules.d/ get
+        # compiled into the audit policy via augenrules on every boot.
+        local audit_rules=/etc/audit/rules.d/99-foxml.rules
+        if [[ ! -f "$audit_rules" ]] || ! grep -q '^# foxml-managed' "$audit_rules"; then
+            sudo tee "$audit_rules" >/dev/null <<'EOF'
+# foxml-managed — auto-applied by install.sh --secure.
+# Watches credential + sshd config files for modifications.
+-w /etc/passwd -p wa -k passwd_changes
+-w /etc/shadow -p wa -k shadow_changes
+-w /etc/ssh/sshd_config -p wa -k sshd_config_changes
+-w /etc/ssh/sshd_config.d/ -p wa -k sshd_config_changes
+-w /etc/sudoers -p wa -k sudoers_changes
+-w /etc/sudoers.d/ -p wa -k sudoers_changes
+EOF
+            # augenrules merges all .rules files in rules.d/ into the
+            # active policy at /etc/audit/audit.rules, then we restart
+            # the service so it picks them up. augenrules is idempotent.
+            sudo augenrules --load >/dev/null 2>&1 || true
+            echo "    auditd watch rules written to ${audit_rules}"
+        fi
         if ! systemctl is-active --quiet auditd; then
             echo "  Configuring Auditd..."
             sudo systemctl enable --now auditd >/dev/null 2>&1
-            # Add basic watch rules
-            sudo auditctl -w /etc/passwd -p wa -k passwd_changes >/dev/null 2>&1
-            sudo auditctl -w /etc/shadow -p wa -k shadow_changes >/dev/null 2>&1
-            sudo auditctl -w /etc/ssh/sshd_config.d/ -p wa -k sshd_config_changes >/dev/null 2>&1
-            echo "    auditd enabled and watching sensitive files"
+            echo "    auditd enabled with persistent watch rules"
         else
-            echo "  • auditd already active"
+            sudo systemctl restart auditd >/dev/null 2>&1
+            echo "  • auditd already active (restarted to load new rules)"
         fi
     fi
 
@@ -2224,14 +2508,27 @@ install_security() {
                 disable_pass="yes"
             fi
 
-            # 3. Apply Config
+            # 3. Apply Config. The extra knobs below are non-controversial
+            # standard hardening: no root login (use sudo from a user
+            # account), tighter auth retry limit, no challenge-response /
+            # keyboard-interactive (cuts off old PAM-based brute force),
+            # explicit Protocol 2 even though it's already default.
             sudo tee "$hardening_conf" >/dev/null <<EOF
 # FoxML Security Hardening
 Port $custom_port
+Protocol 2
 PasswordAuthentication $disable_pass
 PubkeyAuthentication yes
+PermitRootLogin no
+MaxAuthTries 3
+KbdInteractiveAuthentication no
+ChallengeResponseAuthentication no
+LoginGraceTime 30
+ClientAliveInterval 300
+ClientAliveCountMax 2
 EOF
             echo "    SSH config written to $hardening_conf"
+            echo "      PermitRootLogin no, MaxAuthTries 3, no kbd-interactive"
 
             # 4. Update UFW
             if [[ "$custom_port" != "22" ]]; then

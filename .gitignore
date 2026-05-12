@@ -10,6 +10,15 @@ claude-skills/
 # workspace names into this file. Keep it out of the repo regardless.
 .opencode/
 
+# Agent permission grants — Claude Code / OpenCode write this file
+# with absolute paths to whatever the user has allowed. Per-machine
+# state, contains $HOME paths and private-workspace names. Not for
+# the repo.
+.agent/settings.local.json
+
+# Claude Code session state (claude.ai's local IDE config)
+.claude/
+
 # Plans (Personal design and scratchpad)
 plans/
 

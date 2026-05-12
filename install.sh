@@ -92,6 +92,16 @@ INSTALL_FPRINT=false
 IS_LAPTOP=false
 INSTALL_XGBOOST=false
 INSTALL_CPP_PRO=false
+# Security hardening: ON by default. Opt out individually via --no-*
+# flags. install.sh actually applies these only when --deps is set
+# (so the required packages get installed in the same run); users doing
+# a config-only re-run won't get half-installed hardening.
+INSTALL_HARDEN_BROWSER=true
+INSTALL_USBGUARD=true
+INSTALL_ARCH_AUDIT=true
+# MAC randomization stays opt-in — dorm / enterprise WiFi setups
+# require a consistent MAC for the network ACL to recognise the device.
+INSTALL_MAC_RANDOM=false
 INSTALL_AI=false
 INSTALL_MODELS=false
 INSTALL_GITHUB=false
@@ -116,6 +126,16 @@ for arg in "$@"; do
         --fprint)    INSTALL_FPRINT=true ;;
         --xgboost) INSTALL_XGBOOST=true ;;
         --cpp-pro) INSTALL_CPP_PRO=true ;;
+        --harden-browser|--no-harden-browser)
+            [[ "$arg" == "--no-harden-browser" ]] && INSTALL_HARDEN_BROWSER=false || INSTALL_HARDEN_BROWSER=true
+            ;;
+        --usbguard|--no-usbguard)
+            [[ "$arg" == "--no-usbguard" ]] && INSTALL_USBGUARD=false || INSTALL_USBGUARD=true
+            ;;
+        --arch-audit|--no-arch-audit)
+            [[ "$arg" == "--no-arch-audit" ]] && INSTALL_ARCH_AUDIT=false || INSTALL_ARCH_AUDIT=true
+            ;;
+        --mac-random)     INSTALL_MAC_RANDOM=true ;;
         --ai) INSTALL_AI=true ;;
         --models) INSTALL_MODELS=true ;;
         --github) INSTALL_GITHUB=true ;;
@@ -407,6 +427,10 @@ if $DRY_RUN; then
     $IS_LAPTOP        && mods+=("chassis:laptop")
     $INSTALL_XGBOOST  && mods+=("xgboost")
     $INSTALL_CPP_PRO  && mods+=("cpp-pro")
+    $INSTALL_HARDEN_BROWSER && mods+=("harden-browser")
+    $INSTALL_USBGUARD       && mods+=("usbguard")
+    $INSTALL_ARCH_AUDIT     && mods+=("arch-audit")
+    $INSTALL_MAC_RANDOM     && mods+=("mac-random")
     $INSTALL_AI       && mods+=("ai")
     $INSTALL_MODELS   && mods+=("models")
     $INSTALL_GITHUB   && mods+=("github")
@@ -574,6 +598,13 @@ if $INSTALL_DEPS; then
     if $INSTALL_CPP_PRO; then
         PACMAN_PKGS+=(clang lldb mold ccache gdb valgrind perf hyperfine)
     fi
+
+    # Security hardening add-ons — on by default, --no-X opts out.
+    # firejail comes in with --harden-browser since Firefox-in-firejail
+    # is the canonical sandbox pairing for risky browsing.
+    $INSTALL_HARDEN_BROWSER && PACMAN_PKGS+=(firejail)
+    $INSTALL_USBGUARD       && PACMAN_PKGS+=(usbguard)
+    $INSTALL_ARCH_AUDIT     && PACMAN_PKGS+=(arch-audit)
 
     TO_INSTALL=()
     ALREADY_INSTALLED=0
@@ -980,8 +1011,39 @@ echo "Applying kernel hardening sysctls..."
 install_kernel_hardening
 
 # ─────────────────────────────────────────
+# Auto-on security hardening features. Flags default true; --no-X opts
+# out individually. Gated on $INSTALL_DEPS so packages exist in the
+# same run; config-only re-runs skip these (avoids half-installed
+# state).
+# ─────────────────────────────────────────
+if $INSTALL_DEPS; then
+    if $INSTALL_HARDEN_BROWSER; then
+        echo ""
+        foxml_section "Browser hardening (arkenfox + firejail)"
+        install_browser_hardening
+    fi
+    if $INSTALL_USBGUARD; then
+        echo ""
+        foxml_section "USBGuard policy"
+        install_usbguard
+    fi
+    if $INSTALL_ARCH_AUDIT; then
+        echo ""
+        foxml_section "arch-audit daily timer"
+        install_arch_audit
+    fi
+fi
+# MAC randomization is opt-in and doesn't require new packages
+# (NetworkManager handles it), so it runs whenever the flag is set.
+if $INSTALL_MAC_RANDOM; then
+    echo ""
+    foxml_section "NetworkManager MAC randomization"
+    install_mac_random
+fi
+
+# ─────────────────────────────────────────
 # UFW firewall baseline — auto-applied. Default deny incoming, allow
-# outgoing, conditional allow ssh only when sshd is actually enabled.
+# outgoing, conditional limit ssh only when sshd is actually enabled.
 # Skipped cleanly if ufw isn't installed; the --secure module's SSH
 # hardening wizard handles port-22 vs custom-port logic separately.
 # ─────────────────────────────────────────
