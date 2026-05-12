@@ -942,7 +942,7 @@ install_dispatch_hooks() {
 # foxml-managed — fires fox-dispatch on every fail2ban ban.
 # Revert: sudo rm $action and remove "action = foxml-dispatch" from jail.local.
 [Definition]
-actionban  = /bin/sh -c 'sudo -u ${USER} XDG_RUNTIME_DIR=/run/user/\$(id -u ${USER}) HOME=/home/${USER} /home/${USER}/.local/bin/fox-dispatch "ssh-brute" "<ip> banned from <name> after <failures> attempts (host: \$(hostname))"' || true
+actionban  = /bin/sh -c '_log=/home/${USER}/.local/share/foxml/threat-log.txt; mkdir -p "\$(dirname \$_log)" && chmod 700 "\$(dirname \$_log)"; _geo=\$(curl -sS -m 5 "http://ip-api.com/json/<ip>?fields=country,city,isp,as,proxy,hosting" 2>/dev/null); _whois=\$(timeout 5 whois <ip> 2>/dev/null | grep -iE "^(country|netname|orgname|descr):" | head -4 | tr "\\n" "|"); _stamp=\$(date -Iseconds); printf "%s\\t<ip>\\t<name>\\t<failures> failures\\tgeo=%s\\twhois=%s\\n" "\$_stamp" "\$_geo" "\$_whois" >> "\$_log"; chmod 600 "\$_log"; sudo -u ${USER} XDG_RUNTIME_DIR=/run/user/\$(id -u ${USER}) HOME=/home/${USER} /home/${USER}/.local/bin/fox-dispatch "ssh-brute" "<ip> banned (<name>, <failures> failures) geo=\$_geo" || true'
 actionunban = /bin/true
 [Init]
 EOF
@@ -969,10 +969,26 @@ EOF
         if systemctl --user is-enabled --quiet fox-bouncer.service 2>/dev/null; then
             echo "  • fox-bouncer already enabled"
         else
-            # Run the installer mode — drops the unit file + starts it.
             fox-bouncer --install >/dev/null 2>&1 \
                 && echo "  + fox-bouncer.service enabled" \
                 || echo "  ! fox-bouncer install failed (run manually: fox-bouncer --install)"
+        fi
+    fi
+
+    # 2b. fox-sentry-audit — kernel-level honeypot watcher. Drops a
+    # plausibly-named fake credential file in ~/Documents and adds an
+    # auditd watch with key=foxml_honey; a user systemd unit tails the
+    # journal for that key and fires fox-dispatch on any read.
+    # Strong complement to fox-tripwire (userspace inotify): auditd
+    # runs in the kernel so userspace ptrace/inotify tricks can't
+    # bypass it. Both stay on by default — they alert, don't act.
+    if command -v fox-sentry-audit >/dev/null 2>&1 && pacman -Qi audit &>/dev/null; then
+        if systemctl --user is-enabled --quiet fox-sentry-audit.service 2>/dev/null; then
+            echo "  • fox-sentry-audit already enabled"
+        else
+            fox-sentry-audit --install >/dev/null 2>&1 \
+                && echo "  + fox-sentry-audit.service enabled (kernel-level honeypot)" \
+                || echo "  ! fox-sentry-audit install failed (run manually: fox-sentry-audit --install)"
         fi
     fi
 
@@ -992,6 +1008,79 @@ EOF
         else
             echo "  • fox-dispatch webhook already configured"
         fi
+    fi
+}
+
+# Endlessh — SSH tarpit. Listens on port 22 (or wherever the world
+# expects sshd to be) and feeds connecting bots an infinitely slow
+# stream of random SSH banner lines, one every 10 seconds. Bots wait
+# forever for a password prompt that never comes; meanwhile real sshd
+# is on a custom port (set by the SSH hardening wizard) where bots
+# never look. Net effect: every brute-force script gets tarpitted.
+#
+# Legal: defensive — we're just slow-responding to connections on our
+# own port. No active intrusion, no scanning back. Fully within CFAA /
+# Computer Misuse Act bounds.
+#
+# Conflict: requires port 22 to be FREE. If real sshd is on 22, abort.
+install_endlessh_tarpit() {
+    # Only meaningful if real sshd has been moved off 22. Without that,
+    # we'd kick our own SSH service off the port.
+    local real_ssh_port=""
+    if [[ -f /etc/ssh/sshd_config.d/50-foxml-hardening.conf ]]; then
+        real_ssh_port=$(awk '/^Port /{print $2}' /etc/ssh/sshd_config.d/50-foxml-hardening.conf 2>/dev/null)
+    fi
+    if [[ -z "$real_ssh_port" || "$real_ssh_port" == "22" ]]; then
+        echo "  • Endlessh skipped — real sshd on port 22 (move it via the SSH wizard first)"
+        return 0
+    fi
+
+    # Install endlessh from the AUR if not already.
+    if ! command -v endlessh >/dev/null 2>&1; then
+        local aur=""
+        command -v yay  &>/dev/null && aur="yay"
+        [[ -z "$aur" ]] && command -v paru &>/dev/null && aur="paru"
+        if [[ -z "$aur" ]]; then
+            echo "  ! endlessh needs an AUR helper (yay or paru) — skipping"
+            return 0
+        fi
+        echo "  Installing endlessh-go (Go-rewritten endlessh, lighter than upstream C)..."
+        $aur -S --needed --noconfirm endlessh-go >/dev/null 2>&1 \
+            || $aur -S --needed --noconfirm endlessh >/dev/null 2>&1 \
+            || { echo "  ! AUR install of endlessh failed"; return 0; }
+    fi
+
+    # Drop the config: bind on 22 for both v4 and v6, 10-second banner
+    # interval (default), 4 max line length (default), unlimited clients.
+    local conf=/etc/endlessh/config
+    if [[ ! -f "$conf" ]] || ! sudo grep -q '^# foxml-managed' "$conf" 2>/dev/null; then
+        sudo install -d /etc/endlessh
+        sudo tee "$conf" >/dev/null <<'EOF'
+# foxml-managed — SSH tarpit on port 22.
+# Real sshd lives on the custom port set by install_security's SSH
+# wizard. Bots scanning :22 get fed slow banners forever.
+Port 22
+Delay 10000
+MaxLineLength 32
+MaxClients 4096
+LogLevel 1
+BindFamily 0
+EOF
+        echo "  + endlessh config written to $conf"
+    fi
+
+    # Allow port 22 through UFW (endlessh wants connections, not blocks).
+    sudo ufw allow 22/tcp >/dev/null 2>&1 || true
+    echo "    UFW: port 22 allowed for endlessh tarpit (real sshd on $real_ssh_port stays limited)"
+
+    # Enable + start the service.
+    sudo systemctl enable --now endlessh.service >/dev/null 2>&1 \
+        || sudo systemctl enable --now endlessh-go.service >/dev/null 2>&1
+    if sudo systemctl is-active --quiet endlessh 2>/dev/null \
+        || sudo systemctl is-active --quiet endlessh-go 2>/dev/null; then
+        echo "  + endlessh tarpit active on :22 (bots will hang forever)"
+    else
+        echo "  ! endlessh service didn't start — check: systemctl status endlessh"
     fi
 }
 

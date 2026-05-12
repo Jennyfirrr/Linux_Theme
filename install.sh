@@ -1384,13 +1384,22 @@ if $INSTALL_APPARMOR; then
 fi
 
 # Phone-alert hooks (fail2ban actionban → dispatch, fox-bouncer for
-# USBGuard-while-locked). Runs whenever fail2ban + fox-dispatch are
-# present — wiring is idempotent. Offers an interactive --setup for
-# the webhook URL when there's a TTY and the config doesn't exist yet.
+# USBGuard-while-locked, fox-sentry-audit kernel-level honeypot).
+# Runs whenever fox-dispatch is present — wiring is idempotent. Offers
+# an interactive --setup for the webhook URL when there's a TTY and
+# the config doesn't exist yet.
 if command -v fox-dispatch >/dev/null 2>&1; then
     echo ""
-    foxml_section "Phone-alert wiring (dispatch / bouncer / fail2ban hook)"
+    foxml_section "Phone-alert wiring (dispatch / bouncer / audit honey / fail2ban)"
     install_dispatch_hooks
+fi
+
+# SSH tarpit (Endlessh). Only kicks in if the SSH wizard has already
+# moved real sshd off port 22. Skipped cleanly otherwise.
+if $INSTALL_SECURITY; then
+    echo ""
+    foxml_section "SSH tarpit (Endlessh) — port 22 honeypot"
+    install_endlessh_tarpit
 fi
 
 # Always normalise gnome-keyring autostart. The systemd-generated
