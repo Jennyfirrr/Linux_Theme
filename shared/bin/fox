@@ -188,6 +188,10 @@ case "$1" in
         shift
         exec fox-sec "$@"
         ;;
+    audit|lynis)
+        shift
+        exec fox-audit "$@"
+        ;;
     help|--help|-h)
         # `fox help <command>` → forward to the tool's own help.
         # Falls through to the full overview below when no <command>
@@ -264,6 +268,7 @@ case "$1" in
         echo "  allowlist        fapolicyd executable allowlist (--enable / --enforce / --learn)"
         echo "  dnssec           DNSSEC strictness picker — fox dnssec 0/1/2 or off/relaxed/strict"
         echo "  sec              Unified security dashboard (alerts, posture, bans, listeners, failed auth)"
+        echo "  audit            Run lynis hardening audit — score (0-100) + suggestions"
         echo ""
         echo "Per-command help: ${0##*/} help <command>   (e.g. fox help dispatch)"
         echo ""

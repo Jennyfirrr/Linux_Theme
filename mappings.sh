@@ -3882,6 +3882,15 @@ EOF
             esac
         fi
     fi
+
+    # lynis — system hardening audit tool. Read-only; gives a 0-100
+    # hardening_index + a list of suggestions. Different layer from
+    # auditd/fail2ban (active monitors) — lynis is a posture report.
+    # Wired up via `fox audit`. No service, just a binary.
+    if ! pacman -Qi lynis &>/dev/null; then
+        echo "  Installing lynis (audit tool — read-only, no daemon)..."
+        sudo pacman -S --needed --noconfirm lynis 2>&1 | tail -3 | sed 's/^/    /' || true
+    fi
 }
 
 # ─────────────────────────────────────────
