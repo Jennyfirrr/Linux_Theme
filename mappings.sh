@@ -3326,6 +3326,34 @@ EOF
                 echo "  SSH is on port $custom_port, but password login is still ENABLED."
                 echo "    Add your key to ~/.ssh/authorized_keys to disable passwords later."
             fi
+
+            # Port-knocking offer. Closes the SSH port entirely to
+            # scanners; a secret port sequence temporarily opens it.
+            # Opt-in because forgetting the sequence locks you out of
+            # remote SSH (physical TTY login still works).
+            if command -v knockd >/dev/null 2>&1 || command -v fox-knock >/dev/null 2>&1; then
+                echo ""
+                echo "  ${C_BOLD:-}Port knocking (knockd)${C_RST:-} — closes SSH to scanners; secret"
+                echo "  knock sequence opens it briefly for your IP."
+                if foxml_prompt_yn "  Configure port knocking now? [y/N] "; then
+                    if ! command -v knockd >/dev/null 2>&1; then
+                        if pacman -Qi knockd &>/dev/null; then
+                            :
+                        elif command -v yay &>/dev/null; then
+                            yay -S --needed --noconfirm knockd >/dev/null 2>&1
+                        elif command -v paru &>/dev/null; then
+                            paru -S --needed --noconfirm knockd >/dev/null 2>&1
+                        else
+                            echo "  ! knockd not in repos AND no AUR helper — install manually then run: fox knock --setup"
+                        fi
+                    fi
+                    if command -v knockd >/dev/null 2>&1; then
+                        fox-knock --setup || echo "  ! fox knock setup failed — re-run: fox knock --setup"
+                    fi
+                else
+                    echo "  • run later: fox knock --setup"
+                fi
+            fi
         fi
     fi
 }

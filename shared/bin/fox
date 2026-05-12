@@ -88,6 +88,10 @@ case "$1" in
         shift
         exec fox-sentry-audit "$@"
         ;;
+    knock)
+        shift
+        exec fox-knock "$@"
+        ;;
     sec|security)
         shift
         exec fox-sec "$@"
@@ -115,6 +119,7 @@ case "$1" in
         echo "  tripwire         Honeypot-file watcher (--install / --status / --uninstall)"
         echo "  bouncer          USB-block alerts while screen locked (--install / --status)"
         echo "  sentry-audit     Kernel-level honeypot via auditd (--install / --status)"
+        echo "  knock            Port knocking configurator + trigger (--setup / --status / --reveal)"
         echo "  sec              Unified security dashboard (alerts, posture, bans, listeners, failed auth)"
         echo ""
         echo "Custom Tools (found in ~/.local/bin):"
