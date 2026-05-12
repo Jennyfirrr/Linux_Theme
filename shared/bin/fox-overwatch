@@ -76,19 +76,51 @@ show_state_diff() {
     echo
 }
 
+_is_kernel_thread() {
+    # PPid=2 (kthreadd) + no /proc/<pid>/exe = real kernel thread.
+    # Either alone is bypassable; both together is not (a userspace
+    # attacker can rename comm but can't unparent itself from a non-2
+    # ancestor or hide its exe link).
+    local pid="$1"
+    [[ -d "/proc/$pid" ]] || return 1
+    [[ -L "/proc/$pid/exe" && -e "/proc/$pid/exe" ]] && return 1
+    local ppid
+    ppid=$(awk '/^PPid:/{print $2}' "/proc/$pid/status" 2>/dev/null)
+    [[ "$ppid" == "2" ]]
+}
+
 show_recent_root() {
     echo "${C_BOLD}── Recent root processes (<30s alive, not on allow-list) ──${C_RST}"
-    local out
-    out=$(ps -eo pid,euser,etime,comm 2>/dev/null \
-        | awk '$2=="root" {
-                  t=$3; n=split(t, a, /[-:]/)
-                  if (n==2 && a[1]+0 == 0 && a[2]+0 < 30) print
-               }' \
-        | grep -vE ' (sudo|polkitd|sshd|cron|systemd[^ ]*|kworker(/[^ ]*)?|kdmflush[^ ]*|udevd|udevadm|rcu_[^ ]*|ksoftirqd[^ ]*|migration[^ ]*)$')
-    if [[ -z "$out" ]]; then
+    local kthread_pattern='^(kworker(/[^[:space:]]*)?|kdmflush[^[:space:]]*|kthreadd|rcu_[^[:space:]]*|ksoftirqd[^[:space:]]*|migration[^[:space:]]*|irq/[^[:space:]]*|kcompactd[^[:space:]]*|khugepaged|writeback|kswapd[^[:space:]]*)$'
+    local user_pattern='^(sudo|polkitd|sshd|cron|systemd[^[:space:]]*|udevd|udevadm)$'
+
+    local flagged=""
+    while IFS= read -r line; do
+        # Parse: PID, EUSER, ETIME, COMM
+        local pid euser etime comm
+        read -r pid euser etime comm <<<"$line"
+        [[ "$comm" =~ $kthread_pattern ]] && {
+            if _is_kernel_thread "$pid"; then
+                continue   # legit kernel thread
+            else
+                flagged+="${C_YEL}${line} [SPOOFED kthread-name]${C_RST}\n"
+                continue
+            fi
+        }
+        [[ "$comm" =~ $user_pattern ]] && continue
+        flagged+="$line"$'\n'
+    done < <(
+        ps -eo pid,euser,etime,comm 2>/dev/null \
+            | awk '$2=="root" {
+                      t=$3; n=split(t, a, /[-:]/)
+                      if (n==2 && a[1]+0 == 0 && a[2]+0 < 30) print
+                   }'
+    )
+
+    if [[ -z "$flagged" ]]; then
         echo "${C_GRN}  ✓ nothing in window${C_RST}"
     else
-        echo "$out"
+        printf '%b' "$flagged"
     fi
     echo
 }

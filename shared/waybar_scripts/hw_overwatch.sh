@@ -80,21 +80,71 @@ fi
 # ─── Processes: brand-new root processes ──────────────────────────
 # Root processes that have been alive < 30 seconds AND aren't on the
 # allow-list of expected short-lived helpers. ps `etime` is "[[DD-]hh:]mm:ss".
+#
+# Spoofing note: process comm names CAN be set arbitrarily via
+# prctl(PR_SET_NAME, ...) or argv[0], so a name-only allowlist is
+# spoofable. We split the check in two:
+#
+#   1. Kernel-thread allowlist (kworker/*, ksoftirqd/*, rcu_*, etc.) —
+#      require BOTH the comm to match AND the process to actually be
+#      a kernel thread (PPid=2 = kthreadd, no /proc/<pid>/exe). A
+#      userspace process renamed "kworker/5:1" fails both checks and
+#      stays flagged.
+#
+#   2. Userspace-daemon allowlist (sudo, polkitd, sshd, cron, etc.) —
+#      name match is enough. Spoofing one of these names from a
+#      malicious userspace process doesn't grant privilege — real sudo
+#      is suid'd, fake "sudo" can't elevate. So name alone is fine.
 proc_findings=""
-new_roots=$(ps -eo pid,euser,etime,comm 2>/dev/null \
+new_roots_with_pid=$(ps -eo pid,euser,etime,comm 2>/dev/null \
     | awk '$2=="root" {
               t=$3
               n=split(t, a, /[-:]/)
-              if (n==2 && a[1]+0 == 0 && a[2]+0 < 30) print $4
-           }' \
-    | sort -u)
-# Strip known-ok kernel + system noise. Kernel worker names look like
-# `kworker/5:1` or `kworker/5:1-events`, NOT bare `kworker` — exact-end
-# match was missing every single one. Same trap for ksoftirqd, rcu_*,
-# migration/* and the truncated systemd-userwor in ps comm.
-new_roots=$(echo "$new_roots" \
-    | grep -vE '^(sudo|polkitd|sshd|cron|systemd[^[:space:]]*|kworker(/[^[:space:]]*)?|kdmflush[^[:space:]]*|udevd|udevadm|rcu_[^[:space:]]*|ksoftirqd[^[:space:]]*|migration[^[:space:]]*|irq/[^[:space:]]*)$' \
-    | grep -v '^$')
+              if (n==2 && a[1]+0 == 0 && a[2]+0 < 30) print $1 "\t" $4
+           }')
+
+_is_kernel_thread() {
+    # Returns 0 if PID is a real kernel thread.
+    local pid="$1"
+    [[ -d "/proc/$pid" ]] || return 1
+    # Kernel threads have no executable mapped.
+    [[ -L "/proc/$pid/exe" && -e "/proc/$pid/exe" ]] && return 1
+    # Belt + suspenders: parent is kthreadd (PID 2). User-spawned fakes
+    # would have a different PPid (their spawning shell, init system,
+    # etc.) so this catches anything that slipped past the exe check.
+    local ppid
+    ppid=$(awk '/^PPid:/{print $2}' "/proc/$pid/status" 2>/dev/null)
+    [[ "$ppid" == "2" ]]
+}
+
+_kernel_thread_pattern='^(kworker(/[^[:space:]]*)?|kdmflush[^[:space:]]*|kthreadd|rcu_[^[:space:]]*|ksoftirqd[^[:space:]]*|migration[^[:space:]]*|irq/[^[:space:]]*|kcompactd[^[:space:]]*|khugepaged|writeback|kswapd[^[:space:]]*)$'
+_userspace_allow_pattern='^(sudo|polkitd|sshd|cron|systemd[^[:space:]]*|udevd|udevadm)$'
+
+filtered_roots=""
+while IFS=$'\t' read -r pid comm; do
+    [[ -z "$pid" || -z "$comm" ]] && continue
+
+    # Kernel-thread allow: name pattern AND actually a kernel thread.
+    if [[ "$comm" =~ $_kernel_thread_pattern ]]; then
+        if _is_kernel_thread "$pid"; then
+            continue   # genuinely kernel — allow
+        else
+            # Name matches a kernel pattern but it's a userspace impostor!
+            # Flag with extra hostility so the operator notices.
+            filtered_roots+="${comm}[SPOOFED] "
+            continue
+        fi
+    fi
+
+    # Userspace allow: name alone is fine here.
+    if [[ "$comm" =~ $_userspace_allow_pattern ]]; then
+        continue
+    fi
+
+    filtered_roots+="$comm "
+done <<<"$new_roots_with_pid"
+
+new_roots=$(echo "$filtered_roots" | tr ' ' '\n' | sort -u | grep -v '^$')
 if [[ -n "$new_roots" ]]; then
     proc_findings="new root proc(s): $(echo "$new_roots" | head -3 | tr '\n' ',' | sed 's/,$//')"
 fi
