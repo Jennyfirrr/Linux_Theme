@@ -77,6 +77,84 @@ source "$SCRIPT_DIR/mappings.sh"
 source "$SCRIPT_DIR/render.sh"
 
 # ─────────────────────────────────────────
+# Robustness helpers — used at every section boundary that touches
+# privileged operations. Together they guarantee:
+#   • Sudo failure mid-install is logged and the affected section
+#     degrades gracefully instead of aborting the whole install.
+#   • Idempotent finalizers (multi-monitor personalize + ollama
+#     hardening drop-in) always run, even when the main flow exits
+#     early via `set -e`. The EXIT trap below catches that case.
+# ─────────────────────────────────────────
+
+# _foxml_sudo_check — re-prime sudo before a privileged section.
+# Returns 0 if sudo cache is now warm. Returns 1 + warning when sudo
+# is unavailable (cache expired without TTY, fingerprint timeout in
+# a non-interactive context, etc.). Callers gate their section on the
+# return code so install continues even when sudo can't authenticate.
+_foxml_sudo_check() {
+    local section="${1:-this section}"
+    if sudo -n true 2>/dev/null; then
+        return 0
+    fi
+    # Try to re-prime once interactively. If the user isn't at a TTY
+    # this fails immediately rather than hanging.
+    if [[ -t 0 ]] && sudo -v 2>/dev/null; then
+        return 0
+    fi
+    if command -v foxml_warn >/dev/null 2>&1; then
+        foxml_warn "sudo unavailable — skipping ${section}"
+    else
+        echo "  ! sudo unavailable — skipping ${section}" >&2
+    fi
+    return 1
+}
+
+# _foxml_finalize — registered as EXIT trap below. Runs the
+# idempotent helpers that put the system in its final state
+# regardless of how install.sh exited. Functions called here MUST
+# be safe to invoke on:
+#   • a fully-completed install (they're no-ops)
+#   • a half-completed install (they finish the work)
+#   • install that aborted before reaching them (they do their work)
+# Errors inside the finalizer are swallowed so the trap doesn't
+# mask the original exit code with its own failures.
+_foxml_finalize() {
+    local exit_code=$?
+    # Don't run during very-early failures (before flags are even parsed)
+    # or in dry-run mode.
+    if [[ "${DRY_RUN:-false}" == "true" ]] || [[ "${RENDER_ONLY:-false}" == "true" ]]; then
+        return $exit_code
+    fi
+
+    # Multi-monitor personalize. Sidecar is the gating condition —
+    # without it we don't know which monitors are present. Idempotent
+    # in both directions: re-runs on a configured machine no-op, runs
+    # on an unfinished install finish the job. Wrapped in a subshell
+    # with `set +e` so a single failure here doesn't propagate.
+    if [[ -f "$HOME/.config/foxml/monitor-layout.conf" ]]; then
+        (
+            set +e
+            _generate_per_monitor_wallpapers 2>/dev/null
+            _personalize_hyprlock            2>/dev/null
+            _personalize_workspace_rules     2>/dev/null
+        ) || true
+    fi
+
+    # Ollama sandbox drop-in. Only attempt if ollama.service exists
+    # AND the drop-in is missing AND we have sudo. install_ollama_hardening
+    # itself has the sudo check, but skipping the call entirely when we
+    # already know sudo is unavailable keeps the output cleaner.
+    if systemctl list-unit-files 2>/dev/null | grep -q '^ollama\.service' \
+        && [[ ! -f /etc/systemd/system/ollama.service.d/foxml-hardening.conf ]] \
+        && _foxml_sudo_check "ollama sandbox finalizer"; then
+        install_ollama_hardening || true
+    fi
+
+    return $exit_code
+}
+trap '_foxml_finalize' EXIT
+
+# ─────────────────────────────────────────
 # Parse arguments
 # ─────────────────────────────────────────
 THEME_NAME=""
@@ -737,24 +815,67 @@ if $INSTALL_DEPS; then
     fi
 
     # Fingerprint reader: enable fprintd + wire PAM. Gated by the
-    # hardware-detect prompt above ($INSTALL_FPRINT). PAM edit is the
-    # delicate bit — we insert pam_fprintd as `sufficient` *before* the
-    # password lines so finger-presence skips the password ask, with
-    # password still available as fallback. Idempotent on re-runs.
+    # hardware-detect prompt above ($INSTALL_FPRINT).
+    #
+    # CRITICAL ordering: enrollment FIRST, PAM splice ONLY after a
+    # finger is actually enrolled. Previous version spliced
+    # `auth sufficient pam_fprintd.so` regardless; with no enrolled
+    # finger every subsequent sudo / login hit a 30s pam_fprintd
+    # timeout before falling through to password. The user would
+    # type their password, get it eaten by the fingerprint prompt,
+    # and see "Sorry, try again". Now: prompt to enroll (interactive
+    # only), and only splice PAM if enrollment succeeded.
     if $INSTALL_FPRINT && pacman -Qi fprintd &>/dev/null; then
         if ! systemctl is-active --quiet fprintd; then
             sudo systemctl enable --now fprintd 2>/dev/null \
                 && echo "  fprintd service enabled"
         fi
-        pam_file=/etc/pam.d/system-local-login
-        if [[ -f "$pam_file" ]] && ! grep -q pam_fprintd "$pam_file"; then
-            # Insert sufficient pam_fprintd as the first auth rule. If
-            # finger presence succeeds, login proceeds; otherwise PAM
-            # falls through to the existing system-login include chain.
-            sudo sed -i '0,/^auth/{s|^auth|auth      sufficient   pam_fprintd.so\nauth|}' \
-                "$pam_file" 2>/dev/null && echo "  fprintd PAM line added"
+
+        # Check if user has any enrolled fingers. fprintd-list emits
+        # "<user>: ..." lines when enrolled, "No fingerprints enrolled"
+        # when not. Grep for the absence-of-enrollment string.
+        _fprint_has_enrollment=0
+        if fprintd-list "$USER" 2>/dev/null | grep -q "fingerprints enrolled"; then
+            _fprint_has_enrollment=0
+        elif fprintd-list "$USER" 2>/dev/null | grep -qE '#[0-9]'; then
+            _fprint_has_enrollment=1
         fi
-        echo "  + run 'fprintd-enroll' to register a finger when ready"
+
+        if (( ! _fprint_has_enrollment )) && [[ -t 0 ]] && ! $ASSUME_YES; then
+            echo ""
+            echo "  Fingerprint reader is ready but no fingerprints are enrolled."
+            echo "  Without enrolled fingers, PAM would wait 30s on EVERY sudo before"
+            echo "  falling through to password — frustrating to use. Enroll now?"
+            read -p "  Run fprintd-enroll? [Y/n] " -n 1 -r; echo ""
+            if [[ ! "$REPLY" =~ ^[Nn]$ ]]; then
+                # fprintd-enroll is interactive — give the user clear
+                # guidance about touching the reader. Skips PAM splice
+                # if enrollment fails or is cancelled.
+                if fprintd-enroll "$USER"; then
+                    _fprint_has_enrollment=1
+                    echo "  + fingerprint enrolled"
+                else
+                    echo "  • enrollment cancelled or failed — PAM splice will be skipped"
+                fi
+            fi
+        fi
+
+        # Splice PAM ONLY when a fingerprint is actually enrolled.
+        # `auth sufficient pam_fprintd.so` inserted as the first auth
+        # rule so a finger-touch short-circuits the password chain.
+        if (( _fprint_has_enrollment )); then
+            pam_file=/etc/pam.d/system-local-login
+            if [[ -f "$pam_file" ]] && ! grep -q pam_fprintd "$pam_file"; then
+                sudo sed -i '0,/^auth/{s|^auth|auth      sufficient   pam_fprintd.so\nauth|}' \
+                    "$pam_file" && echo "  fprintd PAM line added (fingerprint can unlock sudo)"
+            fi
+        else
+            # No enrollment yet — leave PAM untouched. User can re-run
+            # install OR `fprintd-enroll && sudo sed ...` later.
+            echo "  • PAM splice deferred (no enrolled fingerprints)"
+            echo "    enroll later with: fprintd-enroll"
+            echo "    then re-run: fox install --fprint"
+        fi
     fi
 
     # AUR Helper (yay) and Spotify/Spicetify
@@ -1131,6 +1252,18 @@ if $INSTALL_APPARMOR; then
     echo ""
     foxml_section "AppArmor MAC enablement"
     install_apparmor
+fi
+
+# Always normalise gnome-keyring autostart. The systemd-generated
+# limited services (pkcs11+secrets only) win over our --components
+# flag if they grab the daemon name first; mask them so Hyprland's
+# autostart with the full set (pkcs11,secrets,ssh,gpg) takes effect.
+# Without this, $SSH_AUTH_SOCK points at a stale path and `git push`
+# over SSH fails with "Error connecting to agent".
+if pacman -Qi gnome-keyring &>/dev/null; then
+    echo ""
+    foxml_section "gnome-keyring SSH+GPG components"
+    install_keyring_full_components
 fi
 
 # ─────────────────────────────────────────
@@ -1572,43 +1705,15 @@ EOF
     fi
     _phase_exit_if_done ai
 
-    # ─────────────────────────────────────────
-    # Multi-monitor layout — runs after configs are deployed so the
-    # generated monitors.conf overrides the freshly-installed default.
-    # Skipped automatically when only one display is connected or when
-    # hyprctl can't reach the IPC socket (installer run from a TTY).
-    # ─────────────────────────────────────────
-    echo ""
-    foxml_section "Configuring monitors"
-    configure_monitors
+    # NOTE: configure_monitors + multi-monitor personalize used to be
+    # called here, nested inside `if $INSTALL_AI`. Moved to the
+    # unconditional block after install_throttling (below) so a run
+    # without --ai (or one where the AI block aborted on a sudo
+    # failure) still gets a properly personalized hyprlock.
 
-    # Backstop: regenerate per-monitor wallpaper variants, re-personalise
-    # hyprlock, and re-pin workspace 1 any time the sidecar exists,
-    # regardless of whether the user re-ran the picker. Covers imagemagick
-    # installed mid-run, fresh wallpaper added since, or a previous
-    # configure_monitors that short-circuited (no-TTY skip path).
-    if [[ -f "$HOME/.config/foxml/monitor-layout.conf" ]]; then
-        _generate_per_monitor_wallpapers
-        _personalize_hyprlock
-        _personalize_workspace_rules
-    fi
-
-    # Render waybar AFTER configure_monitors so start_waybar.sh sees the layout
-    # sidecar and emits a multi-bar config when secondary monitors are present.
-    # Then bounce the running waybar so the new config takes effect immediately
-    # (otherwise the bar already on screen keeps the pre-configure single-bar
-    # render until the next Hyprland session).
-    if [[ -x "$HOME/.config/hypr/scripts/start_waybar.sh" ]]; then
-        echo ""
-        foxml_section "Rendering waybar for current monitor layout"
-        "$HOME/.config/hypr/scripts/start_waybar.sh" --render-only || true
-        if pgrep -x waybar >/dev/null 2>&1; then
-            pkill -x waybar 2>/dev/null || true
-            setsid "$HOME/.config/hypr/scripts/start_waybar.sh" >/dev/null 2>&1 < /dev/null &
-            disown 2>/dev/null || true
-            echo "  + waybar restarted"
-        fi
-    fi
+    # NOTE: waybar render moved to the unconditional block below for
+    # the same reason as configure_monitors. Keeps single source of
+    # truth for "after monitor config, refresh the bar."
 
     # ─────────────────────────────────────────
     # CPU throttling / power tuning — interactive wizard. Always offered at
@@ -1617,31 +1722,57 @@ EOF
 install_throttling
 
 # ─────────────────────────────────────────
-# Unconditional multi-monitor + ollama-sandbox safety-net.
+# Multi-monitor + waybar + ollama-sandbox finalization.
 #
-# These helpers ALSO run inside the $INSTALL_AI block earlier, but
-# that block can short-circuit (sudo timeout mid-install, --no-ai
-# flag, an exit deep inside install_github_workspace, etc.) and
-# leave the system in a half-configured state. This block re-runs
-# the idempotent helpers regardless. All are safe to call when
-# already-applied — they no-op if the target state matches.
+# Runs UNCONDITIONALLY (no $INSTALL_AI gate) so a re-install without
+# --ai, or a run where the AI block aborted on a sudo failure, still
+# gets a properly personalised hyprlock + correctly-rendered waybar
+# + ollama drop-in. All helpers are idempotent — calling on a clean
+# state is a no-op.
+#
+# The EXIT trap at the top of install.sh also re-runs these on early
+# abort, so the user is doubly covered: clean exits run them here,
+# aborts run them via the trap.
 # ─────────────────────────────────────────
+echo ""
+foxml_section "Configuring monitors"
+configure_monitors
+
+# Backstop: regenerate per-monitor wallpaper variants, re-personalise
+# hyprlock, re-pin workspace 1. Idempotent; safe on every re-run.
 if [[ -f "$HOME/.config/foxml/monitor-layout.conf" ]]; then
-    echo ""
-    foxml_section "Multi-monitor finalize (safety-net)"
     _generate_per_monitor_wallpapers
     _personalize_hyprlock
     _personalize_workspace_rules
 fi
-# Ollama sandbox drop-in. install_ollama_hardening sudo-prompts; if
-# the user's session lost sudo cache during the long AI install, the
-# drop-in may not have been written. Re-running here catches that.
-if systemctl list-unit-files 2>/dev/null | grep -q '^ollama\.service'; then
-    if [[ ! -f /etc/systemd/system/ollama.service.d/foxml-hardening.conf ]]; then
-        echo ""
-        foxml_section "Ollama systemd sandbox (safety-net)"
-        install_ollama_hardening
+
+# Render waybar AFTER configure_monitors so start_waybar.sh sees the
+# layout sidecar and emits multi-bar config when secondary monitors
+# are present. Then bounce the running waybar so the new config
+# takes effect immediately (otherwise the bar already on screen
+# keeps the pre-configure single-bar render until next session).
+if [[ -x "$HOME/.config/hypr/scripts/start_waybar.sh" ]]; then
+    echo ""
+    foxml_section "Rendering waybar for current monitor layout"
+    "$HOME/.config/hypr/scripts/start_waybar.sh" --render-only || true
+    if pgrep -x waybar >/dev/null 2>&1; then
+        pkill -x waybar 2>/dev/null || true
+        setsid "$HOME/.config/hypr/scripts/start_waybar.sh" >/dev/null 2>&1 < /dev/null &
+        disown 2>/dev/null || true
+        echo "  + waybar restarted"
     fi
+fi
+
+# Ollama sandbox drop-in. install_ollama_hardening was also called
+# from the AI block (if --ai|--models set), but a sudo timeout there
+# would have left no drop-in. Re-running here when missing catches
+# it. install_ollama_hardening's own sudo -v re-prime handles the
+# "no sudo" case loudly.
+if systemctl list-unit-files 2>/dev/null | grep -q '^ollama\.service' \
+    && [[ ! -f /etc/systemd/system/ollama.service.d/foxml-hardening.conf ]]; then
+    echo ""
+    foxml_section "Ollama systemd sandbox"
+    install_ollama_hardening
 fi
 
 # ─────────────────────────────────────────

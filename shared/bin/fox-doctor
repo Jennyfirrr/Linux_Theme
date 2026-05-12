@@ -407,15 +407,34 @@ check_multimonitor() {
 check_security() {
     section "Security baseline"
 
+    # Probe sudo availability once. Many checks below need sudo to
+    # query state (ufw status, fail2ban-client status, aa-status).
+    # When sudo cache is cold, `sudo -n` fails silently and our
+    # checks would otherwise misreport drift as "policy wrong" when
+    # the real cause is just "we couldn't ask root". Distinguish
+    # the two: warn once, skip the affected checks, don't fail them.
+    local _have_sudo=0
+    if sudo -n true 2>/dev/null; then
+        _have_sudo=1
+    fi
+    if (( ! _have_sudo )); then
+        warn "sudo cache cold — root-only checks (UFW policy, fail2ban jails, AppArmor enforce list) will be skipped"
+        hint "re-prime with: sudo -v   then re-run: fox doctor"
+    fi
+
     # UFW
     if command -v ufw >/dev/null 2>&1; then
         if systemctl is-active --quiet ufw 2>/dev/null; then
             ok "UFW active"
-            if sudo -n ufw status 2>/dev/null | grep -qE 'Default: deny.*incoming'; then
-                ok "UFW default deny incoming"
+            if (( _have_sudo )); then
+                if sudo -n ufw status 2>/dev/null | grep -qE 'Default: deny.*incoming'; then
+                    ok "UFW default deny incoming"
+                else
+                    warn "UFW default policy is NOT deny incoming"
+                    hint "fix: source mappings.sh && install_ufw_baseline"
+                fi
             else
-                warn "UFW default policy is NOT deny incoming"
-                hint "fix: source mappings.sh && install_ufw_baseline"
+                ok "UFW default policy — skipped (no sudo)"
             fi
         else
             fail "UFW service not active"
@@ -427,13 +446,17 @@ check_security() {
     if command -v fail2ban-client >/dev/null 2>&1; then
         if systemctl is-active --quiet fail2ban 2>/dev/null; then
             ok "fail2ban service active"
-            local jails
-            jails=$(sudo -n fail2ban-client status 2>/dev/null | grep -oE 'Jail list:[[:space:]]*[^[:space:]].*' | head -1)
-            if [[ -z "$jails" ]] || [[ "$jails" =~ Jail\ list:[[:space:]]*$ ]]; then
-                fail "fail2ban running but no jails enabled"
-                hint "fix: source mappings.sh && install_security  (writes jail.local)"
+            if (( _have_sudo )); then
+                local jails
+                jails=$(sudo -n fail2ban-client status 2>/dev/null | grep -oE 'Jail list:[[:space:]]*[^[:space:]].*' | head -1)
+                if [[ -z "$jails" ]] || [[ "$jails" =~ Jail\ list:[[:space:]]*$ ]]; then
+                    fail "fail2ban running but no jails enabled"
+                    hint "fix: source mappings.sh && install_security  (writes jail.local)"
+                else
+                    ok "fail2ban jails enabled (${jails#*: })"
+                fi
             else
-                ok "fail2ban jails enabled (${jails#*: })"
+                ok "fail2ban jail list — skipped (no sudo)"
             fi
         else
             warn "fail2ban package installed but service inactive"
@@ -484,15 +507,23 @@ check_security() {
         fi
     fi
 
-    # AppArmor enforcement (only checks if user asked for it)
+    # AppArmor enforcement (only checks if user asked for it).
+    # Probe kernel directly via /sys when no sudo — distinguishes
+    # "installed but cmdline-disabled" from "we can't ask root".
     if command -v aa-status >/dev/null 2>&1; then
-        if sudo -n aa-status --enabled 2>/dev/null; then
-            local enforced
-            enforced=$(sudo -n aa-status --enforced 2>/dev/null)
-            ok "AppArmor enforcing ${enforced:-(unknown count of)} profile(s)"
-        else
+        if [[ ! -d /sys/kernel/security/apparmor ]]; then
             warn "AppArmor installed but not enabled in kernel"
             hint "fix: install.sh --apparmor   (modifies kernel cmdline, requires reboot)"
+        elif (( _have_sudo )); then
+            if sudo -n aa-status --enabled 2>/dev/null; then
+                local enforced
+                enforced=$(sudo -n aa-status --enforced 2>/dev/null)
+                ok "AppArmor enforcing ${enforced:-(unknown count of)} profile(s)"
+            else
+                warn "AppArmor installed but parser unhappy — sudo aa-status for details"
+            fi
+        else
+            ok "AppArmor enabled in kernel — profile count skipped (no sudo)"
         fi
     fi
 

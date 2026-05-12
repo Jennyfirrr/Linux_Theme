@@ -857,6 +857,57 @@ ${block_tail}
 #                            unused execution paths.
 #   SystemCallArchitectures=native — refuse seccomp's "execute foreign
 #                            arch" trick.
+# Mask the systemd-generated gnome-keyring "limited" autostart units.
+#
+# The gnome-keyring Arch package ships these XDG autostart entries:
+#   /etc/xdg/autostart/gnome-keyring-pkcs11.desktop
+#   /etc/xdg/autostart/gnome-keyring-secrets.desktop
+# systemd auto-converts those into user services:
+#   app-gnome\x2dkeyring\x2dpkcs11@autostart.service
+#   app-gnome\x2dkeyring\x2dsecrets@autostart.service
+# Those services start gnome-keyring-daemon with ONLY pkcs11+secrets
+# components — no SSH, no GPG. They run BEFORE Hyprland's autostart.conf
+# fires, so `gnome-keyring-daemon --start --components=…,ssh,gpg`
+# becomes a no-op (daemon already running with the limited set).
+# Result: $SSH_AUTH_SOCK points at a nonexistent socket and every
+# `ssh` / `git@github.com:…` call fails with "Error connecting to
+# agent: No such file or directory".
+#
+# Fix: mask the limited services so they never start. Hyprland's
+# autostart.conf then becomes the single source of truth for
+# gnome-keyring-daemon and brings up all 4 components (pkcs11, secrets,
+# ssh, gpg). Idempotent — re-running just re-masks. Reversible with
+# `systemctl --user unmask` if the user wants the systemd-default
+# behaviour back.
+install_keyring_full_components() {
+    # systemd matches `app-gnome-keyring-pkcs11@autostart.service` against
+    # the auto-generated unit name even though the internal name has
+    # \x2d escapes — passing the un-escaped form to mask works and
+    # creates a /dev/null symlink under ~/.config/systemd/user/.
+    # Mask is idempotent: re-running just re-creates the same symlink.
+    local limited_units=(
+        "app-gnome-keyring-pkcs11@autostart.service"
+        "app-gnome-keyring-secrets@autostart.service"
+    )
+    local masked=0
+    for unit in "${limited_units[@]}"; do
+        if [[ -L "$HOME/.config/systemd/user/$unit" ]] \
+            && [[ "$(readlink "$HOME/.config/systemd/user/$unit")" == "/dev/null" ]]; then
+            continue  # already masked
+        fi
+        if systemctl --user mask "$unit" >/dev/null 2>&1; then
+            masked=$((masked + 1))
+        fi
+    done
+    if (( masked > 0 )); then
+        echo "  + masked ${masked} systemd-generated gnome-keyring autostart unit(s)"
+        echo "  + on next login Hyprland will start gnome-keyring with full components (ssh + gpg)"
+    else
+        echo "  • gnome-keyring limited autostart units already masked"
+    fi
+    return 0
+}
+
 install_ollama_hardening() {
     if ! systemctl list-unit-files 2>/dev/null | grep -q '^ollama\.service'; then
         echo "  • ollama.service not present — skipping ollama hardening"
