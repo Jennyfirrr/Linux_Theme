@@ -1059,11 +1059,14 @@ EOF
             # client -t fails with "option 'action' in section 'sshd'
             # already exists".
             #
-            # Approach: use awk to remove every "action = %(action_)s"
-            # line that's followed by a "foxml-dispatch" continuation,
-            # then re-insert exactly one stanza after the [sshd] header.
-            local tmp; tmp=$(mktemp)
-            sudo awk '
+            # Approach: gawk -i inplace edits the file directly as root.
+            # The previous version used mktemp + `sudo tee` to a temp
+            # path under /tmp, which failed on machines with AppArmor
+            # profiles restricting tee's /tmp access (the install hits
+            # this on the very system it's hardening — 83 profiles +
+            # one of them locks tee out of /tmp). Inplace edit avoids
+            # the temp-file dance entirely.
+            sudo gawk -i inplace '
                 # On a fresh "action = %(action_)s" line, peek ahead:
                 # if the next line is the foxml-dispatch continuation,
                 # skip both. Otherwise, print normally.
@@ -1078,8 +1081,7 @@ EOF
                     }
                 }
                 { print }
-            ' "$jail_local" | sudo tee "$tmp" >/dev/null
-            sudo mv "$tmp" "$jail_local"
+            ' "$jail_local"
             sudo chmod 644 "$jail_local"
 
             # Now insert exactly one stanza after the [sshd] header.
