@@ -163,15 +163,22 @@ window#waybar > box {
 
 #custom-foxml_sentry {
     color: #{{GREEN_BRIGHT}};
+    border: 1px solid rgba(122,171,136, 0.4);
+    text-shadow: 0 0 6px rgba(122,171,136, 0.35);
 }
 
 #custom-foxml_sentry.warning {
     color: #{{YELLOW}};
+    border: 1px solid rgba(196,180,138, 0.5);
+    background-color: rgba(196,180,138, 0.08);
+    text-shadow: 0 0 6px rgba(196,180,138, 0.4);
 }
 
 #custom-foxml_sentry.critical {
     color: #{{RED}};
-    background-color: rgba(176,85,85, 0.12);
+    border: 1px solid rgba(176,85,85, 0.6);
+    background-color: rgba(176,85,85, 0.18);
+    text-shadow: 0 0 8px rgba(176,85,85, 0.6);
 }
 
 #custom-ai_status {
