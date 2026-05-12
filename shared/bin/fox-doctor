@@ -404,11 +404,127 @@ check_multimonitor() {
     fi
 }
 
+check_security() {
+    section "Security baseline"
+
+    # UFW
+    if command -v ufw >/dev/null 2>&1; then
+        if systemctl is-active --quiet ufw 2>/dev/null; then
+            ok "UFW active"
+            if sudo -n ufw status 2>/dev/null | grep -qE 'Default: deny.*incoming'; then
+                ok "UFW default deny incoming"
+            else
+                warn "UFW default policy is NOT deny incoming"
+                hint "fix: source mappings.sh && install_ufw_baseline"
+            fi
+        else
+            fail "UFW service not active"
+            hint "fix: sudo systemctl enable --now ufw"
+        fi
+    fi
+
+    # fail2ban with active jails
+    if command -v fail2ban-client >/dev/null 2>&1; then
+        if systemctl is-active --quiet fail2ban 2>/dev/null; then
+            ok "fail2ban service active"
+            local jails
+            jails=$(sudo -n fail2ban-client status 2>/dev/null | grep -oE 'Jail list:[[:space:]]*[^[:space:]].*' | head -1)
+            if [[ -z "$jails" ]] || [[ "$jails" =~ Jail\ list:[[:space:]]*$ ]]; then
+                fail "fail2ban running but no jails enabled"
+                hint "fix: source mappings.sh && install_security  (writes jail.local)"
+            else
+                ok "fail2ban jails enabled (${jails#*: })"
+            fi
+        else
+            warn "fail2ban package installed but service inactive"
+        fi
+    fi
+
+    # auditd persistent rules
+    if command -v auditctl >/dev/null 2>&1; then
+        if systemctl is-active --quiet auditd 2>/dev/null; then
+            if [[ -f /etc/audit/rules.d/99-foxml.rules ]]; then
+                ok "auditd active with persistent foxml rules"
+            else
+                warn "auditd active but no /etc/audit/rules.d/99-foxml.rules"
+                hint "watches won't survive reboot — fix: install.sh --secure"
+            fi
+        fi
+    fi
+
+    # Kernel hardening sysctls — spot-check a few load-bearing values.
+    local sysctl_drift=0
+    for kv in \
+        "kernel.kptr_restrict=2" \
+        "kernel.dmesg_restrict=1" \
+        "kernel.yama.ptrace_scope=1" \
+        "net.ipv4.tcp_syncookies=1" \
+        "net.ipv4.conf.all.accept_redirects=0"; do
+        local key="${kv%=*}" expected="${kv#*=}"
+        local actual
+        actual=$(sysctl -n "$key" 2>/dev/null)
+        if [[ "$actual" != "$expected" ]]; then
+            sysctl_drift=$((sysctl_drift + 1))
+        fi
+    done
+    if (( sysctl_drift > 0 )); then
+        warn "$sysctl_drift kernel hardening sysctl(s) drifted from foxml-hardening.conf"
+        hint "fix: sudo sysctl --system   (reloads /etc/sysctl.d/99-foxml-hardening.conf)"
+    else
+        ok "kernel hardening sysctls applied"
+    fi
+
+    # Ollama sandbox drop-in
+    if systemctl list-unit-files 2>/dev/null | grep -q '^ollama\.service'; then
+        if [[ -f /etc/systemd/system/ollama.service.d/foxml-hardening.conf ]]; then
+            ok "ollama systemd sandbox drop-in present"
+        else
+            warn "ollama.service present but no foxml hardening drop-in"
+            hint "fix: source mappings.sh && install_ollama_hardening"
+        fi
+    fi
+
+    # AppArmor enforcement (only checks if user asked for it)
+    if command -v aa-status >/dev/null 2>&1; then
+        if sudo -n aa-status --enabled 2>/dev/null; then
+            local enforced
+            enforced=$(sudo -n aa-status --enforced 2>/dev/null)
+            ok "AppArmor enforcing ${enforced:-(unknown count of)} profile(s)"
+        else
+            warn "AppArmor installed but not enabled in kernel"
+            hint "fix: install.sh --apparmor   (modifies kernel cmdline, requires reboot)"
+        fi
+    fi
+
+    # systemd timers / services we ship
+    for svc in fox-monitor-watch.service foxml-focus-pulse.service foxml-arch-audit.timer; do
+        if systemctl --user is-enabled --quiet "$svc" 2>/dev/null; then
+            if systemctl --user is-active --quiet "$svc" 2>/dev/null \
+               || [[ "$svc" == *.timer ]]; then
+                ok "$svc enabled"
+            else
+                warn "$svc enabled but not active"
+            fi
+        fi
+    done
+
+    # USBGuard
+    if command -v usbguard >/dev/null 2>&1; then
+        if systemctl is-active --quiet usbguard 2>/dev/null; then
+            ok "usbguard service active"
+        else
+            warn "usbguard installed but not enabled"
+            hint "fix: sudo systemctl enable --now usbguard"
+        fi
+    fi
+}
+
 echo "FoxML Doctor — config sanity checks"
 check_nvim
 check_hyprland
 check_waybar
 check_multimonitor
+check_security
 
 echo
 if (( FAILED > 0 )); then

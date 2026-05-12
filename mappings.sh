@@ -2058,6 +2058,98 @@ EOF
 # MAC addresses — randomization breaks those setups. Standard for
 # coffee-shop / hotel wifi protection though.
 # ─────────────────────────────────────────
+# ─────────────────────────────────────────
+# AppArmor enablement.
+#
+# Three steps, in order:
+#   1. Modify the kernel cmdline so the LSM stack includes apparmor.
+#      Modern kernels (5.x+) accept `lsm=landlock,lockdown,yama,
+#      integrity,apparmor,bpf` — apparmor MUST appear before bpf for
+#      full coverage. Without this, even an enabled apparmor service
+#      can't enforce anything.
+#   2. Enable apparmor.service so the parser loads /etc/apparmor.d/
+#      profiles at boot.
+#   3. Tell the user to reboot — kernel cmdline changes don't apply
+#      until reboot.
+#
+# Bootloader detection: tries systemd-boot first (Arch + greetd is the
+# common case), then grub. Limine and others print a manual hint.
+# Refuses to splice the cmdline twice — idempotent on re-runs.
+# ─────────────────────────────────────────
+_apparmor_systemd_boot() {
+    local needed_lsm='landlock,lockdown,yama,integrity,apparmor,bpf'
+    local modified=0
+    for entry in /boot/loader/entries/*.conf; do
+        [[ -f "$entry" ]] || continue
+        # Already has apparmor in some lsm= value? Skip.
+        if grep -qE '^options .*\blsm=[^[:space:]]*apparmor' "$entry"; then
+            continue
+        fi
+        if grep -qE '^options .*\blsm=' "$entry"; then
+            # Append apparmor to existing lsm= list.
+            sudo sed -i -E 's|(^options .*\blsm=)([^[:space:]]*)|\1\2,apparmor|' "$entry"
+        else
+            # No lsm= yet — append the full recommendation.
+            sudo sed -i -E "s|^options (.*)$|options \\1 lsm=${needed_lsm}|" "$entry"
+        fi
+        modified=$((modified + 1))
+        echo "  + $entry: apparmor added to kernel cmdline"
+    done
+    (( modified == 0 )) && echo "  • all systemd-boot entries already include apparmor in lsm="
+}
+
+_apparmor_grub() {
+    local default_file=/etc/default/grub
+    [[ -f "$default_file" ]] || return 1
+    if grep -qE '^GRUB_CMDLINE_LINUX_DEFAULT=.*\blsm=[^"]*apparmor' "$default_file"; then
+        echo "  • grub cmdline already includes apparmor"
+        return 0
+    fi
+    if grep -qE '^GRUB_CMDLINE_LINUX_DEFAULT=.*\blsm=' "$default_file"; then
+        sudo sed -i -E 's|(^GRUB_CMDLINE_LINUX_DEFAULT=.*\blsm=)([^[:space:]"]*)|\1\2,apparmor|' "$default_file"
+    else
+        sudo sed -i -E 's|^GRUB_CMDLINE_LINUX_DEFAULT="(.*)"$|GRUB_CMDLINE_LINUX_DEFAULT="\1 lsm=landlock,lockdown,yama,integrity,apparmor,bpf"|' "$default_file"
+    fi
+    echo "  + grub default cmdline updated; regenerating grub.cfg..."
+    sudo grub-mkconfig -o /boot/grub/grub.cfg >/dev/null 2>&1 \
+        && echo "    grub.cfg regenerated"
+}
+
+install_apparmor() {
+    if ! pacman -Qi apparmor &>/dev/null; then
+        echo "  • apparmor not installed (re-run with --deps --apparmor)"
+        return 0
+    fi
+
+    # Patch kernel cmdline via whichever bootloader we find.
+    if [[ -d /boot/loader/entries ]]; then
+        _apparmor_systemd_boot
+    elif [[ -f /etc/default/grub ]]; then
+        _apparmor_grub
+    else
+        echo "  ! couldn't detect bootloader (systemd-boot / grub)."
+        echo "    Manually add this to your kernel cmdline and regenerate:"
+        echo "      lsm=landlock,lockdown,yama,integrity,apparmor,bpf"
+    fi
+
+    # Enable the service so the parser runs on next boot.
+    if ! systemctl is-enabled --quiet apparmor 2>/dev/null; then
+        sudo systemctl enable apparmor.service >/dev/null 2>&1 \
+            && echo "  apparmor.service enabled (loads profiles at boot)"
+    else
+        echo "  • apparmor.service already enabled"
+    fi
+
+    echo ""
+    echo "  Reboot to activate AppArmor. After reboot, verify with:"
+    echo "    sudo aa-status   # lists loaded profiles + processes in enforce/complain"
+    echo ""
+    echo "  Arch's apparmor package ships a baseline profile set in /etc/apparmor.d/."
+    echo "  For comprehensive coverage (1500+ profiles incl. firefox/discord/ollama),"
+    echo "  consider the AUR package 'apparmor.d':  yay -S apparmor.d"
+    return 0
+}
+
 install_polkit_strict() {
     # Drop a JS rule into /etc/polkit-1/rules.d/ that forces password
     # auth for every privileged GUI action. Default polkit caches a

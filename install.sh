@@ -113,6 +113,16 @@ INSTALL_MAC_RANDOM=false
 # "click install, click yes" workflows. Useful when you want the same
 # friction in the GUI that sudo without a cookie gives you.
 INSTALL_POLKIT_STRICT=false
+# AppArmor mandatory access control — opt-in. Modifies kernel cmdline
+# (via systemd-boot loader entries or grub default file), enables
+# apparmor.service, and loads the shipped baseline profiles. Requires
+# a reboot to activate enforcement. Off by default because:
+#   - kernel cmdline changes are touchier than userspace tweaks
+#   - some apps misbehave under default profiles until tuned
+# Once enabled, even a Discord / Firefox compromise can't read
+# ~/code/Trading_Software (the AppArmor profile mathematically forbids
+# it at the kernel level — better than firejail's userspace sandbox).
+INSTALL_APPARMOR=false
 INSTALL_AI=false
 INSTALL_MODELS=false
 INSTALL_GITHUB=false
@@ -152,14 +162,16 @@ for arg in "$@"; do
             ;;
         --mac-random)       INSTALL_MAC_RANDOM=true ;;
         --polkit-strict)    INSTALL_POLKIT_STRICT=true ;;
+        --apparmor)         INSTALL_APPARMOR=true ;;
         --ai) INSTALL_AI=true ;;
         --models) INSTALL_MODELS=true ;;
         --github) INSTALL_GITHUB=true ;;
         --full|--all)
-            # Flip every opt-in module on. --xgboost stays out — it's a
-            # heavy from-source build for a niche use case (training the
-            # bundled trading models) and would dominate install time
-            # for users who don't need it.
+            # Flip every opt-in module on. Excluded by design:
+            #   --xgboost       heavy from-source build, niche use
+            #   --mac-random    breaks dorm / enterprise / captive WiFi
+            #   --polkit-strict daily-use ergonomics tradeoff
+            #   --cpp-pro       dev-only toolchain extras
             INSTALL_DEPS=true
             INSTALL_SECURITY=true
             INSTALL_PERF=true
@@ -169,6 +181,11 @@ for arg in "$@"; do
             INSTALL_AI=true
             INSTALL_MODELS=true
             INSTALL_GITHUB=true
+            # AppArmor in --full means a reboot will be required after
+            # install; the summary prints a reminder. Kernel cmdline +
+            # service enablement are idempotent so a re-run --full is
+            # safe.
+            INSTALL_APPARMOR=true
             ;;
         --render-only) RENDER_ONLY=true ;;
         --dry-run)     DRY_RUN=true ;;
@@ -467,6 +484,8 @@ if $DRY_RUN; then
     $INSTALL_USBGUARD       && mods+=("usbguard")
     $INSTALL_ARCH_AUDIT     && mods+=("arch-audit")
     $INSTALL_MAC_RANDOM     && mods+=("mac-random")
+    $INSTALL_POLKIT_STRICT  && mods+=("polkit-strict")
+    $INSTALL_APPARMOR       && mods+=("apparmor")
     $INSTALL_AI       && mods+=("ai")
     $INSTALL_MODELS   && mods+=("models")
     $INSTALL_GITHUB   && mods+=("github")
@@ -644,6 +663,7 @@ if $INSTALL_DEPS; then
     $INSTALL_HARDEN_BROWSER && PACMAN_PKGS+=(firejail)
     $INSTALL_USBGUARD       && PACMAN_PKGS+=(usbguard)
     $INSTALL_ARCH_AUDIT     && PACMAN_PKGS+=(arch-audit)
+    $INSTALL_APPARMOR       && PACMAN_PKGS+=(apparmor)
 
     TO_INSTALL=()
     ALREADY_INSTALLED=0
@@ -1106,6 +1126,11 @@ if $INSTALL_POLKIT_STRICT; then
     echo ""
     foxml_section "Polkit strict mode (every action re-prompts)"
     install_polkit_strict
+fi
+if $INSTALL_APPARMOR; then
+    echo ""
+    foxml_section "AppArmor MAC enablement"
+    install_apparmor
 fi
 
 # ─────────────────────────────────────────
