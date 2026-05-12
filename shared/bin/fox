@@ -144,11 +144,47 @@ case "$1" in
         shift
         exec fox-dns-shield "$@"
         ;;
+    snitch)
+        shift
+        exec fox-snitch "$@"
+        ;;
+    honeypot)
+        shift
+        exec fox-honeypot "$@"
+        ;;
     sec|security)
         shift
         exec fox-sec "$@"
         ;;
-    help|--help|-h|"")
+    help|--help|-h)
+        # `fox help <command>` → forward to the tool's own help.
+        # Falls through to the full overview below when no <command>
+        # is given, matching the existing behaviour.
+        if [[ -n "${2:-}" ]]; then
+            shift
+            sub="$1"
+            # Look up the binary for this subcommand; mirror the
+            # routing table above for the common aliases.
+            case "$sub" in
+                fp|fingerprint)     exec fox-fingerprint --help ;;
+                dns|dns-shield)     exec fox-dns-shield --help ;;
+                cafe|cafe-mode)     exec fox-cafe --help ;;
+                sec|security)       exec fox-sec --help ;;
+                install|setup)      exec ./install.sh --help 2>/dev/null \
+                                    || exec "$FOXML_DIR/install.sh" --help ;;
+                *)
+                    if command -v "fox-$sub" >/dev/null 2>&1; then
+                        exec "fox-$sub" --help
+                    else
+                        echo "no per-command help for: $sub"
+                        echo "(run \`fox help\` for the full overview)"
+                        exit 2
+                    fi
+                    ;;
+            esac
+        fi
+        ;&    # fall through to the overview block
+    "")
         echo "FoxML CLI - Unified Theme Manager"
         echo "Usage: fox <command> [args]"
         echo ""
@@ -185,7 +221,11 @@ case "$1" in
         echo "  cafe             Auto-tighten on untrusted wifi (NetworkManager dispatcher)"
         echo "  spa              Single Packet Authorization (fwknop) — replay-immune SSH gating"
         echo "  dns-shield       Local DNS sinkhole — StevenBlack blocklist via /etc/hosts"
+        echo "  snitch           OpenSnitch per-app outbound firewall (--enable / --status / log)"
+        echo "  honeypot         Cowrie SSH honeypot (--enable / --status / log)"
         echo "  sec              Unified security dashboard (alerts, posture, bans, listeners, failed auth)"
+        echo ""
+        echo "Per-command help: ${0##*/} help <command>   (e.g. fox help dispatch)"
         echo ""
         echo "Custom Tools (found in ~/.local/bin):"
         for cmd in "$HOME/.local/bin/"fox-* "$HOME/.local/bin/"fask "$HOME/.local/bin/"findex "$HOME/.local/bin/"fhelp; do
