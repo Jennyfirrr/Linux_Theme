@@ -4,6 +4,17 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-12 — v2.6.1
+
+### Install/CI follow-ups for v2.6.0
+Patch release fixing two symlink-related regressions surfaced shortly after v2.6.0.
+
+- **`.agent/commands/*.md` are now relative symlinks back into `shared/ai_skills/`.** Replaces the absolute symlinks the repo previously shipped — those broke on any checkout outside the original author's home path.
+- **`distro/build.sh` symlink corrected to a relative path.** Matches the rest of the symlink fix.
+- **`install.sh` no longer aborts when `.agent/commands/<name>.md` already resolves to its source.** The skill-deploy loop did `cp shared/ai_skills/<name>.md .agent/commands/`, but with the relative symlinks above cp errors with "same file." `install.sh` now `-ef`-checks each pair and skips the redundant copy, so the loop is a no-op on a fresh checkout and still copies if a destination has been replaced with a real file.
+
+---
+
 ## 2026-05-12 — v2.6.0
 
 ### Security Update — Hardened SSH & Agent Protection
