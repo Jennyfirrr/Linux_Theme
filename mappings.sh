@@ -777,8 +777,19 @@ _personalize_hyprlock() {
         ' "$hyprlock_conf")
     fi
     [[ -z "$active" ]] && return 0
+
+    # Strip a _WxH variant suffix if the active path was already a
+    # pre-rendered variant (foxml_earthy_1920x1080.jpg). Without this,
+    # a re-run would treat "foxml_earthy_1920x1080" as the source name
+    # and look for "foxml_earthy_1920x1080_1920x1080.jpg" — which never
+    # exists, so every monitor falls back to the same (wrong) source
+    # path. We want to walk back to the actual source filename.
     local active_base="${active%.*}"
     local active_ext="${active##*.}"
+    if [[ "$active_base" =~ _[0-9]+x[0-9]+$ ]]; then
+        active_base="${active_base%_*}"
+        active="${active_base}.${active_ext}"
+    fi
 
     # Shared block tail. Must mirror the template's defaults so a re-run
     # produces no diff beyond the monitor + path lines.
@@ -851,8 +862,19 @@ install_ollama_hardening() {
         echo "  • ollama.service not present — skipping ollama hardening"
         return 0
     fi
+    # Re-prime sudo BEFORE any sudo command below. install.sh's keepalive
+    # is torn down after the deps phase, and a long AI install (model
+    # pulls, gh clones) can blow past the 5-minute sudo cache. Without
+    # this check, `sudo install -d` would silently fail with "terminal
+    # required for password" / fingerprint timeout, the heredoc would
+    # write nothing, and we'd leave no drop-in. Make the failure loud.
+    if ! sudo -v 2>/dev/null; then
+        echo "  ! ollama hardening needs sudo (cache expired or no TTY)"
+        echo "    re-run: source mappings.sh && install_ollama_hardening"
+        return 1
+    fi
     local drop_in=/etc/systemd/system/ollama.service.d
-    sudo install -d "$drop_in"
+    sudo install -d "$drop_in" || { echo "  ! sudo install -d failed"; return 1; }
     sudo tee "$drop_in/foxml-hardening.conf" >/dev/null <<'EOF'
 # foxml-managed — systemd sandbox for ollama.service.
 # Revert: sudo rm /etc/systemd/system/ollama.service.d/foxml-hardening.conf

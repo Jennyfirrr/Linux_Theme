@@ -1617,6 +1617,34 @@ EOF
 install_throttling
 
 # ─────────────────────────────────────────
+# Unconditional multi-monitor + ollama-sandbox safety-net.
+#
+# These helpers ALSO run inside the $INSTALL_AI block earlier, but
+# that block can short-circuit (sudo timeout mid-install, --no-ai
+# flag, an exit deep inside install_github_workspace, etc.) and
+# leave the system in a half-configured state. This block re-runs
+# the idempotent helpers regardless. All are safe to call when
+# already-applied — they no-op if the target state matches.
+# ─────────────────────────────────────────
+if [[ -f "$HOME/.config/foxml/monitor-layout.conf" ]]; then
+    echo ""
+    foxml_section "Multi-monitor finalize (safety-net)"
+    _generate_per_monitor_wallpapers
+    _personalize_hyprlock
+    _personalize_workspace_rules
+fi
+# Ollama sandbox drop-in. install_ollama_hardening sudo-prompts; if
+# the user's session lost sudo cache during the long AI install, the
+# drop-in may not have been written. Re-running here catches that.
+if systemctl list-unit-files 2>/dev/null | grep -q '^ollama\.service'; then
+    if [[ ! -f /etc/systemd/system/ollama.service.d/foxml-hardening.conf ]]; then
+        echo ""
+        foxml_section "Ollama systemd sandbox (safety-net)"
+        install_ollama_hardening
+    fi
+fi
+
+# ─────────────────────────────────────────
 # Cleanup
 # ─────────────────────────────────────────
 rm -rf "$RENDERED_DIR"
