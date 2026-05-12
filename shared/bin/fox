@@ -180,6 +180,10 @@ case "$1" in
         shift
         exec fox-allowlist "$@"
         ;;
+    dnssec)
+        shift
+        exec fox-dnssec "$@"
+        ;;
     sec|security)
         shift
         exec fox-sec "$@"
@@ -258,6 +262,7 @@ case "$1" in
         echo "  audit-timer      Weekly fox doctor drift check + phone alert (--install)"
         echo "  build-verify     Reproducible-build record/verify for C++ projects"
         echo "  allowlist        fapolicyd executable allowlist (--enable / --enforce / --learn)"
+        echo "  dnssec           DNSSEC strictness picker — fox dnssec 0/1/2 or off/relaxed/strict"
         echo "  sec              Unified security dashboard (alerts, posture, bans, listeners, failed auth)"
         echo ""
         echo "Per-command help: ${0##*/} help <command>   (e.g. fox help dispatch)"
