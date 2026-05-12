@@ -1,11 +1,15 @@
 #!/bin/bash
 
-# Simple wrapper to launch hyprlock
-# The theme is handled via ~/.config/hypr/hyprlock.conf (templated)
+# Lock launcher — prefers fox-lock (pre-check wrapper) over bare hyprlock.
+# fox-lock catches wedge precursors (dbus unreachable, awww dead, hyprlock
+# already running) before locking, so the lock screen doesn't hang.
+# Falls through to direct hyprlock, then swaylock, if either is missing.
+# The theme is handled via ~/.config/hypr/hyprlock.conf (templated).
 
-if command -v hyprlock &>/dev/null; then
+if command -v fox-lock &>/dev/null; then
+    fox-lock
+elif command -v hyprlock &>/dev/null; then
     hyprlock
 else
-    # Fallback to swaylock if hyprlock is missing
     swaylock -c 1a1214
 fi

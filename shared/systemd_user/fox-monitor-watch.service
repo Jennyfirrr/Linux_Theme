@@ -1,0 +1,13 @@
+[Unit]
+Description=React to Hyprland monitor hot-swap — rerun rotate / personalise / re-pin
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.config/hypr/scripts/fox-monitor-watch.sh
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=graphical-session.target

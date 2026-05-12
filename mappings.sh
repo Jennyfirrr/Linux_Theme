@@ -554,6 +554,16 @@ JSON
                 systemctl --user enable --now "$(basename "$timer")" &>/dev/null || true
             done
             echo "  systemd user timers enabled"
+            # Auto-enable the long-running fox-* watchers. Backgrounding from
+            # Hyprland's exec-once is unreliable (parent SIGHUP race), so we
+            # take the systemd path instead — Restart=on-failure makes them
+            # self-heal. Other services (power-state-watcher, etc.) stay
+            # opt-in.
+            for svc in fox-monitor-watch.service; do
+                [[ -f "$HOME/.config/systemd/user/$svc" ]] || continue
+                systemctl --user enable --now "$svc" &>/dev/null \
+                    && echo "  systemd $svc enabled"
+            done
         fi
     fi
 
@@ -611,45 +621,194 @@ _pick_scale() {
     esac
 }
 
-_generate_portrait_wallpapers() {
-    # Center-crop each landscape wallpaper into a 1080x1920 portrait variant.
-    # Idempotent: skips files that already have a _portrait sibling. Silent
-    # no-op if imagemagick isn't installed (rotate_wallpaper.sh falls back to
-    # awww --resize crop on the landscape source).
+_generate_per_monitor_wallpapers() {
+    # Pre-render each source wallpaper at every panel resolution listed in
+    # MONITOR_RESOLUTIONS so awww and hyprlock can apply pixel-perfect
+    # images with no runtime scaling. Naming: ${base}_${WxH}.${ext}.
+    # Idempotent — skips when the variant already exists.
     local wall_dir="${HOME}/.wallpapers"
+    local layout="${HOME}/.config/foxml/monitor-layout.conf"
     [[ -d "$wall_dir" ]] || return 0
+    [[ -f "$layout"   ]] || return 0
+
+    # shellcheck disable=SC1090
+    local MONITOR_RESOLUTIONS=""
+    source "$layout"
+    [[ -z "${MONITOR_RESOLUTIONS}" ]] && return 0
 
     local magick_bin=""
     command -v magick  >/dev/null 2>&1 && magick_bin="magick"
     command -v convert >/dev/null 2>&1 && [[ -z "$magick_bin" ]] && magick_bin="convert"
-    [[ -z "$magick_bin" ]] && {
-        echo "  imagemagick not found — portrait wallpapers will use crop-fit on landscape"
+    if [[ -z "$magick_bin" ]]; then
+        echo "  imagemagick missing — install imagemagick to enable per-monitor wallpapers"
         return 0
-    }
+    fi
 
-    local generated=0
+    # Dedupe across monitors — two 1920x1080 panels share one rendered file.
+    local -A seen_res=()
+    local entry res
+    for entry in $MONITOR_RESOLUTIONS; do
+        res="${entry##*:}"
+        [[ -z "$res" || "$res" == "$entry" ]] && continue
+        seen_res[$res]=1
+    done
+    (( ${#seen_res[@]} == 0 )) && return 0
+
+    local generated=0 src base ext name out w h
+    shopt -s nullglob nocaseglob
     for src in "$wall_dir"/*.{jpg,jpeg,png}; do
         [[ -f "$src" ]] || continue
-        local base ext name out
         base="$(basename "$src")"
         ext="${base##*.}"
         name="${base%.*}"
-        # Skip files that are already portrait variants
-        [[ "$name" == *_portrait ]] && continue
-        out="${wall_dir}/${name}_portrait.${ext}"
-        [[ -f "$out" ]] && continue
-        # Scale source so the smaller dimension is 1920 (preserves aspect),
-        # then center-crop to 1080x1920 — same math awww --resize crop would
-        # do at runtime, but pre-rendered so we don't rebuild on every fade.
-        "$magick_bin" "$src" -resize "1920x1920^" -gravity center \
-            -extent 1080x1920 "$out" 2>/dev/null && generated=$((generated + 1))
+        # Skip legacy _portrait siblings and any prior WxH variant — re-running
+        # the generator against its own output would otherwise produce
+        # foo_1920x1080_1920x1080.jpg etc.
+        [[ "$name" == *_portrait ]]          && continue
+        [[ "$name" =~ _[0-9]+x[0-9]+$ ]]     && continue
+
+        for res in "${!seen_res[@]}"; do
+            w="${res%x*}"; h="${res#*x}"
+            out="${wall_dir}/${name}_${res}.${ext}"
+            [[ -f "$out" ]] && continue
+            # -resize WxH^ scales the source so the smaller edge fills the box,
+            # -extent center-crops to exact WxH. No padding, subject stays
+            # centered. Pre-rendered means awww applies with --resize fit and
+            # never re-scales at fade time.
+            "$magick_bin" "$src" -resize "${w}x${h}^" -gravity center \
+                -extent "${w}x${h}" "$out" 2>/dev/null \
+                && generated=$((generated + 1))
+        done
     done
+    shopt -u nullglob nocaseglob
+
     if (( generated > 0 )); then
-        echo "  + ${generated} portrait wallpaper(s) generated"
+        echo "  + ${generated} per-monitor wallpaper variant(s) generated"
     fi
-    # Explicit success — the (( )) test returns 1 when no new files were
-    # generated (every re-run after the first), and `set -e` in install.sh
-    # would treat that as a failure and abort before install_throttling.
+    # Explicit success — the (( )) test returns 1 on a no-op rerun, and
+    # `set -e` in install.sh would otherwise treat that as a failure.
+    return 0
+}
+
+_personalize_hyprlock() {
+    # Rewrite the background block(s) in ~/.config/hypr/hyprlock.conf to one
+    # named block per monitor in MONITOR_RESOLUTIONS, each pointing at the
+    # matching pre-rendered wallpaper variant. Idempotent: the block range
+    # is delimited by sentinel comments left in place by the template, so
+    # re-running converges on the same output without growing the file.
+    local hyprlock_conf="$HOME/.config/hypr/hyprlock.conf"
+    local layout="$HOME/.config/foxml/monitor-layout.conf"
+    [[ -f "$hyprlock_conf" ]] || return 0
+    [[ -f "$layout"        ]] || return 0
+
+    # shellcheck disable=SC1090
+    local MONITOR_RESOLUTIONS=""
+    source "$layout"
+    [[ -z "${MONITOR_RESOLUTIONS}" ]] && return 0
+
+    if ! grep -q '^# foxml:hyprlock-backgrounds-begin' "$hyprlock_conf"; then
+        echo "  ! hyprlock.conf missing sentinel — skipping personalisation"
+        echo "    re-run install.sh to deploy the updated template"
+        return 0
+    fi
+
+    # Active wallpaper basename. Prefer the palette var (in scope when called
+    # from install.sh / swap.sh); fall back to parsing the current path line
+    # inside the sentinel range so this function works standalone.
+    local active="${WALLPAPER:-}"
+    if [[ -z "$active" ]]; then
+        active=$(awk '
+            /^# foxml:hyprlock-backgrounds-begin/ { inblk=1; next }
+            /^# foxml:hyprlock-backgrounds-end/   { exit }
+            inblk && /^[[:space:]]*path[[:space:]]*=/ {
+                n=split($0, a, "/"); print a[n]; exit
+            }
+        ' "$hyprlock_conf")
+    fi
+    [[ -z "$active" ]] && return 0
+    local active_base="${active%.*}"
+    local active_ext="${active##*.}"
+
+    # Shared block tail. Must mirror the template's defaults so a re-run
+    # produces no diff beyond the monitor + path lines.
+    local block_tail="    blur_size = 8
+    blur_passes = 3
+    vibrancy = 0.20
+    brightness = 0.45
+    contrast = 1.10"
+
+    local blocks="" entry name res variant_disk variant_path mons=0 fallbacks=0
+    for entry in $MONITOR_RESOLUTIONS; do
+        name="${entry%%:*}"
+        res="${entry##*:}"
+        [[ -z "$name" || -z "$res" || "$name" == "$entry" ]] && continue
+        variant_disk="${HOME}/.wallpapers/${active_base}_${res}.${active_ext}"
+        variant_path="~/.wallpapers/${active_base}_${res}.${active_ext}"
+        if [[ ! -f "$variant_disk" ]]; then
+            # Variant missing — fall back to the source. awww/hyprlock will
+            # runtime-crop, which is what we're trying to avoid, so log it.
+            variant_path="~/.wallpapers/${active}"
+            fallbacks=$((fallbacks + 1))
+        fi
+        blocks+="background {
+    monitor = ${name}
+    path = ${variant_path}
+${block_tail}
+}
+"
+        mons=$((mons + 1))
+    done
+    (( mons == 0 )) && return 0
+    blocks="${blocks%$'\n'}"
+
+    local tmp
+    tmp=$(mktemp)
+    awk -v new_blocks="$blocks" '
+        /^# foxml:hyprlock-backgrounds-begin/ { print; print new_blocks; skip=1; next }
+        /^# foxml:hyprlock-backgrounds-end/   { skip=0; print; next }
+        !skip { print }
+    ' "$hyprlock_conf" > "$tmp" && mv "$tmp" "$hyprlock_conf"
+
+    if (( fallbacks > 0 )); then
+        echo "  + hyprlock personalised for ${mons} monitor(s) (${fallbacks} on source-fallback)"
+    else
+        echo "  + hyprlock personalised for ${mons} monitor(s)"
+    fi
+    return 0
+}
+
+_personalize_workspace_rules() {
+    # Rewrite the workspace 1 pin in ~/.config/hypr/modules/rules.conf to
+    # bind to monitor-layout.conf's PRIMARY. Default in the shared module
+    # is eDP-1 (laptop-friendly), but desktops and machines where the user
+    # picked a different primary need the real value. Idempotent — bounded
+    # by sentinel comments left in place by the shared module.
+    local rules_conf="$HOME/.config/hypr/modules/rules.conf"
+    local layout="$HOME/.config/foxml/monitor-layout.conf"
+    [[ -f "$rules_conf" ]] || return 0
+    [[ -f "$layout"     ]] || return 0
+
+    # shellcheck disable=SC1090
+    local PRIMARY=""
+    source "$layout"
+    [[ -z "$PRIMARY" ]] && return 0
+
+    if ! grep -q '^# foxml:workspace-pin-begin' "$rules_conf"; then
+        # Old rules.conf without sentinels — skip rather than guess where
+        # to splice. Re-run install.sh to deploy the updated shared module.
+        return 0
+    fi
+
+    local new_line="workspace = 1, monitor:${PRIMARY}, default:true"
+    local tmp
+    tmp=$(mktemp)
+    awk -v new_line="$new_line" '
+        /^# foxml:workspace-pin-begin/ { print; print new_line; skip=1; next }
+        /^# foxml:workspace-pin-end/   { skip=0; print; next }
+        !skip { print }
+    ' "$rules_conf" > "$tmp" && mv "$tmp" "$rules_conf"
+
+    echo "  + workspace pin → ${PRIMARY}"
     return 0
 }
 
@@ -678,10 +837,25 @@ configure_monitors() {
 
     if (( count <= 1 )); then
         # Single monitor — clear any stale layout from a previous dock.
+        local solo_name solo_w solo_h
+        solo_name=$(echo "$monitors_json" | jq -r '.[0].name // ""')
+        solo_w=$(echo "$monitors_json" | jq -r '.[0].width // 0')
+        solo_h=$(echo "$monitors_json" | jq -r '.[0].height // 0')
         : > "$layout"
-        echo "PRIMARY=\"$(echo "$monitors_json" | jq -r '.[0].name // ""')\"" >> "$layout"
-        echo 'PORTRAIT_OUTPUTS=""' >> "$layout"
-        echo 'SECONDARY_OUTPUTS=""' >> "$layout"
+        echo "PRIMARY=\"${solo_name}\""                                   >> "$layout"
+        echo 'PORTRAIT_OUTPUTS=""'                                        >> "$layout"
+        echo 'SECONDARY_OUTPUTS=""'                                       >> "$layout"
+        if [[ -n "$solo_name" && "$solo_w" != "0" && "$solo_h" != "0" ]]; then
+            echo "MONITOR_RESOLUTIONS=\"${solo_name}:${solo_w}x${solo_h}\"" >> "$layout"
+            _generate_per_monitor_wallpapers
+            _personalize_hyprlock
+            _personalize_workspace_rules
+        else
+            echo 'MONITOR_RESOLUTIONS=""'                                 >> "$layout"
+            # Even with an unparseable solo monitor, workspace pin still
+            # benefits from PRIMARY-by-name, so personalise rules.conf too.
+            _personalize_workspace_rules
+        fi
         return
     fi
 
@@ -762,6 +936,12 @@ configure_monitors() {
     local primary_logical_h=$(( primary_h * 100 / primary_scale_x100 ))
 
     local rules="" portrait_outputs="" secondary_outputs=""
+    # Physical panel WxH per monitor (post-transform, pre-scale). Consumed by
+    # _generate_per_monitor_wallpapers and _personalize_hyprlock — awww and
+    # hyprlock write to physical pixels, so scale is intentionally not folded
+    # in here. Primary is assumed transform=0 (current picker doesn't rotate
+    # primary). Externals append below in the loop.
+    local monitor_resolutions="${primary}:${primary_w}x${primary_h}"
     local externals
     externals=$(echo "$monitors_json" | jq -r --arg p "$primary" '.[] | select(.name != $p) | .name')
 
@@ -845,12 +1025,20 @@ configure_monitors() {
         ext_scale="${ext_scale_pair% *}"
         ext_scale_x100="${ext_scale_pair#* }"
 
+        # Physical panel dimensions post-transform, pre-scale. Used for the
+        # MONITOR_RESOLUTIONS sidecar entry — awww writes pixels, so we want
+        # the panel res that imagemagick should render to (e.g. 1080x1920
+        # for a rotated 1920x1080 monitor regardless of HiDPI scale).
+        local phys_w="$ext_w" phys_h="$ext_h"
         # Effective dimensions (post-rotation, post-scale = logical bounds).
         local eff_w="$ext_w" eff_h="$ext_h" transform=0
         case "$orient" in
             portrait-left)  eff_w="$ext_h"; eff_h="$ext_w"; transform=3 ;;  # 270°
             portrait-right) eff_w="$ext_h"; eff_h="$ext_w"; transform=1 ;;  #  90°
         esac
+        if (( transform != 0 )); then
+            phys_w="$ext_h"; phys_h="$ext_w"
+        fi
         eff_w=$(( eff_w * 100 / ext_scale_x100 ))
         eff_h=$(( eff_h * 100 / ext_scale_x100 ))
 
@@ -874,6 +1062,7 @@ configure_monitors() {
             rules+="monitor = ${ext}, preferred, ${ext_x}x${ext_y}, ${ext_scale}"$'\n'
         fi
         secondary_outputs+="${ext} "
+        monitor_resolutions+=" ${ext}:${phys_w}x${phys_h}"
 
         # Record this external's bounds so a later external can anchor to it.
         ANCHOR_X[$ext]=$ext_x
@@ -907,16 +1096,20 @@ configure_monitors() {
         echo "PRIMARY=\"${primary}\""
         echo "PORTRAIT_OUTPUTS=\"${portrait_outputs% }\""
         echo "SECONDARY_OUTPUTS=\"${secondary_outputs% }\""
+        echo "MONITOR_RESOLUTIONS=\"${monitor_resolutions}\""
     } > "$layout"
 
     echo ""
     echo "  + monitors.conf written ($conf)"
     echo "  + layout sidecar       ($layout)"
 
-    # Auto-generate portrait wallpapers if any output was rotated.
-    if [[ -n "$portrait_outputs" ]]; then
-        _generate_portrait_wallpapers
-    fi
+    # Pre-render per-monitor wallpaper variants at each panel's native res
+    # so awww and hyprlock can apply pixel-perfect images without runtime
+    # scaling. Then rewrite hyprlock.conf's background blocks to one per
+    # monitor, and pin workspace 1 to PRIMARY in rules.conf. All idempotent.
+    _generate_per_monitor_wallpapers
+    _personalize_hyprlock
+    _personalize_workspace_rules
 }
 
 # ─────────────────────────────────────────

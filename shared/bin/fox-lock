@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# fox-lock — pre-check wrapper around hyprlock.
+#
+# Catches the most common wedge precursors before invoking hyprlock:
+#   - dbus user session unreachable (common after suspend/resume)
+#   - hyprlock already running (don't stack instances)
+#   - awww-daemon dead (post-unlock wallpaper rotation would fail silently)
+#
+# Pass-through args go straight to hyprlock so this is a drop-in
+# replacement: `fox-lock --grace 2` etc.
+
+set -u
+
+# Already locked → don't stack hyprlock instances. A second hyprlock
+# would race the first for the seat grab and produce undefined behaviour.
+if pgrep -x hyprlock >/dev/null 2>&1; then
+    echo "fox-lock: hyprlock already running" >&2
+    exit 0
+fi
+
+# dbus user session is the most common wedge point. hyprlock and PAM
+# both rely on it; if it's hung, the lock screen surfaces as the
+# "password submit does nothing" symptom. Fail loud here so the user
+# can recover (or knowingly proceed) before triggering the lock.
+if command -v busctl >/dev/null 2>&1; then
+    if ! busctl --user list >/dev/null 2>&1; then
+        echo "fox-lock: dbus user session unreachable — aborting lock" >&2
+        echo "  diagnose: busctl --user list" >&2
+        echo "  recover:  systemctl --user restart dbus" >&2
+        exit 1
+    fi
+fi
+
+# awww-daemon is needed for the on-unlock wallpaper rotate. Not fatal —
+# the lock screen itself is fine without it — but warn so the user
+# knows what to expect after unlocking.
+if command -v awww >/dev/null 2>&1 && ! awww query &>/dev/null; then
+    echo "fox-lock: warning — awww-daemon not reachable (post-unlock wallpaper may not refresh)" >&2
+fi
+
+exec hyprlock "$@"
