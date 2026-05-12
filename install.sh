@@ -181,6 +181,13 @@ _foxml_sudo_check() {
 # mask the original exit code with its own failures.
 _foxml_finalize() {
     local exit_code=$?
+    # Suppress the ERR trap during finalization — otherwise any non-zero
+    # command in the cleanup (e.g. systemctl probe in a degraded state)
+    # double-prints the same "Installer aborted at line N" banner. The
+    # original abort was already logged; the finalizer just needs to do
+    # its idempotent best-effort work quietly.
+    trap - ERR
+    set +e
     # Don't run during very-early failures (before flags are even parsed)
     # or in dry-run mode.
     if [[ "${DRY_RUN:-false}" == "true" ]] || [[ "${RENDER_ONLY:-false}" == "true" ]]; then
@@ -1491,9 +1498,48 @@ else
     echo "Ollama already installed."
 fi
 
-# Ensure embedding model is present for RAG
+# Ollama uses a client-server model — `ollama pull` talks to a running
+# `ollama serve` daemon. On a fresh install (or any boot where ollama
+# wasn't auto-started) the daemon isn't up yet, so the pull below fails
+# with "could not connect to ollama server". Ensure the service is
+# enabled + active first; loud-fail (caught by ERR trap) if we can't.
+echo "Starting ollama daemon..."
+if ! systemctl is-active --quiet ollama; then
+    if sudo systemctl enable --now ollama 2>/dev/null; then
+        echo "  ollama.service started"
+        # Wait up to 10s for the HTTP listener to be reachable.
+        for _ in $(seq 1 50); do
+            curl -sf -m 1 http://127.0.0.1:11434/ >/dev/null 2>&1 && break
+            sleep 0.2
+        done
+    else
+        echo "  ! couldn't start ollama via systemd; falling back to user-space \`ollama serve\`"
+        nohup ollama serve >/tmp/foxml-ollama-serve.log 2>&1 &
+        disown
+        for _ in $(seq 1 50); do
+            curl -sf -m 1 http://127.0.0.1:11434/ >/dev/null 2>&1 && break
+            sleep 0.2
+        done
+    fi
+else
+    echo "  • ollama.service already active"
+fi
+
+# Ensure embedding model is present for RAG. Allow up to two retries on
+# transient failure (network glitch, daemon still warming up) before
+# letting the ERR trap surface it.
 echo "Pulling embedding model (nomic-embed-text)..."
-ollama pull nomic-embed-text
+_ollama_pull_attempt=0
+until ollama pull nomic-embed-text; do
+    _ollama_pull_attempt=$((_ollama_pull_attempt + 1))
+    if (( _ollama_pull_attempt >= 3 )); then
+        echo "  ! nomic-embed-text pull failed after 3 attempts — check connectivity, then:"
+        echo "    ollama pull nomic-embed-text"
+        break
+    fi
+    echo "  • pull attempt ${_ollama_pull_attempt} failed, retrying in 3s..."
+    sleep 3
+done
 
 # Sandbox the ollama service via systemd hardening directives. Real
 # protection against prompt-injection → tool-call escalation: even if
