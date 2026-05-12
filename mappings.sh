@@ -1084,6 +1084,74 @@ EOF
     fi
 }
 
+# etckeeper — git-version /etc. Records every config change with a
+# pacman hook so any post-install drift is visible via `git log`. We
+# DON'T auto-revert (a legit `ufw allow` change from `fox ports` would
+# get clobbered) — we just alert when sensitive files change outside
+# the expected pacman / fox-tool flow.
+install_etckeeper() {
+    if ! command -v etckeeper >/dev/null 2>&1; then
+        if command -v yay  &>/dev/null; then
+            yay -S --needed --noconfirm etckeeper >/dev/null 2>&1 || true
+        elif command -v paru &>/dev/null; then
+            paru -S --needed --noconfirm etckeeper >/dev/null 2>&1 || true
+        else
+            sudo pacman -S --needed --noconfirm etckeeper >/dev/null 2>&1 || true
+        fi
+    fi
+    if ! command -v etckeeper >/dev/null 2>&1; then
+        echo "  ! etckeeper install failed — skipping"
+        return 0
+    fi
+
+    # Initialize /etc as a git repo if not already. etckeeper handles
+    # both the init + the pacman hook (drops /etc/pacman.d/hooks/etckeeper.hook).
+    if [[ ! -d /etc/.git ]]; then
+        sudo etckeeper init >/dev/null 2>&1
+        sudo etckeeper commit "foxml: initial /etc snapshot" >/dev/null 2>&1
+        echo "  + etckeeper initialised /etc/.git"
+    else
+        echo "  • etckeeper already initialised in /etc"
+    fi
+
+    # Drop a systemd path unit that fires fox-dispatch when sensitive
+    # subdirs change outside of pacman / etckeeper's own commits.
+    local watcher="$HOME/.config/systemd/user/fox-etcwatch.path"
+    local svc="$HOME/.config/systemd/user/fox-etcwatch.service"
+    if [[ ! -f "$watcher" ]]; then
+        mkdir -p "$HOME/.config/systemd/user"
+        cat > "$watcher" <<'EOF'
+[Unit]
+Description=fox-etcwatch — alert on changes to sensitive /etc subdirs
+
+[Path]
+PathChanged=/etc/ssh
+PathChanged=/etc/sudoers.d
+PathChanged=/etc/pam.d
+PathChanged=/etc/ufw
+PathChanged=/etc/fail2ban
+PathChanged=/etc/audit/rules.d
+PathChanged=/etc/sysctl.d
+
+[Install]
+WantedBy=default.target
+EOF
+        cat > "$svc" <<EOF
+[Unit]
+Description=fox-etcwatch — dispatch /etc change
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'last=\$(cd /etc && sudo git log -1 --format=%H 2>/dev/null); now=\$(date +%s); sleep 5; new=\$(cd /etc && sudo git log -1 --format=%H 2>/dev/null); if [ "\$last" = "\$new" ]; then fox-dispatch "etc-change" "/etc modified outside an etckeeper commit (paths: ssh/sudoers.d/pam.d/ufw/fail2ban/audit/sysctl.d). Run: sudo etckeeper unclean" 2>/dev/null || true; fi'
+EOF
+        systemctl --user daemon-reload >/dev/null 2>&1
+        systemctl --user enable --now fox-etcwatch.path >/dev/null 2>&1
+        echo "  + fox-etcwatch.path enabled (alerts on /etc/{ssh,sudoers.d,pam.d,ufw,fail2ban,audit,sysctl.d} changes)"
+    else
+        echo "  • fox-etcwatch already configured"
+    fi
+}
+
 install_ollama_hardening() {
     if ! systemctl list-unit-files 2>/dev/null | grep -q '^ollama\.service'; then
         echo "  • ollama.service not present — skipping ollama hardening"

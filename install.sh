@@ -1402,6 +1402,13 @@ if $INSTALL_SECURITY; then
     install_endlessh_tarpit
 fi
 
+# etckeeper — git-version /etc + path-watch sensitive subdirs.
+if $INSTALL_SECURITY; then
+    echo ""
+    foxml_section "etckeeper — git-track /etc + alert on drift"
+    install_etckeeper
+fi
+
 # Always normalise gnome-keyring autostart. The systemd-generated
 # limited services (pkcs11+secrets only) win over our --components
 # flag if they grab the daemon name first; mask them so Hyprland's

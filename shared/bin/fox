@@ -92,6 +92,14 @@ case "$1" in
         shift
         exec fox-knock "$@"
         ;;
+    deadman)
+        shift
+        exec fox-deadman "$@"
+        ;;
+    usb)
+        shift
+        exec fox-usb "$@"
+        ;;
     sec|security)
         shift
         exec fox-sec "$@"
@@ -120,6 +128,8 @@ case "$1" in
         echo "  bouncer          USB-block alerts while screen locked (--install / --status)"
         echo "  sentry-audit     Kernel-level honeypot via auditd (--install / --status)"
         echo "  knock            Port knocking configurator + trigger (--setup / --status / --reveal)"
+        echo "  deadman          USB-tethered panic trigger (--setup / --status / --disarm)"
+        echo "  usb              USBGuard wrapper (list / pending / allow / block / refresh / watch)"
         echo "  sec              Unified security dashboard (alerts, posture, bans, listeners, failed auth)"
         echo ""
         echo "Custom Tools (found in ~/.local/bin):"
