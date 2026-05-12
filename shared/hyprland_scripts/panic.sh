@@ -9,20 +9,48 @@
 
 set -u
 
-# 1. Clipboard wipe — best-effort across the common providers. We wipe
-#    BEFORE killing cliphist so the wipes actually persist; otherwise
-#    a killed cliphist daemon leaves the db file intact on disk.
+# 1. Clipboard wipe — best-effort across the common providers.
+#
+# Order matters here. cliphist uses bbolt for its on-disk store
+# (~/.cache/cliphist/db); bbolt holds an exclusive file lock while
+# the cliphist daemon is alive, so:
+#   - rm on a locked file may fail silently
+#   - even if rm succeeds, the running daemon's in-memory cache will
+#     write back to a freshly-recreated db on the next clipboard event,
+#     restoring the very entries we're trying to wipe.
+#
+# Correct sequence:
+#   a) cliphist wipe        (clear daemon's in-memory state via API)
+#   b) kill the wl-paste/cliphist daemons (release the bbolt lock + stop
+#      future writes)
+#   c) shred + rm the db file (now safely lockless; shred overwrites
+#      blocks before unlink so the data isn't recoverable from the
+#      filesystem)
+#   d) wl-copy clear (covers the live Wayland clipboard buffer)
 if command -v cliphist >/dev/null 2>&1; then
     cliphist wipe 2>/dev/null || true
+fi
+# Kill any cliphist-feeding wl-paste watchers AND the cliphist daemon
+# itself. Without this, the db re-materialises seconds later.
+pkill -9 -x cliphist 2>/dev/null || true
+pkill -9 -f 'wl-paste --type (text|image) --watch cliphist' 2>/dev/null || true
+# Wait for the bbolt lock to release; 1s is overkill but harmless.
+for _ in 1 2 3 4 5; do
+    fuser "$HOME/.cache/cliphist/db" >/dev/null 2>&1 || break
+    sleep 0.1
+done
+db="$HOME/.cache/cliphist/db"
+if [[ -f "$db" ]]; then
+    if command -v shred >/dev/null 2>&1; then
+        shred -uz "$db" 2>/dev/null || rm -f "$db" 2>/dev/null || true
+    else
+        rm -f "$db" 2>/dev/null || true
+    fi
 fi
 if command -v wl-copy >/dev/null 2>&1; then
     wl-copy --clear 2>/dev/null || true
     wl-copy --primary --clear 2>/dev/null || true
 fi
-# Drop the on-disk cliphist DB too. The daemon caches both in memory
-# and on disk; `cliphist wipe` clears its memory state but the bbolt
-# db file at ~/.cache/cliphist/db can contain previously-stored entries.
-rm -f "$HOME/.cache/cliphist/db" 2>/dev/null || true
 
 # 2. Kill sensitive UI processes by EXACT match (-x) so a substring
 #    collision (e.g. some-rofi-thing) doesn't get nuked.

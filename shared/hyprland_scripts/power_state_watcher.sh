@@ -27,10 +27,33 @@ apply_state() {
     esac
     [[ -f "$src" ]] || { echo "missing $src" >&2; return 1; }
     cp "$src" "$LIVE_CONF"
-    pkill -x hypridle 2>/dev/null || true
-    sleep 0.2
+    # Wait for hypridle to actually exit before launching a new one.
+    # The old `pkill + sleep 0.2 + setsid hypridle` raced — under load
+    # hypridle held its socket >200ms and the new instance failed to
+    # bind, leaving the user with NO auto-lock/dpms — a security gap.
+    # Poll the PID, then SIGKILL as a fallback before launching.
+    if pgrep -x hypridle >/dev/null 2>&1; then
+        pkill -x hypridle 2>/dev/null || true
+        for _ in $(seq 1 30); do
+            pgrep -x hypridle >/dev/null 2>&1 || break
+            sleep 0.1
+        done
+        # Still around after 3s? Force it.
+        pgrep -x hypridle >/dev/null 2>&1 && pkill -KILL -x hypridle 2>/dev/null
+        # Small breather for any leftover socket cleanup.
+        sleep 0.1
+    fi
     setsid hypridle >/dev/null 2>&1 < /dev/null &
     disown
+    # Sanity-check the new instance actually came up; if it didn't, log
+    # loudly so the user notices instead of silently losing auto-lock.
+    sleep 0.3
+    if ! pgrep -x hypridle >/dev/null 2>&1; then
+        echo "! hypridle failed to start after $state profile swap — auto-lock disabled" >&2
+        notify-send -u critical -t 5000 "Power state" \
+            "hypridle failed to restart — auto-lock OFF" 2>/dev/null || true
+        return 1
+    fi
     echo "hypridle profile: $state"
 }
 

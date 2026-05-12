@@ -959,7 +959,7 @@ SystemCallArchitectures=native
 # If you've relocated OLLAMA_MODELS, append that path here too.
 ReadWritePaths=/usr/share/ollama /var/lib/ollama
 EOF
-    sudo systemctl daemon-reload >/dev/null 2>&1
+    sudo systemctl daemon-reload >/dev/null 2>&1 || true
     if systemctl is-active --quiet ollama; then
         sudo systemctl restart ollama >/dev/null 2>&1 \
             && echo "  ollama hardened + restarted (ProtectHome=read-only, etc.)"
@@ -1899,7 +1899,7 @@ install_ufw_baseline() {
         local _ssh_port
         _ssh_port=$(awk '{print $4}' <<<"$SSH_CONNECTION")
         if [[ "$_ssh_port" =~ ^[0-9]+$ ]] && (( _ssh_port > 0 && _ssh_port < 65536 )); then
-            sudo ufw limit "${_ssh_port}/tcp" >/dev/null 2>&1
+            sudo ufw limit "${_ssh_port}/tcp" >/dev/null 2>&1 || true
             echo "    active SSH session on port ${_ssh_port} — allowed (rate-limited) to avoid lockout"
         fi
     fi
@@ -1910,7 +1910,8 @@ install_ufw_baseline() {
     # spotting scans on hostile networks.
     sudo ufw logging low >/dev/null 2>&1 || true
     echo "y" | sudo ufw enable >/dev/null
-    sudo systemctl enable --now ufw >/dev/null 2>&1
+    sudo systemctl enable --now ufw >/dev/null 2>&1 \
+        || echo "    ! ufw enable failed — re-run with: sudo -v && fox install --full"
     echo "    UFW enabled (deny incoming + low logging)"
 }
 
@@ -2549,7 +2550,7 @@ install_throttling() {
 # Re-applied on every boot by systemd-tmpfiles
 w /sys/devices/system/cpu/intel_pstate/no_turbo - - - - 1
 EOF
-            sudo systemd-tmpfiles --create /etc/tmpfiles.d/disable-turbo.conf >/dev/null 2>&1
+            sudo systemd-tmpfiles --create /etc/tmpfiles.d/disable-turbo.conf >/dev/null 2>&1 || true
             echo 1 | sudo tee /sys/devices/system/cpu/intel_pstate/no_turbo >/dev/null
             echo "    Intel Turbo disabled (now and on every boot)"
         fi
@@ -2595,7 +2596,7 @@ EOF
             if [[ -n "$governor" ]]; then
                 # validate against the available list to avoid a confusing live-set failure
                 if [[ " $available_gov " == *" $governor "* ]]; then
-                    sudo cpupower frequency-set -g "$governor" >/dev/null 2>&1
+                    sudo cpupower frequency-set -g "$governor" >/dev/null 2>&1 || true
                     _persist_cpupower governor "'${governor}'"
                     echo "    Governor → $governor (now and persistent)"
                 else
@@ -2652,8 +2653,9 @@ install_performance() {
         if ! systemctl is-active --quiet chronyd; then
             echo "  Configuring Chrony (High-Precision Time)..."
             # Disable systemd-timesyncd first
-            sudo systemctl disable --now systemd-timesyncd >/dev/null 2>&1
-            sudo systemctl enable --now chronyd >/dev/null 2>&1
+            sudo systemctl disable --now systemd-timesyncd >/dev/null 2>&1 || true
+            sudo systemctl enable --now chronyd >/dev/null 2>&1 \
+                || echo "    ! chronyd enable failed — time sync may drift; re-run after sudo -v"
             echo "    chronyd enabled (replaces timesyncd)"
             echo "    Precision sync active (check with: chronyc tracking)"
         else
@@ -2692,7 +2694,8 @@ FallbackDNS=1.1.1.1 8.8.8.8
 EOF
 
     # 2. Enable and start resolved
-    sudo systemctl enable --now systemd-resolved >/dev/null 2>&1
+    sudo systemctl enable --now systemd-resolved >/dev/null 2>&1 \
+        || echo "    ! systemd-resolved enable failed — DNSSEC unchanged; re-run after sudo -v"
     
     # 3. Link /etc/resolv.conf to systemd-resolved
     if [[ ! -L /etc/resolv.conf ]]; then
@@ -2778,6 +2781,17 @@ install_vault() {
 # ─────────────────────────────────────────
 
 install_security() {
+    # Re-prime sudo before the long privileged stretch in this function.
+    # Without it, an interactive install (no keepalive) hits a cold sudo
+    # cache 5+ min into the run and any `sudo cmd >/dev/null 2>&1` line
+    # below FAILS SILENTLY — set -e in install.sh then aborts the entire
+    # installer with no error message. Loud failure here is the fix.
+    if ! sudo -v 2>/dev/null; then
+        echo "  ! sudo cache cold and no TTY — security hardening needs root"
+        echo "    re-run: sudo -v && fox install --full"
+        return 0
+    fi
+
     # UFW is applied unconditionally by install_ufw_baseline (called from
     # install.sh BEFORE this function). Re-running it here would just do
     # the same idempotent work twice. If a future code path invokes
@@ -2816,13 +2830,19 @@ EOF
             echo "    fail2ban jail.local written (sshd jail enabled)"
         fi
         if ! systemctl is-active --quiet fail2ban; then
-            sudo systemctl enable --now fail2ban >/dev/null 2>&1
-            echo "    fail2ban service enabled"
+            if sudo systemctl enable --now fail2ban >/dev/null 2>&1; then
+                echo "    fail2ban service enabled"
+            else
+                echo "    ! fail2ban enable failed (sudo cold?) — re-run after: sudo -v"
+            fi
         else
             # Reload so the newly-written jail.local takes effect on re-runs.
-            sudo systemctl reload fail2ban >/dev/null 2>&1 \
-                || sudo systemctl restart fail2ban >/dev/null 2>&1
-            echo "  • fail2ban already active (reloaded for new jail.local)"
+            if sudo systemctl reload fail2ban >/dev/null 2>&1 \
+                || sudo systemctl restart fail2ban >/dev/null 2>&1; then
+                echo "  • fail2ban already active (reloaded for new jail.local)"
+            else
+                echo "    ! fail2ban reload failed (sudo cold?) — service still running on old config"
+            fi
         fi
     else
         echo "  fail2ban package not found — run with --deps --secure"
@@ -2854,12 +2874,22 @@ EOF
         fi
         if ! systemctl is-active --quiet auditd; then
             echo "  Configuring Auditd..."
-            sudo systemctl enable --now auditd >/dev/null 2>&1
-            echo "    auditd enabled with persistent watch rules"
+            if sudo systemctl enable --now auditd >/dev/null 2>&1; then
+                echo "    auditd enabled with persistent watch rules"
+            else
+                echo "    ! auditd enable failed (sudo cold?) — re-run after: sudo -v"
+            fi
         else
-            sudo systemctl restart auditd >/dev/null 2>&1
-            echo "  • auditd already active (restarted to load new rules)"
+            # `|| true` so set -e doesn't abort the installer if sudo cache
+            # expired between earlier sudo and now (no TTY for prompt).
+            if sudo systemctl restart auditd >/dev/null 2>&1; then
+                echo "  • auditd already active (restarted to load new rules)"
+            else
+                echo "  • auditd already active (couldn't restart — sudo cold; rules apply on next reboot)"
+            fi
         fi
+    else
+        echo "  • audit package not installed — skipping persistent audit rules"
     fi
 
     # 4. Waybar Sudoers (Seamless Overwatch).
@@ -2871,14 +2901,20 @@ EOF
     local waybar_sudo="/etc/sudoers.d/99-foxml-waybar"
     if [[ ! -f "$waybar_sudo" ]]; then
         echo "  Configuring sudoers for Waybar Overwatch..."
-        sudo tee "$waybar_sudo" >/dev/null <<EOF
+        if sudo tee "$waybar_sudo" >/dev/null <<EOF
 ${USER} ALL=(ALL) NOPASSWD: /usr/bin/ufw status
 ${USER} ALL=(ALL) NOPASSWD: /usr/bin/fail2ban-client status
 ${USER} ALL=(ALL) NOPASSWD: /usr/bin/fail2ban-client status sshd
 EOF
-        sudo chmod 440 "$waybar_sudo"
-        sudo chown root:root "$waybar_sudo"
-        echo "    Sudoers rule added (ufw status + fail2ban-client status + sshd jail)"
+        then
+            sudo chmod 440 "$waybar_sudo" 2>/dev/null || true
+            sudo chown root:root "$waybar_sudo" 2>/dev/null || true
+            echo "    Sudoers rule added (ufw status + fail2ban-client status + sshd jail)"
+        else
+            echo "    ! sudoers write failed (sudo cold?) — waybar overwatch may prompt"
+        fi
+    else
+        echo "  • waybar sudoers already configured — leaving as-is"
     fi
 
     # 5. SSH Hardening Wizard

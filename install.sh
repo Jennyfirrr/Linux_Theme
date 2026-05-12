@@ -10,6 +10,48 @@
 
 set -e
 
+# ─────────────────────────────────────────
+# Silent-error protection.
+#
+# set -e is good (catches genuine bugs) but BAD when combined with
+# `sudo cmd >/dev/null 2>&1` — a cold sudo cache silently fails, set -e
+# aborts the installer, EXIT trap runs the finalizer, and the user sees
+# nothing about what actually broke. The install just… ends.
+#
+# This ERR trap fires on every uncaught failure that would otherwise
+# trigger set -e and prints WHERE and WHAT. The EXIT trap still runs
+# afterward (so the multi-monitor finalizers still fire), but now the
+# user sees a clear "Installer aborted at line N: <command>" instead of
+# silent termination.
+#
+# Bash inherits the trap into functions only when `set -E` is also on,
+# so commands inside install_security / install_vault / etc. are also
+# covered.
+# ─────────────────────────────────────────
+set -E
+_foxml_err_trap() {
+    local exit_code=$1 lineno=$2 cmd=$3
+    # `_foxml_err_silent=1` is a per-command opt-out: any caller that
+    # genuinely expects a non-zero exit (e.g. `if cmd; then`) is already
+    # filtered out by bash's ERR semantics. This var is here for any
+    # future contributors who want to suppress a specific noisy section.
+    [[ "${_foxml_err_silent:-0}" == "1" ]] && return 0
+    echo "" >&2
+    echo "──────────────────────────────────────────────────────────" >&2
+    echo " ✗ Installer aborted at line ${lineno} (exit ${exit_code})" >&2
+    echo "   failed command: ${cmd}" >&2
+    echo "" >&2
+    echo "   Common causes:" >&2
+    echo "     • sudo cache expired — re-run with: sudo -v && fox install --full" >&2
+    echo "     • network glitch during a git clone / model pull — retry" >&2
+    echo "     • disk full / permission issue — check the failed path above" >&2
+    echo "" >&2
+    echo "   The EXIT-trap finalizer will still run to leave the system" >&2
+    echo "   in a consistent state. fox doctor will tell you what's missing." >&2
+    echo "──────────────────────────────────────────────────────────" >&2
+}
+trap '_foxml_err_trap $? $LINENO "$BASH_COMMAND"' ERR
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 THEMES_DIR="$SCRIPT_DIR/themes"
 TEMPLATES_DIR="$SCRIPT_DIR/templates"

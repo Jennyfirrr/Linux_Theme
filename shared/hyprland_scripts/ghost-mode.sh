@@ -21,10 +21,55 @@ was_muted() {
     wpctl get-volume @DEFAULT_AUDIO_SINK@ 2>/dev/null | grep -q MUTED
 }
 
+# Parse the state file SAFELY — read key=value pairs and only accept a
+# known allowlist of keys with strict value patterns. Previously we did
+# `source "$STATE"`, which is arbitrary code execution if anything in
+# $XDG_RUNTIME_DIR ever wrote `PRE_MUTED=no; rm -rf ~` to that path.
+# This loop refuses anything it doesn't recognise.
+_load_ghost_state() {
+    local file="$1"
+    PRE_MUTED=""
+    TS=""
+    local k v
+    while IFS='=' read -r k v; do
+        # Strip surrounding whitespace + any quotes.
+        k="${k##[[:space:]]}"; k="${k%%[[:space:]]}"
+        v="${v##[[:space:]]}"; v="${v%%[[:space:]]}"
+        v="${v#\"}"; v="${v%\"}"
+        v="${v#\'}"; v="${v%\'}"
+        case "$k" in
+            PRE_MUTED)
+                # Only literal yes/no — anything else is malicious or stale.
+                [[ "$v" == "yes" || "$v" == "no" ]] && PRE_MUTED="$v"
+                ;;
+            TS)
+                # ISO timestamp — letters, digits, :+-T.
+                [[ "$v" =~ ^[A-Za-z0-9:+\-T]+$ ]] && TS="$v"
+                ;;
+            "") continue ;;
+            *)  # Unknown key — ignore. Don't print to avoid leaking what we expected.
+                ;;
+        esac
+    done < "$file"
+}
+
 if [[ -f "$STATE" ]]; then
     # === OFF: restore ===
-    # shellcheck disable=SC1090
-    source "$STATE"
+    # Reject world-writable / non-user-owned state files — that's the only
+    # way a malicious process on the same machine could feed us tampered
+    # values. Both checks combined with the parser above close the
+    # state-injection vector flagged in audit.
+    if [[ "$(stat -c '%u %a' "$STATE" 2>/dev/null)" != "$(id -u) 600" ]]; then
+        # File isn't owned by us or has loose perms — re-write it as our
+        # canonical "on, audio not muted" state before continuing, so an
+        # attacker-planted file can't poison the restore step.
+        rm -f "$STATE"
+        notify-send -u critical -t 3000 "👻 Ghost Mode" \
+            "State file had wrong perms — refusing to read. Toggle again." 2>/dev/null || true
+        exit 1
+    fi
+
+    _load_ghost_state "$STATE"
     rm -f "$STATE"
 
     # Show waybar again.
@@ -46,10 +91,15 @@ if [[ -f "$STATE" ]]; then
 fi
 
 # === ON: hide everything ===
-{
-    echo "PRE_MUTED=$(was_muted && echo yes || echo no)"
-    echo "TS=$(date -Iseconds)"
-} > "$STATE"
+# Write state with 0600 perms via umask scope so a co-tenant process on
+# the same user session can't tamper with it before we read it back.
+( umask 077
+  {
+      echo "PRE_MUTED=$(was_muted && echo yes || echo no)"
+      echo "TS=$(date -Iseconds)"
+  } > "$STATE"
+)
+chmod 600 "$STATE" 2>/dev/null || true
 
 # Hide waybar (SIGUSR1 is its toggle-visibility signal).
 pkill -SIGUSR1 waybar 2>/dev/null || true
