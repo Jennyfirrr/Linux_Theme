@@ -1090,14 +1090,18 @@ EOF
     sudo ufw allow 22/tcp >/dev/null 2>&1 || true
     echo "    UFW: port 22 allowed for endlessh tarpit (real sshd on $real_ssh_port stays limited)"
 
-    # Enable + start the service.
+    # Enable + start the service. `|| true` chains so a failure of
+    # either variant doesn't trip set -e and abort the entire install.
+    # The diagnostic message below tells the user what happened.
     sudo systemctl enable --now endlessh.service >/dev/null 2>&1 \
-        || sudo systemctl enable --now endlessh-go.service >/dev/null 2>&1
+        || sudo systemctl enable --now endlessh-go.service >/dev/null 2>&1 \
+        || true
     if sudo systemctl is-active --quiet endlessh 2>/dev/null \
         || sudo systemctl is-active --quiet endlessh-go 2>/dev/null; then
         echo "  + endlessh tarpit active on :22 (bots will hang forever)"
     else
-        echo "  ! endlessh service didn't start — check: systemctl status endlessh"
+        echo "  ! endlessh service didn't start — check with: systemctl status endlessh"
+        echo "    (continuing install; the tarpit is a nice-to-have, not critical)"
     fi
 }
 

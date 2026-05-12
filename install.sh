@@ -543,23 +543,37 @@ if command -v pacman >/dev/null 2>&1; then
     fi
 fi
 
+# Interactive mode: prime sudo at the start of the install so the user
+# doesn't get interrupted mid-flow by 4-5 sudo prompts. One prompt at
+# the top, keepalive runs for the duration of the privileged sections
+# (UFW, fail2ban, sysctls, AppArmor, etc.). Saves typing `sudo -v &&
+# fox install --full` every time.
+if ! $ASSUME_YES && $INSTALL_DEPS && [[ -t 0 ]]; then
+    if ! sudo -n true 2>/dev/null; then
+        echo "Prime sudo for the install (avoids prompts mid-flow):"
+        sudo -v || { echo "sudo required — re-run when ready"; exit 1; }
+    fi
+fi
+
 # Non-interactive mode: default theme + prime sudo cache so pacman doesn't pause
 if $ASSUME_YES; then
     [[ -z "$THEME_NAME" ]] && THEME_NAME="$DEFAULT_THEME"
     if $INSTALL_DEPS || $INSTALL_NVIDIA || $INSTALL_XGBOOST; then
         echo "Caching sudo credentials for unattended install..."
         sudo -v || { echo "sudo required for --deps / --nvidia / --xgboost"; exit 1; }
-        # Keep sudo alive only for the privileged phase (deps / nvidia /
-        # xgboost). _sudo_keepalive_stop is called once those finish so
-        # the cached credential doesn't stay warm during the long
-        # unprivileged tail of install (model pulls, git clones).
-        # Without that teardown, an attacker on the same session — or
-        # an unattended laptop during a 30-min ollama pull — gets free
-        # sudo for the entire window.
-        ( while true; do sudo -n true; sleep 50; done 2>/dev/null ) &
-        SUDO_KEEPALIVE_PID=$!
-        trap 'kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true' EXIT
     fi
+fi
+
+# Sudo keepalive — runs for any case where we primed above. Keeps the
+# cache warm so late-stage privileged sections (UFW, fail2ban, AppArmor,
+# ollama hardening, endlessh) don't fail silently after the cache
+# expires. In --yes mode it stays alive for the full run; in interactive
+# mode it's torn down at the end of the deps phase (_sudo_keepalive_stop).
+if ( $ASSUME_YES && ( $INSTALL_DEPS || $INSTALL_NVIDIA || $INSTALL_XGBOOST ) ) \
+   || ( ! $ASSUME_YES && $INSTALL_DEPS && sudo -n true 2>/dev/null ); then
+    ( while true; do sudo -n true; sleep 50; done 2>/dev/null ) &
+    SUDO_KEEPALIVE_PID=$!
+    trap 'kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true' EXIT
 fi
 
 # Stop the sudo-keepalive background loop AND drop the cached
