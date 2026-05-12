@@ -2,6 +2,10 @@ font={{FONT_FAMILY}} 10
 background-color=#{{BG}}E6
 text-color=#{{FG}}
 border-color=#{{PRIMARY}}66
+# OSD progress bar (volume / brightness) — mako defaults to blue,
+# which breaks theme cohesion. `over <color>` overlays the bar onto
+# the bubble background using the peach primary at 50% opacity.
+progress-color=over #{{PRIMARY}}80
 border-size=1
 border-radius=0
 padding=12

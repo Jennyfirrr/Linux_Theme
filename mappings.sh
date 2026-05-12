@@ -1103,7 +1103,10 @@ install_endlessh_tarpit() {
         return 0
     fi
 
-    # Install endlessh from the AUR if not already.
+    # Install endlessh from the AUR if not already. Try the candidate
+    # package names in order; the user can also pre-install manually.
+    # endlessh-go was the original name but isn't in AUR — the real
+    # AUR package is `endlessh` (or sometimes `endlessh-git`).
     if ! command -v endlessh >/dev/null 2>&1; then
         local aur=""
         command -v yay  &>/dev/null && aur="yay"
@@ -1112,10 +1115,23 @@ install_endlessh_tarpit() {
             echo "  ! endlessh needs an AUR helper (yay or paru) — skipping"
             return 0
         fi
-        echo "  Installing endlessh-go (Go-rewritten endlessh, lighter than upstream C)..."
-        $aur -S --needed --noconfirm endlessh-go >/dev/null 2>&1 \
-            || $aur -S --needed --noconfirm endlessh >/dev/null 2>&1 \
-            || { echo "  ! AUR install of endlessh failed"; return 0; }
+        echo "  Installing endlessh from AUR..."
+        local _installed=0
+        for pkg in endlessh endlessh-git; do
+            # Probe AUR first; some package names don't exist anymore.
+            if $aur -Si "$pkg" &>/dev/null; then
+                if $aur -S --needed --noconfirm "$pkg" >/dev/null 2>&1; then
+                    _installed=1
+                    echo "  + endlessh installed via $aur ($pkg)"
+                    break
+                fi
+            fi
+        done
+        if (( ! _installed )); then
+            echo "  ! AUR install of endlessh failed (likely sudo timeout during makepkg)"
+            echo "    workaround: manually run: $aur -S endlessh   (then re-run fox install)"
+            return 0
+        fi
     fi
 
     # Drop the config: bind on 22 for both v4 and v6, 10-second banner
