@@ -1897,7 +1897,12 @@ EOF
     echo "Plugging AI skills into project..."
     mkdir -p "$SCRIPT_DIR/.agent/commands"
     for skill in "$SHARED_DIR/ai_skills/"*.md; do
-        cp "$skill" "$SCRIPT_DIR/.agent/commands/"
+        dest="$SCRIPT_DIR/.agent/commands/$(basename "$skill")"
+        # In-repo .agent/commands/ entries are relative symlinks back into
+        # shared/ai_skills/ (committed that way) — cp would error with
+        # "same file". -ef catches the same-inode case for symlink or not.
+        [[ "$dest" -ef "$skill" ]] && continue
+        cp "$skill" "$dest"
     done
     echo "  + Project-level AI skills ready."
     fi
