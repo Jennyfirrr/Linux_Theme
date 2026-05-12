@@ -130,10 +130,21 @@ substitute() {
 # external monitor(s). Without a sidecar (single monitor), keep the single-
 # object config and let waybar render on whatever's connected.
 PRIMARY=""
+PORTRAIT_OUTPUTS=""
 SECONDARY_OUTPUTS=""
-if [[ -f "$LAYOUT_FILE" ]]; then
-    # shellcheck disable=SC1090
-    source "$LAYOUT_FILE"
+MONITOR_RESOLUTIONS=""
+# Parse sidecar instead of source-ing — defensive against a malicious
+# monitor name escaping into shell execution at bar-launch time.
+if [[ -r "$LAYOUT_FILE" ]]; then
+    while IFS='=' read -r _k _v; do
+        _v="${_v#\"}"; _v="${_v%\"}"
+        case "$_k" in
+            PRIMARY)             PRIMARY="$_v" ;;
+            PORTRAIT_OUTPUTS)    PORTRAIT_OUTPUTS="$_v" ;;
+            SECONDARY_OUTPUTS)   SECONDARY_OUTPUTS="$_v" ;;
+            MONITOR_RESOLUTIONS) MONITOR_RESOLUTIONS="$_v" ;;
+        esac
+    done < <(grep -E '^(PRIMARY|PORTRAIT_OUTPUTS|SECONDARY_OUTPUTS|MONITOR_RESOLUTIONS)=' "$LAYOUT_FILE")
 fi
 
 if [[ -n "$SECONDARY_OUTPUTS" && -f "$CONFIG_OUT" && -f "$CONFIG_SECONDARY_OUT" && -n "$PRIMARY" ]] \

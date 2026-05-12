@@ -87,7 +87,9 @@ INSTALL_DEPS=false
 # safe for both interactive and CI flows.
 INSTALL_SECURITY=true
 INSTALL_PERF=false
-INSTALL_PRIVACY=false
+# Privacy (DNS-over-HTTPS via systemd-resolved + privacy.resistFingerprinting
+# in Firefox) is part of the secure-by-default stance. Opt out with --no-privacy.
+INSTALL_PRIVACY=true
 INSTALL_VAULT=false
 INSTALL_NVIDIA=false
 INSTALL_AMD_GPU=false
@@ -124,7 +126,9 @@ for arg in "$@"; do
             [[ "$arg" == "--no-secure" ]] && INSTALL_SECURITY=false || INSTALL_SECURITY=true
             ;;
         --perf) INSTALL_PERF=true ;;
-        --privacy) INSTALL_PRIVACY=true ;;
+        --privacy|--no-privacy)
+            [[ "$arg" == "--no-privacy" ]] && INSTALL_PRIVACY=false || INSTALL_PRIVACY=true
+            ;;
         --vault) INSTALL_VAULT=true ;;
         --nvidia)    INSTALL_NVIDIA=true ;;
         --gpu-amd)   INSTALL_AMD_GPU=true ;;
@@ -462,10 +466,13 @@ if $DRY_RUN; then
     $INSTALL_GITHUB   && mods+=("github")
     foxml_summary_row "Modules"           "${mods[*]:-none}"
     if [[ -f "$HOME/.config/foxml/monitor-layout.conf" ]]; then
-        # shellcheck disable=SC1090
-        ( source "$HOME/.config/foxml/monitor-layout.conf"
-          foxml_summary_row "Monitors (sidecar)" "${MONITOR_RESOLUTIONS:-unknown}"
-          foxml_summary_row "Primary"            "${PRIMARY:-unknown}" )
+        # _read_sidecar parses key=value safely without source-ing,
+        # so a malicious monitor name can't smuggle in code at dry-run
+        # time. Defined in mappings.sh (already sourced above).
+        PRIMARY="" MONITOR_RESOLUTIONS=""
+        _read_sidecar "$HOME/.config/foxml/monitor-layout.conf"
+        foxml_summary_row "Monitors (sidecar)" "${MONITOR_RESOLUTIONS:-unknown}"
+        foxml_summary_row "Primary"            "${PRIMARY:-unknown}"
     else
         foxml_summary_row "Monitors" "configure_monitors would run interactively"
     fi
@@ -754,14 +761,31 @@ if $INSTALL_DEPS; then
         fi
     fi
 
-    # Oh My Zsh
+    # Oh My Zsh — prefer the AUR package (oh-my-zsh-git) when an AUR
+    # helper is available, so the install path goes through pacman's
+    # signature trust DB instead of `curl | sh`. Fall back to the
+    # upstream script only if no AUR helper is present (early-bootstrap
+    # machines that don't have yay/paru yet).
+    _install_omz_script() {
+        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+    }
+    _install_omz_aur() {
+        for aur in yay paru; do
+            command -v "$aur" >/dev/null 2>&1 || continue
+            "$aur" -S --needed --noconfirm oh-my-zsh-git >/dev/null 2>&1 && return 0
+            return 1
+        done
+        return 1
+    }
     if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
         if $ASSUME_YES; then
-            sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+            _install_omz_aur || _install_omz_script
         else
             read -p "  Install Oh My Zsh? [y/N] " -n 1 -r
             echo ""
-            [[ $REPLY =~ ^[Yy]$ ]] && sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+            if [[ $REPLY =~ ^[Yy]$ ]]; then
+                _install_omz_aur || _install_omz_script
+            fi
         fi
     fi
 
@@ -1180,6 +1204,12 @@ fi
 echo "Pulling embedding model (nomic-embed-text)..."
 ollama pull nomic-embed-text
 
+# Sandbox the ollama service via systemd hardening directives. Real
+# protection against prompt-injection → tool-call escalation: even if
+# a model is tricked into trying to read $HOME/.ssh, ProtectHome=ro
+# stops it cold. Idempotent — re-runs converge on the same drop-in.
+install_ollama_hardening
+
 if $INSTALL_AI; then
         # Same AUR-first policy for OpenCode. `opencode-bin` ships the
         # signed upstream binary; AUR sig check catches a malicious
@@ -1578,9 +1608,8 @@ _summary_monitor_line() {
     # ("eDP-1 1920x1080 + HDMI-A-1 1080x1920 (portrait)") for the report.
     local layout="$HOME/.config/foxml/monitor-layout.conf"
     [[ -f "$layout" ]] || { echo "none"; return; }
-    # shellcheck disable=SC1090
-    local PRIMARY="" PORTRAIT_OUTPUTS="" MONITOR_RESOLUTIONS=""
-    source "$layout"
+    local PRIMARY="" PORTRAIT_OUTPUTS="" SECONDARY_OUTPUTS="" MONITOR_RESOLUTIONS=""
+    _read_sidecar "$layout"
     [[ -z "$MONITOR_RESOLUTIONS" ]] && { echo "${PRIMARY:-unknown}"; return; }
     local out="" entry name res portrait
     for entry in $MONITOR_RESOLUTIONS; do

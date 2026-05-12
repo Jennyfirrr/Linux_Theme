@@ -120,6 +120,7 @@ SHARED_MAPPINGS=(
     "zsh_git.zsh|~/.config/zsh/git.zsh"
     "zsh_paths.zsh|~/.config/zsh/paths.zsh"
     "zsh_conda.zsh|~/.config/zsh/conda.zsh"
+    "zsh_history_scrub.zsh|~/.config/zsh/history-scrub.zsh"
     "bin/fox-ai-swap|~/.local/bin/fox-ai-swap"
     "bin/fox-ai-status|~/.local/bin/fox-ai-status"
     "bin/fox-ai-commit|~/.local/bin/fox-ai-commit"
@@ -452,13 +453,32 @@ JSON
     # Icon theme — Papirus-Dark with Catppuccin Mocha Peach folders. The
     # GTK ini already references Papirus-Dark; this fetches the theme
     # user-locally (no sudo) and recolors folders to match the cursor.
+    #
+    # Prefer the AUR package (papirus-icon-theme) for signature-verified
+    # install. Falls back to the curl-pipe-bash path only if no AUR
+    # helper is present yet. The script-pipe is the historical method
+    # PapirusDevelopmentTeam ships; downloading to /tmp + diff'ing against
+    # a known hash would be more rigorous but the AUR fallback covers
+    # the same concern with less ceremony.
     local icons_dir="$HOME/.local/share/icons"
-    if [[ ! -d "$icons_dir/Papirus" ]]; then
-        if curl -fsSL "https://raw.githubusercontent.com/PapirusDevelopmentTeam/papirus-icon-theme/master/install.sh" \
-                | DESTDIR="$icons_dir" sh &>/dev/null; then
-            echo "  Papirus icon theme"
-        else
-            echo "  Papirus install failed; skipping folder recolor"
+    if [[ ! -d "$icons_dir/Papirus" ]] && ! pacman -Qi papirus-icon-theme &>/dev/null; then
+        local _papirus_done=0
+        for aur in yay paru; do
+            if command -v "$aur" >/dev/null 2>&1; then
+                if "$aur" -S --needed --noconfirm papirus-icon-theme >/dev/null 2>&1; then
+                    echo "  Papirus icon theme (via $aur / AUR)"
+                    _papirus_done=1
+                fi
+                break
+            fi
+        done
+        if (( ! _papirus_done )); then
+            if curl -fsSL "https://raw.githubusercontent.com/PapirusDevelopmentTeam/papirus-icon-theme/master/install.sh" \
+                    | DESTDIR="$icons_dir" sh &>/dev/null; then
+                echo "  Papirus icon theme (upstream script — no AUR helper available)"
+            else
+                echo "  Papirus install failed; skipping folder recolor"
+            fi
         fi
     else
         echo "  Papirus already present"
@@ -621,6 +641,39 @@ _pick_scale() {
     esac
 }
 
+# _read_sidecar — safely load monitor-layout.conf into the caller's
+# scope WITHOUT `source`-ing. Sourcing the file means any shell
+# metacharacters in a monitor name from a spoofed hyprctl response
+# would execute as code. This parser only honours the four expected
+# keys, strips surrounding quotes, and leaves the value as a plain
+# string — so `$(rm -rf ~)` in a monitor name becomes just a string,
+# not a shell command.
+#
+# Sets these in the caller's scope:
+#   PRIMARY, PORTRAIT_OUTPUTS, SECONDARY_OUTPUTS, MONITOR_RESOLUTIONS
+# Returns 0 if the file existed and parsed, 1 otherwise.
+_read_sidecar() {
+    local file="$1"
+    PRIMARY=""
+    PORTRAIT_OUTPUTS=""
+    SECONDARY_OUTPUTS=""
+    MONITOR_RESOLUTIONS=""
+    [[ -r "$file" ]] || return 1
+    local key val
+    while IFS='=' read -r key val; do
+        # Strip surrounding double-quotes from "value"
+        val="${val#\"}"
+        val="${val%\"}"
+        case "$key" in
+            PRIMARY)             PRIMARY="$val" ;;
+            PORTRAIT_OUTPUTS)    PORTRAIT_OUTPUTS="$val" ;;
+            SECONDARY_OUTPUTS)   SECONDARY_OUTPUTS="$val" ;;
+            MONITOR_RESOLUTIONS) MONITOR_RESOLUTIONS="$val" ;;
+        esac
+    done < <(grep -E '^(PRIMARY|PORTRAIT_OUTPUTS|SECONDARY_OUTPUTS|MONITOR_RESOLUTIONS)=' "$file" 2>/dev/null)
+    return 0
+}
+
 _generate_per_monitor_wallpapers() {
     # Pre-render each source wallpaper at every panel resolution listed in
     # MONITOR_RESOLUTIONS so awww and hyprlock can apply pixel-perfect
@@ -631,9 +684,8 @@ _generate_per_monitor_wallpapers() {
     [[ -d "$wall_dir" ]] || return 0
     [[ -f "$layout"   ]] || return 0
 
-    # shellcheck disable=SC1090
-    local MONITOR_RESOLUTIONS=""
-    source "$layout"
+    local PRIMARY="" PORTRAIT_OUTPUTS="" SECONDARY_OUTPUTS="" MONITOR_RESOLUTIONS=""
+    _read_sidecar "$layout"
     [[ -z "${MONITOR_RESOLUTIONS}" ]] && return 0
 
     local magick_bin=""
@@ -701,9 +753,8 @@ _personalize_hyprlock() {
     [[ -f "$hyprlock_conf" ]] || return 0
     [[ -f "$layout"        ]] || return 0
 
-    # shellcheck disable=SC1090
-    local MONITOR_RESOLUTIONS=""
-    source "$layout"
+    local PRIMARY="" PORTRAIT_OUTPUTS="" SECONDARY_OUTPUTS="" MONITOR_RESOLUTIONS=""
+    _read_sidecar "$layout"
     [[ -z "${MONITOR_RESOLUTIONS}" ]] && return 0
 
     if ! grep -q '^# foxml:hyprlock-backgrounds-begin' "$hyprlock_conf"; then
@@ -777,6 +828,64 @@ ${block_tail}
     return 0
 }
 
+# Harden the ollama systemd unit with sandboxing directives. The
+# upstream ollama.service doesn't enable any of these by default;
+# without them, ollama runs as user `ollama` but with full filesystem
+# read/write and unrestricted kernel surface. Prompt-injection attacks
+# that trick the model into emitting tool-call shell commands gain less
+# leverage when the process itself is constrained.
+#
+# Conservative tuning — doesn't break the legitimate ollama work flow:
+#   ProtectHome=read-only  — fask can still pass file paths to ollama
+#                            for embedding context; ollama can read them
+#                            but not modify your home.
+#   PrivateTmp=true        — isolated /tmp namespace.
+#   ProtectKernel{Tunables,Modules,Logs}=true — no /proc/sys writes,
+#                            no module load, no /dev/kmsg read.
+#   RestrictNamespaces / LockPersonality / RestrictRealtime — drop
+#                            unused execution paths.
+#   SystemCallArchitectures=native — refuse seccomp's "execute foreign
+#                            arch" trick.
+install_ollama_hardening() {
+    if ! systemctl list-unit-files 2>/dev/null | grep -q '^ollama\.service'; then
+        echo "  • ollama.service not present — skipping ollama hardening"
+        return 0
+    fi
+    local drop_in=/etc/systemd/system/ollama.service.d
+    sudo install -d "$drop_in"
+    sudo tee "$drop_in/foxml-hardening.conf" >/dev/null <<'EOF'
+# foxml-managed — systemd sandbox for ollama.service.
+# Revert: sudo rm /etc/systemd/system/ollama.service.d/foxml-hardening.conf
+[Service]
+NoNewPrivileges=true
+ProtectHome=read-only
+ProtectSystem=strict
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+RestrictNamespaces=true
+RestrictRealtime=true
+LockPersonality=true
+MemoryDenyWriteExecute=false
+SystemCallArchitectures=native
+# Allow ollama to read+write its model store (default /usr/share/ollama).
+# If you've relocated OLLAMA_MODELS, append that path here too.
+ReadWritePaths=/usr/share/ollama /var/lib/ollama
+EOF
+    sudo systemctl daemon-reload >/dev/null 2>&1
+    if systemctl is-active --quiet ollama; then
+        sudo systemctl restart ollama >/dev/null 2>&1 \
+            && echo "  ollama hardened + restarted (ProtectHome=read-only, etc.)"
+    else
+        echo "  ollama hardening dropped in (will apply on next start)"
+    fi
+    return 0
+}
+
 _personalize_workspace_rules() {
     # Rewrite the workspace 1 pin in ~/.config/hypr/modules/rules.conf to
     # bind to monitor-layout.conf's PRIMARY. Default in the shared module
@@ -788,9 +897,8 @@ _personalize_workspace_rules() {
     [[ -f "$rules_conf" ]] || return 0
     [[ -f "$layout"     ]] || return 0
 
-    # shellcheck disable=SC1090
-    local PRIMARY=""
-    source "$layout"
+    local PRIMARY="" PORTRAIT_OUTPUTS="" SECONDARY_OUTPUTS="" MONITOR_RESOLUTIONS=""
+    _read_sidecar "$layout"
     [[ -z "$PRIMARY" ]] && return 0
 
     if ! grep -q '^# foxml:workspace-pin-begin' "$rules_conf"; then
@@ -1651,9 +1759,14 @@ install_ufw_baseline() {
         echo "    sshd detected — port 22 allowed with rate-limit (limit ssh)"
     fi
 
+    # Enable low-volume logging — captures denied attempts to
+    # /var/log/ufw.log without flooding disk. "low" includes blocked
+    # packets but not every allowed connection. Useful tripwire for
+    # spotting scans on hostile networks.
+    sudo ufw logging low >/dev/null 2>&1 || true
     echo "y" | sudo ufw enable >/dev/null
     sudo systemctl enable --now ufw >/dev/null 2>&1
-    echo "    UFW enabled"
+    echo "    UFW enabled (deny incoming + low logging)"
 }
 
 # Kernel hardening sysctls. Auto-applied — drop-in at
@@ -1714,6 +1827,11 @@ net.ipv6.conf.all.accept_redirects     = 0
 net.ipv6.conf.default.accept_redirects = 0
 net.ipv6.conf.all.accept_source_route     = 0
 net.ipv6.conf.default.accept_source_route = 0
+# Kernel Self-Protection Project — harden the eBPF JIT compiler against
+# Spectre / side-channel and JIT-spray attacks. 2 = always-on (vs 1 =
+# always-on-only-for-non-root). Costs ~5% on BPF workloads we don't
+# really have on a laptop.
+net.core.bpf_jit_harden = 2
 fs.suid_dumpable                 = 0
 EOF
 )"

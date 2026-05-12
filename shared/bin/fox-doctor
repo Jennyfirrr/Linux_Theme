@@ -239,9 +239,18 @@ check_multimonitor() {
         hint "fix: run ./install.sh to re-run configure_monitors"
         return
     fi
-    # shellcheck disable=SC1090
+    # Parsed (not sourced) so a malicious monitor name can't run shell
+    # code when fox-doctor inspects the sidecar.
     local PRIMARY="" PORTRAIT_OUTPUTS="" SECONDARY_OUTPUTS="" MONITOR_RESOLUTIONS=""
-    source "$sidecar"
+    while IFS='=' read -r _k _v; do
+        _v="${_v#\"}"; _v="${_v%\"}"
+        case "$_k" in
+            PRIMARY)             PRIMARY="$_v" ;;
+            PORTRAIT_OUTPUTS)    PORTRAIT_OUTPUTS="$_v" ;;
+            SECONDARY_OUTPUTS)   SECONDARY_OUTPUTS="$_v" ;;
+            MONITOR_RESOLUTIONS) MONITOR_RESOLUTIONS="$_v" ;;
+        esac
+    done < <(grep -E '^(PRIMARY|PORTRAIT_OUTPUTS|SECONDARY_OUTPUTS|MONITOR_RESOLUTIONS)=' "$sidecar")
     if [[ -z "$PRIMARY" ]]; then
         fail "sidecar has no PRIMARY"
         return

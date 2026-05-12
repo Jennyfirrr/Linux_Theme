@@ -40,9 +40,17 @@ rm -rf "$TMP_PALETTE"
 GEN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../themes/Generated" && pwd 2>/dev/null || echo "$HOME/.config/foxml/themes/Generated")"
 mkdir -p "$GEN_DIR"
 
+# Sanitize the filename used in the heredoc comment. The heredoc
+# itself isn't shell-evaluating its output, but defence-in-depth: a
+# wallpaper named `$(touch pwned).jpg` would render as a literal
+# comment now, and even if a future change started sourcing this
+# comment line the value couldn't smuggle in metacharacters.
+_img_basename=$(basename "$IMG")
+_img_basename="${_img_basename//[^A-Za-z0-9._-]/_}"
+
 # Write the palette.sh
 cat > "$GEN_DIR/palette.sh" <<EOF
-# Generated FoxML Palette from $(basename "$IMG")
+# Generated FoxML Palette from ${_img_basename}
 THEME_TYPE="Generated"
 BG="${BG}"
 BG_DARK="${BG}"

@@ -38,4 +38,13 @@ if command -v awww >/dev/null 2>&1 && ! awww query &>/dev/null; then
     echo "fox-lock: warning — awww-daemon not reachable (post-unlock wallpaper may not refresh)" >&2
 fi
 
+# USBGuard lock-down — switch any pluggable devices to "block by default"
+# while the screen is locked, so a BadUSB / Rubber Ducky inserted in our
+# absence can't be auto-trusted. install_usbguard adds the running user
+# to IPCAllowedUsers, so no sudo needed. Restored to "apply-policy" on
+# unlock by ~/.config/hypr/scripts/fox-unlock-hook.sh.
+if command -v usbguard >/dev/null 2>&1 && systemctl is-active --quiet usbguard 2>/dev/null; then
+    usbguard set-parameter ImplicitPolicyTarget block 2>/dev/null || true
+fi
+
 exec hyprlock "$@"

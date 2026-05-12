@@ -94,14 +94,26 @@ read -r _ _ filename <<<"${slots[$target_idx]}"
 pick="${WALL_DIR}/${filename}"
 [[ ! -f "$pick" ]] && { echo "missing $pick" >&2; exit 1; }
 
-# Source the layout sidecar — MONITOR_RESOLUTIONS drives per-monitor file
-# pick; PRIMARY + SECONDARY_OUTPUTS drives the boot wait-for-monitors loop.
+# Load the layout sidecar — MONITOR_RESOLUTIONS drives per-monitor file
+# pick; PRIMARY + SECONDARY_OUTPUTS drives the boot wait-for-monitors
+# loop. Parsed instead of sourced so a spoofed monitor name can't smuggle
+# in shell code via the sidecar.
 PRIMARY=""
+PORTRAIT_OUTPUTS=""
 SECONDARY_OUTPUTS=""
 MONITOR_RESOLUTIONS=""
 layout="${HOME}/.config/foxml/monitor-layout.conf"
-# shellcheck disable=SC1090
-[[ -f "$layout" ]] && source "$layout"
+if [[ -r "$layout" ]]; then
+    while IFS='=' read -r _k _v; do
+        _v="${_v#\"}"; _v="${_v%\"}"
+        case "$_k" in
+            PRIMARY)             PRIMARY="$_v" ;;
+            PORTRAIT_OUTPUTS)    PORTRAIT_OUTPUTS="$_v" ;;
+            SECONDARY_OUTPUTS)   SECONDARY_OUTPUTS="$_v" ;;
+            MONITOR_RESOLUTIONS) MONITOR_RESOLUTIONS="$_v" ;;
+        esac
+    done < <(grep -E '^(PRIMARY|PORTRAIT_OUTPUTS|SECONDARY_OUTPUTS|MONITOR_RESOLUTIONS)=' "$layout")
+fi
 
 # Idempotency: skip the fade + notify if we'd be applying what's already up,
 # unless --cycle was passed (cycle should always change the image).

@@ -18,8 +18,17 @@ chosen=$(echo -e "$options" | rofi -dmenu -i -p "$msg" \
     -theme-str "$ROFI_POS_THEME inputbar {enabled: false;} window {width: 30%;}")
 
 if [[ -n "$chosen" ]]; then
-    # Prompt for password if not a known connection
-    nmcli dev wifi connect "$chosen" | grep -q "successfully activated"
+    # `--` terminates option parsing so a maliciously named SSID
+    # starting with `-` (or containing $() shell-substitution chars)
+    # is treated as a literal argument to nmcli, not a flag and not
+    # something nmcli might re-interpret. Belt-and-suspenders: validate
+    # SSIDs match the IEEE 802.11 spec (1-32 bytes, no NUL); reject
+    # anything else as malformed before passing to nmcli.
+    if (( ${#chosen} < 1 || ${#chosen} > 32 )) || [[ "$chosen" == *$'\0'* ]]; then
+        notify-send "Network" "SSID '$chosen' rejected (invalid length or null byte)"
+        exit 1
+    fi
+    nmcli dev wifi connect -- "$chosen" | grep -q "successfully activated"
     if [[ $? -eq 0 ]]; then
         notify-send "Network" "Connected to $chosen"
     else

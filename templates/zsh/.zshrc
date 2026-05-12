@@ -14,6 +14,9 @@ typeset -U path PATH
 HISTFILE="$HOME/.zsh_history"
 HISTSIZE=50000
 SAVEHIST=50000
+# Secret scrub — preexec hook + HISTORY_IGNORE pattern keep passwords /
+# API tokens / private keys out of ~/.zsh_history. Sourced from shared/.
+[[ -r "$HOME/.config/zsh/history-scrub.zsh" ]] && source "$HOME/.config/zsh/history-scrub.zsh"
 
 # ─── Environment ──────────────────────────────
 export QT_QPA_PLATFORMTHEME=qt5ct
