@@ -3672,32 +3672,68 @@ EOF
             fi
 
             # Port-knocking offer. Closes the SSH port entirely to
-            # scanners; a secret port sequence temporarily opens it.
-            # Opt-in because forgetting the sequence locks you out of
-            # remote SSH (physical TTY login still works).
-            if command -v knockd >/dev/null 2>&1 || command -v fox-knock >/dev/null 2>&1; then
-                echo ""
-                echo "  ${C_BOLD:-}Port knocking (knockd)${C_RST:-} — closes SSH to scanners; secret"
-                echo "  knock sequence opens it briefly for your IP."
-                if foxml_prompt_yn "  Configure port knocking now? [y/N] "; then
-                    if ! command -v knockd >/dev/null 2>&1; then
-                        if pacman -Qi knockd &>/dev/null; then
-                            :
-                        elif command -v yay &>/dev/null; then
-                            yay -S --needed --noconfirm knockd >/dev/null 2>&1
-                        elif command -v paru &>/dev/null; then
-                            paru -S --needed --noconfirm knockd >/dev/null 2>&1
+            # SSH gating — closes the custom SSH port to scanners; a
+            # cryptographic / port sequence temporarily opens it for
+            # the authorized source. SPA (Single Packet Auth via
+            # fwknop) is strictly better than port knocking — it's
+            # replay-immune (HMAC + timestamp) and undetectable to
+            # passive sniffers, where port-knock sequences can be
+            # recorded + replayed by anyone on the LAN.
+            #
+            # Default to SPA when fwknop is installable, fall back to
+            # knock if not. Both are opt-in because forgetting the
+            # auth method locks you out of remote SSH (physical TTY
+            # login still works).
+            echo ""
+            echo "  ${C_BOLD:-}SSH gating (recommended)${C_RST:-} — close $custom_port to scanners; auth opens it briefly."
+            echo "    [1] SPA (fwknop)      single encrypted packet, replay-immune  ${C_DIM:-}(recommended)${C_RST:-}"
+            echo "    [2] knock (knockd)    port sequence, simpler, sniffable on LAN"
+            echo "    [3] skip"
+            local _gate_choice
+            read -rp "  choose [1]: " -n 1 -r _gate_choice; echo
+            _gate_choice="${_gate_choice:-1}"
+
+            case "$_gate_choice" in
+                1)
+                    # Install fwknop if missing — AUR.
+                    if ! command -v fwknopd >/dev/null 2>&1; then
+                        local _aur=""
+                        command -v yay &>/dev/null && _aur="yay"
+                        [[ -z "$_aur" ]] && command -v paru &>/dev/null && _aur="paru"
+                        if [[ -n "$_aur" ]]; then
+                            echo "  Installing fwknop from AUR (build ~20-40s)..."
+                            $_aur -S --needed --noconfirm fwknop 2>&1 | sed 's/^/    /'
                         else
-                            echo "  ! knockd not in repos AND no AUR helper — install manually then run: fox knock --setup"
+                            echo "  ! fwknop not installed AND no AUR helper — install manually then run: fox spa --setup"
+                        fi
+                    fi
+                    if command -v fwknopd >/dev/null 2>&1; then
+                        fox-spa --setup || echo "  ! fox spa setup failed — re-run: fox spa --setup"
+                    else
+                        echo "  • SPA not ready — run later: fox spa --setup"
+                    fi
+                    ;;
+                2)
+                    # Install knockd from repos if missing.
+                    if ! command -v knockd >/dev/null 2>&1; then
+                        if ! pacman -Qi knockd &>/dev/null; then
+                            if command -v yay &>/dev/null; then
+                                yay -S --needed --noconfirm knockd 2>&1 | sed 's/^/    /'
+                            elif command -v paru &>/dev/null; then
+                                paru -S --needed --noconfirm knockd 2>&1 | sed 's/^/    /'
+                            fi
                         fi
                     fi
                     if command -v knockd >/dev/null 2>&1; then
                         fox-knock --setup || echo "  ! fox knock setup failed — re-run: fox knock --setup"
+                    else
+                        echo "  ! knockd not available — install manually then run: fox knock --setup"
                     fi
-                else
-                    echo "  • run later: fox knock --setup"
-                fi
-            fi
+                    ;;
+                3|*)
+                    echo "  • skipped — run later:  fox spa --setup  OR  fox knock --setup"
+                    ;;
+            esac
         fi
     fi
 }

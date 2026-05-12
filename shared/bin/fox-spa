@@ -27,10 +27,48 @@ SYS_CONF=/etc/fwknopd.conf
 ACCESS_CONF=/etc/access.conf
 
 _require() {
-    if ! command -v fwknopd >/dev/null 2>&1; then
-        echo "${C_RED}fwknop not installed${C_RST}" >&2
-        echo "  install:  yay -S fwknop  (or paru)" >&2
+    if command -v fwknopd >/dev/null 2>&1; then return 0; fi
+    # Auto-install from AUR so the user doesn't have to do it manually.
+    local aur=""
+    command -v yay  &>/dev/null && aur="yay"
+    [[ -z "$aur" ]] && command -v paru &>/dev/null && aur="paru"
+    if [[ -z "$aur" ]]; then
+        echo "${C_RED}fwknop not installed AND no AUR helper found${C_RST}" >&2
+        echo "  install yay or paru first, then re-run: fox spa --setup" >&2
         return 1
+    fi
+    echo "  ${C_DIM}fwknop not installed — building from AUR (~20-40s)...${C_RST}"
+    if ! $aur -S --needed --noconfirm fwknop 2>&1 | tail -20 | sed 's/^/    /'; then
+        echo "${C_RED}fwknop AUR build failed${C_RST}" >&2
+        echo "  try manually: $aur -S fwknop" >&2
+        return 1
+    fi
+    if ! command -v fwknopd >/dev/null 2>&1; then
+        echo "${C_RED}install completed but fwknopd still not on PATH${C_RST}" >&2
+        return 1
+    fi
+    echo "  ${C_GRN}✓ fwknop installed${C_RST}"
+}
+
+_disable_knockd_if_active() {
+    # If knockd is active OR previously configured, offer to disable.
+    # SPA and knock can't both gate the same SSH port — they'd race on
+    # UFW rules and the user would get inconsistent behavior.
+    local knock_state="" knock_configured=""
+    systemctl is-active --quiet knockd 2>/dev/null && knock_state="active"
+    [[ -f "$HOME/.config/foxml/knock.conf" ]] && knock_configured="yes"
+    if [[ -n "$knock_state" || -n "$knock_configured" ]]; then
+        echo
+        echo "  ${C_YEL}port-knocking (knockd) is already configured.${C_RST}"
+        echo "  SPA replaces knock — both gating the same port would race on UFW rules."
+        local _r
+        read -rp "  Disable knockd first? [Y/n] " -n 1 -r _r; echo
+        if [[ ! "$_r" =~ ^[Nn]$ ]]; then
+            command -v fox-knock >/dev/null 2>&1 && fox-knock --disable \
+                || { sudo systemctl disable --now knockd 2>/dev/null; rm -f "$HOME/.config/foxml/knock.conf"; }
+        else
+            echo "  ${C_YEL}keeping knockd — note: behaviour will be undefined${C_RST}"
+        fi
     fi
 }
 
@@ -41,7 +79,22 @@ _real_ssh_port() {
 }
 
 _setup() {
+    echo "${C_BOLD}fox spa — Single Packet Authorization setup${C_RST}"
+    echo "${C_DIM}  This will:${C_RST}"
+    echo "${C_DIM}    1. Install fwknop from AUR (if missing)${C_RST}"
+    echo "${C_DIM}    2. Disable knockd (if active — they conflict)${C_RST}"
+    echo "${C_DIM}    3. Generate random keys (no hardcoded defaults)${C_RST}"
+    echo "${C_DIM}    4. Lock your SSH port behind UDP :62201 SPA gate${C_RST}"
+    echo "${C_DIM}    5. Print keys + QR for phone transfer${C_RST}"
+    echo "${C_DIM}    6. Remind you to run fox backup${C_RST}"
+    echo
+    local _go
+    read -rp "  Proceed? [Y/n] " -n 1 -r _go; echo
+    [[ "$_go" =~ ^[Nn]$ ]] && { echo "  cancelled"; return 0; }
+
     _require || return 1
+    _disable_knockd_if_active
+
     local ssh_port
     ssh_port=$(_real_ssh_port)
     if [[ "$ssh_port" == "22" ]]; then
@@ -130,6 +183,18 @@ EOF
     echo "  Saved client config: $USER_CONF (0600)"
     echo "  Server config:       $SYS_CONF + $ACCESS_CONF"
     echo "${C_GRN}═══════════════════════════════════════════════════════════════${C_RST}"
+    echo
+    echo "  ${C_BOLD}Next steps:${C_RST}"
+    echo "    1. ${C_DIM}Phone:${C_RST}  install 'FwKnop2 SPA Client' (F-Droid / Play Store)"
+    echo "             scan the QR above, or paste KEY_BASE64 + HMAC_KEY_BASE64"
+    echo "    2. ${C_DIM}Backup:${C_RST} fox backup"
+    echo "             (encrypted tarball includes ~/.config/foxml/spa.conf)"
+    echo "    3. ${C_DIM}Test:${C_RST}   from another machine with fwknop installed:"
+    echo "             fwknop -A tcp/$ssh_port -a <your-public-ip> -D <this-host> \\"
+    echo "                    --key-base64 -K \$KEY_BASE64 \\"
+    echo "                    --hmac-key-base64 \$HMAC_KEY_BASE64"
+    echo "             then ssh -p $ssh_port user@<this-host>"
+    echo "    4. ${C_DIM}Lockout fallback:${C_RST} physical TTY (Ctrl+Alt+F2) → fox spa --disable"
 }
 
 _status() {
