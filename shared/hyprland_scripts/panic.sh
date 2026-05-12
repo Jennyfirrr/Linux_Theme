@@ -57,6 +57,37 @@ fi
 pkill -9 -x rofi      2>/dev/null || true
 pkill -9 -x rofi-pass 2>/dev/null || true
 
+# 2a. Firefox session-state wipe. Closing the browser isn't enough —
+# arkenfox + most setups have "restore previous session" on by default,
+# so reopening Firefox would put you right back into Gmail / GitHub /
+# etc. Stop Firefox cleanly, then shred the sessionstore files so a
+# fresh launch starts logged out.
+if pgrep -x firefox >/dev/null 2>&1; then
+    pkill -SIGTERM -x firefox 2>/dev/null || true
+    # Give Firefox up to 3s to flush + exit cleanly; SIGKILL otherwise.
+    for _ in 1 2 3 4 5 6; do
+        pgrep -x firefox >/dev/null 2>&1 || break
+        sleep 0.5
+    done
+    pgrep -x firefox >/dev/null 2>&1 && pkill -KILL -x firefox 2>/dev/null
+fi
+# Shred sessionstore + recovery files across all profiles.
+for profile in "$HOME/.mozilla/firefox/"*.default* "$HOME/.mozilla/firefox/"*.default-release; do
+    [[ -d "$profile" ]] || continue
+    for f in \
+        "$profile/sessionstore.jsonlz4" \
+        "$profile/sessionstore-backups/recovery.jsonlz4" \
+        "$profile/sessionstore-backups/recovery.baklz4" \
+        "$profile/sessionstore-backups/previous.jsonlz4"; do
+        [[ -f "$f" ]] || continue
+        if command -v shred >/dev/null 2>&1; then
+            shred -uz "$f" 2>/dev/null || rm -f "$f" 2>/dev/null
+        else
+            rm -f "$f" 2>/dev/null
+        fi
+    done
+done
+
 # 3. nvim: only kill instances whose cwd is under $HOME/code (where
 #    FoxML projects live). A bare `pkill nvim` would kill an unrelated
 #    nvim session the user has open elsewhere (notes, journal, etc.)

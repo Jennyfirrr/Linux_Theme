@@ -2103,6 +2103,55 @@ net.ipv6.conf.default.accept_source_route = 0
 # really have on a laptop.
 net.core.bpf_jit_harden = 2
 fs.suid_dumpable                 = 0
+
+# ── Extreme-hardening additions ──────────────────────────────────
+# perf_event_paranoid = 3 — block unprivileged use of the perf subsystem
+# entirely. Closes a known kernel-address-leak / side-channel surface.
+# perf still works for root + CAP_PERFMON; only non-root unprivileged
+# calls are blocked. Costs ~nothing on a personal laptop.
+kernel.perf_event_paranoid       = 3
+
+# kexec_load_disabled = 1 — prevent loading a new kernel image at runtime
+# via kexec_load(). Closes the "kexec bootkit" path where an attacker
+# with root could swap the running kernel without rebooting through
+# UEFI / Secure Boot. One-way ratchet: once set, can't be undone until
+# next boot.
+kernel.kexec_load_disabled       = 1
+
+# Explicit forwarding-off. Default is usually 0 but pin it: this is a
+# laptop, not a router. Prevents accidental misconfig turning the host
+# into an open relay.
+net.ipv4.ip_forward              = 0
+net.ipv6.conf.all.forwarding     = 0
+net.ipv6.conf.default.forwarding = 0
+
+# Drop IPv6 router advertisements — we don't need stateless autoconfig
+# on a personal machine, and accepting RAs is a rogue-router attack
+# vector on hostile networks (cafés, dorm WiFi).
+net.ipv6.conf.all.accept_ra      = 0
+net.ipv6.conf.default.accept_ra  = 0
+
+# Close the TCP-timestamps uptime fingerprint leak. Tiny info disclosure,
+# defaults to on, no downside on a desktop client.
+net.ipv4.tcp_timestamps          = 0
+
+# vm.unprivileged_userfaultfd = 0 — close the userfaultfd local-privesc
+# vector (CVE-2016-3070 + several since). Only root can use userfaultfd
+# now; no real-world userspace tool on a desktop needs it.
+vm.unprivileged_userfaultfd      = 0
+
+# dev.tty.ldisc_autoload = 0 — prevent unprivileged users from auto-
+# loading TTY line discipline modules (historical local-privesc surface,
+# e.g. CVE-2020-14381).
+dev.tty.ldisc_autoload           = 0
+
+# FS protections — Yama-style hardening of hardlink, symlink, FIFO, and
+# regular-file follow semantics in world-writable dirs (e.g. /tmp).
+# Closes the "TOCTOU symlink races" class of local exploits.
+fs.protected_hardlinks           = 1
+fs.protected_symlinks            = 1
+fs.protected_fifos               = 2
+fs.protected_regular             = 2
 EOF
 )"
 
@@ -2201,6 +2250,30 @@ EOF
                 && echo "  firejail symlinks applied (firefox now runs sandboxed)"
         else
             echo "  • firejail already wired for firefox"
+        fi
+
+        # 3. Plug the Firejail DNS leak. By default, firejail-wrapped
+        # Firefox can fall back to whatever DNS its sandbox sees — which
+        # may bypass our systemd-resolved DoH setup if the sandbox has
+        # its own /etc/resolv.conf. Pin DNS to 127.0.0.53 (resolved's
+        # stub listener) via a user-local profile override so all DNS
+        # queries route through DoH regardless.
+        local firejail_dir="$HOME/.config/firejail"
+        local firejail_override="$firejail_dir/firefox.local"
+        mkdir -p "$firejail_dir"
+        if [[ ! -f "$firejail_override" ]] || ! grep -q '^# foxml-managed' "$firejail_override"; then
+            cat > "$firejail_override" <<'EOF'
+# foxml-managed — Firejail Firefox overrides.
+# Pins DNS to 127.0.0.53 (systemd-resolved stub) so the sandbox can't
+# fall back to a non-DoH resolver. Without this, DNS queries from
+# inside the sandbox can bypass our --privacy module's DoH config.
+dns 127.0.0.53
+# Belt + suspenders: route a second resolver entry as backup.
+dns 127.0.0.1
+EOF
+            echo "  + firejail firefox.local override (DNS pinned to 127.0.0.53 for DoH)"
+        else
+            echo "  • firejail firefox.local already configured"
         fi
     fi
 
