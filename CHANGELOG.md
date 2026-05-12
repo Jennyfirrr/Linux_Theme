@@ -4,6 +4,19 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-12 — v2.6.0
+
+### Security Update — Hardened SSH & Agent Protection
+A cumulative security release focused on protecting local credentials and ensuring a reliable SSH environment.
+
+- **Automated SSH Passphrase Protection:** `install.sh` now enforces passphrase protection for `~/.ssh/id_ed25519`. On new installs, it auto-generates a strong 40-char passphrase and stashes it at `~/.config/foxml/ssh-passphrase.txt` (0600) for the user to move to a manager. `fox doctor` now warns if a key is passphraseless or if the plaintext stash remains on disk.
+- **SSH Agent Hijack Prevention:** Updated the installer to mask newer `gnome-keyring-daemon` systemd units (`.service` and `.socket`). This prevents "limited" systemd-started daemons from winning the race against Hyprland's full-component agent, fixing the "Error connecting to agent" issue.
+- **SSH De-jailing:** Removed the restrictive Firejail wrapper from the `ssh` command. The default sandbox was isolating `ssh` from system agents and causing `Memfd` / GTK crashes during passphrase prompts. Restoring native access ensures reliable agent forwarding and stable UI prompts.
+- **Enhanced Security Audits:** `fox doctor` and `fox sec` now include checks for kernel hardening sysctls, `auditd` honeypot rules, and `usbguard` status.
+- **Slack Dispatch Support:** Added Slack incoming-webhook support to `fox-dispatch` for phone alerts.
+
+---
+
 ## 2026-05-11 — v2.5.6
 
 ### `fox-doctor` diagnostic + `install.sh` treesitter parser rebuild
