@@ -1123,21 +1123,33 @@ install_endlessh_tarpit() {
             echo "  ! endlessh needs an AUR helper (yay or paru) — skipping"
             return 0
         fi
-        echo "  Installing endlessh from AUR..."
+        echo "  Installing endlessh from AUR (makepkg build, ~30-60s)..."
         local _installed=0
         for pkg in endlessh endlessh-git; do
-            # Probe AUR first; some package names don't exist anymore.
+            # Probe AUR first.
             if $aur -Si "$pkg" &>/dev/null; then
-                if $aur -S --needed --noconfirm "$pkg" >/dev/null 2>&1; then
+                echo "    → building $pkg..."
+                # DON'T redirect output — silent yay during a 30-60s
+                # makepkg build looks like a frozen install. Pipe
+                # through a 4-space indent so it visually nests under
+                # the foxml_section header. Last 8 lines of output are
+                # kept in /tmp/foxml-aur.log on failure for debugging.
+                if $aur -S --needed --noconfirm "$pkg" 2>&1 \
+                        | tee /tmp/foxml-aur.log \
+                        | sed 's/^/    /' \
+                        ; then
                     _installed=1
                     echo "  + endlessh installed via $aur ($pkg)"
+                    rm -f /tmp/foxml-aur.log
                     break
                 fi
             fi
         done
         if (( ! _installed )); then
-            echo "  ! AUR install of endlessh failed (likely sudo timeout during makepkg)"
-            echo "    workaround: manually run: $aur -S endlessh   (then re-run fox install)"
+            echo "  ! AUR install of endlessh failed"
+            echo "    last 8 lines of build log:"
+            tail -8 /tmp/foxml-aur.log 2>/dev/null | sed 's/^/      /'
+            echo "    workaround: $aur -S endlessh   (then re-run fox install)"
             return 0
         fi
     fi
