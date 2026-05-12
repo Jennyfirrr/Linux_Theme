@@ -1371,6 +1371,17 @@ install_iommu() {
     local iommu_args
     if [[ "$vendor" == "intel" ]]; then iommu_args="intel_iommu=on iommu=pt"; else iommu_args="amd_iommu=on iommu=pt"; fi
 
+    # Append kernel.lockdown=integrity. This restricts what root can
+    # do AT the kernel level — blocks loading unsigned modules,
+    # /dev/kmem writes, kexec to unsigned kernels, raw I/O port
+    # access, etc. Even a root-level exploit can't drop a rootkit
+    # or live-patch the running kernel after this is on. Major
+    # rootkit barrier; effectively turns root into "almost-root."
+    # `integrity` mode allows reading kernel data (less strict than
+    # `confidentiality` which blocks even /proc/kallsyms — that's a
+    # step further but breaks some debug tooling).
+    iommu_args="$iommu_args lockdown=integrity"
+
     if sudo grep -q "$iommu_args" "$cmdline_file" 2>/dev/null; then
         echo "  • IOMMU already enabled in $cmdline_file"
         return 0
@@ -1417,6 +1428,30 @@ EOF
         fi
     fi
     sudo systemctl daemon-reexec 2>/dev/null || true
+}
+
+# Hardened makepkg CFLAGS — any AUR build done after this is compiled
+# with stack protector, FORTIFY_SOURCE, PIE, control-flow-integrity.
+# Doesn't help the system pacman binaries (those are pre-compiled by
+# Arch's builders) but DOES protect every AUR package the user builds
+# after install (knockd, fwknop, ollama-bin builds-from-source paths,
+# etc.). Drop-in pattern means we don't trample the user's customisations.
+install_makepkg_hardening() {
+    local drop=/etc/makepkg.conf.d/99-foxml-hardening.conf
+    sudo install -d /etc/makepkg.conf.d 2>/dev/null
+    if [[ ! -f "$drop" ]] || ! sudo grep -q '^# foxml-managed' "$drop" 2>/dev/null; then
+        sudo tee "$drop" >/dev/null <<'EOF'
+# foxml-managed — hardened CFLAGS/LDFLAGS for AUR builds.
+# Revert: sudo rm /etc/makepkg.conf.d/99-foxml-hardening.conf
+CFLAGS="$CFLAGS -D_FORTIFY_SOURCE=3 -fstack-protector-strong -fcf-protection -fPIE -fstack-clash-protection"
+CXXFLAGS="$CXXFLAGS -D_FORTIFY_SOURCE=3 -fstack-protector-strong -fcf-protection -fPIE -fstack-clash-protection"
+LDFLAGS="$LDFLAGS -Wl,-z,relro -Wl,-z,now -Wl,-z,noexecstack -Wl,--as-needed -pie"
+DEBUG_CFLAGS="$DEBUG_CFLAGS -fno-omit-frame-pointer"
+EOF
+        echo "  + makepkg hardening drop-in (FORTIFY_SOURCE=3 + stack-protector + CFI + PIE + RELRO)"
+    else
+        echo "  • makepkg hardening already present"
+    fi
 }
 
 install_ollama_hardening() {

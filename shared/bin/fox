@@ -168,6 +168,18 @@ case "$1" in
         shift
         exec fox-honey "$@"
         ;;
+    audit-timer)
+        shift
+        exec fox-audit-timer "$@"
+        ;;
+    build-verify)
+        shift
+        exec fox-build-verify "$@"
+        ;;
+    allowlist)
+        shift
+        exec fox-allowlist "$@"
+        ;;
     sec|security)
         shift
         exec fox-sec "$@"
@@ -243,6 +255,9 @@ case "$1" in
         echo "  proximity        Bluetooth proximity auto-lock (--setup / --status / --disable)"
         echo "  backup           GPG-encrypted tar of opt-in config (--list / --restore)"
         echo "  honey            Plant fake-credential honeytokens in repo dirs (audited)"
+        echo "  audit-timer      Weekly fox doctor drift check + phone alert (--install)"
+        echo "  build-verify     Reproducible-build record/verify for C++ projects"
+        echo "  allowlist        fapolicyd executable allowlist (--enable / --enforce / --learn)"
         echo "  sec              Unified security dashboard (alerts, posture, bans, listeners, failed auth)"
         echo ""
         echo "Per-command help: ${0##*/} help <command>   (e.g. fox help dispatch)"

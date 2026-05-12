@@ -1511,6 +1511,12 @@ if $INSTALL_HIDEPID; then
     echo ""
     foxml_section "hidepid — hide other users' processes in /proc"
     install_hidepid
+
+if $INSTALL_SECURITY; then
+    echo ""
+    foxml_section "Hardened makepkg CFLAGS — protect future AUR builds"
+    install_makepkg_hardening
+fi
 fi
 if $INSTALL_NOEXEC_TMP; then
     echo ""

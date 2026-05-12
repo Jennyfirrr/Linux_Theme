@@ -48,6 +48,31 @@ _refresh_list() {
         echo "${C_RED}download failed${C_RST}" >&2
         rm -f "$tmp"; return 1
     fi
+
+    # Hash-pin guard. If the new feed's SHA256 is >5% smaller than the
+    # last-applied feed, refuse to apply. Catches a maintainer
+    # compromise that silently sinkholes critical domains
+    # (archlinux.org, fox-dispatch webhook hosts, etc.) by dropping
+    # most of the legit blocklist content.
+    local new_lines old_lines
+    new_lines=$(wc -l <"$tmp")
+    if [[ -f "$BLOCKLIST" ]]; then
+        old_lines=$(wc -l <"$BLOCKLIST")
+        if (( old_lines > 1000 )); then
+            # Allow growth always; only flag shrinkage >5%.
+            local floor=$(( old_lines * 95 / 100 ))
+            if (( new_lines < floor )); then
+                echo "${C_RED}⚠ feed shrank by >5% ($old_lines → $new_lines lines)${C_RST}" >&2
+                echo "  refusing to splice — possible upstream tampering" >&2
+                echo "  override:  FOX_DNS_SHIELD_TRUST_SHRINK=1 fox dns-shield --refresh" >&2
+                if [[ "${FOX_DNS_SHIELD_TRUST_SHRINK:-}" != "1" ]]; then
+                    rm -f "$tmp"
+                    return 1
+                fi
+                echo "  ${C_YEL}(override accepted)${C_RST}" >&2
+            fi
+        fi
+    fi
     # Extract just the blocked domains (one per line). StevenBlack format:
     #   0.0.0.0 example.com
     # Skip comments + localhost entries.
