@@ -394,24 +394,32 @@ JSON
         echo ""
     fi
 
-    # Hyprland modules.
+    # Hyprland modules — pre-filter the skip list so the progress bar's
+    # $_total reflects what we'll actually install. Previously the bar
+    # showed 9/12 = 75% because theme.conf / nvidia.conf / (sometimes
+    # existing) monitors.conf got skipped via `continue` but they were
+    # still counted in $_total. Now we build the list of mods we'll
+    # install FIRST, then iterate that fixed-size list.
     if [[ -d "$SCRIPT_DIR/shared/hyprland_modules" ]]; then
         mkdir -p ~/.config/hypr/modules
-        local _n=0 _total
-        _total=$(find "$SCRIPT_DIR/shared/hyprland_modules/" -maxdepth 1 -name '*.conf' 2>/dev/null | wc -l)
+        local _mods=()
         for mod in "$SCRIPT_DIR/shared/hyprland_modules/"*.conf; do
             [[ -f "$mod" ]] || continue
-            local basename="$(basename "$mod")"
-            [[ "$basename" == "theme.conf" ]] && continue
-            [[ "$basename" == "nvidia.conf" ]] && continue
-            if [[ "$basename" == "monitors.conf" && -f "$HOME/.config/hypr/modules/monitors.conf" ]]; then
+            local _name="$(basename "$mod")"
+            [[ "$_name" == "theme.conf" ]] && continue
+            [[ "$_name" == "nvidia.conf" ]] && continue
+            if [[ "$_name" == "monitors.conf" && -f "$HOME/.config/hypr/modules/monitors.conf" ]]; then
                 continue
             fi
-            backup_and_copy "$mod" "$HOME/.config/hypr/modules/$basename"
+            _mods+=("$mod")
+        done
+        local _total=${#_mods[@]} _n=0
+        for mod in "${_mods[@]}"; do
+            backup_and_copy "$mod" "$HOME/.config/hypr/modules/$(basename "$mod")"
             _n=$((_n+1))
             command -v foxml_progress >/dev/null && foxml_progress "$_n" "$_total" "Installing Hyprland modules"
         done
-        echo ""
+        (( _total > 0 )) && echo ""
     fi
 
     # ReGreet (login screen) — stage files for install_greetd() to consume.
