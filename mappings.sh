@@ -1048,12 +1048,53 @@ EOF
 
         # Splice the action into jail.local's [sshd] section if not already.
         local jail_local=/etc/fail2ban/jail.local
-        if [[ -f "$jail_local" ]] && ! grep -q '^action.*foxml-dispatch' "$jail_local"; then
-            # Append an action= line under [sshd]. fail2ban combines
-            # multiple action= lines so we don't trample the default.
+        if [[ -f "$jail_local" ]]; then
+            # Self-heal: strip every existing foxml-dispatch action
+            # stanza (the previous version's idempotency grep was
+            # broken — it looked for `^action.*foxml-dispatch` on one
+            # line, but the inserted text spans two: `action = ...`
+            # on one line + `         foxml-dispatch` as a continuation
+            # on the next. The grep never matched on re-runs, so we
+            # appended a duplicate stanza every time, and fail2ban-
+            # client -t fails with "option 'action' in section 'sshd'
+            # already exists".
+            #
+            # Approach: use awk to remove every "action = %(action_)s"
+            # line that's followed by a "foxml-dispatch" continuation,
+            # then re-insert exactly one stanza after the [sshd] header.
+            local tmp; tmp=$(mktemp)
+            sudo awk '
+                # On a fresh "action = %(action_)s" line, peek ahead:
+                # if the next line is the foxml-dispatch continuation,
+                # skip both. Otherwise, print normally.
+                /^action[[:space:]]*=[[:space:]]*%\(action_\)s[[:space:]]*$/ {
+                    getline next_line
+                    if (next_line ~ /^[[:space:]]+foxml-dispatch[[:space:]]*$/) {
+                        next   # skip both this line and the continuation
+                    } else {
+                        print
+                        print next_line
+                        next
+                    }
+                }
+                { print }
+            ' "$jail_local" | sudo tee "$tmp" >/dev/null
+            sudo mv "$tmp" "$jail_local"
+            sudo chmod 644 "$jail_local"
+
+            # Now insert exactly one stanza after the [sshd] header.
             sudo sed -i '/^\[sshd\]/a action = %(action_)s\n         foxml-dispatch' "$jail_local"
-            sudo systemctl reload fail2ban >/dev/null 2>&1 || true
-            echo "  + jail.local sshd → +foxml-dispatch action"
+            echo "  + jail.local sshd → exactly one foxml-dispatch action (deduped on re-run)"
+
+            # Validate before restart — if -t fails, surface loud + leave
+            # the daemon as-is rather than restart into a broken config.
+            if sudo fail2ban-client -t >/dev/null 2>&1; then
+                sudo systemctl reload fail2ban >/dev/null 2>&1 \
+                    || sudo systemctl restart fail2ban >/dev/null 2>&1
+            else
+                echo "  ! fail2ban-client -t fails — leaving daemon as-is"
+                echo "    diagnose: sudo fail2ban-client -t"
+            fi
         fi
     else
         echo "  • fail2ban or fox-dispatch missing — skipping ban-hook"
