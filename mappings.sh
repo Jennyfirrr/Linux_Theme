@@ -936,15 +936,51 @@ install_ollama_hardening() {
     fi
     local drop_in=/etc/systemd/system/ollama.service.d
     sudo install -d "$drop_in" || { echo "  ! sudo install -d failed"; return 1; }
-    sudo tee "$drop_in/foxml-hardening.conf" >/dev/null <<'EOF'
+
+    # Build ReadWritePaths dynamically — listing a missing dir causes
+    # systemd to fail mount-namespace setup with status=226/NAMESPACE,
+    # silently bricking ollama. Only include paths that actually exist.
+    local rw_paths=""
+    for p in /usr/share/ollama /var/lib/ollama "${OLLAMA_MODELS:-}"; do
+        [[ -n "$p" && -d "$p" ]] && rw_paths+="$p "
+    done
+    rw_paths="${rw_paths% }"
+
+    # Detect a discrete GPU. PrivateDevices=true is the strongest sandbox
+    # but it strips access to /dev/nvidia* / /dev/dri/*, killing GPU
+    # inference. Auto-relax to PrivateDevices=false on GPU systems and
+    # explicitly DeviceAllow only the device classes ollama needs.
+    local has_gpu="no"
+    local device_allow=""
+    if compgen -G '/dev/nvidia*' >/dev/null 2>&1; then
+        has_gpu="nvidia"
+        device_allow="DeviceAllow=/dev/nvidia0 rw
+DeviceAllow=/dev/nvidiactl rw
+DeviceAllow=/dev/nvidia-modeset rw
+DeviceAllow=/dev/nvidia-uvm rw
+DeviceAllow=/dev/nvidia-uvm-tools rw"
+    elif [[ -d /dev/dri ]]; then
+        has_gpu="amd-or-intel"
+        device_allow="DeviceAllow=char-drm rw"
+    fi
+
+    local private_devices="true"
+    [[ "$has_gpu" != "no" ]] && private_devices="false"
+
+    sudo tee "$drop_in/foxml-hardening.conf" >/dev/null <<EOF
 # foxml-managed — systemd sandbox for ollama.service.
 # Revert: sudo rm /etc/systemd/system/ollama.service.d/foxml-hardening.conf
+#
+# Auto-tuned for this machine:
+#   GPU:              ${has_gpu}
+#   ReadWritePaths:   ${rw_paths:-<none — ollama will use defaults>}
+#   PrivateDevices:   ${private_devices}  (false on GPU systems so /dev/nvidia* are visible)
 [Service]
 NoNewPrivileges=true
 ProtectHome=read-only
 ProtectSystem=strict
 PrivateTmp=true
-PrivateDevices=true
+PrivateDevices=${private_devices}
 ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectKernelLogs=true
@@ -955,16 +991,27 @@ RestrictRealtime=true
 LockPersonality=true
 MemoryDenyWriteExecute=false
 SystemCallArchitectures=native
-# Allow ollama to read+write its model store (default /usr/share/ollama).
-# If you've relocated OLLAMA_MODELS, append that path here too.
-ReadWritePaths=/usr/share/ollama /var/lib/ollama
+${device_allow}
+ReadWritePaths=${rw_paths}
 EOF
     sudo systemctl daemon-reload >/dev/null 2>&1 || true
     if systemctl is-active --quiet ollama; then
-        sudo systemctl restart ollama >/dev/null 2>&1 \
-            && echo "  ollama hardened + restarted (ProtectHome=read-only, etc.)"
+        if sudo systemctl restart ollama >/dev/null 2>&1; then
+            # Brief wait + sanity check the restart actually stayed up;
+            # status=226/NAMESPACE shows up here if a directive is wrong.
+            sleep 2
+            if systemctl is-active --quiet ollama; then
+                echo "  ollama hardened + restarted (PrivateDevices=${private_devices}, ${rw_paths// /, } RW)"
+            else
+                echo "  ! ollama failed to start after hardening apply — reverting drop-in"
+                sudo rm -f "$drop_in/foxml-hardening.conf"
+                sudo systemctl daemon-reload >/dev/null 2>&1 || true
+                sudo systemctl restart ollama >/dev/null 2>&1 || true
+                echo "    investigate with: systemctl status ollama -l"
+            fi
+        fi
     else
-        echo "  ollama hardening dropped in (will apply on next start)"
+        echo "  ollama hardening dropped in (will apply on next start; tuned for ${has_gpu} GPU)"
     fi
     return 0
 }
