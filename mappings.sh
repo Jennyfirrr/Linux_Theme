@@ -1008,13 +1008,27 @@ install_keyring_full_components() {
 # the hooks fall back to notify-send (local notification) so they're
 # still useful even without phone alerts configured.
 install_dispatch_hooks() {
-    # 1. fail2ban action drop-in. fail2ban runs as root — it calls
-    # `sudo -u $USER fox-dispatch …` so the alert uses the user's webhook
-    # config. Tight env: only PATH inherited.
+    # 0. Install the foxml-fail2ban-notify helper script to /usr/local/bin
+    # so the fail2ban daemon (running as root) can call it. The script
+    # does the geo + whois enrichment + threat-log append + fox-dispatch
+    # call, all in user-friendly bash that fail2ban's config parser
+    # doesn't have to interpret.
+    if [[ -f "$SCRIPT_DIR/shared/bin/foxml-fail2ban-notify" ]]; then
+        sudo install -m 0755 "$SCRIPT_DIR/shared/bin/foxml-fail2ban-notify" \
+            /usr/local/bin/foxml-fail2ban-notify 2>/dev/null \
+            && echo "  + foxml-fail2ban-notify installed to /usr/local/bin/" \
+            || echo "  ! couldn't install fail2ban-notify helper (sudo cold?)"
+    fi
+
+    # 1. fail2ban action drop-in. The action.d entry is now a clean
+    # one-liner that calls the helper script above. Previous version
+    # embedded the entire bash payload inline, which broke fail2ban's
+    # config parser and refused to start the service.
     if pacman -Qi fail2ban &>/dev/null && command -v fox-dispatch >/dev/null 2>&1; then
         local action="/etc/fail2ban/action.d/foxml-dispatch.conf"
-        if [[ ! -f "$action" ]] || ! grep -q '^# foxml-managed' "$action"; then
-            sudo tee "$action" >/dev/null <<EOF
+        # Always rewrite to make sure we get the clean helper-script
+        # form (idempotent — re-writes identical content on re-runs).
+        sudo tee "$action" >/dev/null <<EOF
 # foxml-managed — fires fox-dispatch on every fail2ban ban.
 # Revert: sudo rm $action and remove "action = foxml-dispatch" from jail.local.
 [Definition]
@@ -1022,9 +1036,14 @@ actionban  = /usr/local/bin/foxml-fail2ban-notify <ip> <name> <failures> ${USER}
 actionunban = /bin/true
 [Init]
 EOF
-            echo "  + fail2ban action.d/foxml-dispatch.conf installed"
+        echo "  + fail2ban action.d/foxml-dispatch.conf written (clean helper-script form)"
+        # Validate the new config and surface failures loudly.
+        if sudo fail2ban-client -t >/dev/null 2>&1; then
+            sudo systemctl restart fail2ban >/dev/null 2>&1 \
+                && echo "    fail2ban restarted with new action — phone alerts live" \
+                || echo "    ! fail2ban restart failed — check: systemctl status fail2ban"
         else
-            echo "  • fail2ban foxml-dispatch action already present"
+            echo "    ! fail2ban config-test failed — diagnose: sudo fail2ban-client -t"
         fi
 
         # Splice the action into jail.local's [sshd] section if not already.
