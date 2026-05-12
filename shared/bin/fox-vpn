@@ -70,11 +70,119 @@ _status() {
     _list
 }
 
+_import() {
+    local src="$1"
+    [[ -f "$src" ]] || { echo "${C_RED}file not found: $src${C_RST}" >&2; return 1; }
+    # Sanity-check it looks like a WG config.
+    if ! grep -qE '^\[(Interface|Peer)\]' "$src"; then
+        echo "${C_RED}$src doesn't look like a WireGuard config (no [Interface]/[Peer] section)${C_RST}" >&2
+        return 1
+    fi
+    _check_wg || return 1
+    # Strip .conf if user passed it; we re-add.
+    local name
+    name=$(basename "$src" .conf)
+    # Sanitize: alphanumerics + dash + underscore only.
+    name=$(tr -cd 'A-Za-z0-9_-' <<<"$name")
+    [[ -z "$name" ]] && { echo "${C_RED}empty/invalid name${C_RST}" >&2; return 1; }
+    local dest="$CONF_DIR/${name}.conf"
+    if sudo test -f "$dest"; then
+        local r
+        read -rp "  $dest exists. Overwrite? [y/N] " -n 1 -r r; echo
+        [[ "$r" =~ ^[Yy]$ ]] || { echo cancelled; return 0; }
+    fi
+    sudo install -d -m 0700 "$CONF_DIR"
+    sudo install -m 0600 -o root -g root "$src" "$dest"
+    echo "${C_GRN}✓ imported as $name${C_RST}"
+    echo "  ${C_DIM}bring up:       fox vpn up $name${C_RST}"
+    echo "  ${C_DIM}kill-switch on: fox vpn killswitch on $name${C_RST}"
+}
+
+_import_url() {
+    local url="$1"
+    [[ "$url" =~ ^https?:// ]] || { echo "${C_RED}URL must be http(s)://${C_RST}" >&2; return 1; }
+    local tmp
+    tmp=$(mktemp --suffix=.conf)
+    if ! curl -fsSL -m 30 "$url" -o "$tmp"; then
+        echo "${C_RED}download failed${C_RST}" >&2
+        rm -f "$tmp"; return 1
+    fi
+    chmod 600 "$tmp"
+    local name
+    read -rp "  name to import as (no extension): " name
+    name=$(tr -cd 'A-Za-z0-9_-' <<<"$name")
+    mv "$tmp" "/tmp/${name}.conf"
+    _import "/tmp/${name}.conf"
+    rm -f "/tmp/${name}.conf"
+}
+
+_new() {
+    local name="$1"
+    _check_wg || return 1
+    name=$(tr -cd 'A-Za-z0-9_-' <<<"$name")
+    [[ -z "$name" ]] && { echo "${C_RED}name required${C_RST}" >&2; return 1; }
+    local dest="$CONF_DIR/${name}.conf"
+    if sudo test -f "$dest"; then echo "${C_RED}$dest already exists${C_RST}" >&2; return 1; fi
+
+    # Generate keypair.
+    local privkey pubkey
+    privkey=$(wg genkey)
+    pubkey=$(wg pubkey <<<"$privkey")
+
+    echo "${C_BOLD:-}Creating $name — fill in the peer details:${C_RST:-}"
+    local addr peer_pub peer_endpoint allowed_ips dns
+    read -rp "  Your tunnel IP/CIDR (e.g. 10.66.66.2/32): " addr
+    read -rp "  Peer (server) public key:                 " peer_pub
+    read -rp "  Peer (server) endpoint (host:port):       " peer_endpoint
+    read -rp "  AllowedIPs (e.g. 0.0.0.0/0,::/0 for full): " allowed_ips
+    read -rp "  DNS to use over the tunnel (blank = none): " dns
+
+    sudo install -d -m 0700 "$CONF_DIR"
+    {
+        echo "[Interface]"
+        echo "PrivateKey = $privkey"
+        echo "Address = ${addr:-10.66.66.2/32}"
+        [[ -n "$dns" ]] && echo "DNS = $dns"
+        echo ""
+        echo "[Peer]"
+        echo "PublicKey = $peer_pub"
+        echo "Endpoint = $peer_endpoint"
+        echo "AllowedIPs = ${allowed_ips:-0.0.0.0/0,::/0}"
+        echo "PersistentKeepalive = 25"
+    } | sudo tee "$dest" >/dev/null
+    sudo chmod 600 "$dest"
+    sudo chown root:root "$dest"
+
+    echo
+    echo "${C_GRN}✓ written to $dest${C_RST}"
+    echo "  ${C_PEACH:-}YOUR public key (give to the server admin):${C_RST:-} $pubkey"
+    echo "  ${C_DIM}bring up:    fox vpn up $name${C_RST}"
+    echo "  ${C_DIM}kill-switch: fox vpn killswitch on $name${C_RST}"
+}
+
+_delete() {
+    local name="$1"
+    name=$(tr -cd 'A-Za-z0-9_-' <<<"$name")
+    local f="$CONF_DIR/${name}.conf"
+    if sudo test -f "$f"; then
+        # Down it first if active.
+        sudo wg-quick down "$name" 2>/dev/null || true
+        sudo rm -f "$f"
+        echo "${C_GRN}✓ deleted $f${C_RST}"
+    else
+        echo "${C_YEL}no such config: $f${C_RST}"
+    fi
+}
+
 case "${1:-}" in
     ""|status)   _status ;;
     list)        _list ;;
     up)          [[ -n "${2:-}" ]] && _up   "$2" || { echo "usage: fox vpn up <iface>"; exit 2; } ;;
     down)        [[ -n "${2:-}" ]] && _down "$2" || { echo "usage: fox vpn down <iface>"; exit 2; } ;;
+    import)      [[ -n "${2:-}" ]] && _import "$2" || { echo "usage: fox vpn import <file.conf>"; exit 2; } ;;
+    import-url)  [[ -n "${2:-}" ]] && _import_url "$2" || { echo "usage: fox vpn import-url <https://...>"; exit 2; } ;;
+    new)         [[ -n "${2:-}" ]] && _new "$2" || { echo "usage: fox vpn new <name>"; exit 2; } ;;
+    delete|rm)   [[ -n "${2:-}" ]] && _delete "$2" || { echo "usage: fox vpn delete <name>"; exit 2; } ;;
     killswitch)
         case "${2:-}" in
             on|arm)     _killswitch_on   "${3:-wg0}" ;;
