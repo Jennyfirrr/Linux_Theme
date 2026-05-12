@@ -73,6 +73,9 @@ _status() {
     # vpn
     if sudo -n wg 2>/dev/null | grep -q 'interface:'; then _ok "vpn          wireguard up"
     else _skip "vpn          no active wireguard iface"; fi
+    # proximity
+    if systemctl --user is-active --quiet fox-proximity.service 2>/dev/null; then _ok "proximity    bluetooth auto-lock armed"
+    else _skip "proximity    not configured (fox proximity --setup)"; fi
 }
 
 _arm() {
@@ -147,6 +150,15 @@ _arm() {
         if _yn "Enable egress lockdown (default-deny outgoing with allowlist)? [y/N]"; then
             fox-firewall lockdown
         else _skip "skipped (apps using non-standard ports may break — opt in later if needed)"; fi
+    fi
+
+    _step "proximity (Bluetooth auto-lock)"
+    if systemctl --user is-active --quiet fox-proximity.service 2>/dev/null; then
+        _ok "already armed"
+    else
+        if _yn "Set up Bluetooth proximity lock now? (needs a paired phone/device) [y/N]"; then
+            fox-proximity --setup
+        else _skip "skipped (run later: fox proximity --setup)"; fi
     fi
 
     if (( heavy )); then

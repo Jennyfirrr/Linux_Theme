@@ -156,6 +156,10 @@ case "$1" in
         shift
         exec fox-arm "$@"
         ;;
+    proximity)
+        shift
+        exec fox-proximity "$@"
+        ;;
     sec|security)
         shift
         exec fox-sec "$@"
@@ -228,6 +232,7 @@ case "$1" in
         echo "  snitch           OpenSnitch per-app outbound firewall (--enable / --status / log)"
         echo "  honeypot         Cowrie SSH honeypot (--enable / --status / log)"
         echo "  arm              One-command lockdown — enable every opt-in defense interactively"
+        echo "  proximity        Bluetooth proximity auto-lock (--setup / --status / --disable)"
         echo "  sec              Unified security dashboard (alerts, posture, bans, listeners, failed auth)"
         echo ""
         echo "Per-command help: ${0##*/} help <command>   (e.g. fox help dispatch)"
