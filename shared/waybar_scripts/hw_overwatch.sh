@@ -88,9 +88,12 @@ new_roots=$(ps -eo pid,euser,etime,comm 2>/dev/null \
               if (n==2 && a[1]+0 == 0 && a[2]+0 < 30) print $4
            }' \
     | sort -u)
-# Strip known-ok ones.
+# Strip known-ok kernel + system noise. Kernel worker names look like
+# `kworker/5:1` or `kworker/5:1-events`, NOT bare `kworker` — exact-end
+# match was missing every single one. Same trap for ksoftirqd, rcu_*,
+# migration/* and the truncated systemd-userwor in ps comm.
 new_roots=$(echo "$new_roots" \
-    | grep -vE '^(sudo|polkitd|sshd|cron|systemd|kworker|kdmflush|udevd|systemd-userdbd|systemd-udevd|udevadm)$' \
+    | grep -vE '^(sudo|polkitd|sshd|cron|systemd[^[:space:]]*|kworker(/[^[:space:]]*)?|kdmflush[^[:space:]]*|udevd|udevadm|rcu_[^[:space:]]*|ksoftirqd[^[:space:]]*|migration[^[:space:]]*|irq/[^[:space:]]*)$' \
     | grep -v '^$')
 if [[ -n "$new_roots" ]]; then
     proc_findings="new root proc(s): $(echo "$new_roots" | head -3 | tr '\n' ',' | sed 's/,$//')"
