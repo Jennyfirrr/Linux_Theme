@@ -839,6 +839,31 @@ check_security() {
             ok "fox-firewall lockdown active (egress default deny)"
         fi
     fi
+
+    # SSH private key passphrase. A passphraseless ~/.ssh/id_ed25519 on an
+    # unencrypted disk is a live GitHub credential — anyone who reads the
+    # file gets push/delete access until the key is revoked. The probe:
+    # `ssh-keygen -y -P "" -f <key>` succeeds iff the key has no passphrase.
+    local _ssh_key="$HOME/.ssh/id_ed25519"
+    if [[ -f "$_ssh_key" ]]; then
+        if ssh-keygen -y -P "" -f "$_ssh_key" >/dev/null 2>&1; then
+            warn "SSH key $_ssh_key has no passphrase"
+            hint "fix: ssh-keygen -p -f $_ssh_key   (sets one without regenerating the key)"
+        else
+            ok "SSH key $_ssh_key passphrase-protected"
+        fi
+    fi
+
+    # Stash file from --yes installs. The installer writes the auto-
+    # generated SSH passphrase here so the user can move it into a
+    # password manager. If it's still on disk, that means it wasn't
+    # moved + shredded — and the plaintext lives next to the key it
+    # protects.
+    local _pp_stash="$HOME/.config/foxml/ssh-passphrase.txt"
+    if [[ -f "$_pp_stash" ]]; then
+        warn "SSH passphrase stash still on disk at $_pp_stash"
+        hint "move to password manager (e.g. pass insert ssh/id_ed25519) and: shred -u $_pp_stash"
+    fi
 }
 
 echo "FoxML Doctor — config sanity checks"

@@ -1903,6 +1903,94 @@ EOF
     fi
 
 # ─────────────────────────────────────────
+# SSH key passphrase guard — generate keys protected, retrofit existing
+# passphraseless keys. Handles the three cases the installer can land in:
+#   - no key:                       generate fresh with a passphrase
+#   - key exists, has passphrase:   no-op
+#   - key exists, passphraseless:   offer (interactive) or auto-set (--yes)
+# In --yes mode, a random 40-char alphanumeric passphrase is stashed at
+# ~/.config/foxml/ssh-passphrase.txt (0600) with instructions to move it
+# to a password manager (e.g. `pass insert ssh/id_ed25519`) and `shred -u`
+# the file. The plaintext stash file is the lesser evil compared to a
+# passphraseless on-disk key: it can be moved + destroyed in one minute;
+# the key alone is a live GitHub credential until revoked.
+_ensure_ssh_key_protected() {
+    local gh_user="${1:-}"
+    local key="$HOME/.ssh/id_ed25519"
+    local pp_file="$HOME/.config/foxml/ssh-passphrase.txt"
+
+    # _gen_passphrase: 40 chars, alphanumeric only — avoids shell-quoting
+    # surprises when the user copy-pastes into a password manager.
+    _gen_passphrase() {
+        LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 40
+    }
+
+    _stash_passphrase() {
+        local pp="$1"
+        mkdir -p "$(dirname "$pp_file")" && chmod 700 "$(dirname "$pp_file")"
+        ( umask 077; printf '%s\n' "$pp" > "$pp_file" )
+        chmod 600 "$pp_file"
+        echo "    !! SSH passphrase stored at $pp_file (perms 600)."
+        echo "    !! Move it to a password manager and then:"
+        echo "    !!   shred -u $pp_file"
+    }
+
+    # ── Path 1: no key yet ─────────────────────────────────────────
+    if [[ ! -f "$key" ]]; then
+        mkdir -p "$HOME/.ssh" && chmod 700 "$HOME/.ssh"
+        local ssh_email comment
+        ssh_email="$(git config --global user.email 2>/dev/null)"
+        comment="${ssh_email:-${gh_user}@$(hostname)}"
+
+        if [[ -t 0 ]] && ! ${ASSUME_YES:-false}; then
+            echo "    Generating SSH key (ed25519)..."
+            echo "    ssh-keygen will prompt for a passphrase — leave blank"
+            echo "    only if you really want a passphraseless on-disk key."
+            ssh-keygen -t ed25519 -f "$key" -C "$comment"
+        else
+            local pp
+            pp="$(_gen_passphrase)"
+            echo "    Generating SSH key (ed25519) with a random passphrase..."
+            ssh-keygen -t ed25519 -N "$pp" -f "$key" -C "$comment" -q
+            _stash_passphrase "$pp"
+        fi
+        echo "      Key: $key"
+        return 0
+    fi
+
+    # ── Path 2: key exists — check if it's passphraseless.
+    # `ssh-keygen -y -P "" -f <key>` succeeds iff the key has no passphrase.
+    if ! ssh-keygen -y -P "" -f "$key" >/dev/null 2>&1; then
+        return 0   # has a passphrase, all good
+    fi
+
+    echo "    ! $key has no passphrase."
+    echo "      Anyone who reads this file has your GitHub push access"
+    echo "      until the key is revoked."
+    if [[ -t 0 ]] && ! ${ASSUME_YES:-false}; then
+        read -rp "    Set a passphrase now? [Y/n] " -n 1 -r; echo
+        if [[ "$REPLY" =~ ^[Nn]$ ]]; then
+            echo "      Skipped — re-run install.sh or use: ssh-keygen -p -f $key"
+            return 0
+        fi
+        if ssh-keygen -p -f "$key"; then
+            echo "      ✓ passphrase set on $key"
+        else
+            echo "      ! passphrase change failed — re-run: ssh-keygen -p -f $key"
+        fi
+    else
+        local pp
+        pp="$(_gen_passphrase)"
+        if ssh-keygen -p -P "" -N "$pp" -f "$key" >/dev/null 2>&1; then
+            echo "      ✓ random passphrase set on $key"
+            _stash_passphrase "$pp"
+        else
+            echo "      ! could not set passphrase on $key — re-run interactively"
+        fi
+    fi
+}
+
+# ─────────────────────────────────────────
 # GitHub Workspace — opt-in
 # ─────────────────────────────────────────
 install_github_workspace() {
@@ -1958,17 +2046,15 @@ install_github_workspace() {
         [[ -n "$git_email" ]] && git config --global user.email "$git_email"
     fi
 
-    # 4b. SSH key for git@github.com:... clones (idempotent)
-    if [[ ! -f "$HOME/.ssh/id_ed25519" ]]; then
-        echo "    Generating SSH key (ed25519)..."
-        mkdir -p "$HOME/.ssh"
-        chmod 700 "$HOME/.ssh"
-        local ssh_email
-        ssh_email="$(git config --global user.email 2>/dev/null)"
-        ssh-keygen -t ed25519 -N "" -f "$HOME/.ssh/id_ed25519" \
-            -C "${ssh_email:-$gh_user@$(hostname)}" -q
-        echo "      Key: $HOME/.ssh/id_ed25519"
-    fi
+    # 4b. SSH key for git@github.com:... clones (idempotent).
+    # Three cases handled by _ensure_ssh_key_protected:
+    #   - no key:                   generate with passphrase
+    #   - key exists, has pp:       no-op
+    #   - key exists, passphraseless: offer to set a passphrase
+    # In --yes mode, a random 40-char passphrase is generated and stashed
+    # at ~/.config/foxml/ssh-passphrase.txt (0600) with instructions to
+    # move it to a password manager and shred the file.
+    _ensure_ssh_key_protected "$gh_user"
 
     # Upload pubkey to GitHub if not already registered there
     local pubkey_body
