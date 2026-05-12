@@ -161,24 +161,22 @@ window#waybar > box {
     color: #{{YELLOW}};
 }
 
+/* Sentry: inherit the standard @bubble background + @border from the
+   shared module rule. Differentiate severity ONLY via border color so
+   the widget keeps the same shape/feel as net_speed, cpu, etc. */
 #custom-foxml_sentry {
     color: #{{GREEN_BRIGHT}};
-    border: 1px solid rgba(122,171,136, 0.4);
-    text-shadow: 0 0 6px rgba(122,171,136, 0.35);
+    border: 1px solid rgba(122,171,136, 0.55);
 }
 
 #custom-foxml_sentry.warning {
     color: #{{YELLOW}};
-    border: 1px solid rgba(196,180,138, 0.5);
-    background-color: rgba(196,180,138, 0.08);
-    text-shadow: 0 0 6px rgba(196,180,138, 0.4);
+    border: 1px solid rgba(196,180,138, 0.6);
 }
 
 #custom-foxml_sentry.critical {
     color: #{{RED}};
-    border: 1px solid rgba(176,85,85, 0.6);
-    background-color: rgba(176,85,85, 0.18);
-    text-shadow: 0 0 8px rgba(176,85,85, 0.6);
+    border: 1px solid rgba(176,85,85, 0.7);
 }
 
 #custom-ai_status {

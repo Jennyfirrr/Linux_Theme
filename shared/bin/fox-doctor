@@ -404,6 +404,35 @@ check_multimonitor() {
     fi
 }
 
+check_fox_tools() {
+    # Pointer section — the deep tool-by-tool coverage lives in
+    # `fox sec` / `fox arm --status` / the waybar sentry widget.
+    # Doctor surfaces just whether the user has run them recently.
+    section "Fox security tools"
+    if command -v fox-sec >/dev/null 2>&1; then
+        ok "fox sec / fox arm --status available for full tool inventory"
+        hint "snapshot:  fox sec"
+        hint "gap list:  fox arm --status"
+    fi
+    # Quick at-a-glance via the sentry widget script (same JSON the bar consumes).
+    if [[ -x "$HOME/.config/waybar/scripts/foxml_sentry.sh" ]]; then
+        local widget
+        widget=$("$HOME/.config/waybar/scripts/foxml_sentry.sh" 2>/dev/null)
+        local class
+        class=$(jq -r '.class' <<<"$widget" 2>/dev/null)
+        local oks_count warns_count
+        oks_count=$(jq -r '.tooltip' <<<"$widget" 2>/dev/null | grep -oE 'Active protections \([0-9]+\)' | grep -oE '[0-9]+')
+        warns_count=$(jq -r '.tooltip' <<<"$widget" 2>/dev/null | grep -oE 'Warnings \([0-9]+\)' | grep -oE '[0-9]+')
+        case "$class" in
+            ok)       ok "sentry: ${oks_count:-?} active protections, no warnings" ;;
+            warning)  warn "sentry: ${warns_count:-?} warning(s), ${oks_count:-?} active";
+                      hint "details: fox arm --status" ;;
+            critical) fail "sentry: critical alert active";
+                      hint "details: fox sec --alerts" ;;
+        esac
+    fi
+}
+
 check_security() {
     section "Security baseline"
 
@@ -556,6 +585,7 @@ check_hyprland
 check_waybar
 check_multimonitor
 check_security
+check_fox_tools
 
 echo
 if (( FAILED > 0 )); then

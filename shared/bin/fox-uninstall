@@ -47,13 +47,41 @@ for b in "$HOME/.local/bin/"fox-* "$HOME/.local/bin/"fox \
 done
 shopt -u nullglob
 
-# 2. Systemd user services we install.
+# 2. Systemd user services we install. Covers every service installed
+# by the fox-* tool family — including the security-tool services
+# from the later additions.
 for svc in fox-monitor-watch.service fox-workspace-color-watch.service \
-           power-state-watcher.service wallpaper-rotate.service wallpaper-rotate.timer; do
+           power-state-watcher.service wallpaper-rotate.service wallpaper-rotate.timer \
+           foxml-focus-pulse.service foxml-arch-audit.timer \
+           fox-bouncer.service fox-tripwire.service fox-sentry-audit.service \
+           fox-proximity.service fox-etcwatch.path fox-etcwatch.service; do
     [[ -f "$HOME/.config/systemd/user/$svc" ]] || continue
     SERVICES+=("$svc")
     TARGETS+=("$HOME/.config/systemd/user/$svc")
 done
+
+# 2b. System-level files that fox tools dropped — only listed; we ask
+# the user to confirm because some are root-owned and require sudo.
+declare -a SYS_FILES=(
+    "/etc/sudoers.d/99-foxml-waybar"
+    "/etc/systemd/system/proc-hidepid.service"
+    "/etc/systemd/system/cowrie.service"
+    "/etc/systemd/system/ollama.service.d/foxml-hardening.conf"
+    "/etc/systemd/coredump.conf.d/foxml-no-coredumps.conf"
+    "/etc/security/limits.d/99-foxml-no-coredumps.conf"
+    "/etc/sysctl.d/99-foxml-hardening.conf"
+    "/etc/ssh/sshd_config.d/50-foxml-hardening.conf"
+    "/etc/fail2ban/action.d/foxml-dispatch.conf"
+    "/etc/audit/rules.d/99-foxml.rules"
+    "/etc/firejail/firefox.local"
+    "/etc/NetworkManager/dispatcher.d/99-foxml-cafe"
+    "/etc/NetworkManager/conf.d/99-foxml-mac.conf"
+    "/etc/udev/rules.d/99-foxml-deadman.rules"
+    "/usr/local/bin/foxml-deadman-trip"
+    "/etc/knockd.conf"
+    "/etc/fwknopd.conf"
+    "/etc/endlessh/config"
+)
 
 # 3. FoxML state / marker / sidecar.
 for d in "$HOME/.local/share/foxml" \
@@ -72,10 +100,20 @@ printf '%s\n' "$(bold ':: fox-uninstall — files to remove')"
 for t in "${TARGETS[@]}"; do
     printf '  %s %s\n' "$(red 'X')" "$t"
 done
+printf '\n%s\n' "$(yellow 'system-level files (need sudo to remove)')"
+present_sys=()
+for f in "${SYS_FILES[@]}"; do
+    if [[ -e "$f" ]]; then
+        present_sys+=("$f")
+        printf '  %s %s\n' "$(red 'X')" "$f"
+    fi
+done
+
 printf '\n%s\n' "$(yellow 'NOTE')"
 printf '  %s\n' "$(dim 'Hyprland / waybar / kitty configs are not touched.')"
 printf '  %s\n' "$(dim 'To restore your pre-install configs:  fox rollback')"
 printf '  %s\n' "$(dim 'Packages installed via pacman stay too: sudo pacman -Rsn <pkg> to remove.')"
+printf '  %s\n' "$(dim 'fox harden disable <layer> to roll back individual kernel/userspace layers.')"
 echo
 
 if (( ! ASSUME_YES )); then
@@ -96,5 +134,20 @@ done
 
 systemctl --user daemon-reload >/dev/null 2>&1 || true
 
-printf '\n%s removed %d items\n' "$(bold 'Result:')" "${#TARGETS[@]}"
+# System-level cleanup — ask once, then sweep.
+if (( ${#present_sys[@]} > 0 )); then
+    echo
+    read -p "Also remove the ${#present_sys[@]} system-level files (needs sudo)? [y/N] " -n 1 -r
+    echo
+    if [[ "$REPLY" =~ ^[Yy]$ ]]; then
+        for f in "${present_sys[@]}"; do
+            sudo rm -f "$f" 2>/dev/null
+            printf '  removed %s\n' "$f"
+        done
+        sudo systemctl daemon-reload 2>/dev/null || true
+        sudo sysctl --system >/dev/null 2>&1 || true
+    fi
+fi
+
+printf '\n%s removed %d user items + %d system items\n' "$(bold 'Result:')" "${#TARGETS[@]}" "${#present_sys[@]}"
 echo "  (config files in ~/.config/hypr etc. left in place. fox rollback restores pre-install state.)"

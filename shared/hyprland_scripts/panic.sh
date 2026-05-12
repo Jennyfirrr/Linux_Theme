@@ -112,6 +112,14 @@ done
 #    knows the panic button actually worked.
 notify-send -u critical "LOCKDOWN" "Clipboard wiped. Engines stopped. Screen locking..." 2>/dev/null || true
 
+# Phone alert via fox-dispatch (no-op silently if webhook isn't
+# configured). Background + disown so the lock fires immediately;
+# dispatch finishes in the background after we're locked.
+if command -v fox-dispatch >/dev/null 2>&1; then
+    (fox-dispatch "PANIC" "panic.sh triggered on $(hostname) at $(date -Iseconds)" >/dev/null 2>&1) &
+    disown || true
+fi
+
 # 6. Lock. Prefer fox-lock (dbus + awww sanity check) when present.
 if command -v fox-lock >/dev/null 2>&1; then
     exec fox-lock

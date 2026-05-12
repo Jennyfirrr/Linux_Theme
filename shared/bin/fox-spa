@@ -110,6 +110,20 @@ EOF
     echo "  SPA port (UDP):   62201"
     echo "  Service port:     $ssh_port (TCP, opens for 30s after a valid knock)"
     echo
+
+    # QR code for easy phone-side transfer if qrencode is available.
+    # Encodes as a compact "fwknop://<hostname>?key=...&hmac=...&port=..."
+    # URI that supported clients can ingest; otherwise the user reads
+    # the keys off the terminal as before.
+    if command -v qrencode >/dev/null 2>&1; then
+        local hostname; hostname=$(hostname)
+        local uri="fwknop://${hostname}/spa?key=${key_b64}&hmac=${hmac_b64}&service=tcp/${ssh_port}"
+        echo "  ${C_DIM}QR (scan to phone):${C_RST}"
+        qrencode -t ANSIUTF8 -m 1 "$uri" 2>/dev/null | sed 's/^/  /'
+    else
+        echo "  ${C_DIM}install qrencode for a scannable QR: sudo pacman -S qrencode${C_RST}"
+    fi
+
     echo "  Client invocation (from your phone with fwknop installed):"
     echo "    fwknop -A tcp/$ssh_port -a <YOUR_PUBLIC_IP> -D <THIS_HOST> --key-base64 -K <key>"
     echo
