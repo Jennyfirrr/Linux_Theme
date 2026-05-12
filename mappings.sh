@@ -432,18 +432,23 @@ JSON
     if [[ -f "$SCRIPT_DIR/KEYBINDS.md" ]]; then
         mkdir -p "$HOME/.local/share/foxml"
         backup_and_copy "$SCRIPT_DIR/KEYBINDS.md" "$HOME/.local/share/foxml/KEYBINDS.md"
-        echo "  KEYBINDS.md → ~/.local/share/foxml/"
+        command -v foxml_substep >/dev/null && foxml_substep "KEYBINDS.md → ~/.local/share/foxml/" \
+            || echo "  KEYBINDS.md → ~/.local/share/foxml/"
     fi
 
-    # Wallpapers (image files only — skip README etc.)
+    # Wallpapers — progress bar instead of one-per-line dump.
     if [[ -d "$SCRIPT_DIR/shared/wallpapers" ]]; then
         mkdir -p ~/.wallpapers
         shopt -s nullglob nocaseglob
-        for wp in "$SCRIPT_DIR/shared/wallpapers/"*.{jpg,jpeg,png,webp}; do
+        local _wps=("$SCRIPT_DIR/shared/wallpapers/"*.{jpg,jpeg,png,webp})
+        local _total=${#_wps[@]} _n=0
+        for wp in "${_wps[@]}"; do
             backup_and_copy "$wp" "$HOME/.wallpapers/$(basename "$wp")"
-            echo "  $(basename "$wp")"
+            _n=$((_n+1))
+            command -v foxml_progress >/dev/null && foxml_progress "$_n" "$_total" "Installing wallpapers"
         done
         shopt -u nullglob nocaseglob
+        (( _total > 0 )) && echo ""
     fi
 
     # Cursor theme — Catppuccin Mocha Peach matches the FoxML earthy palette.
@@ -458,12 +463,13 @@ JSON
             mkdir -p "$HOME/.local/share/icons"
             unzip -o -q "$tmp_zip" -d "$HOME/.local/share/icons/"
             rm -f "$tmp_zip"
-            echo "  cursor theme: $cursor_name"
+            command -v foxml_substep >/dev/null && foxml_substep "cursor theme: $cursor_name" || echo "  cursor theme: $cursor_name"
         else
-            echo "  cursor download failed; install from AUR or skip"
+            command -v foxml_warn >/dev/null && foxml_warn "cursor download failed; install from AUR or skip" \
+                || echo "  cursor download failed; install from AUR or skip"
         fi
     else
-        echo "  cursor theme already present"
+        command -v foxml_substep >/dev/null && foxml_substep "cursor theme already present" || echo "  cursor theme already present"
     fi
     if command -v gsettings &>/dev/null; then
         gsettings set org.gnome.desktop.interface cursor-theme "$cursor_name" || true
@@ -480,14 +486,28 @@ JSON
     # PapirusDevelopmentTeam ships; downloading to /tmp + diff'ing against
     # a known hash would be more rigorous but the AUR fallback covers
     # the same concern with less ceremony.
+    # Look for Papirus in BOTH /usr/share/icons (system) and
+    # ~/.local/share/icons (per-user). Previously we only checked the
+    # per-user path, which meant pacman-installed Papirus (in /usr/share)
+    # was reported as "already present" but the folder-recolor step
+    # below silently skipped because $icons_dir/Papirus didn't exist.
     local icons_dir="$HOME/.local/share/icons"
-    if [[ ! -d "$icons_dir/Papirus" ]] && ! pacman -Qi papirus-icon-theme &>/dev/null; then
+    local papirus_root=""
+    if [[ -d /usr/share/icons/Papirus ]]; then
+        papirus_root=/usr/share/icons
+    elif [[ -d "$icons_dir/Papirus" ]]; then
+        papirus_root="$icons_dir"
+    fi
+
+    if [[ -z "$papirus_root" ]] && ! pacman -Qi papirus-icon-theme &>/dev/null; then
         local _papirus_done=0
         for aur in yay paru; do
             if command -v "$aur" >/dev/null 2>&1; then
                 if "$aur" -S --needed --noconfirm papirus-icon-theme >/dev/null 2>&1; then
-                    echo "  Papirus icon theme (via $aur / AUR)"
+                    command -v foxml_substep >/dev/null && foxml_substep "Papirus icon theme (via $aur / AUR)" \
+                        || echo "  Papirus icon theme (via $aur / AUR)"
                     _papirus_done=1
+                    papirus_root=/usr/share/icons
                 fi
                 break
             fi
@@ -495,16 +515,21 @@ JSON
         if (( ! _papirus_done )); then
             if curl -fsSL "https://raw.githubusercontent.com/PapirusDevelopmentTeam/papirus-icon-theme/master/install.sh" \
                     | DESTDIR="$icons_dir" sh &>/dev/null; then
-                echo "  Papirus icon theme (upstream script — no AUR helper available)"
+                command -v foxml_substep >/dev/null && foxml_substep "Papirus icon theme (upstream script)" \
+                    || echo "  Papirus icon theme (upstream script — no AUR helper available)"
+                papirus_root="$icons_dir"
             else
-                echo "  Papirus install failed; skipping folder recolor"
+                command -v foxml_warn >/dev/null && foxml_warn "Papirus install failed; skipping folder recolor" \
+                    || echo "  Papirus install failed; skipping folder recolor"
             fi
         fi
     else
-        echo "  Papirus already present"
+        command -v foxml_substep >/dev/null && foxml_substep "Papirus already present (${papirus_root:-pacman})" \
+            || echo "  Papirus already present"
+        [[ -z "$papirus_root" ]] && papirus_root=/usr/share/icons
     fi
 
-    if [[ -d "$icons_dir/Papirus" ]]; then
+    if [[ -n "$papirus_root" && -d "$papirus_root/Papirus" ]]; then
         # Inject Catppuccin folder SVGs (Papirus-Dark/Light symlink to Papirus)
         local cat_tmp; cat_tmp="$(mktemp -d)"
         if git clone --depth 1 --quiet \
