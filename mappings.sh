@@ -3291,7 +3291,10 @@ install_throttling() {
     echo "│ Configure max-frequency cap, Intel turbo, governor, and (on     │"
     echo "│ ThinkPads) the 'throttled' MSR fix. Each step is opt-in.        │"
     echo "╰──────────────────────────────────────────────────────────────────╯"
-    foxml_prompt_yn "Configure CPU throttling now? [y/N] " || return
+    # `return 0` (not bare `return`) — bare return propagates the
+    # prompt's non-zero exit, which trips install.sh's `set -e` + ERR
+    # trap and aborts the whole installer when the user picks "n".
+    foxml_prompt_yn "Configure CPU throttling now? [y/N] " || return 0
 
     # Hardware detection
     local is_intel=false is_thinkpad=false

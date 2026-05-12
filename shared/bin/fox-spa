@@ -169,8 +169,11 @@ EOF
     # URI that supported clients can ingest; otherwise the user reads
     # the keys off the terminal as before.
     if command -v qrencode >/dev/null 2>&1; then
-        local hostname; hostname=$(hostname)
-        local uri="fwknop://${hostname}/spa?key=${key_b64}&hmac=${hmac_b64}&service=tcp/${ssh_port}"
+        # `hostname` (the binary) isn't installed by default on modern
+        # Arch — use bash's built-in $HOSTNAME, with /etc/hostname as a
+        # last-resort fallback.
+        local host="${HOSTNAME:-$(cat /etc/hostname 2>/dev/null || echo this-host)}"
+        local uri="fwknop://${host}/spa?key=${key_b64}&hmac=${hmac_b64}&service=tcp/${ssh_port}"
         echo "  ${C_DIM}QR (scan to phone):${C_RST}"
         qrencode -t ANSIUTF8 -m 1 "$uri" 2>/dev/null | sed 's/^/  /'
     else
