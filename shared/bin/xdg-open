@@ -27,7 +27,10 @@ fi
 
 target="$1"
 
-# Probe: is the target a URL that Firefox handles?
+# Probe: is the target a URL that Firefox handles? Whitelist the
+# scheme prefix so a malicious caller can't pass something like
+# `--remote-allow-system-access` as $target and have it interpreted
+# as a Firefox flag.
 case "$target" in
     http://*|https://*|mailto:*)
         # Is Firefox already running?
@@ -36,10 +39,23 @@ case "$target" in
             # remote-control flag; Firefox routes it via the
             # remote-controllable agent already running. NO Firejail
             # re-wrap, NO new sandbox attempt.
-            exec /usr/bin/firefox -new-tab "$target"
+            #
+            # The `--` separator after -new-tab is defense-in-depth:
+            # even though we already vetted $target starts with
+            # http(s)://|mailto:, the `--` guarantees Firefox treats
+            # whatever follows as a positional URL argument and not
+            # a flag — closing the "URL-as-flag" injection class
+            # entirely.
+            exec /usr/bin/firefox -new-tab -- "$target"
         fi
         # Firefox not running — let the system xdg-open start a fresh
         # firejail-wrapped Firefox. That path is fine (no nesting).
+        ;;
+    --*|-*)
+        # A `--something` or `-x` first arg is never a legit URL;
+        # refuse rather than passing it through.
+        echo "xdg-open: refusing flag-shaped argument: $target" >&2
+        exit 2
         ;;
 esac
 
