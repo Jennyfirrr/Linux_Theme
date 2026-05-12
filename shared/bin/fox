@@ -11,19 +11,26 @@ fi
 case "$1" in
     install|setup)
         shift
-        cd "$FOXML_DIR" && ./install.sh "$@"
+        # `exec` instead of running as child: install.sh overwrites
+        # ~/.local/bin/fox during the shared/bin deploy loop. With a
+        # regular `cd && ./install.sh`, the parent fox process keeps
+        # reading from the now-rewritten file and bash spits out a
+        # confusing "syntax error near unexpected token" partway
+        # through install. exec replaces this process so there's no
+        # stale file handle to read from.
+        cd "$FOXML_DIR" && exec ./install.sh "$@"
         ;;
     swap)
         shift
-        cd "$FOXML_DIR" && ./swap.sh "$@"
+        cd "$FOXML_DIR" && exec ./swap.sh "$@"
         ;;
     update|save)
         shift
-        cd "$FOXML_DIR" && ./update.sh "$@"
+        cd "$FOXML_DIR" && exec ./update.sh "$@"
         ;;
     rollback)
         shift
-        cd "$FOXML_DIR" && ./shared/bin/fox-rollback "$@"
+        cd "$FOXML_DIR" && exec ./shared/bin/fox-rollback "$@"
         ;;
     lock)
         shift
