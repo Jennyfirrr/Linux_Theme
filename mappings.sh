@@ -1740,13 +1740,21 @@ install_ufw_baseline() {
         return
     fi
 
-    if sudo ufw status 2>/dev/null | grep -q '^Status: active'; then
-        echo "  • UFW already active, leaving rules alone"
-        return
+    # Always re-apply the baseline defaults (deny incoming, allow
+    # outgoing). The previous "skip if active" guard was too permissive:
+    # fox-doctor catches drift on existing installs, but we then refused
+    # to fix it. Default policies are idempotent — `default deny
+    # incoming` on an already-deny-incoming UFW is a no-op. We DO skip
+    # the `--force reset` when UFW is already active, so existing
+    # user-added rules (custom port allows, etc.) survive.
+    local active=0
+    sudo ufw status 2>/dev/null | grep -q '^Status: active' && active=1
+    if (( active )); then
+        echo "  • UFW active — re-applying baseline policy (preserves existing rules)"
+    else
+        echo "  Applying UFW baseline (deny incoming, allow outgoing)..."
+        sudo ufw --force reset >/dev/null 2>&1 || true
     fi
-
-    echo "  Applying UFW baseline (deny incoming, allow outgoing)..."
-    sudo ufw --force reset >/dev/null 2>&1 || true
     sudo ufw default deny incoming  >/dev/null
     sudo ufw default allow outgoing >/dev/null
 
@@ -1973,10 +1981,16 @@ install_usbguard() {
             return 0
         fi
         echo "  Generating initial USBGuard policy from currently connected devices..."
+        # Capture the count BEFORE chmod 600 locks the file to root —
+        # shell redirect (`<`) happens as the calling user, so a
+        # post-chmod read would fail with EACCES. Use `sudo wc -l` on
+        # the path so it opens the file in privileged context.
         sudo usbguard generate-policy | sudo tee "$rules" >/dev/null
+        local _rule_count
+        _rule_count=$(sudo wc -l "$rules" 2>/dev/null | awk '{print $1}')
         sudo chmod 600 "$rules"
         sudo chown root:root "$rules"
-        echo "    → $rules ($(wc -l <"$rules" 2>/dev/null || echo '?') device rules)"
+        echo "    → $rules (${_rule_count:-?} device rules)"
     else
         echo "  • USBGuard rules already present at $rules"
     fi
