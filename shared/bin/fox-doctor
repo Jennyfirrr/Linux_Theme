@@ -784,37 +784,59 @@ if (( FIX_MODE )) && [[ -t 0 ]]; then
     section "Configure missing security tools"
 
     _offer() {
-        # _offer "<short label>" "<fox X --setup>"
-        local label="$1" cmd="$2"
+        # _offer "<short label>" "<setup cmd>" ["<skip-marker path>"]
+        #
+        # If a skip-marker is passed and exists → silently no-op (the
+        # user already declined this in a prior run; don't re-prompt).
+        # On decline → touch the marker so future doctor / install /
+        # fox-arm runs all honour the decision. y → run cmd; marker
+        # not touched so re-running re-prompts if the setup failed.
+        local label="$1" cmd="$2" marker="${3:-}"
+        if [[ -n "$marker" && -f "$marker" ]]; then
+            return 0
+        fi
         read -rp "  Configure $label now? [y/N] " -n 1 -r r; echo
-        [[ "$r" =~ ^[Yy]$ ]] && eval "$cmd"
+        if [[ "$r" =~ ^[Yy]$ ]]; then
+            eval "$cmd"
+        elif [[ -n "$marker" ]]; then
+            mkdir -p "$(dirname "$marker")" 2>/dev/null
+            touch "$marker"
+        fi
     }
 
     [[ ! -f "$HOME/.config/foxml/dispatch.conf" ]] \
-        && _offer "fox dispatch (phone alerts)"    "fox-dispatch --setup"
+        && _offer "fox dispatch (phone alerts)"    "fox-dispatch --setup" \
+                  "$HOME/.config/foxml/.skipped-dispatch"
 
     [[ ! -f "$HOME/.config/foxml/knock.conf" ]] && [[ ! -f "$HOME/.config/foxml/spa.conf" ]] \
-        && _offer "fox spa (SPA SSH gate)"         "fox-spa --setup"
+        && _offer "fox spa (SPA SSH gate)"         "fox-spa --setup" \
+                  "$HOME/.config/foxml/.skipped-ssh-gating"
 
     [[ ! -f "$HOME/.config/foxml/cafe.conf" ]] \
-        && _offer "fox cafe (untrusted-wifi auto-tighten)"  "fox-cafe --setup"
+        && _offer "fox cafe (untrusted-wifi auto-tighten)"  "fox-cafe --setup" \
+                  "$HOME/.config/foxml/.skipped-cafe"
 
     grep -q '^# foxml-shield BEGIN' /etc/hosts 2>/dev/null \
-        || _offer "fox dns-shield (StevenBlack blocklist)"  "fox-dns-shield --enable"
+        || _offer "fox dns-shield (StevenBlack blocklist)"  "fox-dns-shield --enable" \
+                  "$HOME/.config/foxml/.skipped-dns-shield"
 
     systemctl --user is-active --quiet fox-tripwire.service 2>/dev/null \
-        || _offer "fox tripwire (userspace honeypot)"       "fox-tripwire --install"
+        || _offer "fox tripwire (userspace honeypot)"       "fox-tripwire --install" \
+                  "$HOME/.config/foxml/.skipped-tripwire"
 
     if (( UFW_NEEDS_BASELINE )); then
+        # No marker — UFW baseline is REQUIRED, not opt-in. Keep re-prompting until fixed.
         _offer "UFW baseline (default deny incoming + allow outgoing)" \
             "sudo ufw default deny incoming && sudo ufw default allow outgoing && sudo ufw reload"
     fi
 
     sudo -n ufw status verbose 2>/dev/null | grep -q 'deny (outgoing)' \
-        || _offer "fox firewall lockdown (egress filter)"   "fox-firewall lockdown"
+        || _offer "fox firewall lockdown (egress filter)"   "fox-firewall lockdown" \
+                  "$HOME/.config/foxml/.skipped-egress-lockdown"
 
     systemctl --user is-active --quiet fox-proximity.service 2>/dev/null \
-        || _offer "fox proximity (Bluetooth auto-lock)"     "fox-proximity --setup"
+        || _offer "fox proximity (Bluetooth auto-lock)"     "fox-proximity --setup" \
+                  "$HOME/.config/foxml/.skipped-proximity"
 
     # Known-interaction auto-fixes.
     for item in "${INTERACTIONS_NEED_FIX[@]:-}"; do
