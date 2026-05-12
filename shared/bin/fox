@@ -152,6 +152,10 @@ case "$1" in
         shift
         exec fox-honeypot "$@"
         ;;
+    arm|lockdown-all)
+        shift
+        exec fox-arm "$@"
+        ;;
     sec|security)
         shift
         exec fox-sec "$@"
@@ -223,6 +227,7 @@ case "$1" in
         echo "  dns-shield       Local DNS sinkhole — StevenBlack blocklist via /etc/hosts"
         echo "  snitch           OpenSnitch per-app outbound firewall (--enable / --status / log)"
         echo "  honeypot         Cowrie SSH honeypot (--enable / --status / log)"
+        echo "  arm              One-command lockdown — enable every opt-in defense interactively"
         echo "  sec              Unified security dashboard (alerts, posture, bans, listeners, failed auth)"
         echo ""
         echo "Per-command help: ${0##*/} help <command>   (e.g. fox help dispatch)"
