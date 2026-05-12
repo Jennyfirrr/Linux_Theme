@@ -1,1 +1,1 @@
-shared/bin/fox-distro-build
+../shared/bin/fox-distro-build
