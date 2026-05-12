@@ -241,6 +241,9 @@ INSTALL_HIDEPID=true       # /proc hidepid=2 (hide other users' procs)
 INSTALL_NOEXEC_TMP=true    # /tmp + /dev/shm noexec,nosuid,nodev
 INSTALL_IOMMU=true         # intel_iommu=on / amd_iommu=on (DMA isolation)
 INSTALL_NO_COREDUMPS=true  # systemd-coredump → Storage=none
+# --arm chains `fox arm` at the end of install so every opt-in
+# defense gets walked through in the same flow (no second command).
+INSTALL_ARM=false
 # Privacy (DNS-over-HTTPS via systemd-resolved + privacy.resistFingerprinting
 # in Firefox) is part of the secure-by-default stance. Opt out with --no-privacy.
 INSTALL_PRIVACY=true
@@ -299,6 +302,8 @@ for arg in "$@"; do
         --no-noexec)        INSTALL_NOEXEC_TMP=false ;;
         --no-iommu)         INSTALL_IOMMU=false ;;
         --no-coredumps)     INSTALL_NO_COREDUMPS=false ;;
+        --arm)              INSTALL_ARM=true ;;
+        --paranoid)         INSTALL_ARM=true ;;  # alias
         --privacy|--no-privacy)
             [[ "$arg" == "--no-privacy" ]] && INSTALL_PRIVACY=false || INSTALL_PRIVACY=true
             ;;
@@ -344,6 +349,9 @@ for arg in "$@"; do
             # service enablement are idempotent so a re-run --full is
             # safe.
             INSTALL_APPARMOR=true
+            INSTALL_ARM=true   # --full now chains into `fox arm` at the
+                               # end too, so one command installs and
+                               # walks through every opt-in defense
             ;;
         --render-only) RENDER_ONLY=true ;;
         --dry-run)     DRY_RUN=true ;;
@@ -2166,6 +2174,22 @@ apply_post_install() {
 
 apply_post_install
 _phase_mark post
+
+# Chain into `fox arm` to walk the user through every opt-in defense
+# in the same flow. Only triggers with --full / --arm / --paranoid;
+# silent otherwise. Skipped under --yes (no TTY for interactive
+# prompts) — `fox arm` itself is interactive by design.
+if $INSTALL_ARM && [[ -t 0 ]] && ! $ASSUME_YES; then
+    echo ""
+    foxml_section "fox arm — walk through every opt-in defense"
+    if command -v fox-arm >/dev/null 2>&1; then
+        # The user can Ctrl-C out of fox arm without disrupting the
+        # install summary; arm prompts each tool independently.
+        fox-arm || true
+    else
+        echo "  ! fox-arm not on PATH — install seems incomplete"
+    fi
+fi
 
 echo ""
 if $INSTALL_AI; then
