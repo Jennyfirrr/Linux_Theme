@@ -530,32 +530,58 @@ JSON
     fi
 
     if [[ -n "$papirus_root" && -d "$papirus_root/Papirus" ]]; then
-        # Inject Catppuccin folder SVGs (Papirus-Dark/Light symlink to Papirus)
-        local cat_tmp; cat_tmp="$(mktemp -d)"
-        if git clone --depth 1 --quiet \
-                https://github.com/catppuccin/papirus-folders.git "$cat_tmp/repo" 2>/dev/null; then
-            # Walk the tree and snapshot any pre-existing icon override
-            # before the catppuccin SVGs land on top. backup_and_copy_dir
-            # handles both create and overwrite paths.
-            backup_and_copy_dir "$cat_tmp/repo/src" "$icons_dir/Papirus" || true
-            echo "  Catppuccin folder palette injected"
-        fi
-        rm -rf "$cat_tmp"
-
-        # Fetch the papirus-folders helper if not on PATH and apply peach color
-        local pf_script
-        if command -v papirus-folders &>/dev/null; then
-            pf_script="papirus-folders"
+        # Catppuccin folder injection — clone + tree-walk takes 8-15s
+        # over a slow connection. Marker file makes the second run a
+        # 0.01s no-op. Manually delete the marker to force re-inject.
+        local cat_marker
+        if [[ -w "$papirus_root" ]] || sudo -n true 2>/dev/null; then
+            cat_marker="$papirus_root/.foxml-catppuccin-injected"
         else
-            pf_script="$(mktemp)"
-            curl -fsSL -o "$pf_script" \
-                "https://raw.githubusercontent.com/PapirusDevelopmentTeam/papirus-folders/master/papirus-folders" \
-                && chmod +x "$pf_script"
+            cat_marker="$HOME/.config/foxml/catppuccin-papirus-injected.marker"
         fi
-        if [[ -x "$pf_script" ]]; then
-            "$pf_script" -C cat-mocha-peach -t Papirus-Dark &>/dev/null || true
-            echo "  folders → cat-mocha-peach"
-            [[ "$pf_script" != "papirus-folders" ]] && rm -f "$pf_script"
+        if [[ -f "$cat_marker" ]]; then
+            command -v foxml_substep >/dev/null && foxml_substep "Catppuccin folder palette already injected" \
+                || echo "  Catppuccin folder palette already injected"
+        else
+            local cat_tmp; cat_tmp="$(mktemp -d)"
+            if git clone --depth 1 --quiet \
+                    https://github.com/catppuccin/papirus-folders.git "$cat_tmp/repo" 2>/dev/null; then
+                backup_and_copy_dir "$cat_tmp/repo/src" "$papirus_root/Papirus" || true
+                command -v foxml_substep >/dev/null && foxml_substep "Catppuccin folder palette injected" \
+                    || echo "  Catppuccin folder palette injected"
+                # Drop marker (root or user-local depending on permissions).
+                if [[ "$cat_marker" == /usr/* ]]; then
+                    sudo touch "$cat_marker" 2>/dev/null
+                else
+                    mkdir -p "$(dirname "$cat_marker")" && touch "$cat_marker"
+                fi
+            fi
+            rm -rf "$cat_tmp"
+        fi
+
+        # papirus-folders helper. Skip if marker exists AND gsettings
+        # already reports the cat-mocha-peach folder set.
+        local pf_marker="$HOME/.config/foxml/catppuccin-folders-applied.marker"
+        if [[ -f "$pf_marker" ]]; then
+            command -v foxml_substep >/dev/null && foxml_substep "folders already cat-mocha-peach" \
+                || echo "  folders already cat-mocha-peach"
+        else
+            local pf_script
+            if command -v papirus-folders &>/dev/null; then
+                pf_script="papirus-folders"
+            else
+                pf_script="$(mktemp)"
+                curl -fsSL -o "$pf_script" \
+                    "https://raw.githubusercontent.com/PapirusDevelopmentTeam/papirus-folders/master/papirus-folders" \
+                    && chmod +x "$pf_script"
+            fi
+            if [[ -x "$pf_script" ]]; then
+                "$pf_script" -C cat-mocha-peach -t Papirus-Dark &>/dev/null || true
+                command -v foxml_substep >/dev/null && foxml_substep "folders → cat-mocha-peach" \
+                    || echo "  folders → cat-mocha-peach"
+                [[ "$pf_script" != "papirus-folders" ]] && rm -f "$pf_script"
+                mkdir -p "$(dirname "$pf_marker")" && touch "$pf_marker"
+            fi
         fi
 
         if command -v gsettings &>/dev/null; then

@@ -210,17 +210,29 @@ foxml_progress() {
     local current="$1"
     local total="$2"
     local label="$3"
-    
+    (( total <= 0 )) && return 0   # nothing to bar
+
     local width=30
     local percent=$(( current * 100 / total ))
     local filled=$(( current * width / total ))
     local empty=$(( width - filled ))
-    
+
     local bar=""
     [[ $filled -gt 0 ]] && bar+=$(printf "%${filled}s" "" | tr ' ' '#')
     [[ $empty -gt 0 ]] && bar+=$(printf "%${empty}s" "" | tr ' ' '-')
-    
-    printf "\r:: %-25s [%s] %3d%% (%d/%d)" "$label" "$bar" "$percent" "$current" "$total"
+
+    # Right-align the bar to the terminal edge. Tail format is
+    # ` [bar] NNN% (current/total)` — we reserve enough for the
+    # widest expected count, pad the label to fill the rest.
+    local cols
+    cols=$(tput cols 2>/dev/null || echo 80)
+    # Tail = " [" + bar + "] NNN% (D/D)"; pre-format and measure.
+    local tail
+    tail=$(printf ' [%s] %3d%% (%d/%d)' "$bar" "$percent" "$current" "$total")
+    local prefix=":: "
+    local label_w=$(( cols - ${#prefix} - ${#tail} ))
+    (( label_w < 10 )) && label_w=10
+    printf "\r%s%-*s%s" "$prefix" "$label_w" "$label" "$tail"
 }
 
 # ─────────────────────────────────────────
