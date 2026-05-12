@@ -128,7 +128,47 @@ foxml_self_update() {
         return
     fi
 
-    echo "  Installer updated, re-executing with new version..."
+    # SUPPLY-CHAIN GUARD: verify the new HEAD commit is GPG-signed by a
+    # trusted key BEFORE re-exec'ing it. A compromised GitHub account
+    # or MITM on git fetch could otherwise auto-install attacker code
+    # with the warmed sudo cache.
+    #
+    # FOXML_TRUSTED_SIGNERS in the user's env (or ~/.config/foxml/trusted-signers,
+    # one fingerprint per line) lists the keys we'll accept. Default
+    # falls back to the committer's own key if no trust file exists —
+    # better than no check, weaker than an explicit allowlist.
+    local _trust_file="$HOME/.config/foxml/trusted-signers"
+    local _allow_unsigned="${FOXML_ALLOW_UNSIGNED_UPDATE:-0}"
+    if (( _allow_unsigned != 1 )); then
+        # `git verify-commit` returns 0 only when the signature is good AND
+        # the key is in the user's gpg keyring (trusted via gpg's web of
+        # trust or explicit trustdb).
+        if ! git -C "$SCRIPT_DIR" verify-commit --raw HEAD >/dev/null 2>&1; then
+            echo "  ! pulled HEAD is NOT verifiably signed — refusing to auto-exec" >&2
+            echo "    rollback to pre-pull state + bail (will not run attacker code)." >&2
+            git -C "$SCRIPT_DIR" reset --hard "ORIG_HEAD" >/dev/null 2>&1 || true
+            echo "    if you trust this update, override with:" >&2
+            echo "      FOXML_ALLOW_UNSIGNED_UPDATE=1 fox install --full" >&2
+            echo "    or import the maintainer's key first:" >&2
+            echo "      gh api /users/Jennyfirrr/gpg_keys --jq '.[].raw_key' | gpg --import" >&2
+            return
+        fi
+        # Belt + suspenders: when a trust-file exists, require the
+        # signing key to be in it explicitly. Otherwise the default
+        # gpg-keyring check is enough.
+        if [[ -f "$_trust_file" ]]; then
+            local _signer_fpr
+            _signer_fpr=$(git -C "$SCRIPT_DIR" log -1 --format='%GF' 2>/dev/null)
+            if [[ -z "$_signer_fpr" ]] || ! grep -qF "$_signer_fpr" "$_trust_file" 2>/dev/null; then
+                echo "  ! commit signer ${_signer_fpr:-<unknown>} not in $_trust_file" >&2
+                echo "    refusing auto-exec. Verify the key + add its fingerprint to the trust file." >&2
+                git -C "$SCRIPT_DIR" reset --hard "ORIG_HEAD" >/dev/null 2>&1 || true
+                return
+            fi
+        fi
+    fi
+
+    echo "  Installer updated (commit verified), re-executing with new version..."
     export FOXML_UPDATED=1
     exec "$SCRIPT_DIR/install.sh" "$@"
 }

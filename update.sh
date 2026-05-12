@@ -70,10 +70,59 @@ if [[ "$UPDATE_MODE" == "review" ]]; then
     echo ""
 fi
 
+# Danger-pattern scan: refuse to suck content that looks like an
+# injection vector. If an attacker compromises the user's live config
+# and embeds malicious bash, update.sh would otherwise capture it into
+# templates/ and a later `git push` would publish it. Block at the
+# capture point. Patterns matched here are things that should NEVER
+# appear in a config file's diff if the user only changed colors,
+# fonts, or pure-data settings.
+#
+# Always-on, regardless of --force. The whole point is that --force
+# users specifically can't accidentally publish a payload.
+_DANGER_PATTERNS=(
+    '^[[:space:]]*exec[-_]?once[[:space:]]*='
+    'curl[[:space:]].*\|[[:space:]]*(bash|sh)'
+    'wget[[:space:]].*\|[[:space:]]*(bash|sh)'
+    'bash[[:space:]]+-c[[:space:]]+[\x22\x27].*\$\('
+    'eval[[:space:]]*[\x22\x27]?\$'
+    'on[-_]?click[[:space:]]*='
+    'on[-_]?press[[:space:]]*='
+    'command[[:space:]]*=[[:space:]]*[\x22\x27]?[a-zA-Z]'
+    'PreExec[[:space:]]*='
+    'ExecStartPre[[:space:]]*='
+    '<script[[:space:]>]'
+)
+
+_scan_danger() {
+    local file="$1"
+    [[ -f "$file" ]] || return 0
+    for pat in "${_DANGER_PATTERNS[@]}"; do
+        if grep -qE "$pat" "$file" 2>/dev/null; then
+            echo "    ${pat}" >&2
+            return 1
+        fi
+    done
+    return 0
+}
+
 # Confirm before each file lands in templates/ or shared/. Returns 0 to
-# accept the change, 1 to skip. --force short-circuits to accept.
+# accept the change, 1 to skip. --force short-circuits the prompt but
+# NOT the danger scan — danger patterns always require manual review.
 _confirm_update() {
     local label="$1" current="$2" proposed="$3"
+
+    # Step 1: danger-pattern check on the proposed (incoming) content.
+    # Refuse to publish without --review prompt even if --force is set.
+    if ! _scan_danger "$proposed"; then
+        echo ""
+        echo "  ⚠ DANGER PATTERN found in $label (above)"
+        echo "    update.sh will NOT auto-capture this file."
+        echo "    If this is legitimate (e.g. you added a custom keybind),"
+        echo "    edit templates/<file> directly + commit; don't reverse-sync."
+        return 1
+    fi
+
     [[ "$UPDATE_MODE" == "force" ]] && return 0
     if ! diff -q "$current" "$proposed" >/dev/null 2>&1; then
         echo ""
