@@ -12,8 +12,7 @@
   "modules-center": [],
 
   "modules-right": [
-    "custom/overwatch",
-    "custom/security",
+    "custom/foxml_sentry",
     "custom/net_speed",
     "custom/cpu",
     "memory",
@@ -41,6 +40,13 @@
     "tooltip": true
   },
 
+  "custom/foxml_sentry": {
+    "exec": "~/.config/waybar/scripts/foxml_sentry.sh",
+    "return-type": "json",
+    "interval": 15,
+    "tooltip": true,
+    "on-click": "kitty -e fox sec --live"
+  },
   "custom/overwatch": {
     "exec": "~/.config/waybar/scripts/hw_overwatch.sh",
     "return-type": "json",

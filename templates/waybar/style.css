@@ -65,6 +65,7 @@ window#waybar > box {
 #custom-net_speed,
 #custom-overwatch,
 #custom-security,
+#custom-foxml_sentry,
 #custom-system_health,
 #launcher {
     background-color: @bubble;
@@ -158,6 +159,19 @@ window#waybar > box {
 
 #custom-overwatch.alert {
     color: #{{YELLOW}};
+}
+
+#custom-foxml_sentry {
+    color: #{{GREEN_BRIGHT}};
+}
+
+#custom-foxml_sentry.warning {
+    color: #{{YELLOW}};
+}
+
+#custom-foxml_sentry.critical {
+    color: #{{RED}};
+    background-color: rgba(176,85,85, 0.12);
 }
 
 #custom-ai_status {
