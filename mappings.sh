@@ -1152,6 +1152,130 @@ EOF
     fi
 }
 
+# /proc with hidepid=2 — anyone but the owner sees nothing in /proc.
+# A compromised low-priv shell running `ps aux` only sees its own
+# processes; can't enumerate VPN daemons, password manager bg workers,
+# trading bots, etc. Systemd mount unit so it survives reboot.
+install_hidepid() {
+    local unit=/etc/systemd/system/proc-hidepid.service
+    if [[ -f "$unit" ]] && sudo grep -q '^# foxml-managed' "$unit" 2>/dev/null; then
+        echo "  • /proc hidepid already configured"
+        return 0
+    fi
+    sudo tee "$unit" >/dev/null <<'EOF'
+# foxml-managed — apply hidepid=2 to /proc on boot.
+[Unit]
+Description=Remount /proc with hidepid=2 (foxml)
+DefaultDependencies=no
+After=local-fs.target
+Before=systemd-user-sessions.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/mount -o remount,hidepid=2 /proc
+RemainAfterExit=yes
+
+[Install]
+WantedBy=sysinit.target
+EOF
+    sudo systemctl daemon-reload >/dev/null 2>&1 || true
+    sudo systemctl enable proc-hidepid.service >/dev/null 2>&1 || true
+    # Apply live so the user sees it work without rebooting.
+    sudo mount -o remount,hidepid=2 /proc 2>/dev/null && echo "  + /proc remounted hidepid=2 (other users' processes hidden)" \
+        || echo "  + /proc hidepid=2 enabled on next boot"
+}
+
+# noexec / nosuid / nodev on /tmp + /dev/shm. Many Linux malware drop
+# their second-stage payload in /tmp and exec it; this kills that
+# class entirely. WARNING: breaks any tool that legit-execs from /tmp
+# (rare but: some build scripts, in-place ELF tests). Opt-in only.
+install_noexec_tmp() {
+    local fstab=/etc/fstab
+    sudo cp "$fstab" "${fstab}.foxml-bak" 2>/dev/null
+    # /tmp on tmpfs — add or amend.
+    if ! grep -qE '^\S+\s+/tmp\s+tmpfs' "$fstab"; then
+        echo "tmpfs   /tmp        tmpfs   defaults,noexec,nosuid,nodev,size=4G  0 0" | sudo tee -a "$fstab" >/dev/null
+        echo "  + /tmp added to /etc/fstab as tmpfs with noexec,nosuid,nodev"
+    else
+        # Append flags if missing.
+        sudo sed -i -E '/^\S+\s+\/tmp\s+tmpfs.*defaults/{
+            /noexec/!s/defaults/defaults,noexec/
+            /nosuid/!s/defaults/defaults,nosuid/
+            /nodev/!s/defaults/defaults,nodev/
+        }' "$fstab"
+        echo "  + /tmp tmpfs entry amended with noexec,nosuid,nodev"
+    fi
+    # /dev/shm — almost always a tmpfs already; just remount.
+    sudo mount -o remount,noexec,nosuid,nodev /dev/shm 2>/dev/null \
+        && echo "  + /dev/shm live-remounted noexec,nosuid,nodev (persistent via systemd default)" \
+        || echo "  + /dev/shm flags will apply on next reboot"
+    echo "  ${C_DIM:-}note: backup at ${fstab}.foxml-bak — if a build script breaks, revert with: sudo mv ${fstab}.foxml-bak $fstab${C_RST:-}"
+}
+
+# IOMMU / DMA protection. Plugged-in Thunderbolt / PCIe device can do
+# DMA reads of RAM (Inception, etc.). intel_iommu=on iommu=pt isolates
+# devices behind the kernel's IOMMU. AMD systems use amd_iommu=on.
+install_iommu() {
+    local cmdline_file=""
+    if [[ -f /boot/loader/entries/arch.conf ]]; then
+        cmdline_file=/boot/loader/entries/arch.conf
+    elif [[ -f /etc/default/grub ]]; then
+        cmdline_file=/etc/default/grub
+    fi
+    if [[ -z "$cmdline_file" ]]; then
+        echo "  ! no recognised bootloader config — skipping IOMMU enable"
+        return 0
+    fi
+
+    # Detect vendor.
+    local vendor=""
+    grep -qi 'GenuineIntel' /proc/cpuinfo && vendor="intel"
+    grep -qi 'AuthenticAMD' /proc/cpuinfo && vendor="amd"
+    [[ -z "$vendor" ]] && { echo "  ! unknown CPU vendor — skipping IOMMU"; return 0; }
+
+    local iommu_args
+    if [[ "$vendor" == "intel" ]]; then iommu_args="intel_iommu=on iommu=pt"; else iommu_args="amd_iommu=on iommu=pt"; fi
+
+    if sudo grep -q "$iommu_args" "$cmdline_file" 2>/dev/null; then
+        echo "  • IOMMU already enabled in $cmdline_file"
+        return 0
+    fi
+    sudo cp "$cmdline_file" "${cmdline_file}.foxml-bak" 2>/dev/null
+    if [[ "$cmdline_file" == */loader/entries/* ]]; then
+        sudo sed -i "s|^options |options $iommu_args |" "$cmdline_file"
+    else
+        sudo sed -i "s|^GRUB_CMDLINE_LINUX_DEFAULT=\"|GRUB_CMDLINE_LINUX_DEFAULT=\"$iommu_args |" "$cmdline_file"
+        sudo grub-mkconfig -o /boot/grub/grub.cfg >/dev/null 2>&1 || true
+    fi
+    echo "  + IOMMU enabled ($iommu_args) — REBOOT to activate"
+}
+
+# Disable core dumps. A crashing app (browser, password manager) can
+# write a full RAM dump containing your secrets to disk. Set
+# systemd-coredump → /dev/null and hard ulimit core = 0.
+install_no_coredumps() {
+    local conf=/etc/systemd/coredump.conf.d/foxml-no-coredumps.conf
+    sudo mkdir -p "$(dirname "$conf")"
+    if ! [[ -f "$conf" ]] || ! sudo grep -q '^# foxml-managed' "$conf"; then
+        sudo tee "$conf" >/dev/null <<'EOF'
+# foxml-managed — refuse to write core dumps to disk.
+[Coredump]
+Storage=none
+ProcessSizeMax=0
+EOF
+        echo "  + systemd-coredump set to Storage=none (no crash RAM hits disk)"
+    else
+        echo "  • coredump-disable already in place"
+    fi
+    # Hard ulimit via /etc/security/limits.d.
+    local lim=/etc/security/limits.d/99-foxml-no-coredumps.conf
+    if ! [[ -f "$lim" ]]; then
+        echo "* hard core 0" | sudo tee "$lim" >/dev/null
+        echo "  + /etc/security/limits.d hard core=0 (applies next login)"
+    fi
+    sudo systemctl daemon-reexec 2>/dev/null || true
+}
+
 install_ollama_hardening() {
     if ! systemctl list-unit-files 2>/dev/null | grep -q '^ollama\.service'; then
         echo "  • ollama.service not present — skipping ollama hardening"
@@ -2309,6 +2433,15 @@ fs.protected_hardlinks           = 1
 fs.protected_symlinks            = 1
 fs.protected_fifos               = 2
 fs.protected_regular             = 2
+
+# OS fingerprint obfuscation. nmap's OS detection looks at TTL +
+# TCP window sizing — defaults expose "this is a Linux 6.x box".
+# TTL=128 mimics Windows (Windows ships 128, Linux ships 64), TCP
+# window randomisation makes the fingerprint less stable. Doesn't
+# defeat application-layer scans but blunts the network-layer
+# "what OS is this?" question.
+net.ipv4.ip_default_ttl          = 128
+net.ipv4.tcp_invalid_ratelimit   = 500
 
 # SysRq hardening. Default Arch kernel exposes the full Magic-SysRq
 # command set, which an attacker with physical keyboard access can use

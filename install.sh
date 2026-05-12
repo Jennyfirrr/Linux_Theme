@@ -233,6 +233,14 @@ INSTALL_DEPS=false
 # safe for both interactive and CI flows.
 INSTALL_SECURITY=true
 INSTALL_PERF=false
+# Secure-by-default kernel/userspace hardening layers. All default ON;
+# opt out individually with --no-hidepid / --no-noexec / --no-iommu /
+# --no-coredumps. Heavy / breakage-prone ones (port knocking, dead-man
+# USB, tripwire honeypot) remain opt-in via their own --setup commands.
+INSTALL_HIDEPID=true       # /proc hidepid=2 (hide other users' procs)
+INSTALL_NOEXEC_TMP=true    # /tmp + /dev/shm noexec,nosuid,nodev
+INSTALL_IOMMU=true         # intel_iommu=on / amd_iommu=on (DMA isolation)
+INSTALL_NO_COREDUMPS=true  # systemd-coredump → Storage=none
 # Privacy (DNS-over-HTTPS via systemd-resolved + privacy.resistFingerprinting
 # in Firefox) is part of the secure-by-default stance. Opt out with --no-privacy.
 INSTALL_PRIVACY=true
@@ -287,6 +295,10 @@ for arg in "$@"; do
             [[ "$arg" == "--no-secure" ]] && INSTALL_SECURITY=false || INSTALL_SECURITY=true
             ;;
         --perf) INSTALL_PERF=true ;;
+        --no-hidepid)       INSTALL_HIDEPID=false ;;
+        --no-noexec)        INSTALL_NOEXEC_TMP=false ;;
+        --no-iommu)         INSTALL_IOMMU=false ;;
+        --no-coredumps)     INSTALL_NO_COREDUMPS=false ;;
         --privacy|--no-privacy)
             [[ "$arg" == "--no-privacy" ]] && INSTALL_PRIVACY=false || INSTALL_PRIVACY=true
             ;;
@@ -1407,6 +1419,30 @@ if $INSTALL_SECURITY; then
     echo ""
     foxml_section "etckeeper — git-track /etc + alert on drift"
     install_etckeeper
+fi
+
+# Secure-by-default kernel/userspace hardening layers. Each runs as
+# its own toggleable section so a user can opt out of just one piece
+# (e.g. --no-noexec if their build tools need exec from /tmp).
+if $INSTALL_HIDEPID; then
+    echo ""
+    foxml_section "hidepid — hide other users' processes in /proc"
+    install_hidepid
+fi
+if $INSTALL_NOEXEC_TMP; then
+    echo ""
+    foxml_section "noexec /tmp + /dev/shm — kill the malware staging ground"
+    install_noexec_tmp
+fi
+if $INSTALL_IOMMU; then
+    echo ""
+    foxml_section "IOMMU — block DMA attacks from rogue Thunderbolt/PCIe"
+    install_iommu
+fi
+if $INSTALL_NO_COREDUMPS; then
+    echo ""
+    foxml_section "core-dump annihilation — crashed RAM never hits disk"
+    install_no_coredumps
 fi
 
 # Always normalise gnome-keyring autostart. The systemd-generated

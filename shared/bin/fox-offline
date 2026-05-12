@@ -46,17 +46,12 @@ if ! command -v unshare >/dev/null 2>&1; then
     exit 1
 fi
 
-# --net      → private network namespace
-# --user     → unprivileged user namespace (so --net works without sudo)
-# --map-root-user → uid 0 inside the namespace = current uid outside
-# `--keep-caps` is not needed; the inner uid 0 only has caps inside the ns.
-# We bring up lo inside the ns so localhost-bound code works.
+# --net      = private network namespace
+# --user     = unprivileged user namespace (so --net works without sudo)
+# --map-root-user = uid 0 inside the namespace, current uid outside
+# We bring up lo inside the ns so localhost-bound code still works.
+# The inner sh brings up loopback then execs the user command. Using
+# double-quoted heredoc inner script to avoid single-quote issues with
+# any apostrophes in arguments.
 exec unshare --net --user --map-root-user \
-    /bin/sh -c '
-        ip link set lo up 2>/dev/null || true
-        # Drop back to the original (real) user inside the namespace
-        # by exec'\''ing the user's command directly. We were started as
-        # uid 0 inside, but the unshare --user mapping keeps file
-        # ownership stable.
-        exec "$@"
-    ' _ "$@"
+    /bin/sh -c "ip link set lo up 2>/dev/null || true; exec \"\$@\"" _ "$@"

@@ -124,6 +124,10 @@ case "$1" in
         shift
         exec fox-offline "$@"
         ;;
+    harden)
+        shift
+        exec fox-harden "$@"
+        ;;
     sec|security)
         shift
         exec fox-sec "$@"
@@ -160,6 +164,7 @@ case "$1" in
         echo "  fingerprint      fprintd wrapper — enroll / delete / test / status"
         echo "  vpn              WireGuard manager + UFW kill-switch (up / down / killswitch)"
         echo "  offline          Run a command in a network-blackholed namespace (untrusted code sandbox)"
+        echo "  harden           Toggle kernel/userspace hardening layers (hidepid/noexec/iommu/coredumps)"
         echo "  sec              Unified security dashboard (alerts, posture, bans, listeners, failed auth)"
         echo ""
         echo "Custom Tools (found in ~/.local/bin):"
