@@ -18,10 +18,51 @@
 
 set -u
 
-FOXML_DIR="${FOXML_DIR:-$HOME/code/Linux_Theme}"
 SIDECAR="$HOME/.config/foxml/monitor-layout.conf"
 SOCKET="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/hypr/${HYPRLAND_INSTANCE_SIGNATURE:-}/.socket2.sock"
 DEBOUNCE_SECONDS=2
+
+# FOXML_DIR resolution. Order:
+#   1. Explicit env override (FOXML_DIR=…)
+#   2. Cached path from a prior install at ~/.config/foxml/install.conf
+#   3. Walk up from the running script's symlink-resolved location
+#      (handles `~/.config/hypr/scripts/` install AND repo-local invocation)
+#   4. Common conventional locations as a last resort
+# Hardcoding $HOME/code/Linux_Theme would silently break for any user
+# who clones elsewhere — this script is the multi-monitor hot-swap
+# nerve so a wrong path means the dock event drops on the floor.
+_resolve_foxml_dir() {
+    [[ -n "${FOXML_DIR:-}" ]] && return 0
+
+    # install.sh writes script_dir=… to ~/.local/share/foxml/.installed-version
+    # on every successful install — that's the authoritative location.
+    local marker="$HOME/.local/share/foxml/.installed-version"
+    if [[ -f "$marker" ]]; then
+        local cached
+        cached=$(awk -F= '/^script_dir=/{gsub(/"/, "", $2); print $2; exit}' "$marker")
+        if [[ -n "$cached" && -f "$cached/mappings.sh" ]]; then
+            FOXML_DIR="$cached"; return 0
+        fi
+    fi
+
+    local self
+    self=$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")
+    local dir="$(dirname "$self")"
+    while [[ "$dir" != "/" ]]; do
+        if [[ -f "$dir/mappings.sh" && -f "$dir/install.sh" ]]; then
+            FOXML_DIR="$dir"; return 0
+        fi
+        dir="$(dirname "$dir")"
+    done
+
+    for candidate in "$HOME/code/Linux_Theme" "$HOME/Linux_Theme" "$HOME/.local/share/Linux_Theme"; do
+        if [[ -f "$candidate/mappings.sh" ]]; then
+            FOXML_DIR="$candidate"; return 0
+        fi
+    done
+    return 1
+}
+_resolve_foxml_dir || FOXML_DIR="${FOXML_DIR:-/nonexistent}"
 
 if [[ ! -S "$SOCKET" ]]; then
     echo "fox-monitor-watch: no Hyprland socket at $SOCKET" >&2

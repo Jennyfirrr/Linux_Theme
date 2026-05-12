@@ -897,8 +897,12 @@ install_keyring_full_components() {
     )
     local masked=0
     for unit in "${limited_units[@]}"; do
-        if [[ -L "$HOME/.config/systemd/user/$unit" ]] \
-            && [[ "$(readlink "$HOME/.config/systemd/user/$unit")" == "/dev/null" ]]; then
+        # Use systemctl's own state machine instead of manually probing
+        # for symlinks under ~/.config/systemd/user. systemd is allowed to
+        # change where it stores user-level masks (e.g. /run, /var/lib);
+        # `is-enabled` returns the literal string "masked" on any storage
+        # backend and is the only future-proof check.
+        if [[ "$(systemctl --user is-enabled "$unit" 2>/dev/null)" == "masked" ]]; then
             continue  # already masked
         fi
         if systemctl --user mask "$unit" >/dev/null 2>&1; then

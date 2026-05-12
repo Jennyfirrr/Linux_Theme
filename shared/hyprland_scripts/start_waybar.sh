@@ -188,5 +188,18 @@ if [[ "${1:-}" == "--render-only" ]]; then
 fi
 
 # Replace any existing waybar so a Hyprland reload picks up new sizes.
-pkill -x waybar 2>/dev/null || true
+# pkill is asynchronous — exec'ing waybar immediately can race the old
+# instance still holding its Wayland layer-shell name, leaving a dead
+# bar and a "name in use" error in the journal. Wait up to ~2s for the
+# old PID to actually exit before launching the new one.
+if pgrep -x waybar >/dev/null 2>&1; then
+    pkill -x waybar 2>/dev/null || true
+    for _ in $(seq 1 20); do
+        pgrep -x waybar >/dev/null 2>&1 || break
+        sleep 0.1
+    done
+    # Still running? Force it. Better than starting a half-dead second bar.
+    pgrep -x waybar >/dev/null 2>&1 && pkill -KILL -x waybar 2>/dev/null
+    sleep 0.1
+fi
 exec waybar

@@ -18,34 +18,89 @@ hex_to_rgb() {
 # ─────────────────────────────────────────
 # Build sed expression from palette variables
 # ─────────────────────────────────────────
+# Parse a palette.sh file and split its uppercase assignments into hex
+# colours vs everything else. Output is written into two name-referenced
+# arrays so the caller can stay decoupled from the parsing rules.
+#
+# Classification:
+#   - 6-char hex (e.g. f4b58a, A1B2C3)         → hex_vars
+#   - PALETTE_LABELS or PALETTE_NAME           → skipped (handled elsewhere)
+#   - everything else (paths, labels, opts)     → str_vars
+#
+# Designed to match the legacy behaviour exactly, then extend cleanly.
+_derive_palette_vars() {
+    local palette_file="$1"
+    local -n _hex="$2"
+    local -n _str="$3"
+    [[ -r "$palette_file" ]] || return 1
+
+    local line name val
+    while IFS= read -r line; do
+        # Skip comments / blanks / non-assignments.
+        [[ "$line" =~ ^[[:space:]]*# ]] && continue
+        [[ "$line" =~ ^[[:space:]]*$ ]] && continue
+        [[ "$line" =~ ^[A-Z_][A-Z0-9_]*= ]] || continue
+
+        name="${line%%=*}"
+        val="${line#*=}"
+        # Strip surrounding quotes, trailing inline comments, whitespace.
+        val="${val%%#*}"
+        val="${val%\"}"; val="${val#\"}"
+        val="${val%\'}"; val="${val#\'}"
+        val="${val##[[:space:]]}"; val="${val%%[[:space:]]}"
+
+        case "$name" in
+            PALETTE_LABELS|PALETTE_NAME|PALETTE_DESCRIPTION) continue ;;
+        esac
+
+        if [[ "$val" =~ ^[0-9a-fA-F]{6}$ ]]; then
+            _hex+=("$name")
+        else
+            _str+=("$name")
+        fi
+    done < "$palette_file"
+}
+
 build_sed_expr() {
     local sed_expr=""
 
-    # All palette variables that hold hex colors (6-char hex without #)
-    local hex_vars=(
-        BG BG_DARK BG_ALT BG_HIGHLIGHT SELECTION
-        FG FG_PASTEL FG_DIM COMMENT
-        PRIMARY SECONDARY ACCENT SURFACE
-        RED RED_BRIGHT GREEN GREEN_BRIGHT
-        YELLOW YELLOW_BRIGHT BLUE BLUE_BRIGHT
-        CYAN CYAN_BRIGHT WHITE OK WARN
-        BG_DUNST BG_SPICETIFY BG_VENCORD_ALT BG_VENCORD_DEEP CARD_HOVER
-        FZF_ACCENT1 FZF_ACCENT2 ZSH_SUGGEST ZSH_CMD
-        TMUX_INACTIVE_FG TMUX_ACTIVE_FG TMUX_ACTIVE_BG
-        DIFF_ADD DIFF_CHANGE DIFF_DELETE DIFF_TEXT TREESITTER_CTX
-        WARM SAND WHEAT CLAY NVIM_BG_HL NVIM_SEL
-    )
-
-    # Non-hex variables (strings/numbers)
-    local str_vars=(
-        THEME_TYPE NVIM_STYLE NVIM_BG KITTY_BG_OPACITY SHOW_WELCOME SHOW_BANNER WALLPAPER
-        MAKO_ICON_THEME VSCODE_UI_THEME FONT_FAMILY
-        ANSI_ACCENT1 ANSI_ACCENT2 ANSI_ACCENT3 ANSI_ACCENT4 ANSI_ACCENT5
-        ANSI_TEXT ANSI_MUTED ANSI_ERROR ANSI_OK ANSI_STANDOUT_BG
-        ANSI_PROMPT ANSI_PROMPT2 ANSI_LOAD
-        GRAD1 GRAD2 GRAD3 GRAD4 GRAD5
-        TMUX_ACTIVE TMUX_INACTIVE
-    )
+    # Auto-derive hex_vars + str_vars from the active palette file rather
+    # than hardcoding them. With the hardcoded arrays, contributors who
+    # added a new palette colour silently broke template substitution
+    # because the new {{VAR}} placeholder had no matching entry in the
+    # array — the rendered output still contained the literal {{VAR}}
+    # text. _derive_palette_vars parses palette.sh, classifies every
+    # ALL_CAPS assignment by value pattern, and pushes the result into
+    # the local arrays. Falls through to the legacy hardcoded list if
+    # the palette path isn't available (e.g. unit-test invocation).
+    local -a hex_vars=() str_vars=()
+    if declare -F _derive_palette_vars >/dev/null && [[ -n "${_PALETTE_FILE:-}" ]]; then
+        _derive_palette_vars "$_PALETTE_FILE" hex_vars str_vars
+    fi
+    if (( ${#hex_vars[@]} == 0 )); then
+        hex_vars=(
+            BG BG_DARK BG_ALT BG_HIGHLIGHT SELECTION
+            FG FG_PASTEL FG_DIM COMMENT
+            PRIMARY SECONDARY ACCENT SURFACE
+            RED RED_BRIGHT GREEN GREEN_BRIGHT
+            YELLOW YELLOW_BRIGHT BLUE BLUE_BRIGHT
+            CYAN CYAN_BRIGHT WHITE OK WARN
+            BG_DUNST BG_SPICETIFY BG_VENCORD_ALT BG_VENCORD_DEEP CARD_HOVER
+            FZF_ACCENT1 FZF_ACCENT2 ZSH_SUGGEST ZSH_CMD
+            TMUX_INACTIVE_FG TMUX_ACTIVE_FG TMUX_ACTIVE_BG
+            DIFF_ADD DIFF_CHANGE DIFF_DELETE DIFF_TEXT TREESITTER_CTX
+            WARM SAND WHEAT CLAY NVIM_BG_HL NVIM_SEL
+        )
+        str_vars=(
+            THEME_TYPE NVIM_STYLE NVIM_BG KITTY_BG_OPACITY SHOW_WELCOME SHOW_BANNER WALLPAPER
+            MAKO_ICON_THEME VSCODE_UI_THEME FONT_FAMILY
+            ANSI_ACCENT1 ANSI_ACCENT2 ANSI_ACCENT3 ANSI_ACCENT4 ANSI_ACCENT5
+            ANSI_TEXT ANSI_MUTED ANSI_ERROR ANSI_OK ANSI_STANDOUT_BG
+            ANSI_PROMPT ANSI_PROMPT2 ANSI_LOAD
+            GRAD1 GRAD2 GRAD3 GRAD4 GRAD5
+            TMUX_ACTIVE TMUX_INACTIVE
+        )
+    fi
 
     # Use `|` as sed delimiter instead of `/`. Both hex colours (6-char
     # hex) and the string vars below are guaranteed not to contain `|`,
@@ -176,8 +231,10 @@ render_all() {
     local template_dir="$2"
     local output_dir="$3"
 
-    # Source the palette
+    # Source the palette + expose its path for build_sed_expr's
+    # auto-derive (fallback hardcoded list kicks in if unset).
     source "$palette_file"
+    _PALETTE_FILE="$palette_file"
 
     # Build sed expression
     local sed_expr
@@ -210,38 +267,50 @@ render_all() {
 build_reverse_sed_expr() {
     local sed_expr=""
 
-    local hex_vars=(
-        BG BG_DARK BG_ALT BG_HIGHLIGHT SELECTION
-        FG FG_PASTEL FG_DIM COMMENT
-        PRIMARY SECONDARY ACCENT SURFACE
-        RED RED_BRIGHT GREEN GREEN_BRIGHT
-        YELLOW YELLOW_BRIGHT BLUE BLUE_BRIGHT
-        CYAN CYAN_BRIGHT WHITE OK WARN
-        BG_DUNST BG_SPICETIFY BG_VENCORD_ALT BG_VENCORD_DEEP CARD_HOVER
-        FZF_ACCENT1 FZF_ACCENT2 ZSH_SUGGEST ZSH_CMD
-        TMUX_INACTIVE_FG TMUX_ACTIVE_FG TMUX_ACTIVE_BG
-        DIFF_ADD DIFF_CHANGE DIFF_DELETE DIFF_TEXT TREESITTER_CTX
-        WARM SAND WHEAT CLAY NVIM_BG_HL NVIM_SEL
-    )
+    # Same auto-derive as build_sed_expr — keeps the forward and reverse
+    # paths in lockstep, so a contributor adding a palette colour
+    # automatically gets correct round-trip update.sh behaviour without
+    # touching this file.
+    local -a hex_vars=() str_vars=()
+    if declare -F _derive_palette_vars >/dev/null && [[ -n "${_PALETTE_FILE:-}" ]]; then
+        _derive_palette_vars "$_PALETTE_FILE" hex_vars str_vars
+    fi
+    if (( ${#hex_vars[@]} == 0 )); then
+        hex_vars=(
+            BG BG_DARK BG_ALT BG_HIGHLIGHT SELECTION
+            FG FG_PASTEL FG_DIM COMMENT
+            PRIMARY SECONDARY ACCENT SURFACE
+            RED RED_BRIGHT GREEN GREEN_BRIGHT
+            YELLOW YELLOW_BRIGHT BLUE BLUE_BRIGHT
+            CYAN CYAN_BRIGHT WHITE OK WARN
+            BG_DUNST BG_SPICETIFY BG_VENCORD_ALT BG_VENCORD_DEEP CARD_HOVER
+            FZF_ACCENT1 FZF_ACCENT2 ZSH_SUGGEST ZSH_CMD
+            TMUX_INACTIVE_FG TMUX_ACTIVE_FG TMUX_ACTIVE_BG
+            DIFF_ADD DIFF_CHANGE DIFF_DELETE DIFF_TEXT TREESITTER_CTX
+            WARM SAND WHEAT CLAY NVIM_BG_HL NVIM_SEL
+        )
+        str_vars=(
+            THEME_TYPE NVIM_STYLE NVIM_BG KITTY_BG_OPACITY SHOW_WELCOME SHOW_BANNER WALLPAPER
+            MAKO_ICON_THEME VSCODE_UI_THEME FONT_FAMILY
+            ANSI_ACCENT1 ANSI_ACCENT2 ANSI_ACCENT3 ANSI_ACCENT4 ANSI_ACCENT5
+            ANSI_TEXT ANSI_MUTED ANSI_ERROR ANSI_OK ANSI_STANDOUT_BG
+            ANSI_PROMPT ANSI_PROMPT2 ANSI_LOAD
+            GRAD1 GRAD2 GRAD3 GRAD4 GRAD5
+            TMUX_ACTIVE TMUX_INACTIVE
+        )
+    fi
 
-    local str_vars=(
-        THEME_TYPE NVIM_STYLE NVIM_BG KITTY_BG_OPACITY SHOW_WELCOME SHOW_BANNER WALLPAPER
-        MAKO_ICON_THEME VSCODE_UI_THEME FONT_FAMILY
-        ANSI_ACCENT1 ANSI_ACCENT2 ANSI_ACCENT3 ANSI_ACCENT4 ANSI_ACCENT5
-        ANSI_TEXT ANSI_MUTED ANSI_ERROR ANSI_OK ANSI_STANDOUT_BG
-        ANSI_PROMPT ANSI_PROMPT2 ANSI_LOAD
-        GRAD1 GRAD2 GRAD3 GRAD4 GRAD5
-        TMUX_ACTIVE TMUX_INACTIVE
-    )
-
-    # Reverse: replace RGB triples first (longer patterns), then hex values
+    # Reverse: replace RGB triples first (longer patterns), then hex values.
+    # Use | as the sed delimiter to mirror build_sed_expr — / would break
+    # on any palette value containing a path-like character (and forces
+    # us to escape every / in the str_vars loop below).
     for var in "${hex_vars[@]}"; do
         local val="${!var}"
         [[ -z "$val" ]] && continue
         local r g b
         read r g b <<< "$(hex_to_rgb "$val")"
         # Replace RGB triple (e.g., "244,181,138" or "244, 181, 138")
-        sed_expr+="s/${r}, *${g}, *${b}/{{${var}_R}},{{${var}_G}},{{${var}_B}}/g;"
+        sed_expr+="s|${r}, *${g}, *${b}|{{${var}_R}},{{${var}_G}},{{${var}_B}}|g;"
     done
 
     # Then replace hex values (case-insensitive)
@@ -252,20 +321,21 @@ build_reverse_sed_expr() {
         local upper="${val^^}"
         local lower="${val,,}"
         if [[ "$upper" != "$lower" ]]; then
-            sed_expr+="s/${lower}/{{${var}}}/g;s/${upper}/{{${var}}}/g;"
+            sed_expr+="s|${lower}|{{${var}}}|g;s|${upper}|{{${var}}}|g;"
         else
-            sed_expr+="s/${val}/{{${var}}}/g;"
+            sed_expr+="s|${val}|{{${var}}}|g;"
         fi
     done
 
     for var in "${str_vars[@]}"; do
         local val="${!var}"
         [[ -z "$val" ]] && continue
-        # Escape sed special chars: / . * [ ] ^
-        local escaped="${val//\//\\/}"
+        # With | as delimiter we no longer need to escape / — but . * |
+        # remain regex metacharacters and need backslash-escaping.
+        local escaped="${val//|/\\|}"
         escaped="${escaped//./\\.}"
         escaped="${escaped//\*/\\*}"
-        sed_expr+="s/${escaped}/{{${var}}}/g;"
+        sed_expr+="s|${escaped}|{{${var}}}|g;"
     done
 
     echo "$sed_expr"

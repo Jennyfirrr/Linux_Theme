@@ -23,10 +23,19 @@ while true; do
         [[ -z "$bt_device" ]] && bt_status="On (No Device)" || bt_status="Connected: $bt_device"
     fi
 
-    # Audio Status (Fast)
-    vol_raw=$(wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{print $2}')
-    vol_percent=$(awk "BEGIN {print int($vol_raw*100)}")
-    mute=$(wpctl get-volume @DEFAULT_AUDIO_SINK@ | grep -q "MUTED" && echo " (Muted)" || echo "")
+    # Audio Status (Fast). wpctl can return empty / non-numeric mid-restart
+    # of pipewire — passing that into awk arithmetic crashes the hub. Cache
+    # the wpctl output once, validate vol_raw matches a float pattern, and
+    # default to "—" on no signal.
+    wpctl_out=$(wpctl get-volume @DEFAULT_AUDIO_SINK@ 2>/dev/null)
+    vol_raw=$(awk '{print $2}' <<<"$wpctl_out")
+    if [[ "$vol_raw" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+        vol_percent=$(awk -v v="$vol_raw" 'BEGIN {print int(v*100)}')
+    else
+        vol_percent="—"
+    fi
+    mute=""
+    grep -q "MUTED" <<<"$wpctl_out" && mute=" (Muted)"
     audio_status="Volume: ${vol_percent}%$mute"
 
     # Night Light Status (Fast)
@@ -104,7 +113,23 @@ EOF
             ;;
         *"Idle Inhibitor"*) ~/.config/hypr/scripts/toggle_dpms.sh ;;
         *"Sync Theme to Wallpaper"*)
-            current_wp=$(awww query | grep 'currently displaying' | awk '{print $NF}')
+            # awww query prints one line per monitor; on multi-monitor
+            # setups awk '{print $NF}' returned NEWLINE-separated paths
+            # and the [[ -f ]] check failed. Take just the first line.
+            # Prefer the primary monitor's wallpaper if the sidecar names one.
+            primary=""
+            if [[ -f "$HOME/.config/foxml/monitor-layout.conf" ]]; then
+                primary=$(awk -F'"' '/^PRIMARY=/{print $2; exit}' "$HOME/.config/foxml/monitor-layout.conf")
+            fi
+            if [[ -n "$primary" ]]; then
+                current_wp=$(awww query 2>/dev/null \
+                    | awk -v m="$primary" '$0 ~ m {print $NF; exit}')
+            fi
+            # Fallback to first line if the primary lookup didn't match.
+            if [[ -z "${current_wp:-}" || ! -f "${current_wp:-}" ]]; then
+                current_wp=$(awww query 2>/dev/null \
+                    | grep -m1 'currently displaying' | awk '{print $NF}')
+            fi
             if [[ -f "$current_wp" ]]; then
                 ~/.config/hypr/scripts/generate_palette.sh "$current_wp"
             else

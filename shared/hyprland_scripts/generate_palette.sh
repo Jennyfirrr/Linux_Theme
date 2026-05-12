@@ -82,8 +82,11 @@ description=Auto-generated from wallpaper
 EOF
 fi
 
-# Run the installer for the Generated theme
-cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+# Run the installer for the Generated theme. Script lives at
+# shared/hyprland_scripts/generate_palette.sh so the repo root is two
+# levels up, not three (the prior ../../../ went one above the repo
+# and silently broke wallpaper-derived theming).
+cd "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 ./install.sh Generated --yes
 
 notify-send "Auto-Theme" "Theme synchronized with wallpaper!"
