@@ -405,16 +405,12 @@ check_multimonitor() {
 }
 
 check_fox_tools() {
-    # Pointer section — the deep tool-by-tool coverage lives in
-    # `fox sec` / `fox arm --status` / the waybar sentry widget.
-    # Doctor surfaces just whether the user has run them recently.
     section "Fox security tools"
     if command -v fox-sec >/dev/null 2>&1; then
         ok "fox sec / fox arm --status available for full tool inventory"
         hint "snapshot:  fox sec"
         hint "gap list:  fox arm --status"
     fi
-    # Quick at-a-glance via the sentry widget script (same JSON the bar consumes).
     if [[ -x "$HOME/.config/waybar/scripts/foxml_sentry.sh" ]]; then
         local widget
         widget=$("$HOME/.config/waybar/scripts/foxml_sentry.sh" 2>/dev/null)
@@ -430,6 +426,19 @@ check_fox_tools() {
             critical) fail "sentry: critical alert active";
                       hint "details: fox sec --alerts" ;;
         esac
+    fi
+    # Gap summary for opt-in tools — same set the inline-fix offer
+    # at the end of the script can configure.
+    local missing=()
+    [[ ! -f "$HOME/.config/foxml/dispatch.conf" ]] && missing+=("dispatch (phone alerts)")
+    [[ ! -f "$HOME/.config/foxml/knock.conf" ]] && [[ ! -f "$HOME/.config/foxml/spa.conf" ]] \
+        && missing+=("knock or spa (SSH gate)")
+    [[ ! -f "$HOME/.config/foxml/cafe.conf" ]] && missing+=("cafe (untrusted wifi)")
+    grep -q '^# foxml-shield BEGIN' /etc/hosts 2>/dev/null || missing+=("dns-shield")
+    systemctl --user is-active --quiet fox-tripwire.service 2>/dev/null || missing+=("tripwire")
+    if (( ${#missing[@]} > 0 )); then
+        warn "${#missing[@]} opt-in tool(s) not configured: ${missing[*]}"
+        hint "auto-fix offer: fox doctor --fix"
     fi
 }
 
@@ -601,6 +610,46 @@ fi
 
 if (( FIX_MODE )) && (( FIX_NVIM_TS_MASTER )); then
     fix_nvim_ts_master || status=1
+fi
+
+# Inline gap-fix offers for the security tools. Doctor's existing
+# checks point at fox sec / fox arm --status; here we walk through
+# the missing opt-ins and offer to configure each one inline (only
+# when --fix is passed and stdin is a TTY).
+if (( FIX_MODE )) && [[ -t 0 ]]; then
+    echo
+    section "Configure missing security tools"
+
+    _offer() {
+        # _offer "<short label>" "<fox X --setup>"
+        local label="$1" cmd="$2"
+        read -rp "  Configure $label now? [y/N] " -n 1 -r r; echo
+        [[ "$r" =~ ^[Yy]$ ]] && eval "$cmd"
+    }
+
+    [[ ! -f "$HOME/.config/foxml/dispatch.conf" ]] \
+        && _offer "fox dispatch (phone alerts)"    "fox-dispatch --setup"
+
+    [[ ! -f "$HOME/.config/foxml/knock.conf" ]] && [[ ! -f "$HOME/.config/foxml/spa.conf" ]] \
+        && _offer "fox spa (SPA SSH gate)"         "fox-spa --setup"
+
+    [[ ! -f "$HOME/.config/foxml/cafe.conf" ]] \
+        && _offer "fox cafe (untrusted-wifi auto-tighten)"  "fox-cafe --setup"
+
+    grep -q '^# foxml-shield BEGIN' /etc/hosts 2>/dev/null \
+        || _offer "fox dns-shield (StevenBlack blocklist)"  "fox-dns-shield --enable"
+
+    systemctl --user is-active --quiet fox-tripwire.service 2>/dev/null \
+        || _offer "fox tripwire (userspace honeypot)"       "fox-tripwire --install"
+
+    sudo -n ufw status verbose 2>/dev/null | grep -q 'deny (outgoing)' \
+        || _offer "fox firewall lockdown (egress filter)"   "fox-firewall lockdown"
+
+    systemctl --user is-active --quiet fox-proximity.service 2>/dev/null \
+        || _offer "fox proximity (Bluetooth auto-lock)"     "fox-proximity --setup"
+
+    echo
+    echo "  (other opt-ins need physical hardware:  fox deadman / fox vpn import)"
 fi
 
 exit "$status"
