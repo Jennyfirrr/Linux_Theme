@@ -8,6 +8,7 @@
 set -u
 
 FIX_MODE=0
+UFW_NEEDS_BASELINE=0
 for arg in "$@"; do
     case "$arg" in
         --fix)  FIX_MODE=1 ;;
@@ -627,7 +628,8 @@ check_security() {
                     ok "UFW default deny incoming"
                 else
                     warn "UFW default policy is NOT deny incoming"
-                    hint "fix: source mappings.sh && install_ufw_baseline"
+                    hint "fix: fox doctor --fix   (or: sudo ufw default deny incoming)"
+                    UFW_NEEDS_BASELINE=1
                 fi
             else
                 ok "UFW default policy — skipped (no sudo)"
@@ -802,6 +804,11 @@ if (( FIX_MODE )) && [[ -t 0 ]]; then
 
     systemctl --user is-active --quiet fox-tripwire.service 2>/dev/null \
         || _offer "fox tripwire (userspace honeypot)"       "fox-tripwire --install"
+
+    if (( UFW_NEEDS_BASELINE )); then
+        _offer "UFW baseline (default deny incoming + allow outgoing)" \
+            "sudo ufw default deny incoming && sudo ufw default allow outgoing && sudo ufw reload"
+    fi
 
     sudo -n ufw status verbose 2>/dev/null | grep -q 'deny (outgoing)' \
         || _offer "fox firewall lockdown (egress filter)"   "fox-firewall lockdown"

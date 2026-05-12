@@ -7,8 +7,11 @@ C_GRN=$'\e[38;5;108m'; C_YEL=$'\e[38;5;221m'; C_RED=$'\e[38;5;167m'; C_DIM=$'\e[
 _status() {
     echo "${C_DIM}Kernel/userspace hardening layers:${C_RST}"
     echo
-    # hidepid
-    if findmnt /proc 2>/dev/null | grep -qE 'hidepid=[12]'; then
+    # hidepid — kernel 5.8+ accepts both numeric (1|2) and symbolic
+    # (noaccess|invisible|ptraceable) values. findmnt normalises to
+    # the symbolic form on modern kernels, so the legacy [12]-only
+    # regex misreports an enforced /proc as "fully visible".
+    if findmnt /proc 2>/dev/null | grep -qE 'hidepid=(1|2|noaccess|invisible|ptraceable)'; then
         echo "  ${C_GRN}✓${C_RST} hidepid       /proc mounted with hidepid"
     else
         echo "  ${C_RED}✗${C_RST} hidepid       /proc fully visible"

@@ -1381,6 +1381,18 @@ install_noexec_tmp() {
     sudo mount -o remount,noexec,nosuid,nodev /dev/shm 2>/dev/null \
         && echo "  + /dev/shm live-remounted noexec,nosuid,nodev (persistent via systemd default)" \
         || echo "  + /dev/shm flags will apply on next reboot"
+
+    # Try /tmp live too — kernel rejects if any open file holds /tmp
+    # busy, but most install-time runs succeed. Falls back to a clear
+    # "reboot to apply" note so fox doctor / fox harden doesn't keep
+    # flagging a half-applied state.
+    if findmnt /tmp 2>/dev/null | grep -q noexec; then
+        echo "  • /tmp already noexec live"
+    elif sudo mount -o remount,noexec,nosuid,nodev /tmp 2>/dev/null; then
+        echo "  + /tmp live-remounted noexec,nosuid,nodev"
+    else
+        echo "  + /tmp fstab updated — reboot to apply noexec live (kernel refused live remount: busy)"
+    fi
     echo "  ${C_DIM:-}note: backup at ${fstab}.foxml-bak — if a build script breaks, revert with: sudo mv ${fstab}.foxml-bak $fstab${C_RST:-}"
 }
 
