@@ -53,11 +53,32 @@ else
     [[ "$class" != "critical" ]] && class="warning"
 fi
 
+# 5. Recent intrusion alerts (shared ledger — tripwire, bouncer,
+# fail2ban hook, hw_overwatch all write here via fox-dispatch). Any
+# entry inside the 5-minute window flips us to at-least-warning.
+LEDGER="${XDG_DATA_HOME:-$HOME/.local/share}/foxml/alerts.log"
+LEDGER_WINDOW=300
+if [[ -f "$LEDGER" ]]; then
+    cutoff=$(( $(date +%s) - LEDGER_WINDOW ))
+    while IFS=$'\t' read -r ts source msg; do
+        [[ "$ts" =~ ^[0-9]+$ ]] || continue
+        if (( ts >= cutoff )); then
+            warnings+=("recent: ${source}: ${msg}")
+            # ban / USB-while-locked / tripwire are escalations — treat
+            # as critical. Plain overwatch anomalies stay at warning.
+            case "$source" in
+                ssh-brute|*tripwire*|USB*locked*) class="critical" ;;
+                *) [[ "$class" != "critical" ]] && class="warning" ;;
+            esac
+        fi
+    done < "$LEDGER"
+fi
+
 if [[ ${#warnings[@]} -gt 0 ]]; then
     # Show different icons based on severity
     icon="󰀦"
     [[ "$class" == "critical" ]] && icon="󰀦"
-    
+
     text="$icon SECURITY"
     tooltip="Security Overwatch:\\n"
     for w in "${warnings[@]}"; do

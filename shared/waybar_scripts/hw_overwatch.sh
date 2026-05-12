@@ -90,11 +90,31 @@ if [[ -n "$new_roots" ]]; then
     proc_findings="new root proc(s): $(echo "$new_roots" | head -3 | tr '\n' ',' | sed 's/,$//')"
 fi
 
+# ─── Shared ledger: tripwire / bouncer / fail2ban / dispatch ──────
+# Pull any alert entries written by fox-dispatch in the last 5 minutes
+# (matches our notify-send cooldown window). Format: epoch\tsource\tmsg.
+ledger_findings=""
+LEDGER="${XDG_DATA_HOME:-$HOME/.local/share}/foxml/alerts.log"
+LEDGER_WINDOW=300   # seconds — anything older is stale
+if [[ -f "$LEDGER" ]]; then
+    cutoff=$(( $(date +%s) - LEDGER_WINDOW ))
+    while IFS=$'\t' read -r ts source msg; do
+        [[ -z "$ts" ]] && continue
+        [[ "$ts" =~ ^[0-9]+$ ]] || continue
+        if (( ts >= cutoff )); then
+            # Skip overwatch's own entries so the bar doesn't echo itself.
+            [[ "$source" == "overwatch anomaly" ]] && continue
+            ledger_findings+="${source}: ${msg}; "
+        fi
+    done < "$LEDGER"
+fi
+
 # ─── Compose ──────────────────────────────────────────────────────
 combined=""
 [[ -n "$gpu_findings"  ]] && combined+="$gpu_findings"
 [[ -n "$net_findings"  ]] && combined+="$net_findings; "
 [[ -n "$proc_findings" ]] && combined+="$proc_findings"
+[[ -n "$ledger_findings" ]] && combined+="$ledger_findings"
 
 # Persist current listen state for next tick's diff.
 {

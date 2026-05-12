@@ -27,6 +27,16 @@ CONF="$CONF_DIR/dispatch.conf"
 LOG_DIR="${XDG_RUNTIME_DIR:-/tmp}/foxml-$USER"
 LOG="$LOG_DIR/dispatch.log"
 
+# Shared alert ledger — every fox-* security signal lands here. Both
+# waybar widgets (#custom-overwatch = hw_overwatch.sh, #custom-security
+# = security_overwatch.sh) read this file and flip to alert state on
+# any entry in the last 5 minutes. Format per line:
+#     <epoch>\t<source>\t<message>
+# Kept under $XDG_DATA_HOME so it survives logout (unlike /run/user/<uid>).
+LEDGER_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/foxml"
+LEDGER="$LEDGER_DIR/alerts.log"
+LEDGER_MAX_LINES=500   # auto-trim cap to keep tail-reads fast
+
 C_BOLD=$'\e[1m'
 C_DIM=$'\e[2m'
 C_GRN=$'\e[38;5;108m'
@@ -85,6 +95,31 @@ _log() {
     mkdir -p "$LOG_DIR" 2>/dev/null
     chmod 700 "$LOG_DIR" 2>/dev/null || true
     printf '[%s] %s\n' "$(date -Iseconds)" "$*" >>"$LOG"
+}
+
+# Append a one-line entry to the shared alert ledger so both waybar
+# widgets pick it up. Called from act_send regardless of whether a
+# webhook is configured — the ledger is the local fan-out point.
+# Self-trims to LEDGER_MAX_LINES.
+_ledger_write() {
+    local source="$1" message="$2"
+    mkdir -p "$LEDGER_DIR" 2>/dev/null
+    chmod 700 "$LEDGER_DIR" 2>/dev/null || true
+    # Strip tabs/newlines from input so the TSV stays intact.
+    source="${source//$'\t'/ }"
+    message="${message//$'\t'/ }"
+    message="${message//$'\n'/ }"
+    printf '%s\t%s\t%s\n' "$(date +%s)" "$source" "$message" >>"$LEDGER" 2>/dev/null
+    # Trim if we've crossed the cap. Quick line count + tail rewrite —
+    # the file is small (one line per alert), so this is microseconds.
+    if [[ -f "$LEDGER" ]]; then
+        local nlines
+        nlines=$(wc -l <"$LEDGER" 2>/dev/null || echo 0)
+        if (( nlines > LEDGER_MAX_LINES )); then
+            tail -n "$LEDGER_MAX_LINES" "$LEDGER" > "${LEDGER}.tmp" 2>/dev/null \
+                && mv "${LEDGER}.tmp" "$LEDGER" 2>/dev/null
+        fi
+    fi
 }
 
 # ─── senders ──────────────────────────────────────────────────────
@@ -216,7 +251,15 @@ act_send() {
     if [[ -z "$body" && ! -t 0 ]]; then
         body=$(cat)
     fi
-    _load_conf || return 1
+    # ALWAYS write to the shared ledger so the waybar widgets pick it up,
+    # even when no webhook is configured yet. fox-dispatch is the single
+    # fan-out point — local notify-send is each tool's responsibility.
+    _ledger_write "$title" "$body"
+
+    # Webhook send is opt-in: skip silently if not configured.
+    if ! _load_conf 2>/dev/null; then
+        return 0
+    fi
     case "$WEBHOOK_KIND" in
         discord)  _send_discord  "$title" "$body" ;;
         telegram) _send_telegram "$title" "$body" ;;
@@ -225,12 +268,33 @@ act_send() {
     esac
 }
 
+act_recent() {
+    # Show the last 20 ledger entries with human-readable timestamps.
+    if [[ ! -f "$LEDGER" ]]; then
+        echo "  no alerts logged yet"
+        return 0
+    fi
+    echo "${C_BOLD:-}recent alerts (newest last):${C_RST:-}"
+    tail -n 20 "$LEDGER" | while IFS=$'\t' read -r ts source msg; do
+        printf '  %s  %-18s  %s\n' "$(date -d "@$ts" '+%m-%d %H:%M:%S' 2>/dev/null || echo "$ts")" "$source" "$msg"
+    done
+}
+
+act_clear() {
+    if [[ -f "$LEDGER" ]]; then
+        : > "$LEDGER"
+        echo "${C_GRN:-}✓ ledger cleared${C_RST:-}"
+    fi
+}
+
 # ─── entry ────────────────────────────────────────────────────────
 case "${1:-}" in
     -h|--help|help)  usage ;;
     --setup)         act_setup ;;
     --test)          act_test ;;
     --status)        act_status ;;
+    --recent)        act_recent ;;
+    --clear)         act_clear ;;
     "" )             usage; exit 1 ;;
     *)               act_send "$1" "${2:-}" ;;
 esac
