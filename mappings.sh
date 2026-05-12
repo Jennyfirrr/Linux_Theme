@@ -1850,6 +1850,46 @@ install_ufw_baseline() {
         echo "    sshd detected — port 22 allowed with rate-limit (limit ssh)"
     fi
 
+    # Interactive port allowlist: prompt the user for any additional
+    # ports they want exposed (LAN dev servers, game launchers, sync
+    # tools, etc). Skipped silently in --yes / no-TTY mode so unattended
+    # installs aren't blocked. Format accepted: "8080 3000 5432" — space
+    # or comma separated, optional "/tcp"/"/udp" suffix per entry.
+    if [[ -t 0 ]] && ! ${ASSUME_YES:-false}; then
+        echo
+        echo "  Open additional ports? (e.g. 8080 3000/tcp 51820/udp)"
+        echo "  Press Enter to skip, or list ports separated by spaces:"
+        read -r -p "  ports> " _extra_ports
+        if [[ -n "$_extra_ports" ]]; then
+            # Split on whitespace OR commas. Validate each entry.
+            IFS=' ,' read -ra _port_list <<<"$_extra_ports"
+            local p num proto
+            for p in "${_port_list[@]}"; do
+                [[ -z "$p" ]] && continue
+                # Allow "port" or "port/tcp" or "port/udp".
+                num="${p%%/*}"
+                proto=""
+                if [[ "$p" == */* ]]; then
+                    proto="${p#*/}"
+                    [[ "$proto" != tcp && "$proto" != udp ]] && {
+                        echo "    ! skipping '$p' — proto must be tcp or udp"; continue
+                    }
+                fi
+                if ! [[ "$num" =~ ^[0-9]+$ ]] || (( num < 1 || num > 65535 )); then
+                    echo "    ! skipping '$p' — not a valid port"
+                    continue
+                fi
+                if [[ -n "$proto" ]]; then
+                    sudo ufw allow "${num}/${proto}" >/dev/null
+                    echo "    + allowed ${num}/${proto}"
+                else
+                    sudo ufw allow "$num" >/dev/null
+                    echo "    + allowed ${num}"
+                fi
+            done
+        fi
+    fi
+
     # SSH lockout safety: if we're being run over SSH (e.g. `fox install`
     # from a remote shell), the deny-incoming default would kill the
     # current session mid-install. SSH_CONNECTION format is

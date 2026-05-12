@@ -61,6 +61,25 @@ foxml_self_update() {
         return
     fi
 
+    # Detect ahead/behind/diverged. Before we just printed "Pulling
+    # updates: <local> → <remote>" unconditionally — confusing when
+    # local was ahead of remote (looked like a downgrade was about to
+    # happen). Use --count to label the direction precisely.
+    local ahead behind
+    read -r behind ahead < <(git -C "$SCRIPT_DIR" rev-list --left-right --count origin/main...HEAD 2>/dev/null)
+    ahead="${ahead:-0}"; behind="${behind:-0}"
+
+    if (( ahead > 0 && behind == 0 )); then
+        echo "  • local is ${ahead} commit(s) AHEAD of origin/main — nothing to pull"
+        echo "    (push your work with: git push origin main)"
+        return
+    fi
+    if (( ahead > 0 && behind > 0 )); then
+        echo "  ! local has diverged from origin (${ahead} ahead / ${behind} behind), skipping auto-update"
+        echo "    rebase or merge manually before re-running"
+        return
+    fi
+
     echo "  Pulling updates: $(git -C "$SCRIPT_DIR" rev-parse --short HEAD) → $(git -C "$SCRIPT_DIR" rev-parse --short origin/main)"
     if ! git -C "$SCRIPT_DIR" pull --ff-only --quiet origin main 2>/dev/null; then
         echo "  ! non-fast-forward (local commits ahead?), continuing with current version"
