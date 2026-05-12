@@ -1020,14 +1020,14 @@ install_dispatch_hooks() {
             || echo "  ! couldn't install fail2ban-notify helper (sudo cold?)"
     fi
 
-    # 1. fail2ban action drop-in. The action.d entry is now a clean
-    # one-liner that calls the helper script above. Previous version
-    # embedded the entire bash payload inline, which broke fail2ban's
-    # config parser and refused to start the service.
+    # fail2ban setup — order matters! The validation has to happen
+    # AFTER both the action.d file AND the jail.local dedupe, not
+    # between them. Otherwise we test against a config that's half-
+    # updated and report a false-positive failure.
     if pacman -Qi fail2ban &>/dev/null && command -v fox-dispatch >/dev/null 2>&1; then
         local action="/etc/fail2ban/action.d/foxml-dispatch.conf"
-        # Always rewrite to make sure we get the clean helper-script
-        # form (idempotent — re-writes identical content on re-runs).
+        # Always rewrite the action drop-in to ensure we have the
+        # clean helper-script form. Idempotent on re-runs.
         sudo tee "$action" >/dev/null <<EOF
 # foxml-managed — fires fox-dispatch on every fail2ban ban.
 # Revert: sudo rm $action and remove "action = foxml-dispatch" from jail.local.
@@ -1037,16 +1037,8 @@ actionunban = /bin/true
 [Init]
 EOF
         echo "  + fail2ban action.d/foxml-dispatch.conf written (clean helper-script form)"
-        # Validate the new config and surface failures loudly.
-        if sudo fail2ban-client -t >/dev/null 2>&1; then
-            sudo systemctl restart fail2ban >/dev/null 2>&1 \
-                && echo "    fail2ban restarted with new action — phone alerts live" \
-                || echo "    ! fail2ban restart failed — check: systemctl status fail2ban"
-        else
-            echo "    ! fail2ban config-test failed — diagnose: sudo fail2ban-client -t"
-        fi
 
-        # Splice the action into jail.local's [sshd] section if not already.
+        # Splice the action into jail.local's [sshd] section.
         local jail_local=/etc/fail2ban/jail.local
         if [[ -f "$jail_local" ]]; then
             # Self-heal: strip every existing foxml-dispatch action
@@ -1087,16 +1079,18 @@ EOF
             # Now insert exactly one stanza after the [sshd] header.
             sudo sed -i '/^\[sshd\]/a action = %(action_)s\n         foxml-dispatch' "$jail_local"
             echo "  + jail.local sshd → exactly one foxml-dispatch action (deduped on re-run)"
+        fi
 
-            # Validate before restart — if -t fails, surface loud + leave
-            # the daemon as-is rather than restart into a broken config.
-            if sudo fail2ban-client -t >/dev/null 2>&1; then
-                sudo systemctl reload fail2ban >/dev/null 2>&1 \
-                    || sudo systemctl restart fail2ban >/dev/null 2>&1
-            else
-                echo "  ! fail2ban-client -t fails — leaving daemon as-is"
-                echo "    diagnose: sudo fail2ban-client -t"
-            fi
+        # Validate the final state (action.d + jail.local both updated).
+        # Single validation point, single restart point — no false-
+        # positive failures from intermediate states.
+        if sudo fail2ban-client -t >/dev/null 2>&1; then
+            sudo systemctl restart fail2ban >/dev/null 2>&1 \
+                && echo "    fail2ban restarted — phone alerts live" \
+                || echo "    ! fail2ban restart failed — systemctl status fail2ban"
+        else
+            echo "    ! fail2ban-client -t fails — leaving daemon as-is"
+            echo "      diagnose: sudo fail2ban-client -t"
         fi
     else
         echo "  • fail2ban or fox-dispatch missing — skipping ban-hook"
