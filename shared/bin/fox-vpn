@@ -191,18 +191,28 @@ case "${1:-}" in
         esac
         ;;
     -h|--help|help) cat <<EOF
-fox vpn — WireGuard manager with UFW kill-switch
+fox vpn — WireGuard manager + UFW kill-switch + config import/generate
 
   fox vpn [status]               show iface state + kill-switch state
-  fox vpn list                   list configs in /etc/wireguard + active ifaces
-  fox vpn up   <iface>           wg-quick up <iface>
-  fox vpn down <iface>           wg-quick down <iface>
-  fox vpn killswitch on [iface]  default-deny outgoing except via <iface> (default wg0)
-  fox vpn killswitch off         restore outgoing default = allow
+  fox vpn list                   list configs + active ifaces
 
-Drop your .conf in /etc/wireguard/<name>.conf (chmod 600), then:
-  fox vpn killswitch on <name>
-  fox vpn up <name>
+  config management (no manual /etc/wireguard editing):
+    fox vpn import <file>        copy a .conf into /etc/wireguard (0600 root:root)
+    fox vpn import-url <url>     fetch + import from https URL
+    fox vpn new <name>           generate keypair + interactive scaffold;
+                                  prints YOUR pubkey to give to the server admin
+    fox vpn delete <name>        remove a config (downs it first if active)
+
+  runtime:
+    fox vpn up   <iface>         wg-quick up
+    fox vpn down <iface>         wg-quick down
+    fox vpn killswitch on [iface]   default-deny outgoing except via <iface>
+    fox vpn killswitch off          restore outgoing default = allow
+
+Typical flow:
+  fox vpn import ~/Downloads/myvpn.conf
+  fox vpn killswitch on myvpn
+  fox vpn up myvpn
 EOF
     ;;
     *) echo "unknown: $1" >&2; exit 2 ;;
