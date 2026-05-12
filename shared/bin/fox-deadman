@@ -152,13 +152,15 @@ act_status() {
         echo "  rule:    $RULES"
         # Probe if device is currently present.
         local present="no"
-        for d in /dev/disk/by-id/usb-* 2>/dev/null; do
+        shopt -s nullglob
+        for d in /dev/disk/by-id/usb-*; do
             [[ -e "$d" ]] || continue
             local s
             s=$(udevadm info --query=property --name="$d" 2>/dev/null \
                 | awk -F= '/^ID_SERIAL_SHORT=/{print $2; exit}')
             [[ "$s" == "$serial" ]] && present="yes"
         done
+        shopt -u nullglob
         if [[ "$present" == "yes" ]]; then
             echo "  device:  ${C_GRN}plugged in${C_RST}"
         else
