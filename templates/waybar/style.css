@@ -63,6 +63,7 @@ window#waybar > box {
 #tray,
 #custom-media,
 #custom-net_speed,
+#custom-overwatch,
 #custom-security,
 #custom-system_health,
 #launcher {
@@ -149,6 +150,14 @@ window#waybar > box {
 
 #custom-security.critical {
     color: #{{RED}};
+}
+
+#custom-overwatch {
+    color: @dim;
+}
+
+#custom-overwatch.alert {
+    color: #{{YELLOW}};
 }
 
 #custom-ai_status {

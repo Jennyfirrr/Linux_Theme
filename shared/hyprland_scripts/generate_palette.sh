@@ -37,7 +37,7 @@ WARN=${HEX_CODES[5]#\#}
 rm -rf "$TMP_PALETTE"
 
 # Prepare the Generated theme directory
-GEN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../themes/Generated" && pwd 2>/dev/null || echo "$HOME/.config/foxml/themes/Generated")"
+GEN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../themes/Generated" 2>/dev/null && pwd || echo "$HOME/.config/foxml/themes/Generated")"
 mkdir -p "$GEN_DIR"
 
 # Sanitize the filename used in the heredoc comment. The heredoc

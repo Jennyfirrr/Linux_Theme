@@ -201,7 +201,7 @@ install_specials() {
         for css in userChrome.css userContent.css; do
             if [[ -f "$rendered_dir/firefox/$css" ]]; then
                 mkdir -p "$ff_profile/chrome"
-                cp "$rendered_dir/firefox/$css" "$ff_profile/chrome/$css"
+                backup_and_copy "$rendered_dir/firefox/$css" "$ff_profile/chrome/$css"
                 echo "  Firefox $css"
             fi
         done
@@ -238,7 +238,7 @@ install_specials() {
     for ext_dir in ~/.cursor/extensions ~/.vscode/extensions; do
         if [[ -d "$ext_dir" && -f "$rendered_dir/cursor/foxml-color-theme.json" ]]; then
             mkdir -p "$ext_dir/foxml-theme/themes"
-            cp "$rendered_dir/cursor/foxml-color-theme.json" "$ext_dir/foxml-theme/themes/"
+            backup_and_copy "$rendered_dir/cursor/foxml-color-theme.json" "$ext_dir/foxml-theme/themes/foxml-color-theme.json"
             cat > "$ext_dir/foxml-theme/package.json" << 'PKGJSON'
 {
   "name": "foxml-theme",
@@ -343,40 +343,43 @@ JSON
     fi
 
     # ~/.local/bin helpers (tmux pane-label, etc.) — referenced by configs but
-    # too small for their own subdir; kept executable on copy.
+    # too small for their own subdir; kept executable on copy. Routed
+    # through backup_and_copy so any locally-customised user binary in
+    # ~/.local/bin/ is snapshotted into $BACKUP_DIR before overwrite.
     if [[ -d "$SCRIPT_DIR/shared/bin" ]]; then
         mkdir -p "$HOME/.local/bin"
         for bin in "$SCRIPT_DIR/shared/bin/"*; do
             [[ -f "$bin" ]] || continue
-            cp "$bin" "$HOME/.local/bin/$(basename "$bin")"
+            backup_and_copy "$bin" "$HOME/.local/bin/$(basename "$bin")"
             chmod +x "$HOME/.local/bin/$(basename "$bin")"
             echo "  bin/$(basename "$bin")"
         done
     fi
 
-    # Hyprland scripts
+    # Hyprland scripts — same invariant. User-edited scripts in
+    # ~/.config/hypr/scripts/ get a pre-overwrite snapshot.
     if [[ -d "$SCRIPT_DIR/shared/hyprland_scripts" ]]; then
         mkdir -p ~/.config/hypr/scripts
         for script in "$SCRIPT_DIR/shared/hyprland_scripts/"*.sh; do
             [[ -f "$script" ]] || continue
-            cp "$script" "$HOME/.config/hypr/scripts/$(basename "$script")"
+            backup_and_copy "$script" "$HOME/.config/hypr/scripts/$(basename "$script")"
             chmod +x "$HOME/.config/hypr/scripts/$(basename "$script")"
             echo "  scripts/$(basename "$script")"
         done
     fi
 
-    # Waybar scripts
+    # Waybar scripts — same.
     if [[ -d "$SCRIPT_DIR/shared/waybar_scripts" ]]; then
         mkdir -p ~/.config/waybar/scripts
         for script in "$SCRIPT_DIR/shared/waybar_scripts/"*.sh; do
             [[ -f "$script" ]] || continue
-            cp "$script" "$HOME/.config/waybar/scripts/$(basename "$script")"
+            backup_and_copy "$script" "$HOME/.config/waybar/scripts/$(basename "$script")"
             chmod +x "$HOME/.config/waybar/scripts/$(basename "$script")"
             echo "  waybar/$(basename "$script")"
         done
     fi
 
-    # Hyprland modules
+    # Hyprland modules — same.
     if [[ -d "$SCRIPT_DIR/shared/hyprland_modules" ]]; then
         mkdir -p ~/.config/hypr/modules
         for mod in "$SCRIPT_DIR/shared/hyprland_modules/"*.conf; do
@@ -389,7 +392,7 @@ JSON
             if [[ "$basename" == "monitors.conf" && -f "$HOME/.config/hypr/modules/monitors.conf" ]]; then
                 continue
             fi
-            cp "$mod" "$HOME/.config/hypr/modules/$basename"
+            backup_and_copy "$mod" "$HOME/.config/hypr/modules/$basename"
             echo "  modules/$basename"
         done
     fi
@@ -399,10 +402,10 @@ JSON
     # (called from install.sh after install_specials).
     if [[ -f "$rendered_dir/regreet/regreet.css" ]]; then
         mkdir -p ~/.config/regreet
-        cp "$rendered_dir/regreet/regreet.css" ~/.config/regreet/regreet.css
-        cp "$SCRIPT_DIR/shared/regreet.toml" ~/.config/regreet/regreet.toml
-        cp "$SCRIPT_DIR/shared/greetd_hyprland.conf" ~/.config/regreet/hyprland.conf
-        cp "$SCRIPT_DIR/shared/greetd_select_monitor.sh" ~/.config/regreet/select-monitor.sh
+        backup_and_copy "$rendered_dir/regreet/regreet.css"            "$HOME/.config/regreet/regreet.css"
+        backup_and_copy "$SCRIPT_DIR/shared/regreet.toml"              "$HOME/.config/regreet/regreet.toml"
+        backup_and_copy "$SCRIPT_DIR/shared/greetd_hyprland.conf"      "$HOME/.config/regreet/hyprland.conf"
+        backup_and_copy "$SCRIPT_DIR/shared/greetd_select_monitor.sh"  "$HOME/.config/regreet/select-monitor.sh"
         chmod +x ~/.config/regreet/select-monitor.sh
         echo "  ReGreet staged to ~/.config/regreet/ (install_greetd will deploy)"
     fi
@@ -411,7 +414,7 @@ JSON
     # can find it on installed systems without depending on the repo path.
     if [[ -f "$SCRIPT_DIR/KEYBINDS.md" ]]; then
         mkdir -p "$HOME/.local/share/foxml"
-        cp "$SCRIPT_DIR/KEYBINDS.md" "$HOME/.local/share/foxml/KEYBINDS.md"
+        backup_and_copy "$SCRIPT_DIR/KEYBINDS.md" "$HOME/.local/share/foxml/KEYBINDS.md"
         echo "  KEYBINDS.md → ~/.local/share/foxml/"
     fi
 
@@ -420,7 +423,7 @@ JSON
         mkdir -p ~/.wallpapers
         shopt -s nullglob nocaseglob
         for wp in "$SCRIPT_DIR/shared/wallpapers/"*.{jpg,jpeg,png,webp}; do
-            cp "$wp" ~/.wallpapers/
+            backup_and_copy "$wp" "$HOME/.wallpapers/$(basename "$wp")"
             echo "  $(basename "$wp")"
         done
         shopt -u nullglob nocaseglob
@@ -489,7 +492,10 @@ JSON
         local cat_tmp; cat_tmp="$(mktemp -d)"
         if git clone --depth 1 --quiet \
                 https://github.com/catppuccin/papirus-folders.git "$cat_tmp/repo" 2>/dev/null; then
-            cp -r "$cat_tmp/repo/src/"* "$icons_dir/Papirus/" || true
+            # Walk the tree and snapshot any pre-existing icon override
+            # before the catppuccin SVGs land on top. backup_and_copy_dir
+            # handles both create and overwrite paths.
+            backup_and_copy_dir "$cat_tmp/repo/src" "$icons_dir/Papirus" || true
             echo "  Catppuccin folder palette injected"
         fi
         rm -rf "$cat_tmp"
@@ -563,7 +569,7 @@ JSON
         local installed_any=0
         for unit in "$SCRIPT_DIR/shared/systemd_user/"*.{service,timer}; do
             [[ -f "$unit" ]] || continue
-            cp "$unit" "$HOME/.config/systemd/user/$(basename "$unit")"
+            backup_and_copy "$unit" "$HOME/.config/systemd/user/$(basename "$unit")"
             echo "  systemd/$(basename "$unit")"
             installed_any=1
         done
@@ -1840,6 +1846,20 @@ install_ufw_baseline() {
         echo "    sshd detected — port 22 allowed with rate-limit (limit ssh)"
     fi
 
+    # SSH lockout safety: if we're being run over SSH (e.g. `fox install`
+    # from a remote shell), the deny-incoming default would kill the
+    # current session mid-install. SSH_CONNECTION format is
+    # "client_ip client_port server_ip server_port" — explicitly allow
+    # the server port we're connected to before enabling.
+    if [[ -n "${SSH_CONNECTION:-}" ]]; then
+        local _ssh_port
+        _ssh_port=$(awk '{print $4}' <<<"$SSH_CONNECTION")
+        if [[ "$_ssh_port" =~ ^[0-9]+$ ]] && (( _ssh_port > 0 && _ssh_port < 65536 )); then
+            sudo ufw limit "${_ssh_port}/tcp" >/dev/null 2>&1
+            echo "    active SSH session on port ${_ssh_port} — allowed (rate-limited) to avoid lockout"
+        fi
+    fi
+
     # Enable low-volume logging — captures denied attempts to
     # /var/log/ufw.log without flooding disk. "low" includes blocked
     # packets but not every allowed connection. Useful tripwire for
@@ -2714,14 +2734,12 @@ install_vault() {
 # ─────────────────────────────────────────
 
 install_security() {
-    # 1. UFW — defer to install_ufw_baseline so we share one source of
-    # truth for rules. The baseline applies deny-incoming / allow-outgoing
-    # and conditionally `ufw limit ssh` ONLY when sshd is actually enabled,
-    # which is what we want here too. The prior duplicate block opened
-    # port 22 unconditionally — bad on machines with no sshd.
-    if pacman -Qi ufw &>/dev/null; then
-        install_ufw_baseline
-    else
+    # UFW is applied unconditionally by install_ufw_baseline (called from
+    # install.sh BEFORE this function). Re-running it here would just do
+    # the same idempotent work twice. If a future code path invokes
+    # install_security in isolation (e.g. fox-doctor remediation), call
+    # install_ufw_baseline yourself first; we no longer chain it here.
+    if ! pacman -Qi ufw &>/dev/null; then
         echo "  ufw package not found — run with --deps --secure"
     fi
 

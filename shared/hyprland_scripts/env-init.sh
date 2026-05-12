@@ -24,3 +24,14 @@ export XCURSOR_SIZE=24
 export XCURSOR_THEME=catppuccin-mocha-peach-cursors
 export XCURSOR_PATH="$HOME/.local/share/icons:$HOME/.icons:/usr/share/icons:/usr/share/pixmaps"
 
+# systemd --user integration. Push Wayland/desktop env vars into the user
+# systemd manager so services launched by it inherit them. Our long-lived
+# units use WantedBy=default.target (already active on login) rather than
+# graphical-session.target, which is RefuseManualStart=yes upstream and is
+# not auto-activated by Hyprland.
+if command -v systemctl >/dev/null 2>&1; then
+    systemctl --user import-environment \
+        WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE \
+        DISPLAY DBUS_SESSION_BUS_ADDRESS \
+        XCURSOR_THEME XCURSOR_SIZE XCURSOR_PATH 2>/dev/null
+fi

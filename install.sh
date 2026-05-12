@@ -861,13 +861,43 @@ if $INSTALL_DEPS; then
         fi
 
         # Splice PAM ONLY when a fingerprint is actually enrolled.
-        # `auth sufficient pam_fprintd.so` inserted as the first auth
-        # rule so a finger-touch short-circuits the password chain.
+        # `auth sufficient pam_fprintd.so` placed so a finger-touch
+        # short-circuits the password chain, but AFTER any
+        # pam_faillock/pam_env preauth lines so failed attempts still
+        # count toward lockout. Falls back to "first auth line" only
+        # when no preauth anchor exists.
         if (( _fprint_has_enrollment )); then
             pam_file=/etc/pam.d/system-local-login
             if [[ -f "$pam_file" ]] && ! grep -q pam_fprintd "$pam_file"; then
-                sudo sed -i '0,/^auth/{s|^auth|auth      sufficient   pam_fprintd.so\nauth|}' \
-                    "$pam_file" && echo "  fprintd PAM line added (fingerprint can unlock sudo)"
+                # Backup before edit — recoverable if PAM ends up broken.
+                sudo cp "$pam_file" "${pam_file}.foxml-bak" 2>/dev/null || true
+                # awk-based insert: place pam_fprintd line AFTER the last
+                # preauth/faillock/env auth line if present, otherwise
+                # before the first include/required/requisite. This keeps
+                # rate-limit + lockout semantics intact.
+                sudo awk '
+                    BEGIN { printed=0; last_preauth=0 }
+                    /^auth[[:space:]]+.*pam_(faillock\.so.*preauth|env\.so)/ { last_preauth=NR }
+                    { lines[NR]=$0 }
+                    END {
+                        insert_after = last_preauth
+                        if (insert_after == 0) {
+                            # No preauth anchor — insert before first auth line.
+                            for (i=1; i<=NR; i++) {
+                                if (lines[i] ~ /^auth[[:space:]]/) { insert_after = i-1; break }
+                            }
+                        }
+                        for (i=1; i<=NR; i++) {
+                            print lines[i]
+                            if (i == insert_after && !printed) {
+                                print "auth      sufficient   pam_fprintd.so"
+                                printed=1
+                            }
+                        }
+                    }
+                ' "$pam_file" | sudo tee "${pam_file}.foxml-new" >/dev/null \
+                    && sudo mv "${pam_file}.foxml-new" "$pam_file" \
+                    && echo "  fprintd PAM line added (fingerprint can unlock sudo; backup at ${pam_file}.foxml-bak)"
             fi
         else
             # No enrollment yet — leave PAM untouched. User can re-run
@@ -990,12 +1020,17 @@ if $INSTALL_XGBOOST; then
     fi
     _phase_mark deps
 fi
-# Tear down the sudo keepalive now — the privileged phase (pacman /
-# nvidia / xgboost build) is done. Everything past this point runs
-# unprivileged: model pulls, git clones, theme rendering, file copies
-# into $HOME. If sudo is needed again later it will re-prompt, which
-# is the desired behaviour.
-_sudo_keepalive_stop
+# Sudo keepalive: stop here ONLY in interactive mode (where the user is
+# at the keyboard and can re-auth when later privileged sections prompt).
+# In --yes / unattended mode we keep the keepalive alive for the full
+# run, because UFW + fail2ban + AppArmor + greetd + NVIDIA + the EXIT-
+# trap finalizer (ollama hardening) all need sudo AFTER this point, and
+# without a TTY they cannot re-prompt — they would fail silently. The
+# EXIT trap on SUDO_KEEPALIVE_PID (registered at start-up) tears the
+# keepalive down on script exit regardless.
+if ! $ASSUME_YES; then
+    _sudo_keepalive_stop
+fi
 _phase_exit_if_done deps
 
 # zsh plugins — install whenever oh-my-zsh is present, regardless of --deps,
@@ -1108,6 +1143,32 @@ backup_and_copy() {
     cp "$src" "$dest"
 }
 
+# Directory-tree variant of backup_and_copy. Used for shared_mappings
+# entries that resolve to directories (e.g. nvim_ftplugin/) and for the
+# Papirus tree merge — both used to call raw `cp -a src/. dest/`, which
+# silently overwrote user files. Now: snapshot each pre-existing file
+# under $BACKUP_DIR before the copy lands, preserving the same relative
+# structure so rollback can restore an exact tree.
+backup_and_copy_dir() {
+    local src="$1" dest="$2"
+    mkdir -p "$dest"
+    if [[ -d "$dest" ]]; then
+        local rel backup_path
+        # Walk every file we're ABOUT to copy. If a corresponding file
+        # exists at the destination, snapshot it first. Symlinks are
+        # preserved as-is in the backup (no -L follow).
+        while IFS= read -r -d '' f; do
+            rel="${f#$src/}"
+            if [[ -e "$dest/$rel" || -L "$dest/$rel" ]]; then
+                backup_path="$BACKUP_DIR/${dest#$HOME/}/$rel"
+                mkdir -p "$(dirname "$backup_path")"
+                cp -a "$dest/$rel" "$backup_path" 2>/dev/null || true
+            fi
+        done < <(find "$src" -mindepth 1 -print0 2>/dev/null)
+    fi
+    cp -a "$src/." "$dest/"
+}
+
 # ─────────────────────────────────────────
 # Install rendered template files
 # ─────────────────────────────────────────
@@ -1154,9 +1215,9 @@ for mapping in "${SHARED_MAPPINGS[@]}"; do
     if [[ -f "$SHARED_DIR/$src" ]]; then
         backup_and_copy "$SHARED_DIR/$src" "$dest"
     elif [[ -d "$SHARED_DIR/$src" ]]; then
-        # Handle directory entries (like nvim_ftplugin/cpp.lua)
-        mkdir -p "$(dirname "$dest")"
-        cp -a "$SHARED_DIR/$src/." "$dest/"
+        # Handle directory entries (like nvim_ftplugin/cpp.lua) — walks
+        # the tree and snapshots any pre-existing file before the copy.
+        backup_and_copy_dir "$SHARED_DIR/$src" "$dest"
     fi
 done
 echo ""

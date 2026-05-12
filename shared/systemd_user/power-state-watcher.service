@@ -1,7 +1,8 @@
 [Unit]
 Description=Swap hypridle config based on AC/battery power state
-After=graphical-session.target
-PartOf=graphical-session.target
+After=default.target
+# graphical-session.target is RefuseManualStart=yes upstream and Hyprland
+# does not pull it in; default.target activates on user login.
 
 [Service]
 Type=simple
@@ -10,4 +11,4 @@ Restart=on-failure
 RestartSec=5
 
 [Install]
-WantedBy=graphical-session.target
+WantedBy=default.target

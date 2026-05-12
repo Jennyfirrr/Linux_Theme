@@ -1,7 +1,9 @@
 [Unit]
 Description=React to Hyprland monitor hot-swap — rerun rotate / personalise / re-pin
-After=graphical-session.target
-PartOf=graphical-session.target
+After=default.target
+# graphical-session.target is RefuseManualStart=yes upstream and Hyprland
+# does not pull it in. WantedBy=default.target activates the unit on user
+# login, which is what we want for a long-running Hyprland-aware script.
 
 [Service]
 Type=simple
@@ -10,4 +12,4 @@ Restart=on-failure
 RestartSec=5
 
 [Install]
-WantedBy=graphical-session.target
+WantedBy=default.target
