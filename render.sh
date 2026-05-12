@@ -88,6 +88,62 @@ render_file() {
 }
 
 # ─────────────────────────────────────────
+# Pacman-style output helpers
+#
+# Layered to match pacman/makepkg conventions:
+#   foxml_section  → ":: " bold cyan, top-level action
+#   foxml_substep  → " -> " indented step under a section
+#   foxml_ok       → "  +" indented success, green
+#   foxml_warn     → "warning: " yellow, makepkg-style
+#   foxml_err      → "error: " red, makepkg-style
+#
+# Colors are emitted only when stdout is a TTY and tput supports ≥8 colors.
+# Falls back to plain text under pipes / log files / no-TTY installs.
+# ─────────────────────────────────────────
+if [[ -t 1 ]] && command -v tput >/dev/null 2>&1 && (( $(tput colors 2>/dev/null || echo 0) >= 8 )); then
+    _FOXML_BOLD="$(tput bold)"
+    _FOXML_DIM="$(tput dim)"
+    _FOXML_RED="$(tput setaf 1)"
+    _FOXML_GREEN="$(tput setaf 2)"
+    _FOXML_YELLOW="$(tput setaf 3)"
+    _FOXML_CYAN="$(tput setaf 6)"
+    _FOXML_RESET="$(tput sgr0)"
+else
+    _FOXML_BOLD=""; _FOXML_DIM=""; _FOXML_RED=""; _FOXML_GREEN=""
+    _FOXML_YELLOW=""; _FOXML_CYAN=""; _FOXML_RESET=""
+fi
+
+foxml_section() {
+    printf '%s%s::%s %s%s%s\n' \
+        "$_FOXML_BOLD" "$_FOXML_CYAN" "$_FOXML_RESET" \
+        "$_FOXML_BOLD" "$*" "$_FOXML_RESET"
+}
+
+foxml_substep() {
+    printf ' %s->%s %s\n' "$_FOXML_BOLD" "$_FOXML_RESET" "$*"
+}
+
+foxml_ok() {
+    printf '  %s+%s %s\n' "$_FOXML_GREEN" "$_FOXML_RESET" "$*"
+}
+
+foxml_warn() {
+    printf '%swarning:%s %s\n' "$_FOXML_YELLOW" "$_FOXML_RESET" "$*" >&2
+}
+
+foxml_err() {
+    printf '%serror:%s %s\n' "$_FOXML_RED" "$_FOXML_RESET" "$*" >&2
+}
+
+# Aligned summary row (label : value). Used by the end-of-install report.
+# Keep label width consistent across callers — pacman's final summary is
+# column-aligned and this helper enforces the same.
+foxml_summary_row() {
+    local label="$1" value="$2"
+    printf '  %s%-22s%s : %s\n' "$_FOXML_DIM" "$label" "$_FOXML_RESET" "$value"
+}
+
+# ─────────────────────────────────────────
 # Progress bar helper (pacman-style)
 # ─────────────────────────────────────────
 foxml_progress() {

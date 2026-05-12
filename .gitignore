@@ -5,6 +5,11 @@
 # OpenCode Skills (Private)
 claude-skills/
 
+# OpenCode project-local config — install.sh regenerates from a static
+# template, but earlier versions wrote $HOME-absolute paths and private-
+# workspace names into this file. Keep it out of the repo regardless.
+.opencode/
+
 # Plans (Personal design and scratchpad)
 plans/
 

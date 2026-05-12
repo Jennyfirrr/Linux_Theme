@@ -86,12 +86,21 @@ INSTALL_PERF=false
 INSTALL_PRIVACY=false
 INSTALL_VAULT=false
 INSTALL_NVIDIA=false
+INSTALL_AMD_GPU=false
+INSTALL_INTEL_GPU=false
+INSTALL_FPRINT=false
+IS_LAPTOP=false
 INSTALL_XGBOOST=false
+INSTALL_CPP_PRO=false
 INSTALL_AI=false
 INSTALL_MODELS=false
 INSTALL_GITHUB=false
 ASSUME_YES=false
 RENDER_ONLY=false
+DRY_RUN=false
+QUICK=false
+RESUME=false
+PHASE=""
 DEFAULT_THEME="FoxML_Classic"
 
 for arg in "$@"; do
@@ -101,8 +110,12 @@ for arg in "$@"; do
         --perf) INSTALL_PERF=true ;;
         --privacy) INSTALL_PRIVACY=true ;;
         --vault) INSTALL_VAULT=true ;;
-        --nvidia) INSTALL_NVIDIA=true ;;
+        --nvidia)    INSTALL_NVIDIA=true ;;
+        --gpu-amd)   INSTALL_AMD_GPU=true ;;
+        --gpu-intel) INSTALL_INTEL_GPU=true ;;
+        --fprint)    INSTALL_FPRINT=true ;;
         --xgboost) INSTALL_XGBOOST=true ;;
+        --cpp-pro) INSTALL_CPP_PRO=true ;;
         --ai) INSTALL_AI=true ;;
         --models) INSTALL_MODELS=true ;;
         --github) INSTALL_GITHUB=true ;;
@@ -122,10 +135,192 @@ for arg in "$@"; do
             INSTALL_GITHUB=true
             ;;
         --render-only) RENDER_ONLY=true ;;
+        --dry-run)     DRY_RUN=true ;;
+        --quick)       QUICK=true ;;
+        --resume)      RESUME=true ;;
+        --phase)       PHASE="${arg##*=}"; [[ "$PHASE" == "--phase" ]] && PHASE="next" ;;
+        --phase=*)     PHASE="${arg#--phase=}" ;;
         -y|--yes) ASSUME_YES=true ;;
         *) THEME_NAME="$arg" ;;
     esac
 done
+
+# ─────────────────────────────────────────
+# Hardware auto-detect block.
+#
+# Three independent detections, each behind a Y/n prompt in interactive
+# mode and a warning-only line in --yes mode (don't auto-modify system
+# without consent):
+#   1. NVIDIA GPU  → nvidia-open-dkms + DKMS headers + boot tweaks
+#   2. AMD GPU     → vulkan-radeon + libva-mesa-driver (userspace only)
+#   3. Intel GPU   → intel-media-driver + libva-intel-driver (userspace)
+#   4. Chassis type (/sys/class/dmi/id/chassis_type) → IS_LAPTOP flag
+#   5. Fingerprint reader (USB vendor IDs) → fprintd + PAM integration
+#
+# All idempotent — re-runs see flags already set and skip prompts.
+# ─────────────────────────────────────────
+
+# Chassis: 8/9/10/11/14 = laptop family; 30/31 = tablet/convertible.
+# Used to gate the fingerprint prompt (readers are laptop-only) and
+# could later inform battery widget defaults.
+if [[ -r /sys/class/dmi/id/chassis_type ]]; then
+    case "$(cat /sys/class/dmi/id/chassis_type 2>/dev/null)" in
+        8|9|10|11|14|30|31) IS_LAPTOP=true ;;
+    esac
+fi
+
+# Helper: prompt to enable a GPU userspace stack. Same pattern as
+# NVIDIA but factored so the three branches stay readable.
+# Note the explicit `return 0` on the early-exits — `set -e` is in effect
+# at this point of the script, and a bare `return` would inherit the
+# previous command's exit status (e.g. 1 from a non-matching grep) and
+# kill the whole installer. "No matching GPU" is not an error.
+_gpu_prompt() {
+    local pattern="$1" vendor_label="$2" pkgs_label="$3" var_to_set="$4"
+    local current_val="${!var_to_set}"
+    [[ "$current_val" == "true" ]] && return 0
+    command -v lspci >/dev/null 2>&1 || return 0
+    lspci 2>/dev/null | grep -qE "$pattern" || return 0
+    local gpu
+    gpu=$(lspci 2>/dev/null | grep -E "$pattern" | head -1 | sed -E 's/^.*: //; s/ \(rev [^)]*\)$//')
+    if $ASSUME_YES; then
+        foxml_warn "${vendor_label} GPU detected (${gpu}) — pass the matching flag explicitly in --yes mode"
+        return
+    fi
+    echo ""
+    foxml_section "${vendor_label} GPU detected"
+    foxml_substep "${gpu}"
+    read -p "Install ${pkgs_label}? [Y/n] " -n 1 -r
+    echo ""
+    if [[ ! "$REPLY" =~ ^[Nn]$ ]]; then
+        printf -v "$var_to_set" '%s' "true"
+        foxml_ok "${vendor_label} GPU userspace enabled for this install"
+    else
+        foxml_substep "skipping ${vendor_label} GPU install"
+    fi
+}
+
+if ! $INSTALL_NVIDIA; then
+    _gpu_prompt '(VGA|3D).*NVIDIA' 'NVIDIA' \
+        'nvidia-open-dkms + DKMS headers + Hyprland NVIDIA tweaks' INSTALL_NVIDIA
+fi
+_gpu_prompt '(VGA|3D).*(AMD|ATI)' 'AMD' \
+    'vulkan-radeon + libva-mesa-driver (userspace only, no boot tweaks)' INSTALL_AMD_GPU
+_gpu_prompt '(VGA|3D).*Intel' 'Intel' \
+    'intel-media-driver + libva-intel-driver + vulkan-intel' INSTALL_INTEL_GPU
+
+# Fingerprint reader: USB vendor IDs covering most consumer readers.
+# Laptop-only (chassis_type check) so desktop users with random USB
+# devices don't get false positives. PAM integration touches
+# /etc/pam.d/system-local-login — strictly behind a prompt.
+if $IS_LAPTOP && ! $ASSUME_YES && command -v lsusb >/dev/null 2>&1; then
+    fp_vendors='138a|06cb|27c6|1c7a|147e|04f3|0483|08ff'
+    if lsusb 2>/dev/null | grep -qiE "ID (${fp_vendors})"; then
+        fp_dev=$(lsusb 2>/dev/null | grep -iE "ID (${fp_vendors})" | head -1 | sed -E 's/^Bus [0-9]+ Device [0-9]+: //')
+        echo ""
+        foxml_section "Fingerprint reader detected"
+        foxml_substep "${fp_dev}"
+        read -p "Enable fprintd + PAM integration (touches /etc/pam.d/system-local-login)? [y/N] " -n 1 -r
+        echo ""
+        if [[ "$REPLY" =~ ^[Yy]$ ]]; then
+            INSTALL_FPRINT=true
+            foxml_ok "fingerprint stack enabled — you'll be prompted to enroll a finger after install"
+        else
+            foxml_substep "skipping fingerprint integration"
+        fi
+    fi
+fi
+
+# ─────────────────────────────────────────
+# Pre-flight checks. Disk space, connectivity, existing-install marker,
+# conflicting WM/DE. Fail fast on hard problems (no disk, no network);
+# warn on soft conflicts (other DE installed).
+# ─────────────────────────────────────────
+
+# Disk: require ≥5GB free in $HOME for templates + backups + AI binaries.
+# --models adds 5-20GB depending on tier; warn separately so user can
+# bail before kicking off a multi-GB pull.
+_free_home=$(df -BG --output=avail "$HOME" 2>/dev/null | tail -1 | tr -dc '0-9')
+if [[ -n "$_free_home" && "$_free_home" -lt 5 ]]; then
+    foxml_err "less than 5GB free in $HOME (${_free_home}GB) — installer needs headroom for backups + tools"
+    exit 1
+fi
+if $INSTALL_MODELS && [[ -n "$_free_home" && "$_free_home" -lt 25 ]]; then
+    foxml_warn "${_free_home}GB free in $HOME — --models pulls 5-20GB depending on tier; consider pruning"
+fi
+
+# Connectivity: only matters when the install actually fetches things.
+# 3s timeout — fails fast on offline / DNS-broken machines instead of
+# letting pacman / git stall mid-run.
+if ! $DRY_RUN && ! $RENDER_ONLY \
+    && ( $INSTALL_DEPS || $INSTALL_AI || $INSTALL_MODELS || $INSTALL_GITHUB ); then
+    if ! timeout 3 curl -sSf https://archlinux.org/ >/dev/null 2>&1; then
+        foxml_err "can't reach archlinux.org — installer needs network for pacman / git / ollama"
+        foxml_substep "diagnose: ping archlinux.org   /   systemctl status NetworkManager"
+        exit 1
+    fi
+fi
+
+# Existing install: marker file at the end of a successful install
+# records the theme + timestamp. --quick on a re-run skips deps/clones
+# (the slow parts) and just re-renders + redeploys configs. Without
+# --quick, we just nudge.
+INSTALL_MARKER="$HOME/.local/share/foxml/.installed-version"
+if [[ -f "$INSTALL_MARKER" ]]; then
+    _prior=$(cat "$INSTALL_MARKER" 2>/dev/null)
+    if $QUICK; then
+        foxml_substep "Quick mode: skipping deps/clones (prior install: ${_prior})"
+        INSTALL_DEPS=false
+        INSTALL_GITHUB=false
+        INSTALL_MODELS=false
+    else
+        foxml_substep "Existing FoxML install detected (${_prior}) — pass --quick to skip deps + clones next time"
+    fi
+fi
+
+# Phase markers. The installer records its last-completed phase in a
+# state file; --resume reads it back and prints guidance. --phase X
+# exits cleanly after phase X. The marker pattern is intentionally
+# minimal — the existing flags (--deps off, --quick) handle most of
+# the "skip-what's-done" needs.
+#
+# Phase names (in execution order):
+#   deps   — pacman + AUR helper + Oh My Zsh + npm globals
+#   render — render templates, deploy configs, scripts, modules
+#   ai     — Ollama + OpenCode + model pulls + AI skills
+#   github — gh auth + ~/code clone-all
+#   post   — apply_post_install, install marker, summary
+PHASE_STATE_FILE="$HOME/.local/state/foxml/install-state"
+if $RESUME && [[ -f "$PHASE_STATE_FILE" ]]; then
+    _resume_phase=$(cat "$PHASE_STATE_FILE" 2>/dev/null)
+    foxml_substep "last completed phase: '${_resume_phase:-none}'"
+    foxml_substep "this run continues from there; pass --quick to skip deps if already installed"
+fi
+_phase_mark() {
+    mkdir -p "$(dirname "$PHASE_STATE_FILE")"
+    echo "$1" > "$PHASE_STATE_FILE"
+}
+_phase_exit_if_done() {
+    if [[ -n "$PHASE" && "$PHASE" == "$1" ]]; then
+        foxml_substep "phase '$1' complete — exiting (--phase requested)"
+        exit 0
+    fi
+}
+
+# Conflicting WM/DE: warn that configs coexist but Hyprland-specific
+# keybinds won't apply if the user logs into the other session.
+if command -v pacman >/dev/null 2>&1; then
+    _wm_conflicts=()
+    pacman -Qi plasma-desktop &>/dev/null && _wm_conflicts+=("KDE Plasma")
+    pacman -Qi gnome-shell    &>/dev/null && _wm_conflicts+=("GNOME")
+    pacman -Qi sway           &>/dev/null && _wm_conflicts+=("sway")
+    pacman -Qi i3-wm          &>/dev/null && _wm_conflicts+=("i3")
+    pacman -Qi xfce4-session  &>/dev/null && _wm_conflicts+=("XFCE")
+    if (( ${#_wm_conflicts[@]} > 0 )); then
+        foxml_warn "another desktop / WM installed: ${_wm_conflicts[*]}"
+        foxml_substep "configs will coexist; Hyprland binds only apply inside Hyprland session"
+    fi
+fi
 
 # Non-interactive mode: default theme + prime sudo cache so pacman doesn't pause
 if $ASSUME_YES; then
@@ -186,6 +381,74 @@ echo ""
 echo "Installing theme: $THEME_NAME"
 echo "Backups will be saved to: $BACKUP_DIR"
 echo ""
+
+# ─────────────────────────────────────────
+# Dry-run: print plan summary and exit. No file writes, no pacman calls,
+# no sudo. Lets the user preview which modules would activate, how many
+# templates would render, and what the monitor layout looks like — useful
+# when running with --full on a new machine, or sanity-checking a config
+# change before committing to the install.
+# ─────────────────────────────────────────
+if $DRY_RUN; then
+    foxml_section "Dry run — no changes will be applied"
+    foxml_summary_row "Theme"             "$THEME_NAME"
+    foxml_summary_row "Templates"         "${#TEMPLATE_MAPPINGS[@]} files would render"
+    foxml_summary_row "Backup target"     "$BACKUP_DIR"
+    mods=()
+    $INSTALL_DEPS     && mods+=("deps")
+    $INSTALL_SECURITY && mods+=("security")
+    $INSTALL_PERF     && mods+=("perf")
+    $INSTALL_PRIVACY  && mods+=("privacy")
+    $INSTALL_VAULT    && mods+=("vault")
+    $INSTALL_NVIDIA   && mods+=("nvidia")
+    $INSTALL_AMD_GPU  && mods+=("gpu-amd")
+    $INSTALL_INTEL_GPU && mods+=("gpu-intel")
+    $INSTALL_FPRINT   && mods+=("fprint")
+    $IS_LAPTOP        && mods+=("chassis:laptop")
+    $INSTALL_XGBOOST  && mods+=("xgboost")
+    $INSTALL_CPP_PRO  && mods+=("cpp-pro")
+    $INSTALL_AI       && mods+=("ai")
+    $INSTALL_MODELS   && mods+=("models")
+    $INSTALL_GITHUB   && mods+=("github")
+    foxml_summary_row "Modules"           "${mods[*]:-none}"
+    if [[ -f "$HOME/.config/foxml/monitor-layout.conf" ]]; then
+        # shellcheck disable=SC1090
+        ( source "$HOME/.config/foxml/monitor-layout.conf"
+          foxml_summary_row "Monitors (sidecar)" "${MONITOR_RESOLUTIONS:-unknown}"
+          foxml_summary_row "Primary"            "${PRIMARY:-unknown}" )
+    else
+        foxml_summary_row "Monitors" "configure_monitors would run interactively"
+    fi
+    echo ""
+    foxml_substep "no files written, no packages installed — rerun without --dry-run to apply"
+    exit 0
+fi
+
+# ─────────────────────────────────────────
+# Distro / session guard. install.sh issues pacman / yay / makepkg calls
+# unconditionally and writes Hyprland-format configs. Fail fast with a
+# clear message rather than the deep "command not found" the user would
+# otherwise see hundreds of lines into the install. --dry-run skips this
+# so a non-Arch user can still preview the plan.
+# ─────────────────────────────────────────
+if ! command -v pacman >/dev/null 2>&1; then
+    foxml_err "pacman not found — install.sh requires Arch Linux or an Arch-derived distro"
+    distro_id=$(grep ^ID= /etc/os-release 2>/dev/null | cut -d= -f2 | tr -d '"')
+    foxml_substep "detected: ${distro_id:-unknown}"
+    foxml_substep "if you're on Arch under a non-standard PATH, ensure /usr/bin is in \$PATH"
+    foxml_substep "preview the install on this system without running it: ./install.sh --dry-run"
+    exit 1
+fi
+
+# Hyprland session is not required for --render-only / --deps / theme
+# rendering, but configure_monitors and post-install reload steps will
+# self-skip without it. Surface a single line up front so the user knows
+# those will defer rather than wondering why monitors aren't picked up.
+if [[ -z "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]]; then
+    foxml_warn "no active Hyprland session — configure_monitors will defer to next install"
+    foxml_substep "run ./install.sh from inside a Hyprland session to capture monitor layout"
+fi
+
 if ! $ASSUME_YES; then
     read -p "Continue? [y/N] " -n 1 -r
     echo ""
@@ -199,7 +462,7 @@ mkdir -p "$BACKUP_DIR"
 # ─────────────────────────────────────────
 if $INSTALL_DEPS; then
     echo ""
-    echo "Installing dependencies..."
+    foxml_section "Installing dependencies"
 
     PACMAN_PKGS=(
         # Fonts (nerd fonts for prompt glyphs, noto for CJK/emoji fallback in welcome banner)
@@ -251,6 +514,9 @@ if $INSTALL_DEPS; then
         # imagemagick — used by configure_monitors() to auto-crop landscape
         # wallpapers into portrait variants when a rotated monitor is detected
         imagemagick
+        # socat — used by fox-monitor-watch.sh to stream Hyprland's socket2
+        # event feed (monitoradded/monitorremoved) for hot-swap detection
+        socat
         # Power profile switcher (waybar power-profiles-daemon module);
         # python-gobject is the optional dep that makes `powerprofilesctl` work
         # for click-to-switch handlers
@@ -285,10 +551,40 @@ if $INSTALL_DEPS; then
         PACMAN_PKGS+=(nvidia-open-dkms linux-headers libva-nvidia-driver)
     fi
 
+    # AMD / Intel GPU userspace — auto-detected upstream; only Vulkan /
+    # VA-API packages, no kernel modules or boot tweaks. Safe to install
+    # alongside mesa (already in deps).
+    if $INSTALL_AMD_GPU; then
+        PACMAN_PKGS+=(vulkan-radeon libva-mesa-driver mesa-vdpau)
+    fi
+    if $INSTALL_INTEL_GPU; then
+        PACMAN_PKGS+=(intel-media-driver libva-intel-driver vulkan-intel)
+    fi
+
+    # C++ trading toolchain extras — opt-in via --cpp-pro. base-devel
+    # already covers gcc/make; this layer adds:
+    #   clang, lldb        — alternative compiler + debugger
+    #   mold               — 5-10x faster linker than ld.bfd
+    #   ccache             — rebuild cache, big win on repeated builds
+    #   gdb                — Linux's default debugger (not in base-devel)
+    #   valgrind           — memory error / leak checks
+    #   perf               — Linux kernel profiling
+    #   hyperfine          — microbenchmark CLI
+    #   linux-tools-common — perf needs this companion meta on some kernels
+    if $INSTALL_CPP_PRO; then
+        PACMAN_PKGS+=(clang lldb mold ccache gdb valgrind perf hyperfine)
+    fi
+
     TO_INSTALL=()
+    ALREADY_INSTALLED=0
     for pkg in "${PACMAN_PKGS[@]}"; do
-        pacman -Qi "$pkg" &>/dev/null || TO_INSTALL+=("$pkg")
+        if pacman -Qi "$pkg" &>/dev/null; then
+            ALREADY_INSTALLED=$((ALREADY_INSTALLED + 1))
+        else
+            TO_INSTALL+=("$pkg")
+        fi
     done
+    foxml_substep "${ALREADY_INSTALLED}/${#PACMAN_PKGS[@]} packages already installed"
 
     # Check for multilib if steam is needed
     if [[ " ${TO_INSTALL[*]} " =~ " steam " ]] && ! grep -q "^\[multilib\]" /etc/pacman.conf; then
@@ -316,7 +612,7 @@ if $INSTALL_DEPS; then
     fi
 
     if [[ ${#TO_INSTALL[@]} -gt 0 ]]; then
-        echo "  Packages to install: ${TO_INSTALL[*]}"
+        foxml_substep "${#TO_INSTALL[@]} new package(s) to install: ${TO_INSTALL[*]}"
         if $ASSUME_YES; then
             sudo pacman -S --needed --noconfirm "${TO_INSTALL[@]}"
         else
@@ -325,7 +621,7 @@ if $INSTALL_DEPS; then
             [[ $REPLY =~ ^[Yy]$ ]] && sudo pacman -S --needed "${TO_INSTALL[@]}"
         fi
     else
-        echo "  All packages already installed"
+        foxml_ok "all packages already installed — nothing to do"
     fi
 
     # Default web browser — wire xdg-open to Firefox so CLI auth flows
@@ -348,6 +644,27 @@ if $INSTALL_DEPS; then
         && ! systemctl is-active --quiet bluetooth; then
         sudo systemctl enable --now bluetooth \
             && echo "  bluetooth service enabled"
+    fi
+
+    # Fingerprint reader: enable fprintd + wire PAM. Gated by the
+    # hardware-detect prompt above ($INSTALL_FPRINT). PAM edit is the
+    # delicate bit — we insert pam_fprintd as `sufficient` *before* the
+    # password lines so finger-presence skips the password ask, with
+    # password still available as fallback. Idempotent on re-runs.
+    if $INSTALL_FPRINT && pacman -Qi fprintd &>/dev/null; then
+        if ! systemctl is-active --quiet fprintd; then
+            sudo systemctl enable --now fprintd 2>/dev/null \
+                && echo "  fprintd service enabled"
+        fi
+        pam_file=/etc/pam.d/system-local-login
+        if [[ -f "$pam_file" ]] && ! grep -q pam_fprintd "$pam_file"; then
+            # Insert sufficient pam_fprintd as the first auth rule. If
+            # finger presence succeeds, login proceeds; otherwise PAM
+            # falls through to the existing system-login include chain.
+            sudo sed -i '0,/^auth/{s|^auth|auth      sufficient   pam_fprintd.so\nauth|}' \
+                "$pam_file" 2>/dev/null && echo "  fprintd PAM line added"
+        fi
+        echo "  + run 'fprintd-enroll' to register a finger when ready"
     fi
 
     # AUR Helper (yay) and Spotify/Spicetify
@@ -443,7 +760,9 @@ if $INSTALL_XGBOOST; then
         ) && echo "  XGBoost installed to /usr/local/" \
           || echo "  XGBoost build failed — see output above (continuing)"
     fi
+    _phase_mark deps
 fi
+_phase_exit_if_done deps
 
 # zsh plugins — install whenever oh-my-zsh is present, regardless of --deps,
 # so the caramel theme + plugin list in .zshrc don't error out on first shell.
@@ -461,7 +780,7 @@ fi
 # Render templates
 # ─────────────────────────────────────────
 echo ""
-echo "Rendering templates with $THEME_NAME palette..."
+foxml_section "Rendering templates with $THEME_NAME palette"
 RENDERED_DIR=$(mktemp -d)
 render_all "$PALETTE_FILE" "$TEMPLATES_DIR" "$RENDERED_DIR"
 echo "  Templates rendered"
@@ -526,7 +845,7 @@ fi
 # Compile FoxML Intelligence Layer (C++)
 # ─────────────────────────────────────────
 if [[ -d "$SCRIPT_DIR/src/fox-intel" ]]; then
-    echo "Compiling FoxML Intelligence Layer (C++)..."
+    foxml_section "Compiling FoxML Intelligence Layer (C++)"
     (
         set -e
         cd "$SCRIPT_DIR/src/fox-intel"
@@ -608,11 +927,14 @@ for mapping in "${SHARED_MAPPINGS[@]}"; do
 done
 echo ""
 
+_phase_mark render
+_phase_exit_if_done render
+
 # ─────────────────────────────────────────
 # Special handlers
 # ─────────────────────────────────────────
 echo ""
-echo "Installing special configs..."
+foxml_section "Installing special configs"
 install_specials "$RENDERED_DIR"
 
 # Waybar render is deferred until after configure_monitors writes the layout
@@ -759,15 +1081,23 @@ if $INSTALL_AI; then
         eval "$(bash "$SHARED_DIR/bin/fox-hw-info")"
         echo "  RAM: ${RAM_GB}GB, VRAM: ${VRAM_GB}GB (Tier: $TIER)"
 
+        # Hybrid stack: a qwen2.5 chat sibling alongside the coder series.
+        # The coder models are FIM-tuned and emit code when asked anything
+        # general ("count to 10" → `echo -e "1\n2\n3"` with literal \n).
+        # configure_opencode picks the chat sibling as the OpenCode default
+        # model so general prompts produce prose; coder is still in the
+        # picker for code tasks.
         case "$TIER" in
             "lite")
-                echo "Pulling Lite Stack (1.5B, 3B, 7B)..."
+                echo "Pulling Lite Stack (chat 3B + coder 1.5B/3B/7B)..."
+                ollama pull qwen2.5:3b
                 ollama pull qwen2.5-coder:1.5b
                 ollama pull qwen2.5-coder:3b
                 ollama pull qwen2.5-coder:7b
                 ;;
             "standard")
-                echo "Pulling Standard Stack (7B, 14B, 32B)..."
+                echo "Pulling Standard Stack (chat 7B + coder 7B/14B/32B)..."
+                ollama pull qwen2.5:7b
                 ollama pull qwen2.5-coder:7b
                 ollama pull qwen2.5-coder:14b
                 ollama pull qwen2.5-coder:32b
@@ -775,7 +1105,8 @@ if $INSTALL_AI; then
             "pro")
                 # qwen2.5-coder tops out at 32B on the Ollama registry. Larger
                 # hosts get the same coder ceiling — no broken 70B pull.
-                echo "Pulling Pro Stack (14B, 32B)..."
+                echo "Pulling Pro Stack (chat 14B + coder 14B/32B)..."
+                ollama pull qwen2.5:14b
                 ollama pull qwen2.5-coder:14b
                 ollama pull qwen2.5-coder:32b
                 ;;
@@ -790,11 +1121,19 @@ if $INSTALL_AI; then
         echo "Configuring OpenCode (theme + multi-model picker + skill discovery)..."
         mkdir -p "$HOME/.config/opencode"
 
-        # Discover installed Ollama models for the picker
+        # Discover installed Ollama models for the picker. Embedding-only
+        # models (nomic-embed-text*, mxbai-embed-*, bge-*) are filtered out
+        # — they exit non-zero from the chat endpoint and clutter the model
+        # picker. The previous filter matched only the bare name, so
+        # nomic-embed-text:latest (the actual installed tag) slipped through.
         local INSTALLED_MODELS=()
         if command -v ollama &>/dev/null; then
             while IFS= read -r m; do
-                [ -n "$m" ] && [ "$m" != "nomic-embed-text" ] && INSTALLED_MODELS+=("$m")
+                [[ -z "$m" ]] && continue
+                case "$m" in
+                    nomic-embed-text*|mxbai-embed-*|bge-*) continue ;;
+                esac
+                INSTALLED_MODELS+=("$m")
             done < <(ollama list 2>/dev/null | awk 'NR>1 && $1 != "" {print $1}')
         fi
         if [ ${#INSTALLED_MODELS[@]} -eq 0 ]; then
@@ -823,14 +1162,34 @@ if $INSTALL_AI; then
             SKILL_PATHS_JSON+=$(printf '"%s"' "$p")
         done
 
-        # Default model: prefer 7b if installed, else first available
+        # Default model: prefer a chat-tuned variant over a coder variant.
+        # Coder models are FIM-tuned and produce code-formatted responses
+        # for general prompts (the user reported "count to 10" yielding
+        # `echo -e "1\n2..."` with literal escapes). Preference cascade:
+        #   1. qwen2.5:7b   — Standard tier chat sibling
+        #   2. qwen2.5:14b  — Pro tier chat sibling
+        #   3. qwen2.5:3b   — Lite tier chat sibling
+        #   4. any other non-coder model present
+        #   5. first installed (falls back to coder if that's all there is)
         local DEFAULT_MODEL="ollama/${INSTALLED_MODELS[0]}"
-        for m in "${INSTALLED_MODELS[@]}"; do
-            if [ "$m" = "qwen2.5-coder:7b" ]; then
-                DEFAULT_MODEL="ollama/qwen2.5-coder:7b"
-                break
-            fi
+        local chat_preference=("qwen2.5:7b" "qwen2.5:14b" "qwen2.5:3b")
+        local picked=""
+        for pref in "${chat_preference[@]}"; do
+            for m in "${INSTALLED_MODELS[@]}"; do
+                [ "$m" = "$pref" ] && { picked="$m"; break 2; }
+            done
         done
+        if [ -z "$picked" ]; then
+            # No tier-specific chat model — scan for any non-coder model
+            # that's not an embed variant (those are already filtered out).
+            for m in "${INSTALLED_MODELS[@]}"; do
+                case "$m" in
+                    *-coder*) continue ;;
+                    *)        picked="$m"; break ;;
+                esac
+            done
+        fi
+        [ -n "$picked" ] && DEFAULT_MODEL="ollama/$picked"
 
         cat <<EOF > "$HOME/.config/opencode/opencode.json"
 {
@@ -864,14 +1223,19 @@ EOF
         echo "  + Models exposed to picker: ${#INSTALLED_MODELS[@]}  (default: $DEFAULT_MODEL)"
         echo "  + Skill workspaces wired: ${#SKILL_PATHS[@]}"
 
-        # Project-local override so this repo always sees its own skills,
-        # plus any other workspaces present on the same machine.
+        # Project-local override — wires opencode into THIS project's own
+        # claude-skills directory via a relative path. Intentionally does
+        # not reference other workspaces; cross-workspace skill discovery
+        # belongs in the user-level config above. Keeping this file
+        # machine-agnostic means it's safe to commit (no /home/<user>
+        # leaks, no private-workspace names) and identical across every
+        # user who runs install.sh.
         mkdir -p "$SCRIPT_DIR/.opencode"
         cat <<EOF > "$SCRIPT_DIR/.opencode/opencode.json"
 {
   "\$schema": "https://opencode.ai/config.json",
   "skills": {
-    "paths": [${SKILL_PATHS_JSON}]
+    "paths": ["./claude-skills"]
   }
 }
 EOF
@@ -999,7 +1363,9 @@ EOF
 
     if $INSTALL_GITHUB; then
     install_github_workspace
+    _phase_mark github
     fi
+    _phase_exit_if_done github
 
     # ─────────────────────────────────────────
     # OpenCode JSON config — runs LAST so skill-path discovery sees any
@@ -1008,7 +1374,9 @@ EOF
     # ─────────────────────────────────────────
     if $INSTALL_AI; then
         configure_opencode
+        _phase_mark ai
     fi
+    _phase_exit_if_done ai
 
     # ─────────────────────────────────────────
     # Multi-monitor layout — runs after configs are deployed so the
@@ -1017,19 +1385,18 @@ EOF
     # hyprctl can't reach the IPC socket (installer run from a TTY).
     # ─────────────────────────────────────────
     echo ""
-    echo "Configuring monitors..."
+    foxml_section "Configuring monitors"
     configure_monitors
 
-    # Backstop: regenerate portrait wallpapers any time the sidecar lists a
-    # rotated output, regardless of whether the user re-ran the picker. Covers
-    # the case where imagemagick was installed in this same run (after the
-    # first configure_monitors pass) or a fresh wallpaper was added since.
+    # Backstop: regenerate per-monitor wallpaper variants, re-personalise
+    # hyprlock, and re-pin workspace 1 any time the sidecar exists,
+    # regardless of whether the user re-ran the picker. Covers imagemagick
+    # installed mid-run, fresh wallpaper added since, or a previous
+    # configure_monitors that short-circuited (no-TTY skip path).
     if [[ -f "$HOME/.config/foxml/monitor-layout.conf" ]]; then
-        # shellcheck disable=SC1090
-        source "$HOME/.config/foxml/monitor-layout.conf"
-        if [[ -n "${PORTRAIT_OUTPUTS:-}" ]]; then
-            _generate_portrait_wallpapers
-        fi
+        _generate_per_monitor_wallpapers
+        _personalize_hyprlock
+        _personalize_workspace_rules
     fi
 
     # Render waybar AFTER configure_monitors so start_waybar.sh sees the layout
@@ -1039,7 +1406,7 @@ EOF
     # render until the next Hyprland session).
     if [[ -x "$HOME/.config/hypr/scripts/start_waybar.sh" ]]; then
         echo ""
-        echo "Rendering waybar for current monitor layout..."
+        foxml_section "Rendering waybar for current monitor layout"
         "$HOME/.config/hypr/scripts/start_waybar.sh" --render-only || true
         if pgrep -x waybar >/dev/null 2>&1; then
             pkill -x waybar 2>/dev/null || true
@@ -1065,13 +1432,70 @@ rm -rf "$RENDERED_DIR"
 # ─────────────────────────────────────────
 echo "$THEME_NAME" > "$ACTIVE_FILE"
 
+# Persistent install marker. Read by --quick on subsequent runs to skip
+# the expensive parts (deps install, github clones, model pulls) when
+# the theme/scripts just need a re-render.
+mkdir -p "$HOME/.local/share/foxml"
+{
+    echo "theme=${THEME_NAME}"
+    echo "installed_at=$(date -Iseconds)"
+    echo "script_dir=${SCRIPT_DIR}"
+} > "$HOME/.local/share/foxml/.installed-version"
+
+# ─────────────────────────────────────────
+# Pacman-style install summary
+# ─────────────────────────────────────────
+_summary_monitor_line() {
+    # Read sidecar to produce a one-line monitor summary
+    # ("eDP-1 1920x1080 + HDMI-A-1 1080x1920 (portrait)") for the report.
+    local layout="$HOME/.config/foxml/monitor-layout.conf"
+    [[ -f "$layout" ]] || { echo "none"; return; }
+    # shellcheck disable=SC1090
+    local PRIMARY="" PORTRAIT_OUTPUTS="" MONITOR_RESOLUTIONS=""
+    source "$layout"
+    [[ -z "$MONITOR_RESOLUTIONS" ]] && { echo "${PRIMARY:-unknown}"; return; }
+    local out="" entry name res portrait
+    for entry in $MONITOR_RESOLUTIONS; do
+        name="${entry%%:*}"; res="${entry##*:}"
+        portrait=""
+        [[ " ${PORTRAIT_OUTPUTS:-} " == *" ${name} "* ]] && portrait=" (portrait)"
+        [[ -n "$out" ]] && out+=" + "
+        out+="${name} ${res}${portrait}"
+    done
+    echo "$out"
+}
+_summary_wallpaper_count() {
+    # Count pre-rendered ${base}_${WxH}.${ext} files. nullglob keeps this
+    # quiet on a setup with no variants yet.
+    local count
+    shopt -s nullglob
+    count=$(printf '%s\n' "$HOME"/.wallpapers/*_[0-9]*x[0-9]*.{jpg,jpeg,png} | grep -c '.')
+    shopt -u nullglob
+    echo "${count:-0}"
+}
+
 echo ""
-echo "╭──────────────────────────────────────────────────────────────────╮"
-echo "│                    Installation Complete!                       │"
-echo "╰──────────────────────────────────────────────────────────────────╯"
-echo ""
-echo "Active theme: $THEME_NAME"
-echo "Backups saved to: $BACKUP_DIR"
+foxml_section "Installation Complete"
+foxml_summary_row "Active theme"      "$THEME_NAME"
+foxml_summary_row "Templates rendered" "${#TEMPLATE_MAPPINGS[@]}"
+foxml_summary_row "Monitors detected"  "$(_summary_monitor_line)"
+foxml_summary_row "Wallpapers cached"  "$(_summary_wallpaper_count)"
+foxml_summary_row "Backups saved to"   "$BACKUP_DIR"
+
+# Health check: run fox-doctor and surface the headline count. Full
+# output goes through fox-doctor directly if the user wants details
+# (just run `fox doctor`). Skips if fox-doctor isn't on PATH yet, e.g.
+# the very first install hasn't propagated ~/.local/bin yet.
+if command -v fox-doctor >/dev/null 2>&1; then
+    _doctor_out=$(fox-doctor 2>&1 || true)
+    _doctor_result=$(printf '%s\n' "$_doctor_out" | grep -E '^Result:' | tail -1)
+    if [[ -n "$_doctor_result" ]]; then
+        # Strip ANSI colour codes from the captured line so the row aligns.
+        _doctor_result=$(printf '%s' "$_doctor_result" | sed -E 's/\x1B\[[0-9;]*[a-zA-Z]//g; s/^Result: //')
+        foxml_summary_row "Health check"     "${_doctor_result}"
+        foxml_substep "run \`fox doctor\` for the full report"
+    fi
+fi
 echo ""
 
 # ─────────────────────────────────────────
@@ -1080,7 +1504,7 @@ echo ""
 # no nvim install, no jq, no Cursor/Code dir).
 # ─────────────────────────────────────────
 apply_post_install() {
-    echo "Applying post-install actions..."
+    foxml_section "Applying post-install actions"
 
     # Hyprland reload — only inside an active Hyprland session
     if [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]] && command -v hyprctl &>/dev/null; then
@@ -1146,6 +1570,7 @@ apply_post_install() {
 }
 
 apply_post_install
+_phase_mark post
 
 echo ""
 if $INSTALL_AI; then

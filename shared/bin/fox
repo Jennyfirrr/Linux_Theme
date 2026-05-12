@@ -25,6 +25,30 @@ case "$1" in
         shift
         cd "$FOXML_DIR" && ./shared/bin/fox-rollback "$@"
         ;;
+    lock)
+        shift
+        exec fox-lock "$@"
+        ;;
+    doctor)
+        shift
+        exec fox-doctor "$@"
+        ;;
+    develop|dev)
+        shift
+        exec fox-develop "$@"
+        ;;
+    menu)
+        shift
+        exec fox-menu "$@"
+        ;;
+    test)
+        shift
+        exec fox-test "$@"
+        ;;
+    uninstall|remove)
+        shift
+        exec fox-uninstall "$@"
+        ;;
     help|--help|-h|"")
         echo "FoxML CLI - Unified Theme Manager"
         echo "Usage: fox <command> [args]"
@@ -34,6 +58,12 @@ case "$1" in
         echo "  swap             Open the interactive theme switcher"
         echo "  update           Save current live config edits back into templates"
         echo "  rollback         Restore configs from a previous backup"
+        echo "  lock             Pre-checked screen lock (dbus/awww sanity + hyprlock)"
+        echo "  doctor           Diagnose config drift (nvim, hyprland, waybar, multi-monitor)"
+        echo "  develop          Toggle dev mode (symlink shared/ → live config for fast iteration)"
+        echo "  menu             Rofi-based launcher for all fox-* commands"
+        echo "  test             Run shellcheck + roundtrip + fox-doctor (CI gate)"
+        echo "  uninstall        Remove fox binaries + services + state (keeps user configs)"
         echo ""
         echo "Custom Tools (found in ~/.local/bin):"
         for cmd in "$HOME/.local/bin/"fox-* "$HOME/.local/bin/"fask "$HOME/.local/bin/"findex "$HOME/.local/bin/"fhelp; do

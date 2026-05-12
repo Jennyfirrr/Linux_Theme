@@ -1,11 +1,16 @@
 #!/bin/bash
 # fox-distro-flash — Safe flashing utility for the FoxML ISO
 
-ISO_FILE="/home/caramel/code/FoxML_Workstation/distro/out/FoxML-OS-$(date +%Y.%m.%d)-x86_64.iso"
+# Locate the FoxML_Workstation repo. Convention is ~/code/FoxML_Workstation/
+# per CLAUDE.md; override with FOXML_WORKSTATION_DIR=... if you keep it
+# elsewhere. Avoids hardcoding any particular user's $HOME path.
+WORKSTATION_DIR="${FOXML_WORKSTATION_DIR:-$HOME/code/FoxML_Workstation}"
+ISO_DIR="${WORKSTATION_DIR}/distro/out"
+ISO_FILE="${ISO_DIR}/FoxML-OS-$(date +%Y.%m.%d)-x86_64.iso"
 
 # Try to find the latest ISO if the dated one doesn't exist
 if [[ ! -f "$ISO_FILE" ]]; then
-    ISO_FILE=$(ls -t /home/caramel/code/FoxML_Workstation/distro/out/*.iso 2>/dev/null | head -n 1)
+    ISO_FILE=$(ls -t "${ISO_DIR}"/*.iso 2>/dev/null | head -n 1)
 fi
 
 if [[ -z "$ISO_FILE" ]]; then

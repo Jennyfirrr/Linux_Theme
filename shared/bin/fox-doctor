@@ -208,10 +208,175 @@ SUDO_SCRIPT
     ok "pinned in /etc/pacman.conf: $(grep '^IgnorePkg' /etc/pacman.conf)"
 }
 
+check_multimonitor() {
+    section "Multi-monitor + lock screen"
+    local sidecar="$HOME/.config/foxml/monitor-layout.conf"
+    if [[ ! -f "$sidecar" ]]; then
+        warn "no monitor-layout sidecar"
+        hint "fix: run ./install.sh to re-run configure_monitors"
+        return
+    fi
+    # shellcheck disable=SC1090
+    local PRIMARY="" PORTRAIT_OUTPUTS="" SECONDARY_OUTPUTS="" MONITOR_RESOLUTIONS=""
+    source "$sidecar"
+    if [[ -z "$PRIMARY" ]]; then
+        fail "sidecar has no PRIMARY"
+        return
+    fi
+    ok "sidecar parses (PRIMARY=$PRIMARY)"
+
+    if [[ -z "$MONITOR_RESOLUTIONS" ]]; then
+        warn "sidecar missing MONITOR_RESOLUTIONS — per-monitor variants disabled"
+        hint "fix: rerun ./install.sh; configure_monitors now emits this field"
+    else
+        ok "MONITOR_RESOLUTIONS: $MONITOR_RESOLUTIONS"
+    fi
+
+    # Pre-rendered wallpaper variants — verify every source has a variant
+    # for every distinct resolution in the sidecar.
+    local wall_dir="$HOME/.wallpapers"
+    if [[ -d "$wall_dir" && -n "$MONITOR_RESOLUTIONS" ]]; then
+        local -A seen_res=()
+        local entry res
+        for entry in $MONITOR_RESOLUTIONS; do
+            res="${entry##*:}"
+            [[ -n "$res" && "$res" != "$entry" ]] && seen_res[$res]=1
+        done
+        local missing=0 src base ext name
+        shopt -s nullglob
+        for src in "$wall_dir"/*.{jpg,jpeg,png}; do
+            base="$(basename "$src")"
+            ext="${base##*.}"
+            name="${base%.*}"
+            [[ "$name" == *_portrait ]]      && continue
+            [[ "$name" =~ _[0-9]+x[0-9]+$ ]] && continue
+            for res in "${!seen_res[@]}"; do
+                [[ -f "$wall_dir/${name}_${res}.${ext}" ]] || missing=$((missing+1))
+            done
+        done
+        shopt -u nullglob
+        if (( missing > 0 )); then
+            warn "$missing per-monitor wallpaper variant(s) missing"
+            hint "fix: source mappings.sh && _generate_per_monitor_wallpapers"
+        else
+            ok "per-monitor wallpaper variants complete"
+        fi
+    fi
+
+    # hyprlock.conf: one background block per monitor, all paths resolve.
+    local hyprlock_conf="$HOME/.config/hypr/hyprlock.conf"
+    if [[ -f "$hyprlock_conf" ]]; then
+        if grep -q '^# foxml:hyprlock-backgrounds-begin' "$hyprlock_conf"; then
+            local expected=0 found
+            for entry in $MONITOR_RESOLUTIONS; do
+                [[ -n "${entry%%:*}" ]] && expected=$((expected+1))
+            done
+            found=$(awk '
+                /^# foxml:hyprlock-backgrounds-begin/ { inblk=1; next }
+                /^# foxml:hyprlock-backgrounds-end/   { exit }
+                inblk && /^background[[:space:]]*\{/  { n++ } END { print n+0 }
+            ' "$hyprlock_conf")
+            if (( found == expected )); then
+                ok "hyprlock has $found background block(s) matching monitors"
+            else
+                warn "hyprlock has $found background block(s); expected $expected"
+                hint "fix: source mappings.sh && _personalize_hyprlock"
+            fi
+            # Verify each path resolves
+            local bad_paths=0 p
+            while IFS= read -r p; do
+                p="${p/#\~/$HOME}"
+                [[ -f "$p" ]] || bad_paths=$((bad_paths+1))
+            done < <(awk '
+                /^# foxml:hyprlock-backgrounds-begin/ { inblk=1; next }
+                /^# foxml:hyprlock-backgrounds-end/   { exit }
+                inblk && /^[[:space:]]*path[[:space:]]*=/ {
+                    sub(/^[[:space:]]*path[[:space:]]*=[[:space:]]*/, "")
+                    print
+                }
+            ' "$hyprlock_conf")
+            if (( bad_paths > 0 )); then
+                fail "$bad_paths hyprlock background path(s) do not exist"
+            fi
+        else
+            warn "hyprlock.conf missing foxml sentinels"
+            hint "fix: rerun ./install.sh to redeploy the template"
+        fi
+    fi
+
+    # rules.conf workspace pin
+    local rules_conf="$HOME/.config/hypr/modules/rules.conf"
+    if [[ -f "$rules_conf" ]]; then
+        if grep -q '^# foxml:workspace-pin-begin' "$rules_conf"; then
+            local pinned
+            pinned=$(awk '
+                /^# foxml:workspace-pin-begin/ { inblk=1; next }
+                /^# foxml:workspace-pin-end/   { exit }
+                inblk && /^workspace[[:space:]]*=.*monitor:/ {
+                    match($0, /monitor:[^,]+/)
+                    print substr($0, RSTART+8, RLENGTH-8)
+                    exit
+                }
+            ' "$rules_conf")
+            if [[ "$pinned" == "$PRIMARY" ]]; then
+                ok "workspace 1 pinned to $PRIMARY"
+            else
+                warn "workspace 1 pinned to '$pinned' but PRIMARY is '$PRIMARY'"
+                hint "fix: source mappings.sh && _personalize_workspace_rules"
+            fi
+        else
+            warn "rules.conf missing foxml workspace-pin sentinel"
+        fi
+    fi
+
+    # Hot-swap watcher prerequisites
+    if ! command -v socat &>/dev/null; then
+        warn "socat not installed — fox-monitor-watch.sh will not run"
+        hint "fix: sudo pacman -S socat"
+    else
+        ok "socat present"
+    fi
+    if [[ -x "$HOME/.config/hypr/scripts/fox-monitor-watch.sh" ]]; then
+        ok "fox-monitor-watch.sh deployed"
+        if ! pgrep -f fox-monitor-watch.sh >/dev/null 2>&1; then
+            warn "fox-monitor-watch.sh not running"
+            hint "fix: relogin, or exec ~/.config/hypr/scripts/fox-monitor-watch.sh &"
+        fi
+    fi
+
+    # chvt diagnostic binds
+    local keybinds_conf="$HOME/.config/hypr/modules/keybinds.conf"
+    if [[ -f "$keybinds_conf" ]] && grep -q 'exec, chvt 2' "$keybinds_conf"; then
+        ok "chvt diagnostic binds present"
+        if ! getcap /usr/bin/chvt 2>/dev/null | grep -q cap_sys_tty_config; then
+            warn "/usr/bin/chvt lacks CAP_SYS_TTY_CONFIG — binds will fail silently"
+            hint "fix: sudo setcap cap_sys_tty_config+ep /usr/bin/chvt"
+        fi
+    fi
+
+    # awww-daemon reachable
+    if command -v awww >/dev/null 2>&1; then
+        if awww query &>/dev/null; then
+            ok "awww-daemon reachable"
+        else
+            warn "awww-daemon not running"
+            hint "fix: setsid awww-daemon &  (or relogin)"
+        fi
+    fi
+
+    # hypridle config is the new logind-mediated style
+    local hypridle_conf="$HOME/.config/hypr/hypridle-ac.conf"
+    if [[ -f "$hypridle_conf" ]] && ! grep -q '^[[:space:]]*lock_cmd' "$hypridle_conf"; then
+        warn "hypridle config still uses pre-loginctl pattern"
+        hint "fix: rerun ./install.sh to redeploy hypridle configs"
+    fi
+}
+
 echo "FoxML Doctor — config sanity checks"
 check_nvim
 check_hyprland
 check_waybar
+check_multimonitor
 
 echo
 if (( FAILED > 0 )); then

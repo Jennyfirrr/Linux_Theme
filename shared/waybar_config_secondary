@@ -5,7 +5,8 @@
   "margin": "__MARGIN_BAR__",
 
   "modules-left": [
-    "group/launcher"
+    "group/launcher",
+    "custom/ai_status"
   ],
 
   "modules-center": [],
@@ -20,6 +21,14 @@
         "custom/logo",
         "hyprland/workspaces"
     ]
+  },
+
+  "custom/ai_status": {
+    "exec": "~/.local/bin/fox-ai-status",
+    "return-type": "json",
+    "interval": 2,
+    "tooltip": true,
+    "on-click": "~/.config/hypr/scripts/toggle_rofi.sh ~/.local/bin/fox-ai-quick"
   },
 
   "custom/logo": {

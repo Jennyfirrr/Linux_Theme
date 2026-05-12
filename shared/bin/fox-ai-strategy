@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# fox-ai-strategy — plain-English explanation of a trading strategy config.
+#
+# Usage: fox-ai-strategy strategies/momentum.yaml
+#        fox-ai-strategy strategies/risk_limits.json
+#
+# Designed for FoxML_Trader / FoxML_Trader_v2 / tick-trader strategy
+# files. Emits a short prose summary covering:
+#   - What the strategy does (entry / exit / sizing logic).
+#   - Risk profile (max drawdown, position limits, leverage).
+#   - Parameter sensitivities (which knobs matter most).
+#   - Any obvious red flags (no stop loss, leverage > 5x, etc.).
+
+set -u
+
+if ! command -v ollama >/dev/null 2>&1; then
+    echo "fox-ai-strategy: ollama not installed" >&2
+    exit 1
+fi
+
+MODEL="${FOXAI_MODEL:-}"
+if [[ -z "$MODEL" ]] && [[ -f "$HOME/.config/opencode/opencode.json" ]] && command -v jq >/dev/null 2>&1; then
+    MODEL=$(jq -r '.model // empty' "$HOME/.config/opencode/opencode.json" 2>/dev/null | sed 's|^ollama/||')
+fi
+MODEL="${MODEL:-qwen2.5-coder:7b}"
+
+if [[ $# -lt 1 || ! -f "$1" ]]; then
+    echo "usage: fox-ai-strategy <strategy-config-file>" >&2
+    exit 2
+fi
+
+src="$1"
+content=$(cat "$src")
+prompt="The file below is a configuration for a trading strategy in the FoxML stack (high-performance C++ engines, paper-trading-by-default crypto). Read it and produce a focused summary:
+
+1. What it does — entry trigger, exit trigger, position sizing. One paragraph.
+2. Risk profile — drawdown limit, position cap, leverage, stop loss. Bullets.
+3. Parameter sensitivities — which parameters most affect P&L vs. drawdown.
+4. Red flags, if any — missing stop loss, leverage >5x, no risk shard, infinite-position-size assumptions.
+
+Be concrete. Quote parameter names. Do not restate the file verbatim.
+
+CONFIG (${src}):
+$content"
+
+ollama run "$MODEL" "$prompt" 2>/dev/null

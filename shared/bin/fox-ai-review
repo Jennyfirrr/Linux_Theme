@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# fox-ai-review — local AI code review on staged diff.
+#
+# Usage: fox-ai-review              # review currently staged changes
+#        fox-ai-review HEAD~3       # review diff vs given ref
+#        fox-ai-review --file path  # review a specific file
+#
+# Designed as a companion to fox-ai-commit. Surfaces likely bugs, style
+# issues, and project-specific violations (branchless-hot-path, fixed-
+# point accounting) for FoxML's C++ engines. Doesn't auto-fix anything —
+# just reports.
+
+set -u
+
+if ! command -v ollama >/dev/null 2>&1; then
+    echo "fox-ai-review: ollama not installed" >&2
+    exit 1
+fi
+
+MODEL="${FOXAI_MODEL:-}"
+if [[ -z "$MODEL" ]] && [[ -f "$HOME/.config/opencode/opencode.json" ]] && command -v jq >/dev/null 2>&1; then
+    MODEL=$(jq -r '.model // empty' "$HOME/.config/opencode/opencode.json" 2>/dev/null | sed 's|^ollama/||')
+fi
+MODEL="${MODEL:-qwen2.5-coder:7b}"
+
+mode="staged"
+ref=""
+file=""
+while (( $# > 0 )); do
+    case "$1" in
+        --file) file="$2"; mode="file"; shift ;;
+        --help|-h) sed -n '2,11p' "$0" | sed 's/^# \?//'; exit 0 ;;
+        *) ref="$1"; mode="ref" ;;
+    esac
+    shift
+done
+
+case "$mode" in
+    staged) diff=$(git diff --staged) ;;
+    ref)    diff=$(git diff "$ref"...HEAD) ;;
+    file)   diff=$(cat "$file") ;;
+esac
+
+if [[ -z "$diff" ]]; then
+    echo "fox-ai-review: no diff to review" >&2
+    exit 0
+fi
+
+system='You are a senior C++/Python code reviewer. Review the following diff and produce a concise report covering:
+- Likely bugs or correctness issues (rank: high/medium/low)
+- Performance concerns, especially in hot paths
+- Style / convention drift
+- Security / safety pitfalls
+- Anything load-bearing that lacks a test
+
+Project context: this is a high-performance trading codebase. C++17/20, branchless hot paths preferred, fixed-point arithmetic over float in accounting. Tests are mandatory for invariant changes.
+
+Output format: short headings, bullet points, line references where possible. Do NOT restate the diff. Do NOT include preamble. If the diff is clean, say so in one line.'
+
+echo "─── fox-ai-review (model: $MODEL) ───"
+ollama run "$MODEL" "$system
+
+DIFF:
+$diff" 2>/dev/null
