@@ -1,1 +1,1 @@
-/home/caramel/code/Linux_Theme/shared/bin/fox-distro-build
+shared/bin/fox-distro-build

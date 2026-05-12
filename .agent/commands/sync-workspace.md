@@ -1,1 +1,1 @@
-/home/caramel/.local/share/foxml/ai_skills/sync-workspace.md
+../../shared/ai_skills/sync-workspace.md

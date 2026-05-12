@@ -1,1 +1,1 @@
-/home/caramel/.local/share/foxml/ai_skills/dust.md
+../../shared/ai_skills/dust.md

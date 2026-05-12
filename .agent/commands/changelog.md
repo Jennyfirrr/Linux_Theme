@@ -1,1 +1,1 @@
-/home/caramel/.local/share/foxml/ai_skills/changelog.md
+../../shared/ai_skills/changelog.md

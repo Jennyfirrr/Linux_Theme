@@ -1,1 +1,1 @@
-/home/caramel/.local/share/foxml/ai_skills/parity.md
+../../shared/ai_skills/parity.md

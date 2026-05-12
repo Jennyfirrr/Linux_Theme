@@ -1,1 +1,1 @@
-/home/caramel/.local/share/foxml/ai_skills/context.md
+../../shared/ai_skills/context.md

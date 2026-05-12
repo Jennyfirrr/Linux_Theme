@@ -1,1 +1,1 @@
-/home/caramel/.local/share/foxml/ai_skills/theme_ready.md
+../../shared/ai_skills/theme_ready.md

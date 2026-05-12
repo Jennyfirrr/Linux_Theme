@@ -1,1 +1,1 @@
-/home/caramel/.local/share/foxml/ai_skills/gen-cpp.md
+../../shared/ai_skills/gen-cpp.md

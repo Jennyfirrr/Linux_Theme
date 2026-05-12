@@ -1,1 +1,1 @@
-/home/caramel/.local/share/foxml/ai_skills/plan-check.md
+../../shared/ai_skills/plan-check.md

@@ -1,1 +1,1 @@
-/home/caramel/.local/share/foxml/ai_skills/ml-audit.md
+../../shared/ai_skills/ml-audit.md

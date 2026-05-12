@@ -1,1 +1,1 @@
-/home/caramel/.local/share/foxml/ai_skills/fox-intel.md
+../../shared/ai_skills/fox-intel.md

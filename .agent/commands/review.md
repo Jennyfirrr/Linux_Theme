@@ -1,1 +1,1 @@
-/home/caramel/.local/share/foxml/ai_skills/review.md
+../../shared/ai_skills/review.md

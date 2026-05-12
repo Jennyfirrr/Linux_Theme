@@ -1,1 +1,1 @@
-/home/caramel/.local/share/foxml/ai_skills/lib-promotion.md
+../../shared/ai_skills/lib-promotion.md

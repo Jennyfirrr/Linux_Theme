@@ -1,1 +1,1 @@
-/home/caramel/.local/share/foxml/ai_skills/readiness.md
+../../shared/ai_skills/readiness.md

@@ -1,1 +1,1 @@
-/home/caramel/.local/share/foxml/ai_skills/ship.md
+../../shared/ai_skills/ship.md
