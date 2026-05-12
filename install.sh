@@ -244,6 +244,7 @@ INSTALL_NO_COREDUMPS=true  # systemd-coredump → Storage=none
 # --arm chains `fox arm` at the end of install so every opt-in
 # defense gets walked through in the same flow (no second command).
 INSTALL_ARM=false
+INSTALL_ARM_HEAVY=false
 # Privacy (DNS-over-HTTPS via systemd-resolved + privacy.resistFingerprinting
 # in Firefox) is part of the secure-by-default stance. Opt out with --no-privacy.
 INSTALL_PRIVACY=true
@@ -304,6 +305,7 @@ for arg in "$@"; do
         --no-coredumps)     INSTALL_NO_COREDUMPS=false ;;
         --arm)              INSTALL_ARM=true ;;
         --paranoid)         INSTALL_ARM=true ;;  # alias
+        --heavy)            INSTALL_ARM=true; INSTALL_ARM_HEAVY=true ;;
         --privacy|--no-privacy)
             [[ "$arg" == "--no-privacy" ]] && INSTALL_PRIVACY=false || INSTALL_PRIVACY=true
             ;;
@@ -2183,9 +2185,12 @@ if $INSTALL_ARM && [[ -t 0 ]] && ! $ASSUME_YES; then
     echo ""
     foxml_section "fox arm — walk through every opt-in defense"
     if command -v fox-arm >/dev/null 2>&1; then
-        # The user can Ctrl-C out of fox arm without disrupting the
-        # install summary; arm prompts each tool independently.
-        fox-arm || true
+        # --heavy passed → also enable opensnitch + cowrie inside arm.
+        if $INSTALL_ARM_HEAVY; then
+            fox-arm --heavy || true
+        else
+            fox-arm || true
+        fi
     else
         echo "  ! fox-arm not on PATH — install seems incomplete"
     fi
