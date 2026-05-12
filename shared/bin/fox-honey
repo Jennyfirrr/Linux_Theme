@@ -88,23 +88,48 @@ _list() {
 }
 
 _plant_all_trading() {
-    # Heuristic: directories under ~/code that look like trading repos.
-    # Patterns: *trader*, tick*, ticker*. Tweak via env: FOX_HONEY_DIRS.
-    local dirs=()
-    if [[ -n "${FOX_HONEY_DIRS:-}" ]]; then
-        for d in $FOX_HONEY_DIRS; do dirs+=("$d"); done
+    # Resolve target dirs from env / config file / default patterns.
+    # Dedupe via associative array since the default patterns overlap
+    # (a repo matched by both *trader* and FoxML* used to plant twice).
+    local -a patterns=()
+    if [[ -n "${FOX_HONEY_TARGETS:-}" ]]; then
+        read -ra patterns <<<"$FOX_HONEY_TARGETS"
+    elif [[ -f "$HOME/.config/foxml/honey-targets" ]]; then
+        while IFS= read -r line; do
+            [[ "$line" =~ ^[[:space:]]*# ]] && continue
+            [[ -z "$line" ]] && continue
+            patterns+=("$line")
+        done < "$HOME/.config/foxml/honey-targets"
     else
         shopt -s nullglob
-        for d in "$HOME/code/"*[Tt]rader*  "$HOME/code/"tick* "$HOME/code/"FoxML* ; do
-            [[ -d "$d" && -d "$d/.git" ]] && dirs+=("$d")
-        done
+        patterns=(
+            "$HOME/code/"*[Tt]rader*
+            "$HOME/code/"tick*
+            "$HOME/code/"FoxML*
+        )
         shopt -u nullglob
     fi
+
+    declare -A seen=()
+    local -a dirs=()
+    for d in "${patterns[@]}"; do
+        [[ -d "$d" && -d "$d/.git" ]] || continue
+        local key; key=$(readlink -f "$d")
+        [[ -n "${seen[$key]:-}" ]] && continue
+        seen[$key]=1
+        dirs+=("$d")
+    done
+
     if (( ${#dirs[@]} == 0 )); then
-        echo "${C_YEL}no trading-pattern dirs found in ~/code/${C_RST}"
-        echo "  override with:  FOX_HONEY_DIRS='~/code/dir1 ~/code/dir2' fox honey plant-all-trading"
+        echo "${C_YEL}no matching repo dirs found${C_RST}"
+        echo "  override patterns:"
+        echo "    FOX_HONEY_TARGETS='~/code/dir1 ~/work/dir2' fox honey plant-all-trading"
+        echo "  or persist to ~/.config/foxml/honey-targets (one glob per line):"
+        echo "    ~/code/*Trader*"
+        echo "    ~/work/secret-repo"
         return 0
     fi
+    echo "${C_DIM}planting in ${#dirs[@]} repo(s):${C_RST}"
     for d in "${dirs[@]}"; do _plant "$d"; done
 }
 

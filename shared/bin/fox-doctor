@@ -422,27 +422,64 @@ check_dev_security() {
         hint "fix:  git config --global commit.gpgsign true && git config --global user.signingkey <KEYID>"
     fi
 
-    # 2. GitHub 2FA (best-effort via gh CLI)
+    # 2. GitHub 2FA — the /user endpoint's two_factor_authentication
+    # field requires the `read:user` OAuth scope. The default `gh auth
+    # login` scopes don't include it, so the field comes back null and
+    # we used to call this "unknown". Detect the scope gap explicitly
+    # and tell the user how to refresh.
     if command -v gh >/dev/null 2>&1; then
-        local two_fa
+        local two_fa scopes
         two_fa=$(gh api /user --jq '.two_factor_authentication' 2>/dev/null)
+        scopes=$(gh auth status 2>&1 | awk '/Token scopes:/{sub(/.*Token scopes: */, ""); print}')
         if [[ "$two_fa" == "true" ]]; then
             ok "GitHub 2FA enabled"
         elif [[ "$two_fa" == "false" ]]; then
             fail "GitHub 2FA is NOT enabled"
             hint "fix: https://github.com/settings/security  (TOTP minimum; FIDO2/passkey if you have one)"
+        elif [[ -n "$scopes" && "$scopes" != *read:user* && "$scopes" != *user* ]]; then
+            warn "GitHub 2FA: gh token missing 'read:user' scope — can't query state"
+            hint "fix:  gh auth refresh -s read:user"
         else
-            warn "GitHub 2FA state unknown (gh CLI may need auth: gh auth status)"
+            warn "GitHub 2FA: state couldn't be determined (gh API issue?)"
+            hint "check manually:  https://github.com/settings/security"
         fi
     else
         warn "gh CLI not installed — can't probe GitHub 2FA state"
     fi
 
-    # 3. Honeytokens in trading repo dirs
+    # 3. Honeytokens in repo dirs. Patterns configurable via
+    # ~/.config/foxml/honey-targets (one glob per line) or the
+    # FOX_HONEY_TARGETS env var. Default: trading-related patterns
+    # under ~/code/ with dedupe so a repo matched by multiple globs
+    # only shows once.
     if [[ -d "$HOME/code" ]]; then
+        local -a patterns=()
+        if [[ -n "${FOX_HONEY_TARGETS:-}" ]]; then
+            read -ra patterns <<<"$FOX_HONEY_TARGETS"
+        elif [[ -f "$HOME/.config/foxml/honey-targets" ]]; then
+            while IFS= read -r line; do
+                [[ "$line" =~ ^[[:space:]]*# ]] && continue
+                [[ -z "$line" ]] && continue
+                patterns+=("$line")
+            done < "$HOME/.config/foxml/honey-targets"
+        else
+            patterns=(
+                "$HOME/code/"*[Tt]rader*
+                "$HOME/code/"tick*
+                "$HOME/code/"FoxML*
+            )
+        fi
+
+        # Dedupe via associative array — repos matching multiple globs
+        # showed up twice in the old output.
+        declare -A _seen=()
         local honey_count=0 honey_missing=()
-        for d in "$HOME/code/"*[Tt]rader* "$HOME/code/"tick* "$HOME/code/"FoxML*; do
+        for d in "${patterns[@]}"; do
             [[ -d "$d" && -d "$d/.git" ]] || continue
+            local key
+            key=$(readlink -f "$d")
+            [[ -n "${_seen[$key]:-}" ]] && continue
+            _seen[$key]=1
             if [[ -f "$d/prod_keys.txt" ]]; then
                 honey_count=$((honey_count+1))
             else
@@ -450,11 +487,12 @@ check_dev_security() {
             fi
         done
         if (( honey_count > 0 )); then
-            ok "honey planted in $honey_count trading repo dir(s)"
+            ok "honey planted in $honey_count repo dir(s)"
         fi
         if (( ${#honey_missing[@]} > 0 )); then
             warn "no honey in: ${honey_missing[*]}"
             hint "plant: fox honey plant-all-trading"
+            hint "customise paths: ~/.config/foxml/honey-targets (one glob per line)"
         fi
     fi
 
