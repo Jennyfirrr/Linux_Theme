@@ -1,0 +1,43 @@
+name: release
+
+# Generates SHA256SUMS.txt for every tag and attaches it to the GitHub
+# release. Lets users `sha256sum -c SHA256SUMS.txt` before piping the
+# bootstrap script to bash. If your GitHub account is ever compromised
+# and someone rewrites bootstrap.sh, the published SHA256SUMS.txt for
+# a prior tag still vouches for the file content at that snapshot.
+#
+# To verify locally:
+#   curl -fsSL https://github.com/Jennyfirrr/Linux_Theme/releases/download/<tag>/SHA256SUMS.txt -o SHA256SUMS.txt
+#   curl -fsSL https://raw.githubusercontent.com/Jennyfirrr/Linux_Theme/<tag>/bootstrap.sh -o bootstrap.sh
+#   sha256sum -c SHA256SUMS.txt --ignore-missing
+#   # only proceed if "bootstrap.sh: OK"
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  checksums:
+    name: SHA256SUMS
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Generate SHA256SUMS
+        run: |
+          # Hash every file tracked in git at this tag. Excludes the
+          # checksum file itself (which doesn't exist yet anyway).
+          git ls-files | LC_ALL=C sort | xargs sha256sum > SHA256SUMS.txt
+          echo "Generated $(wc -l < SHA256SUMS.txt) hashes"
+
+      - name: Attach to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: SHA256SUMS.txt
+          # Don't overwrite — if the release exists, just append the
+          # asset. Lets the maintainer write release notes manually.
+          fail_on_unmatched_files: true

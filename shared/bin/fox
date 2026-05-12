@@ -49,6 +49,14 @@ case "$1" in
         shift
         exec fox-uninstall "$@"
         ;;
+    sandbox)
+        shift
+        exec fox-sandbox "$@"
+        ;;
+    init)
+        shift
+        exec fox-init "$@"
+        ;;
     help|--help|-h|"")
         echo "FoxML CLI - Unified Theme Manager"
         echo "Usage: fox <command> [args]"
@@ -64,6 +72,8 @@ case "$1" in
         echo "  menu             Rofi-based launcher for all fox-* commands"
         echo "  test             Run shellcheck + roundtrip + fox-doctor (CI gate)"
         echo "  uninstall        Remove fox binaries + services + state (keeps user configs)"
+        echo "  sandbox          Rofi picker for disposable firejail-wrapped apps"
+        echo "  init <name>      Open workspace + tmux + nvim + index (one-touch project onboarding)"
         echo ""
         echo "Custom Tools (found in ~/.local/bin):"
         for cmd in "$HOME/.local/bin/"fox-* "$HOME/.local/bin/"fask "$HOME/.local/bin/"findex "$HOME/.local/bin/"fhelp; do

@@ -108,6 +108,11 @@ INSTALL_ARCH_AUDIT=true
 # MAC randomization stays opt-in — dorm / enterprise WiFi setups
 # require a consistent MAC for the network ACL to recognise the device.
 INSTALL_MAC_RANDOM=false
+# Polkit strict mode — require password for every privileged GUI
+# action (no 5-minute cached auth). Opt-in: breaks the convenience of
+# "click install, click yes" workflows. Useful when you want the same
+# friction in the GUI that sudo without a cookie gives you.
+INSTALL_POLKIT_STRICT=false
 INSTALL_AI=false
 INSTALL_MODELS=false
 INSTALL_GITHUB=false
@@ -145,7 +150,8 @@ for arg in "$@"; do
         --arch-audit|--no-arch-audit)
             [[ "$arg" == "--no-arch-audit" ]] && INSTALL_ARCH_AUDIT=false || INSTALL_ARCH_AUDIT=true
             ;;
-        --mac-random)     INSTALL_MAC_RANDOM=true ;;
+        --mac-random)       INSTALL_MAC_RANDOM=true ;;
+        --polkit-strict)    INSTALL_POLKIT_STRICT=true ;;
         --ai) INSTALL_AI=true ;;
         --models) INSTALL_MODELS=true ;;
         --github) INSTALL_GITHUB=true ;;
@@ -1095,6 +1101,11 @@ if $INSTALL_MAC_RANDOM; then
     echo ""
     foxml_section "NetworkManager MAC randomization"
     install_mac_random
+fi
+if $INSTALL_POLKIT_STRICT; then
+    echo ""
+    foxml_section "Polkit strict mode (every action re-prompts)"
+    install_polkit_strict
 fi
 
 # ─────────────────────────────────────────

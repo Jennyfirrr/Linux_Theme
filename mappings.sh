@@ -579,7 +579,7 @@ JSON
             # take the systemd path instead — Restart=on-failure makes them
             # self-heal. Other services (power-state-watcher, etc.) stay
             # opt-in.
-            for svc in fox-monitor-watch.service; do
+            for svc in fox-monitor-watch.service foxml-focus-pulse.service; do
                 [[ -f "$HOME/.config/systemd/user/$svc" ]] || continue
                 systemctl --user enable --now "$svc" &>/dev/null \
                     && echo "  systemd $svc enabled"
@@ -2058,6 +2058,33 @@ EOF
 # MAC addresses — randomization breaks those setups. Standard for
 # coffee-shop / hotel wifi protection though.
 # ─────────────────────────────────────────
+install_polkit_strict() {
+    # Drop a JS rule into /etc/polkit-1/rules.d/ that forces password
+    # auth for every privileged GUI action. Default polkit caches a
+    # success for ~5 minutes (AUTH_ADMIN_KEEP); this changes that to
+    # AUTH_ADMIN — no cache, prompts every time. Annoying for daily
+    # GUI sudo, decisive against "walked away from desk → attacker
+    # clicks install" attacks.
+    local rule=/etc/polkit-1/rules.d/99-foxml-strict.rules
+    sudo install -d /etc/polkit-1/rules.d
+    sudo tee "$rule" >/dev/null <<'EOF'
+// foxml-managed — require fresh password auth for every admin action.
+// Revert: sudo rm /etc/polkit-1/rules.d/99-foxml-strict.rules
+polkit.addRule(function(action, subject) {
+    // AUTH_ADMIN means prompt for the admin password every time, no
+    // 5-minute keep-window. Applies to package installs, USB mounts
+    // by non-owners, NetworkManager hotspot create, etc.
+    if (subject.isInGroup("wheel")) {
+        return polkit.Result.AUTH_ADMIN;
+    }
+});
+EOF
+    sudo chmod 644 "$rule"
+    sudo systemctl reload polkit 2>/dev/null \
+        || sudo systemctl restart polkit 2>/dev/null || true
+    echo "  Polkit strict mode enabled (every admin action re-prompts)"
+}
+
 install_mac_random() {
     local conf=/etc/NetworkManager/conf.d/00-foxml-mac-random.conf
     sudo install -d /etc/NetworkManager/conf.d

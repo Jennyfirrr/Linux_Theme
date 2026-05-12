@@ -1,0 +1,13 @@
+[Unit]
+Description=Brief OSD on Hyprland workspace switch (foxml focus-pulse)
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.config/hypr/scripts/focus-pulse.sh
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=graphical-session.target

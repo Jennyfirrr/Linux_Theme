@@ -12,6 +12,7 @@
   "modules-center": [],
 
   "modules-right": [
+    "custom/overwatch",
     "custom/security",
     "custom/net_speed",
     "custom/cpu",
@@ -37,6 +38,13 @@
     "exec": "~/.config/waybar/scripts/system_health.sh",
     "return-type": "json",
     "interval": 10,
+    "tooltip": true
+  },
+
+  "custom/overwatch": {
+    "exec": "~/.config/waybar/scripts/hw_overwatch.sh",
+    "return-type": "json",
+    "interval": 15,
     "tooltip": true
   },
 
