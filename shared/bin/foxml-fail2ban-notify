@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# foxml-fail2ban-notify — called by fail2ban actionban with positional
+# args. Logs to ~/.local/share/foxml/threat-log.txt + fires fox-dispatch.
+#
+# Fail2ban's config parser chokes on giant inline `bash -c` blocks with
+# embedded $(...) + token interpolation. Moving the logic here means
+# the action.d entry is one clean command line and fail2ban-client -t
+# passes cleanly.
+#
+# Usage (positional, in order — match the actionban line):
+#   foxml-fail2ban-notify <ip> <jail> <failures> <target_user>
+#
+# Runs as root (fail2ban is a root daemon). Drops back to target_user
+# for the dispatch call so fox-dispatch reads the user's webhook config.
+
+set -u
+
+IP="${1:-?}"
+JAIL="${2:-?}"
+FAILURES="${3:-?}"
+TARGET="${4:-}"
+
+# Resolve target user. fail2ban can't expand $USER (it runs as root),
+# so we accept it as arg 4. Fall back to the first sudo-eligible user
+# if not provided.
+if [[ -z "$TARGET" ]]; then
+    TARGET=$(getent group wheel 2>/dev/null | awk -F: '{print $4}' | tr ',' '\n' | head -1)
+fi
+[[ -z "$TARGET" ]] && { echo "foxml-fail2ban-notify: no target user resolved" >&2; exit 0; }
+
+USER_HOME=$(getent passwd "$TARGET" | cut -d: -f6)
+[[ -z "$USER_HOME" || ! -d "$USER_HOME" ]] && exit 0
+
+# Threat log: per-event tab-separated row in $XDG_DATA_HOME equivalent.
+LOG="$USER_HOME/.local/share/foxml/threat-log.txt"
+mkdir -p "$(dirname "$LOG")" 2>/dev/null
+chmod 700 "$(dirname "$LOG")" 2>/dev/null || true
+
+# Passive lookups — geo + whois. Both have 5s timeouts so a slow
+# upstream doesn't stall fail2ban's action queue.
+GEO=$(curl -sS -m 5 "http://ip-api.com/json/${IP}?fields=country,city,isp,as,proxy,hosting" 2>/dev/null)
+WHOIS=$(timeout 5 whois "$IP" 2>/dev/null \
+    | grep -iE '^(country|netname|orgname|descr):' \
+    | head -4 \
+    | tr '\n' '|')
+
+STAMP=$(date -Iseconds)
+printf '%s\t%s\t%s\t%s failures\tgeo=%s\twhois=%s\n' \
+    "$STAMP" "$IP" "$JAIL" "$FAILURES" "$GEO" "$WHOIS" \
+    >> "$LOG"
+chmod 600 "$LOG" 2>/dev/null || true
+chown "$TARGET:$TARGET" "$LOG" 2>/dev/null || true
+
+# Fire the phone alert as the target user so fox-dispatch picks up
+# their personal webhook config (~/.config/foxml/dispatch.conf).
+TARGET_UID=$(id -u "$TARGET")
+sudo -u "$TARGET" \
+    XDG_RUNTIME_DIR="/run/user/${TARGET_UID}" \
+    HOME="$USER_HOME" \
+    "$USER_HOME/.local/bin/fox-dispatch" \
+    "ssh-brute" \
+    "${IP} banned (${JAIL}, ${FAILURES} failures) geo=${GEO}" \
+    2>/dev/null || true

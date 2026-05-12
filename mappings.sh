@@ -1018,7 +1018,7 @@ install_dispatch_hooks() {
 # foxml-managed — fires fox-dispatch on every fail2ban ban.
 # Revert: sudo rm $action and remove "action = foxml-dispatch" from jail.local.
 [Definition]
-actionban  = /bin/sh -c '_log=/home/${USER}/.local/share/foxml/threat-log.txt; mkdir -p "\$(dirname \$_log)" && chmod 700 "\$(dirname \$_log)"; _geo=\$(curl -sS -m 5 "http://ip-api.com/json/<ip>?fields=country,city,isp,as,proxy,hosting" 2>/dev/null); _whois=\$(timeout 5 whois <ip> 2>/dev/null | grep -iE "^(country|netname|orgname|descr):" | head -4 | tr "\\n" "|"); _stamp=\$(date -Iseconds); printf "%s\\t<ip>\\t<name>\\t<failures> failures\\tgeo=%s\\twhois=%s\\n" "\$_stamp" "\$_geo" "\$_whois" >> "\$_log"; chmod 600 "\$_log"; sudo -u ${USER} XDG_RUNTIME_DIR=/run/user/\$(id -u ${USER}) HOME=/home/${USER} /home/${USER}/.local/bin/fox-dispatch "ssh-brute" "<ip> banned (<name>, <failures> failures) geo=\$_geo" || true'
+actionban  = /usr/local/bin/foxml-fail2ban-notify <ip> <name> <failures> ${USER}
 actionunban = /bin/true
 [Init]
 EOF
