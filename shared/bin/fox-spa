@@ -51,21 +51,22 @@ _require() {
 }
 
 _disable_knockd_if_active() {
-    # If knockd is active OR previously configured, offer to disable.
-    # SPA and knock can't both gate the same SSH port — they'd race on
-    # UFW rules and the user would get inconsistent behavior.
-    local knock_state="" knock_configured=""
-    systemctl is-active --quiet knockd 2>/dev/null && knock_state="active"
-    [[ -f "$HOME/.config/foxml/knock.conf" ]] && knock_configured="yes"
-    if [[ -n "$knock_state" || -n "$knock_configured" ]]; then
+    # Only fire when knockd is CURRENTLY active. The previous OR-check
+    # (active OR conf-exists) re-prompted forever, because fox-knock
+    # --disable stops the service but leaves knock.conf in place as
+    # archived secret storage — so the prompt would re-fire every
+    # subsequent run with the user saying y, fox-knock --disable
+    # no-op'ing, loop. SPA and knock only fight over UFW state when
+    # knockd is live; a dormant conf file is harmless.
+    if systemctl is-active --quiet knockd 2>/dev/null; then
         echo
-        echo "  ${C_YEL}port-knocking (knockd) is already configured.${C_RST}"
+        echo "  ${C_YEL}port-knocking (knockd) is active.${C_RST}"
         echo "  SPA replaces knock — both gating the same port would race on UFW rules."
         local _r
         read -rp "  Disable knockd first? [Y/n] " -n 1 -r _r; echo
         if [[ ! "$_r" =~ ^[Nn]$ ]]; then
             command -v fox-knock >/dev/null 2>&1 && fox-knock --disable \
-                || { sudo systemctl disable --now knockd 2>/dev/null; rm -f "$HOME/.config/foxml/knock.conf"; }
+                || sudo systemctl disable --now knockd 2>/dev/null
         else
             echo "  ${C_YEL}keeping knockd — note: behaviour will be undefined${C_RST}"
         fi

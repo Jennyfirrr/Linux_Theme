@@ -279,6 +279,12 @@ act_disable() {
     ssh_port=$(_real_ssh_port)
     sudo ufw delete deny "$ssh_port/tcp" 2>/dev/null
     sudo ufw limit "$ssh_port/tcp" >/dev/null 2>&1
+    # Archive the user's sequence so fox-spa stops treating the
+    # dormant file as "knock is still configured". Preserves the
+    # secret (rename, not rm) so re-enabling later restores it.
+    if [[ -f "$USER_CONF" ]]; then
+        mv -f "$USER_CONF" "${USER_CONF}.disabled" 2>/dev/null
+    fi
     echo "${C_GRN}✓ knockd stopped, $ssh_port re-opened (rate-limited)${C_RST}"
 }
 

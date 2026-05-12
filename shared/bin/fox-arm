@@ -103,10 +103,19 @@ _arm() {
     _step "dispatch (phone alerts via webhook)"
     if [[ -f "$HOME/.config/foxml/dispatch.conf" ]]; then
         _ok "already configured"
+    elif [[ -f "$HOME/.config/foxml/.skipped-dispatch" ]]; then
+        # Respect a prior decline from install.sh's interactive flow.
+        # Avoids the "asked twice" complaint when fox install --full
+        # --heavy chains install_security_extras + fox arm.
+        _skip "previously declined (rm ~/.config/foxml/.skipped-dispatch to re-offer)"
     else
         if _yn "Configure Discord/Telegram webhook now? [Y/n]"; then
             fox-dispatch --setup
-        else _skip "skipped (run later: fox dispatch --setup)"; fi
+        else
+            mkdir -p "$HOME/.config/foxml" 2>/dev/null
+            touch "$HOME/.config/foxml/.skipped-dispatch"
+            _skip "skipped (run later: fox dispatch --setup)"
+        fi
     fi
 
     _step "knock OR spa (SSH access gating)"

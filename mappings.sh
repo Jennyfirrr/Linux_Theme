@@ -1126,19 +1126,25 @@ EOF
 
     # 3. Offer to configure fox-dispatch webhook if it's not set up yet.
     # Only when at a TTY and not --yes — silent in unattended mode.
-    # foxml_prompt_yn uses `read -n 1` so it advances on a single y/n
-    # keypress (no Enter needed), matching the other interactive prompts.
+    # Touch a `.skipped-dispatch` marker on decline so the same
+    # question doesn't re-fire from fox-arm later in the --heavy flow.
+    # User can `rm ~/.config/foxml/.skipped-dispatch` to re-trigger.
     if [[ -t 0 ]] && ! ${ASSUME_YES:-false}; then
-        if [[ ! -f "$HOME/.config/foxml/dispatch.conf" ]]; then
+        local _skip_marker="$HOME/.config/foxml/.skipped-dispatch"
+        if [[ -f "$HOME/.config/foxml/dispatch.conf" ]]; then
+            echo "  • fox-dispatch webhook already configured"
+        elif [[ -f "$_skip_marker" ]]; then
+            echo "  • fox-dispatch previously declined ($_skip_marker — remove to re-prompt)"
+        else
             echo ""
             echo "  fox-dispatch (phone alerts) is not yet configured."
             if foxml_prompt_yn "  Set up Discord/Telegram webhook now? [y/N] "; then
                 fox-dispatch --setup
             else
-                echo "  • run later: fox dispatch --setup"
+                mkdir -p "$HOME/.config/foxml" 2>/dev/null
+                touch "$_skip_marker"
+                echo "  • run later: fox dispatch --setup  (or: rm $_skip_marker && fox install --full)"
             fi
-        else
-            echo "  • fox-dispatch webhook already configured"
         fi
     fi
 }
