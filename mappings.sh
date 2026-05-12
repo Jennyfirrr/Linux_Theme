@@ -342,59 +342,76 @@ JSON
         rm -f "$hooks_json"
     fi
 
-    # ~/.local/bin helpers (tmux pane-label, etc.) — referenced by configs but
-    # too small for their own subdir; kept executable on copy. Routed
-    # through backup_and_copy so any locally-customised user binary in
-    # ~/.local/bin/ is snapshotted into $BACKUP_DIR before overwrite.
+    # ~/.local/bin helpers, Hyprland scripts, Waybar scripts, Hyprland
+    # modules — each block previously echoed one line per file, which
+    # produced a 100+ line dump during install_specials. Switched to
+    # foxml_progress-style "section + count" output so it reads like
+    # the rest of the install (pacman aesthetic). Per-file diagnostics
+    # are still available via fox-doctor.
+
+    # ~/.local/bin helpers.
     if [[ -d "$SCRIPT_DIR/shared/bin" ]]; then
         mkdir -p "$HOME/.local/bin"
-        for bin in "$SCRIPT_DIR/shared/bin/"*; do
+        local _bins=("$SCRIPT_DIR/shared/bin/"*) _n=0 _total
+        _total=$(find "$SCRIPT_DIR/shared/bin/" -maxdepth 1 -type f 2>/dev/null | wc -l)
+        for bin in "${_bins[@]}"; do
             [[ -f "$bin" ]] || continue
             backup_and_copy "$bin" "$HOME/.local/bin/$(basename "$bin")"
             chmod +x "$HOME/.local/bin/$(basename "$bin")"
-            echo "  bin/$(basename "$bin")"
+            _n=$((_n+1))
+            command -v foxml_progress >/dev/null && foxml_progress "$_n" "$_total" "Installing bin tools"
         done
+        echo ""
     fi
 
-    # Hyprland scripts — same invariant. User-edited scripts in
-    # ~/.config/hypr/scripts/ get a pre-overwrite snapshot.
+    # Hyprland scripts.
     if [[ -d "$SCRIPT_DIR/shared/hyprland_scripts" ]]; then
         mkdir -p ~/.config/hypr/scripts
+        local _n=0 _total
+        _total=$(find "$SCRIPT_DIR/shared/hyprland_scripts/" -maxdepth 1 -name '*.sh' 2>/dev/null | wc -l)
         for script in "$SCRIPT_DIR/shared/hyprland_scripts/"*.sh; do
             [[ -f "$script" ]] || continue
             backup_and_copy "$script" "$HOME/.config/hypr/scripts/$(basename "$script")"
             chmod +x "$HOME/.config/hypr/scripts/$(basename "$script")"
-            echo "  scripts/$(basename "$script")"
+            _n=$((_n+1))
+            command -v foxml_progress >/dev/null && foxml_progress "$_n" "$_total" "Installing Hyprland scripts"
         done
+        echo ""
     fi
 
-    # Waybar scripts — same.
+    # Waybar scripts.
     if [[ -d "$SCRIPT_DIR/shared/waybar_scripts" ]]; then
         mkdir -p ~/.config/waybar/scripts
+        local _n=0 _total
+        _total=$(find "$SCRIPT_DIR/shared/waybar_scripts/" -maxdepth 1 -name '*.sh' 2>/dev/null | wc -l)
         for script in "$SCRIPT_DIR/shared/waybar_scripts/"*.sh; do
             [[ -f "$script" ]] || continue
             backup_and_copy "$script" "$HOME/.config/waybar/scripts/$(basename "$script")"
             chmod +x "$HOME/.config/waybar/scripts/$(basename "$script")"
-            echo "  waybar/$(basename "$script")"
+            _n=$((_n+1))
+            command -v foxml_progress >/dev/null && foxml_progress "$_n" "$_total" "Installing Waybar scripts"
         done
+        echo ""
     fi
 
-    # Hyprland modules — same.
+    # Hyprland modules.
     if [[ -d "$SCRIPT_DIR/shared/hyprland_modules" ]]; then
         mkdir -p ~/.config/hypr/modules
+        local _n=0 _total
+        _total=$(find "$SCRIPT_DIR/shared/hyprland_modules/" -maxdepth 1 -name '*.conf' 2>/dev/null | wc -l)
         for mod in "$SCRIPT_DIR/shared/hyprland_modules/"*.conf; do
             [[ -f "$mod" ]] || continue
             local basename="$(basename "$mod")"
-            [[ "$basename" == "theme.conf" ]] && continue   # theme.conf comes from templates
-            [[ "$basename" == "nvidia.conf" ]] && continue  # opt-in, handled by install_nvidia()
-            # monitors.conf is per-machine — configure_monitors() writes it.
-            # Only seed the catch-all default on first run when the file is absent.
+            [[ "$basename" == "theme.conf" ]] && continue
+            [[ "$basename" == "nvidia.conf" ]] && continue
             if [[ "$basename" == "monitors.conf" && -f "$HOME/.config/hypr/modules/monitors.conf" ]]; then
                 continue
             fi
             backup_and_copy "$mod" "$HOME/.config/hypr/modules/$basename"
-            echo "  modules/$basename"
+            _n=$((_n+1))
+            command -v foxml_progress >/dev/null && foxml_progress "$_n" "$_total" "Installing Hyprland modules"
         done
+        echo ""
     fi
 
     # ReGreet (login screen) — stage files for install_greetd() to consume.
