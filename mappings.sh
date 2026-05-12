@@ -978,13 +978,13 @@ EOF
 
     # 3. Offer to configure fox-dispatch webhook if it's not set up yet.
     # Only when at a TTY and not --yes — silent in unattended mode.
+    # foxml_prompt_yn uses `read -n 1` so it advances on a single y/n
+    # keypress (no Enter needed), matching the other interactive prompts.
     if [[ -t 0 ]] && ! ${ASSUME_YES:-false}; then
         if [[ ! -f "$HOME/.config/foxml/dispatch.conf" ]]; then
             echo ""
             echo "  fox-dispatch (phone alerts) is not yet configured."
-            local _r
-            read -rp "  Set up Discord/Telegram webhook now? [y/N] " _r
-            if [[ "$_r" =~ ^[Yy]$ ]]; then
+            if foxml_prompt_yn "  Set up Discord/Telegram webhook now? [y/N] "; then
                 fox-dispatch --setup
             else
                 echo "  • run later: fox dispatch --setup"

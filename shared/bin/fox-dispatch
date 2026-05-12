@@ -166,8 +166,12 @@ act_setup() {
     echo
     echo "  [1] Discord (webhook URL — fastest setup)"
     echo "  [2] Telegram (bot token + chat ID)"
-    local kind_choice
-    read -rp "  choose [1]: " kind_choice
+    # Single-keypress accept: press 1 / 2 / Enter (defaults to Discord).
+    # No Return needed for the choice itself; the per-platform prompts
+    # below still take Enter (they're URLs / tokens, not yes/no).
+    local kind_choice=""
+    read -rp "  choose [1]: " -n 1 -r kind_choice || true
+    echo ""
     kind_choice="${kind_choice:-1}"
     case "$kind_choice" in
         1)
