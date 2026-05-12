@@ -1,0 +1,171 @@
+#!/usr/bin/env bash
+# fox-spa — Single Packet Authorization via fwknop.
+#
+# Like fox knock (port knocking) but cryptographically signed: instead
+# of a port sequence (sniffable + replayable), fwknop sends ONE
+# encrypted+HMAC'd UDP packet. The fwknopd server verifies the HMAC
+# (replay-immune via timestamp), reads the requested port, and opens
+# UFW for the source IP for a short window.
+#
+# Two halves:
+#   • Server side  (on the laptop): fwknopd reads /etc/fwknopd.conf
+#   • Client side  (your phone or another laptop): fwknop binary with
+#     the matching key sends the SPA packet
+#
+# Usage:
+#   fox spa --setup           install fwknopd, generate keys, write configs
+#   fox spa --status          show fwknopd state + config location
+#   fox spa --reveal          print client config (with confirmation)
+#   fox spa --disable         disable fwknopd + restore UFW SSH allow
+
+set -u
+C_GRN=$'\e[38;5;108m'; C_YEL=$'\e[38;5;221m'; C_RED=$'\e[38;5;167m'; C_DIM=$'\e[2m'; C_RST=$'\e[0m'
+
+CONF_DIR="$HOME/.config/foxml"
+USER_CONF="$CONF_DIR/spa.conf"
+SYS_CONF=/etc/fwknopd.conf
+ACCESS_CONF=/etc/access.conf
+
+_require() {
+    if ! command -v fwknopd >/dev/null 2>&1; then
+        echo "${C_RED}fwknop not installed${C_RST}" >&2
+        echo "  install:  yay -S fwknop  (or paru)" >&2
+        return 1
+    fi
+}
+
+_real_ssh_port() {
+    awk '/^Port /{print $2}' /etc/ssh/sshd_config.d/50-foxml-hardening.conf 2>/dev/null \
+        || awk '/^Port /{print $2; exit}' /etc/ssh/sshd_config 2>/dev/null \
+        || echo 22
+}
+
+_setup() {
+    _require || return 1
+    local ssh_port
+    ssh_port=$(_real_ssh_port)
+    if [[ "$ssh_port" == "22" ]]; then
+        echo "${C_YEL}real sshd is on :22 — SPA is most useful when sshd is on a custom port${C_RST}"
+        echo "${C_YEL}run the SSH wizard first via: fox install --full${C_RST}"
+    fi
+
+    # Pick which interface fwknopd watches. Default to a wifi iface if
+    # one exists; fall back to first up iface.
+    local iface
+    iface=$(ip -br link 2>/dev/null | awk '$2=="UP" && $1 !~ /^lo$/ {print $1; exit}')
+    [[ -z "$iface" ]] && iface=wlan0
+
+    # Generate keys (rndsalt + HMAC).
+    mkdir -p "$CONF_DIR" && chmod 700 "$CONF_DIR"
+    local key_b64 hmac_b64
+    key_b64=$(head -c 16 /dev/urandom | base64)
+    hmac_b64=$(head -c 32 /dev/urandom | base64)
+
+    ( umask 077
+      cat > "$USER_CONF" <<EOF
+# foxml-managed — fwknop SPA client config.
+KEY_BASE64=$key_b64
+HMAC_BASE64=$hmac_b64
+FWKNOPD_IFACE=$iface
+TARGET_PORT=$ssh_port
+EOF
+    )
+    chmod 600 "$USER_CONF"
+
+    # Server config.
+    sudo tee "$SYS_CONF" >/dev/null <<EOF
+# foxml-managed
+PCAP_INTF                 $iface
+ENABLE_PCAP_PROMISC       Y
+PCAP_FILTER               udp port 62201
+EOF
+
+    sudo tee "$ACCESS_CONF" >/dev/null <<EOF
+# foxml-managed
+SOURCE                    ANY
+KEY_BASE64                $key_b64
+HMAC_KEY_BASE64           $hmac_b64
+FW_ACCESS_TIMEOUT         30
+CMD_CYCLE_OPEN            /usr/bin/ufw allow from \$SRC to any port $ssh_port proto tcp
+CMD_CYCLE_CLOSE           /usr/bin/ufw delete allow from \$SRC to any port $ssh_port proto tcp
+CMD_CYCLE_TIMER           30
+EOF
+
+    # Lock down SSH port: deny by default, fwknopd opens per-IP on knock.
+    if [[ "$ssh_port" != "22" ]]; then
+        sudo ufw delete allow "$ssh_port/tcp" 2>/dev/null
+        sudo ufw delete limit "$ssh_port/tcp" 2>/dev/null
+        sudo ufw deny "$ssh_port/tcp" >/dev/null
+    fi
+    sudo systemctl enable --now fwknopd >/dev/null 2>&1
+
+    echo
+    echo "${C_GRN}═══════════════════════════════════════════════════════════════${C_RST}"
+    echo "${C_GRN}  YOUR SPA CLIENT KEYS — save these to your phone/laptop NOW${C_RST}"
+    echo "${C_GRN}═══════════════════════════════════════════════════════════════${C_RST}"
+    echo
+    echo "  KEY_BASE64:       $key_b64"
+    echo "  HMAC_KEY_BASE64:  $hmac_b64"
+    echo "  Target host:      <THIS HOST>"
+    echo "  SPA port (UDP):   62201"
+    echo "  Service port:     $ssh_port (TCP, opens for 30s after a valid knock)"
+    echo
+    echo "  Client invocation (from your phone with fwknop installed):"
+    echo "    fwknop -A tcp/$ssh_port -a <YOUR_PUBLIC_IP> -D <THIS_HOST> --key-base64 -K <key>"
+    echo
+    echo "  Saved client config: $USER_CONF (0600)"
+    echo "  Server config:       $SYS_CONF + $ACCESS_CONF"
+    echo "${C_GRN}═══════════════════════════════════════════════════════════════${C_RST}"
+}
+
+_status() {
+    if sudo -n systemctl is-active --quiet fwknopd 2>/dev/null \
+       || systemctl is-active --quiet fwknopd 2>/dev/null; then
+        echo "  fwknopd:  ${C_GRN}active${C_RST}"
+    else
+        echo "  fwknopd:  ${C_RED}inactive${C_RST}"
+    fi
+    [[ -f "$USER_CONF" ]] \
+        && echo "  config:   ${C_GRN}$USER_CONF${C_RST} (keys masked — fox spa --reveal)" \
+        || echo "  config:   ${C_YEL}not set up${C_RST}"
+    echo "  ssh port: $(_real_ssh_port)"
+}
+
+_reveal() {
+    [[ -f "$USER_CONF" ]] || { echo "no config — run --setup first"; return 1; }
+    local r
+    read -rp "  Reveal SPA keys? Anyone watching your screen will see them. [y/N] " -n 1 -r r; echo
+    [[ "$r" =~ ^[Yy]$ ]] || { echo cancelled; return 0; }
+    cat "$USER_CONF"
+}
+
+_disable() {
+    sudo systemctl disable --now fwknopd >/dev/null 2>&1
+    local ssh_port
+    ssh_port=$(_real_ssh_port)
+    sudo ufw delete deny "$ssh_port/tcp" 2>/dev/null
+    sudo ufw limit "$ssh_port/tcp" >/dev/null 2>&1
+    echo "${C_GRN}✓ fwknopd stopped, SSH re-opened (rate-limited)${C_RST}"
+}
+
+case "${1:-}" in
+    --setup)    _setup ;;
+    --status)   _status ;;
+    --reveal)   _reveal ;;
+    --disable)  _disable ;;
+    -h|--help|help) cat <<EOF
+fox spa — Single Packet Authorization (fwknop) for SSH
+
+  fox spa --setup     interactive: install fwknopd, generate keys, lock SSH
+  fox spa --status    daemon state + config location
+  fox spa --reveal    print client keys (with confirm)
+  fox spa --disable   stop fwknopd, re-open SSH unconditionally
+
+vs fox knock:
+  fox knock = port sequence (sniffable + replayable on the same network)
+  fox spa   = encrypted single packet + HMAC + timestamp (replay-immune,
+              undetectable to passive observers)
+EOF
+    ;;
+    *) echo "unknown: $1" >&2; exit 2 ;;
+esac

@@ -128,6 +128,22 @@ case "$1" in
         shift
         exec fox-harden "$@"
         ;;
+    firewall)
+        shift
+        exec fox-firewall "$@"
+        ;;
+    cafe|cafe-mode)
+        shift
+        exec fox-cafe "$@"
+        ;;
+    spa)
+        shift
+        exec fox-spa "$@"
+        ;;
+    dns-shield|dns)
+        shift
+        exec fox-dns-shield "$@"
+        ;;
     sec|security)
         shift
         exec fox-sec "$@"
@@ -165,6 +181,10 @@ case "$1" in
         echo "  vpn              WireGuard manager + UFW kill-switch (up / down / killswitch)"
         echo "  offline          Run a command in a network-blackholed namespace (untrusted code sandbox)"
         echo "  harden           Toggle kernel/userspace hardening layers (hidepid/noexec/iommu/coredumps)"
+        echo "  firewall         Egress filtering — fox firewall lockdown / unlock / allow <port>"
+        echo "  cafe             Auto-tighten on untrusted wifi (NetworkManager dispatcher)"
+        echo "  spa              Single Packet Authorization (fwknop) — replay-immune SSH gating"
+        echo "  dns-shield       Local DNS sinkhole — StevenBlack blocklist via /etc/hosts"
         echo "  sec              Unified security dashboard (alerts, posture, bans, listeners, failed auth)"
         echo ""
         echo "Custom Tools (found in ~/.local/bin):"
