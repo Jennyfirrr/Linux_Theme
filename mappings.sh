@@ -1320,7 +1320,13 @@ Description=fox-etcwatch — dispatch /etc change
 
 [Service]
 Type=oneshot
-ExecStart=/bin/sh -c 'last=\$(cd /etc && sudo git log -1 --format=%H 2>/dev/null); now=\$(date +%s); sleep 5; new=\$(cd /etc && sudo git log -1 --format=%H 2>/dev/null); if [ "\$last" = "\$new" ]; then fox-dispatch "etc-change" "/etc modified outside an etckeeper commit (paths: ssh/sudoers.d/pam.d/ufw/fail2ban/audit/sysctl.d). Run: sudo etckeeper unclean" 2>/dev/null || true; fi'
+# Suppress alerts that fire from etckeeper's own commits by checking
+# /etc/.git/HEAD mtime — if it was touched in the last 30s, the change
+# is almost certainly etckeeper itself, not an out-of-band edit. We
+# avoid \`sudo git log\` here because user systemd units have no TTY
+# for password prompts; stat works on the directory entry without
+# needing read access to the .git contents.
+ExecStart=/bin/sh -c 'head_mtime=\$(stat -c %Y /etc/.git/HEAD 2>/dev/null || echo 0); now=\$(date +%s); age=\$((now - head_mtime)); if [ "\$age" -gt 30 ]; then fox-dispatch "etc-change" "/etc modified outside an etckeeper commit (paths: ssh/sudoers.d/pam.d/ufw/fail2ban/audit/sysctl.d). Run: sudo etckeeper unclean" 2>/dev/null || true; fi'
 EOF
         systemctl --user daemon-reload >/dev/null 2>&1
         systemctl --user enable --now fox-etcwatch.path >/dev/null 2>&1

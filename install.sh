@@ -1902,10 +1902,10 @@ EOF
     echo "  + Project-level AI skills ready."
     fi
 
-    # ─────────────────────────────────────────
-    # GitHub Workspace — opt-in
-    # ─────────────────────────────────────────
-    install_github_workspace() {
+# ─────────────────────────────────────────
+# GitHub Workspace — opt-in
+# ─────────────────────────────────────────
+install_github_workspace() {
     # If ASSUME_YES is on but --github wasn't passed, we skip.
     # If --github WAS passed, we run it regardless of ASSUME_YES because it's a specific user request.
     if $ASSUME_YES && ! $INSTALL_GITHUB; then
@@ -1992,50 +1992,65 @@ EOF
     mkdir -p "$HOME/code"
     cd "$HOME/code" || return
 
-    # 6. Pull Repos
+    # 5b. Pre-seed github.com SSH host key so the clone loop below doesn't
+    # block on "Are you sure you want to continue connecting?" under --yes
+    # (StrictHostKeyChecking=ask is the default on fresh ~/.ssh/known_hosts).
+    if [[ ! -f "$HOME/.ssh/known_hosts" ]] \
+       || ! ssh-keygen -F github.com -f "$HOME/.ssh/known_hosts" &>/dev/null; then
+        mkdir -p "$HOME/.ssh" && chmod 700 "$HOME/.ssh"
+        ssh-keyscan -t rsa,ecdsa,ed25519 github.com 2>/dev/null \
+            >> "$HOME/.ssh/known_hosts"
+        chmod 600 "$HOME/.ssh/known_hosts"
+    fi
+
+    # 6. Pull Repos. Each clone is wrapped in a `|| { echo; continue; }` so
+    # one broken repo (archived, renamed, perms revoked) doesn't take down
+    # the whole workspace setup under `set -e`.
     echo "      Pulling all repositories for $gh_user..."
-    # Get list of all repos (name and sshUrl)
-    gh repo list "$gh_user" --limit 1000 --json name,sshUrl -q '.[] | [.name, .sshUrl] | @tsv' | while read -r name url; do
+    gh repo list "$gh_user" --limit 1000 --json name,sshUrl \
+        -q '.[] | [.name, .sshUrl] | @tsv' \
+        | while IFS=$'\t' read -r name url; do
         if [[ -d "$name" ]]; then
             echo "      • $name already exists, skipping"
         else
             echo "      ↓ Cloning $name..."
-            git clone "$url" "$name" --quiet
+            git clone "$url" "$name" --quiet \
+                || echo "        ! clone failed for $name, continuing"
         fi
     done
 
     echo "    + Workspace setup complete in ~/code"
-    }
+}
 
-    if $INSTALL_GITHUB; then
+if $INSTALL_GITHUB; then
     install_github_workspace
     _phase_mark github
-    fi
-    _phase_exit_if_done github
+fi
+_phase_exit_if_done github
 
-    # ─────────────────────────────────────────
-    # OpenCode JSON config — runs LAST so skill-path discovery sees any
-    # workspaces that the GitHub clone step just brought down. Safe to call
-    # whenever --ai is set; idempotent on re-runs.
-    # ─────────────────────────────────────────
-    if $INSTALL_AI; then
-        configure_opencode
-        _phase_mark ai
-    fi
-    _phase_exit_if_done ai
+# ─────────────────────────────────────────
+# OpenCode JSON config — runs LAST so skill-path discovery sees any
+# workspaces that the GitHub clone step just brought down. Safe to call
+# whenever --ai is set; idempotent on re-runs.
+# ─────────────────────────────────────────
+if $INSTALL_AI; then
+    configure_opencode
+    _phase_mark ai
+fi
+_phase_exit_if_done ai
 
-    # NOTE: configure_monitors + multi-monitor personalize used to be
-    # called here, nested inside `if $INSTALL_AI`. Moved to the
-    # unconditional block after install_throttling (below) so a run
-    # without --ai (or one where the AI block aborted on a sudo
-    # failure) still gets a properly personalized hyprlock.
+# NOTE: configure_monitors + multi-monitor personalize used to be
+# called here, nested inside `if $INSTALL_AI`. Moved to the
+# unconditional block after install_throttling (below) so a run
+# without --ai (or one where the AI block aborted on a sudo
+# failure) still gets a properly personalized hyprlock.
 
-    # NOTE: waybar render moved to the unconditional block below for
-    # the same reason as configure_monitors. Keeps single source of
-    # truth for "after monitor config, refresh the bar."
+# NOTE: waybar render moved to the unconditional block below for
+# the same reason as configure_monitors. Keeps single source of
+# truth for "after monitor config, refresh the bar."
 
-    # ─────────────────────────────────────────
-    # CPU throttling / power tuning — interactive wizard. Always offered at
+# ─────────────────────────────────────────
+# CPU throttling / power tuning — interactive wizard. Always offered at
 # the end of an interactive install; auto-skipped under -y.
 # ─────────────────────────────────────────
 install_throttling

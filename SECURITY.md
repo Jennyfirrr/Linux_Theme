@@ -11,11 +11,8 @@ starting point that you can tighten or relax for your own threat model.
 ## Threat model the stack assumes
 
 - A laptop used in mixed environments (home, café, conference, dorm)
-- A public OSS author whose code attracts professional attention
 - Realistic adversaries: phishing, opportunistic scanners, stolen-laptop
   attempts, lateral movement after a low-privilege compromise
-- **Not** in scope: state-actor zero-days with multi-million-dollar
-  exploit chains (those win — see below)
 
 ## What it defends
 
@@ -43,8 +40,6 @@ Layered (each cheap, attacker pays full cost to bypass each):
 
 ## What it does NOT defend against
 
-- State-actor zero-day chains that escape Firejail + AppArmor (cost:
-  $2M+; if you're a target at that level, you need a different setup)
 - Physical access to an unlocked laptop (mitigations: aggressive idle
   lock + Bluetooth proximity lock, but none are 100%)
 - Cold-boot RAM forensics on a stolen laptop (mitigations: full-disk

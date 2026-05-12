@@ -624,7 +624,7 @@ check_security() {
         if systemctl is-active --quiet ufw 2>/dev/null; then
             ok "UFW active"
             if (( _have_sudo )); then
-                if sudo -n ufw status 2>/dev/null | grep -qE 'Default: deny.*incoming'; then
+                if sudo -n ufw status verbose 2>/dev/null | grep -qE 'Default: deny.*incoming'; then
                     ok "UFW default deny incoming"
                 else
                     warn "UFW default policy is NOT deny incoming"
@@ -744,6 +744,99 @@ check_security() {
         else
             warn "usbguard installed but not enabled"
             hint "fix: sudo systemctl enable --now usbguard"
+        fi
+    fi
+
+    # /proc hidepid — install_hidepid writes the fstab entry; runtime
+    # state is /proc/sys/fs/proc/hide_pid or the mount option. Check
+    # both: fstab pin so the setting survives reboot, runtime so we
+    # know it's active now.
+    if [[ -f /etc/fstab ]] && grep -qE '^[[:space:]]*proc[[:space:]].*hidepid' /etc/fstab; then
+        local _hp
+        _hp=$(awk '$2=="/proc"{print $4}' /proc/mounts | grep -oE 'hidepid=[^,]*' | head -1)
+        if [[ -n "$_hp" ]]; then
+            ok "hidepid pinned in fstab + active ($_hp)"
+        else
+            warn "hidepid in fstab but not active on running /proc"
+            hint "fix: sudo mount -o remount,$(grep -oE 'hidepid=[^[:space:]]*' /etc/fstab | head -1) /proc"
+        fi
+    else
+        : # not configured — install_hidepid is opt-in, don't nag
+    fi
+
+    # noexec on /tmp + /dev/shm — install_noexec_tmp pins both.
+    local _noexec_drift=0
+    for mp in /tmp /dev/shm; do
+        if awk -v mp="$mp" '$2==mp' /proc/mounts | grep -q . \
+           && ! awk -v mp="$mp" '$2==mp && $4 ~ /(^|,)noexec($|,)/' /proc/mounts | grep -q .; then
+            _noexec_drift=$((_noexec_drift + 1))
+        fi
+    done
+    if (( _noexec_drift > 0 )) && [[ -f /etc/fstab ]] \
+       && grep -qE '(/tmp|/dev/shm).*noexec' /etc/fstab; then
+        warn "noexec configured in fstab but $_noexec_drift mount(s) live without it"
+        hint "fix: sudo mount -o remount,noexec /tmp /dev/shm"
+    elif (( _noexec_drift == 0 )) && [[ -f /etc/fstab ]] \
+         && grep -qE '(/tmp|/dev/shm).*noexec' /etc/fstab; then
+        ok "noexec active on /tmp + /dev/shm"
+    fi
+
+    # IOMMU — kernel must be booted with intel_iommu=on or amd_iommu=on.
+    # /sys/class/iommu/ being non-empty is the runtime ground truth.
+    if [[ -f /proc/cmdline ]] && grep -qE 'intel_iommu=on|amd_iommu=on' /proc/cmdline; then
+        if find /sys/class/iommu/ -mindepth 1 -maxdepth 1 -print -quit 2>/dev/null | grep -q .; then
+            ok "IOMMU active (DMA isolation enabled)"
+        else
+            warn "IOMMU on kernel cmdline but no /sys/class/iommu/ devices"
+            hint "VT-d/AMD-Vi may be disabled in firmware — check BIOS"
+        fi
+    fi
+
+    # Core dump suppression — install_no_coredumps writes limits.d + coredump.conf.d.
+    if [[ -f /etc/security/limits.d/99-foxml-no-coredumps.conf ]] \
+       && [[ -f /etc/systemd/coredump.conf.d/foxml-no-coredumps.conf ]]; then
+        ok "core dumps suppressed (limits.d + coredump.conf.d)"
+    elif [[ -f /etc/security/limits.d/99-foxml-no-coredumps.conf ]] \
+         || [[ -f /etc/systemd/coredump.conf.d/foxml-no-coredumps.conf ]]; then
+        warn "core dump suppression partial — one of two drop-ins missing"
+        hint "fix: source mappings.sh && install_no_coredumps"
+    fi
+
+    # etckeeper — install_etckeeper inits /etc as a git repo.
+    if [[ -d /etc/.git ]]; then
+        if (( _have_sudo )); then
+            if sudo -n test -f /etc/.git/HEAD 2>/dev/null; then
+                ok "etckeeper repo present at /etc/.git"
+            fi
+        else
+            ok "etckeeper /etc/.git directory present (HEAD check skipped, no sudo)"
+        fi
+    fi
+
+    # endlessh tarpit — runs on :22 to slow SSH probes. Optional.
+    if systemctl list-unit-files 2>/dev/null | grep -q '^endlessh\.service'; then
+        if systemctl is-active --quiet endlessh 2>/dev/null; then
+            ok "endlessh tarpit active on :22"
+        else
+            warn "endlessh installed but not active"
+            hint "fix: sudo systemctl enable --now endlessh"
+        fi
+    fi
+
+    # Cowrie SSH honeypot — fully optional (`fox honeypot --enable`).
+    if [[ -d /opt/cowrie ]] || systemctl list-unit-files 2>/dev/null | grep -q '^cowrie\.service'; then
+        if systemctl is-active --quiet cowrie 2>/dev/null; then
+            ok "cowrie SSH honeypot active"
+        else
+            warn "cowrie installed but not active"
+            hint "fix: fox honeypot --enable"
+        fi
+    fi
+
+    # fox-firewall lockdown — egress filtering. Optional; just report state.
+    if command -v ufw >/dev/null 2>&1 && (( _have_sudo )); then
+        if sudo -n ufw status verbose 2>/dev/null | grep -q 'deny (outgoing)'; then
+            ok "fox-firewall lockdown active (egress default deny)"
         fi
     fi
 }

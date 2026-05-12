@@ -5,8 +5,8 @@
 # (tripwire, fail2ban actionban, USBGuard lock-screen blocks, etc).
 #
 # Config: ~/.config/foxml/dispatch.conf
-#   WEBHOOK_KIND=discord|telegram
-#   WEBHOOK_URL=...               # Discord: webhook URL
+#   WEBHOOK_KIND=discord|telegram|slack
+#   WEBHOOK_URL=...               # Discord or Slack: webhook URL
 #   TELEGRAM_BOT_TOKEN=...        # Telegram only
 #   TELEGRAM_CHAT_ID=...          # Telegram only
 #
@@ -49,7 +49,7 @@ usage() {
 ${C_BOLD}fox dispatch${C_RST} — send a notification to your phone via webhook
 
   fox dispatch "Title" "Body"   send a one-shot alert
-  fox dispatch --setup          configure a Discord or Telegram destination
+  fox dispatch --setup          configure a Discord, Slack, or Telegram destination
   fox dispatch --test           send a test ping
   fox dispatch --status         show current config (URL masked)
   echo body | fox dispatch "T"  body can come from stdin
@@ -159,14 +159,39 @@ _send_telegram() {
     return $rc
 }
 
+# Slack incoming-webhook. Same JSON shape as Discord but the field is
+# `text` (not `content`) and Slack accepts a simple "text" string with
+# markdown automatically rendered. Compatible with both classic incoming
+# webhooks and Slack app webhooks.
+_send_slack() {
+    local title="$1" body="$2"
+    local payload
+    if command -v jq >/dev/null 2>&1; then
+        payload=$(jq -nc --arg t "*$title*: $body" '{text: $t}')
+    else
+        local esc_t esc_b
+        esc_t="${title//\"/\\\"}"; esc_b="${body//\"/\\\"}"
+        esc_t="${esc_t//$'\n'/\\n}"; esc_b="${esc_b//$'\n'/\\n}"
+        payload="{\"text\": \"*${esc_t}*: ${esc_b}\"}"
+    fi
+    local rc
+    curl -sS -m 8 -o /dev/null -w '%{http_code}' \
+        -H "Content-Type: application/json" \
+        -X POST -d "$payload" "$WEBHOOK_URL" | grep -qE '^2[0-9]{2}$'
+    rc=$?
+    _log "slack rc=$rc title=$title"
+    return $rc
+}
+
 # ─── actions ──────────────────────────────────────────────────────
 act_setup() {
     mkdir -p "$CONF_DIR" && chmod 700 "$CONF_DIR"
     echo "${C_BOLD}fox dispatch — setup${C_RST}"
     echo
     echo "  [1] Discord (webhook URL — fastest setup)"
-    echo "  [2] Telegram (bot token + chat ID)"
-    # Single-keypress accept: press 1 / 2 / Enter (defaults to Discord).
+    echo "  [2] Slack (incoming webhook URL)"
+    echo "  [3] Telegram (bot token + chat ID)"
+    # Single-keypress accept: press 1 / 2 / 3 / Enter (defaults to Discord).
     # No Return needed for the choice itself; the per-platform prompts
     # below still take Enter (they're URLs / tokens, not yes/no).
     local kind_choice=""
@@ -194,6 +219,25 @@ EOF
             echo "${C_GRN}  ✓ saved to $CONF (perms 600)${C_RST}"
             ;;
         2)
+            echo
+            echo "  In Slack: api.slack.com/apps → your app → Incoming Webhooks → Add New."
+            echo "  Pick a channel only you read. Copy the https://hooks.slack.com/... URL."
+            local url
+            read -rp "  webhook URL: " url
+            if [[ ! "$url" =~ ^https://hooks\.slack\.com/services/ ]]; then
+                echo "${C_RED}that doesn't look like a Slack incoming-webhook URL${C_RST}" >&2
+                return 1
+            fi
+            ( umask 077
+              cat > "$CONF" <<EOF
+WEBHOOK_KIND=slack
+WEBHOOK_URL=$url
+EOF
+            )
+            chmod 600 "$CONF"
+            echo "${C_GRN}  ✓ saved to $CONF (perms 600)${C_RST}"
+            ;;
+        3)
             echo
             echo "  Talk to @BotFather on Telegram → /newbot → save the token"
             echo "  Send your bot any message, then visit:"
@@ -237,6 +281,12 @@ act_status() {
             echo "  kind:     discord"
             echo "  endpoint: ${host:-?}/api/webhooks/****"
             ;;
+        slack)
+            local host
+            host=$(awk -F/ '{print $3}' <<<"$WEBHOOK_URL")
+            echo "  kind:     slack"
+            echo "  endpoint: ${host:-?}/services/****"
+            ;;
         telegram)
             local masked="${TELEGRAM_BOT_TOKEN:0:6}…${TELEGRAM_BOT_TOKEN: -4}"
             echo "  kind:     telegram"
@@ -266,6 +316,7 @@ act_send() {
     fi
     case "$WEBHOOK_KIND" in
         discord)  _send_discord  "$title" "$body" ;;
+        slack)    _send_slack    "$title" "$body" ;;
         telegram) _send_telegram "$title" "$body" ;;
         *) echo "${C_RED}unknown WEBHOOK_KIND='$WEBHOOK_KIND' — re-run --setup${C_RST}" >&2
            return 1 ;;

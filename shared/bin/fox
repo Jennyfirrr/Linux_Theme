@@ -192,6 +192,49 @@ case "$1" in
         shift
         exec fox-audit "$@"
         ;;
+    cheatsheet)
+        shift
+        exec fox-cheatsheet "$@"
+        ;;
+    hw-info|hwinfo)
+        shift
+        exec fox-hw-info "$@"
+        ;;
+    new-project|new)
+        shift
+        exec fox-new-project "$@"
+        ;;
+    # AI sub-namespace: `fox ai <sub>` → fox-ai-<sub>. Lets `fox ai status`,
+    # `fox ai commit`, `fox ai bench` etc. route without listing every
+    # subcommand individually.
+    ai)
+        shift
+        sub="${1:-status}"
+        shift 2>/dev/null || true
+        if command -v "fox-ai-$sub" >/dev/null 2>&1; then
+            exec "fox-ai-$sub" "$@"
+        else
+            echo "Unknown 'fox ai' subcommand: $sub" >&2
+            echo "Available:" >&2
+            for f in "$HOME/.local/bin/"fox-ai-*; do
+                [[ -x "$f" ]] && printf "  fox ai %s\n" "${f##*/fox-ai-}" >&2
+            done
+            exit 1
+        fi
+        ;;
+    # Distro sub-namespace: `fox distro <sub>` → fox-distro-<sub>.
+    distro)
+        shift
+        sub="${1:-guide}"
+        shift 2>/dev/null || true
+        if command -v "fox-distro-$sub" >/dev/null 2>&1; then
+            exec "fox-distro-$sub" "$@"
+        else
+            echo "Unknown 'fox distro' subcommand: $sub" >&2
+            echo "Available: build, flash, guide" >&2
+            exit 1
+        fi
+        ;;
     help|--help|-h)
         # `fox help <command>` → forward to the tool's own help.
         # Falls through to the full overview below when no <command>
@@ -295,6 +338,14 @@ case "$1" in
         echo "Run 'fox help' to show this message again."
         ;;
     *)
+        # Auto-route: if `fox-<arg>` exists on PATH, exec it. Means new
+        # tools added to shared/bin/ become accessible as `fox <name>`
+        # without having to register them here. Falls through to the
+        # error only when nothing matches.
+        if command -v "fox-$1" >/dev/null 2>&1; then
+            sub="$1"; shift
+            exec "fox-$sub" "$@"
+        fi
         echo "Unknown command: $1"
         echo "Run 'fox help' for usage."
         exit 1

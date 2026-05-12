@@ -1,6 +1,6 @@
 # Linux_Theme (FoxML)
 
-Arch Linux + Hyprland theme + dotfiles for 25 apps. Configs live as templates with `{{COLOR}}` placeholders; each theme is one `palette.sh` file. `install.sh` renders templates into your real configs, `update.sh` pulls live edits back into templates, and `swap.sh` switches themes.
+Arch Linux + Hyprland theme + dotfiles for 24 apps. Configs live as templates with `{{COLOR}}` placeholders; each theme is one `palette.sh` file. `install.sh` renders templates into your real configs, `update.sh` pulls live edits back into templates, and `swap.sh` switches themes.
 
 ## Screenshots
 
