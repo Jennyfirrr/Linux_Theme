@@ -2159,19 +2159,37 @@ install_resolved_dnssec() {
         echo "  commented active DNSSEC= line in /etc/systemd/resolved.conf"
     fi
 
-    # 2. Drop-in — DNSSEC=allow-downgrade is the security-vs-stability
-    # middle ground:
-    #   • Signed answers from the upstream resolver → validated
-    #   • Unsigned answers → accepted (no wedge)
-    #   • Clock-skew → answers might be invalid but resolver just
-    #     drops the validation, doesn't wedge resolution
-    # Strictly better than DNSSEC=no (no validation ever) but doesn't
-    # cause the v2.4.7 NTP-startup deadlock that pure DNSSEC=yes did.
+    # 2. Drop-in. Interactive picker (skipped under --yes / no-TTY):
+    #   0 / off       no validation (DoH path-encryption only)
+    #   1 / relaxed   validate-when-signed (recommended for laptops)
+    #   2 / strict    refuse unsigned answers (best, can wedge on
+    #                 hotel / café wifi + clock skew)
+    # User can flip later anytime via `fox dnssec 0/1/2`.
     local conf=/etc/systemd/resolved.conf.d/00-foxml-dnssec.conf
     sudo install -d /etc/systemd/resolved.conf.d
-    if [[ ! -f "$conf" ]] || ! grep -qE '^DNSSEC=allow-downgrade' "$conf"; then
-        printf '[Resolve]\nDNSSEC=allow-downgrade\n' | sudo tee "$conf" >/dev/null
-        echo "  DNSSEC=allow-downgrade → $conf"
+    local current_val="" desired_val="allow-downgrade"   # default = relaxed
+    [[ -f "$conf" ]] && current_val=$(grep -h '^DNSSEC=' "$conf" 2>/dev/null | head -1 | awk -F= '{print $2}')
+
+    if [[ -t 0 ]] && ! ${ASSUME_YES:-false}; then
+        echo ""
+        echo "  ${C_BOLD:-}DNSSEC strictness:${C_RST:-}"
+        echo "    [0] off — DoH only (no validation)"
+        echo "    [1] relaxed (allow-downgrade) ${C_DIM:-}(recommended; current default)${C_RST:-}"
+        echo "    [2] strict (yes) — can wedge DNS on hotel/café wifi"
+        local _lvl
+        read -rp "  choose [1]: " -n 1 -r _lvl; echo
+        case "${_lvl:-1}" in
+            0) desired_val="no" ;;
+            2) desired_val="yes" ;;
+            *) desired_val="allow-downgrade" ;;
+        esac
+    fi
+
+    if [[ "$current_val" != "$desired_val" ]]; then
+        printf '[Resolve]\nDNSSEC=%s\n' "$desired_val" | sudo tee "$conf" >/dev/null
+        echo "  DNSSEC=$desired_val → $conf  ${C_DIM:-}(change later: fox dnssec 0/1/2)${C_RST:-}"
+    else
+        echo "  • DNSSEC=$desired_val already configured  ${C_DIM:-}(change: fox dnssec 0/1/2)${C_RST:-}"
     fi
 
     # 3. Clear NetworkManager per-connection DNSSEC overrides. Empty value
