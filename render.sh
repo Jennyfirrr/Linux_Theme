@@ -47,27 +47,32 @@ build_sed_expr() {
         TMUX_ACTIVE TMUX_INACTIVE
     )
 
-    # Hex variables: substitute {{VAR}} and also {{VAR_R}}, {{VAR_G}}, {{VAR_B}}
+    # Use `|` as sed delimiter instead of `/`. Both hex colours (6-char
+    # hex) and the string vars below are guaranteed not to contain `|`,
+    # while `/` showed up freely in filesystem-path values and required
+    # ad-hoc escaping. Switching the delimiter removes the escape and
+    # the corresponding "what if someone adds a path-valued var later"
+    # footgun flagged in audit.
     for var in "${hex_vars[@]}"; do
         local val="${!var}"
         [[ -z "$val" ]] && continue
-        sed_expr+="s/{{${var}}}/${val}/g;"
+        sed_expr+="s|{{${var}}}|${val}|g;"
 
         # Compute RGB
         local r g b
         read r g b <<< "$(hex_to_rgb "$val")"
-        sed_expr+="s/{{${var}_R}}/${r}/g;"
-        sed_expr+="s/{{${var}_G}}/${g}/g;"
-        sed_expr+="s/{{${var}_B}}/${b}/g;"
+        sed_expr+="s|{{${var}_R}}|${r}|g;"
+        sed_expr+="s|{{${var}_G}}|${g}|g;"
+        sed_expr+="s|{{${var}_B}}|${b}|g;"
     done
 
-    # String/number variables: just {{VAR}} → value
+    # String/number variables: just {{VAR}} → value. No escaping needed
+    # now that the delimiter is `|` — values are filenames / palette
+    # strings, none contain `|`.
     for var in "${str_vars[@]}"; do
         local val="${!var}"
         [[ -z "$val" ]] && continue
-        # Escape slashes in value for sed
-        local escaped="${val//\//\\/}"
-        sed_expr+="s/{{${var}}}/${escaped}/g;"
+        sed_expr+="s|{{${var}}}|${val}|g;"
     done
 
     # PALETTE_LABELS is special (array) — skip, handled by swap.sh directly

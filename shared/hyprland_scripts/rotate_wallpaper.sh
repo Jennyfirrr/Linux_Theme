@@ -47,10 +47,25 @@ calendar_slot_index() {
 
 # Find the slot whose filename matches the .current symlink target.
 # Returns -1 if .current is missing or points at something not in the table.
+#
+# Path safety: the slot table holds bare filenames (no /), so any
+# symlink target containing a slash isn't a match anyway. We also
+# reject symlinks that resolve outside $WALL_DIR so a crafted .current
+# can't trick downstream code into reading from /etc, /home/other, etc.
 slot_index_of_current() {
-    local cur_link="" i fname
+    local cur_link="" cur_real i fname
     [[ -L "$WALL_DIR/.current" ]] && cur_link="$(readlink "$WALL_DIR/.current")"
     [[ -z "$cur_link" ]] && { echo -1; return; }
+    # Reject ../ traversal and absolute-path targets outright. .current
+    # is supposed to be a bare filename symlink (e.g. "foxml_earthy.jpg")
+    # inside $WALL_DIR; anything else is suspicious.
+    if [[ "$cur_link" == /* || "$cur_link" == *../* || "$cur_link" == */* ]]; then
+        echo -1; return
+    fi
+    cur_real="$(readlink -f "$WALL_DIR/.current" 2>/dev/null)"
+    if [[ -n "$cur_real" && "$cur_real" != "$WALL_DIR/"* ]]; then
+        echo -1; return
+    fi
     for i in "${!slots[@]}"; do
         read -r _ _ fname <<<"${slots[$i]}"
         [[ "$fname" == "$cur_link" ]] && { echo "$i"; return; }

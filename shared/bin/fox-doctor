@@ -178,9 +178,32 @@ fix_nvim_ts_master() {
     local nvim_path="/tmp/$latest_nvim"
     local ts_path="/tmp/$latest_ts"
 
-    echo "  Downloading..."
-    curl -sSL --max-time 60 -o "$nvim_path" "https://archive.archlinux.org/packages/n/neovim/$latest_nvim" || { fail "download failed: $latest_nvim"; return 1; }
-    curl -sSL --max-time 60 -o "$ts_path"   "https://archive.archlinux.org/packages/t/tree-sitter/$latest_ts" || { fail "download failed: $latest_ts"; return 1; }
+    echo "  Downloading packages + signatures..."
+    # Pull both the .pkg.tar.zst and its detached .sig from the archive.
+    # pacman -U will refuse the package if the .sig doesn't validate
+    # against the system's pacman-key trust DB — that's our gate
+    # against a compromised archive mirror serving a malicious .pkg.
+    curl -sSL --max-time 60 -o "$nvim_path"     "https://archive.archlinux.org/packages/n/neovim/$latest_nvim"     || { fail "download failed: $latest_nvim"; return 1; }
+    curl -sSL --max-time 60 -o "$nvim_path.sig" "https://archive.archlinux.org/packages/n/neovim/$latest_nvim.sig" || { fail "download failed: $latest_nvim.sig"; return 1; }
+    curl -sSL --max-time 60 -o "$ts_path"       "https://archive.archlinux.org/packages/t/tree-sitter/$latest_ts"     || { fail "download failed: $latest_ts"; return 1; }
+    curl -sSL --max-time 60 -o "$ts_path.sig"   "https://archive.archlinux.org/packages/t/tree-sitter/$latest_ts.sig" || { fail "download failed: $latest_ts.sig"; return 1; }
+
+    # Independent verification BEFORE we hand the file to pacman -U.
+    # pacman-key --verify checks against the keyring at /etc/pacman.d/
+    # gnupg, which is populated by archlinux-keyring on every Arch box.
+    # If a mirror is compromised, the signature won't match the trusted
+    # keys and we abort. This catches the package-substitution attack
+    # gemini's audit flagged.
+    echo "  Verifying signatures via pacman-key..."
+    if ! sudo pacman-key --verify "$nvim_path.sig" "$nvim_path" >/dev/null 2>&1; then
+        fail "signature verification FAILED for $latest_nvim — aborting (mirror may be compromised)"
+        return 1
+    fi
+    if ! sudo pacman-key --verify "$ts_path.sig" "$ts_path" >/dev/null 2>&1; then
+        fail "signature verification FAILED for $latest_ts — aborting"
+        return 1
+    fi
+    ok "signatures verified against system keyring"
 
     echo
     echo "  About to (one sudo prompt):"

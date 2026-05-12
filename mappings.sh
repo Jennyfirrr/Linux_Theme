@@ -1838,11 +1838,27 @@ install_usbguard() {
     fi
     local rules=/etc/usbguard/rules.conf
     if [[ ! -s "$rules" ]]; then
+        # SHOW the devices before whitelisting them. If a malicious USB
+        # (Rubber Ducky etc.) is plugged in during install, blind
+        # `generate-policy` would trust it forever. Listing first means
+        # the user can spot something unexpected and unplug it before
+        # confirming.
+        echo "  Devices currently connected (these will be trusted):"
+        if command -v lsusb >/dev/null 2>&1; then
+            lsusb | sed 's/^/    /'
+        else
+            sudo usbguard list-devices 2>/dev/null | sed 's/^/    /'
+        fi
+        echo ""
+        if [[ -t 0 ]] && ! foxml_prompt_yn "Whitelist all of these as trusted devices? [y/N] "; then
+            echo "  • USBGuard install aborted by user. Unplug suspicious devices and re-run --usbguard."
+            return 0
+        fi
         echo "  Generating initial USBGuard policy from currently connected devices..."
         sudo usbguard generate-policy | sudo tee "$rules" >/dev/null
         sudo chmod 600 "$rules"
         sudo chown root:root "$rules"
-        echo "    → $rules (trusts currently plugged USB devices)"
+        echo "    → $rules ($(wc -l <"$rules" 2>/dev/null || echo '?') device rules)"
     else
         echo "  • USBGuard rules already present at $rules"
     fi
@@ -2313,8 +2329,24 @@ install_vault() {
         gpg_key=$(gpg --list-secret-keys --keyid-format LONG | grep sec | awk '{print $2}' | cut -d/ -f2 | head -n 1)
         
         if [[ -z "$gpg_key" ]]; then
-            echo "    No GPG key found. Generating one for you..."
-            gpg --batch --passphrase '' --quick-gen-key "$USER <${USER}@foxml.local>" default default 0
+            # SAFETY: never generate a passwordless GPG key for `pass`.
+            # An empty-passphrase key would let anyone with shell access
+            # to this user decrypt the entire password store with zero
+            # authentication — the opposite of what a password manager
+            # is for. Use pinentry interactively. If we have no TTY
+            # (CI / unattended install), skip and tell the user how to
+            # do it themselves rather than ship a broken-by-default key.
+            if [[ ! -t 0 ]]; then
+                echo "    ! No GPG signing key found and no TTY for pinentry."
+                echo "      Re-run install.sh interactively, or generate one yourself:"
+                echo "        gpg --full-generate-key   (pick ed25519 or RSA 4096, set a passphrase)"
+                echo "      Then re-run --vault to wire pass to the new key."
+                return 0
+            fi
+            echo "    No GPG key found. Generating one (pinentry will prompt for a passphrase)..."
+            echo "      Pick a strong passphrase — your password store will be encrypted with this key."
+            gpg --quick-generate-key "$USER <${USER}@foxml.local>" ed25519 sign,cert 0 \
+                || { echo "    ! GPG key generation failed or cancelled, skipping pass init"; return 1; }
             gpg_key=$(gpg --list-secret-keys --keyid-format LONG | grep sec | awk '{print $2}' | cut -d/ -f2 | head -n 1)
         fi
         
@@ -2444,13 +2476,23 @@ EOF
         fi
     fi
 
-    # 4. Waybar Sudoers (Seamless Overwatch)
+    # 4. Waybar Sudoers (Seamless Overwatch).
+    # Tight allow-list — no wildcards. Earlier version had
+    # `fail2ban-client status *` which would have matched any jail name
+    # the bar passed. Pinning to the two specific invocations the
+    # waybar module actually issues (overall status + sshd jail status)
+    # closes that.
     local waybar_sudo="/etc/sudoers.d/99-foxml-waybar"
     if [[ ! -f "$waybar_sudo" ]]; then
         echo "  Configuring sudoers for Waybar Overwatch..."
-        echo "$USER ALL=(ALL) NOPASSWD: /usr/bin/ufw status, /usr/bin/fail2ban-client status *" | sudo tee "$waybar_sudo" >/dev/null
+        sudo tee "$waybar_sudo" >/dev/null <<EOF
+${USER} ALL=(ALL) NOPASSWD: /usr/bin/ufw status
+${USER} ALL=(ALL) NOPASSWD: /usr/bin/fail2ban-client status
+${USER} ALL=(ALL) NOPASSWD: /usr/bin/fail2ban-client status sshd
+EOF
         sudo chmod 440 "$waybar_sudo"
-        echo "    Sudoers rule added for UFW/Fail2ban status"
+        sudo chown root:root "$waybar_sudo"
+        echo "    Sudoers rule added (ufw status + fail2ban-client status + sshd jail)"
     fi
 
     # 5. SSH Hardening Wizard

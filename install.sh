@@ -81,7 +81,11 @@ source "$SCRIPT_DIR/render.sh"
 # ─────────────────────────────────────────
 THEME_NAME=""
 INSTALL_DEPS=false
-INSTALL_SECURITY=false
+# Security baseline (fail2ban + auditd + waybar status sudoers + the
+# optional SSH hardening wizard) is ON by default. Opt out via --no-secure.
+# The SSH wizard self-skips in --yes / unattended mode, so auto-on is
+# safe for both interactive and CI flows.
+INSTALL_SECURITY=true
 INSTALL_PERF=false
 INSTALL_PRIVACY=false
 INSTALL_VAULT=false
@@ -116,7 +120,9 @@ DEFAULT_THEME="FoxML_Classic"
 for arg in "$@"; do
     case "$arg" in
         --deps) INSTALL_DEPS=true ;;
-        --secure) INSTALL_SECURITY=true ;;
+        --secure|--no-secure)
+            [[ "$arg" == "--no-secure" ]] && INSTALL_SECURITY=false || INSTALL_SECURITY=true
+            ;;
         --perf) INSTALL_PERF=true ;;
         --privacy) INSTALL_PRIVACY=true ;;
         --vault) INSTALL_VAULT=true ;;
@@ -348,12 +354,32 @@ if $ASSUME_YES; then
     if $INSTALL_DEPS || $INSTALL_NVIDIA || $INSTALL_XGBOOST; then
         echo "Caching sudo credentials for unattended install..."
         sudo -v || { echo "sudo required for --deps / --nvidia / --xgboost"; exit 1; }
-        # Keep sudo alive for the rest of the script
+        # Keep sudo alive only for the privileged phase (deps / nvidia /
+        # xgboost). _sudo_keepalive_stop is called once those finish so
+        # the cached credential doesn't stay warm during the long
+        # unprivileged tail of install (model pulls, git clones).
+        # Without that teardown, an attacker on the same session — or
+        # an unattended laptop during a 30-min ollama pull — gets free
+        # sudo for the entire window.
         ( while true; do sudo -n true; sleep 50; done 2>/dev/null ) &
         SUDO_KEEPALIVE_PID=$!
         trap 'kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true' EXIT
     fi
 fi
+
+# Stop the sudo-keepalive background loop AND drop the cached
+# credential. Called as soon as the privileged installation phase is
+# over. After this, any further sudo command will re-prompt for the
+# user's password (the desired behaviour for everything past pacman).
+_sudo_keepalive_stop() {
+    if [[ -n "${SUDO_KEEPALIVE_PID:-}" ]]; then
+        kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true
+        unset SUDO_KEEPALIVE_PID
+        # Drop the cached sudo timestamp so subsequent sudo invocations
+        # re-prompt rather than inherit a still-warm credential.
+        sudo -k 2>/dev/null || true
+    fi
+}
 
 # ─────────────────────────────────────────
 # Theme selection (interactive if not specified)
@@ -793,6 +819,12 @@ if $INSTALL_XGBOOST; then
     fi
     _phase_mark deps
 fi
+# Tear down the sudo keepalive now — the privileged phase (pacman /
+# nvidia / xgboost build) is done. Everything past this point runs
+# unprivileged: model pulls, git clones, theme rendering, file copies
+# into $HOME. If sudo is needed again later it will re-prompt, which
+# is the desired behaviour.
+_sudo_keepalive_stop
 _phase_exit_if_done deps
 
 # zsh plugins — install whenever oh-my-zsh is present, regardless of --deps,
@@ -1119,9 +1151,27 @@ fi
 # ─────────────────────────────────────────
 if $INSTALL_AI || $INSTALL_MODELS; then
 echo ""
+# Prefer the AUR package over `curl | sh`. AUR builds run through
+# makepkg + PGP key validation (the maintainer's signing key is in
+# pacman's trust DB after `pacman -S archlinux-keyring`), which gives
+# us a verified install path instead of trusting whatever the upstream
+# script does today. Falls back to the official script only if no AUR
+# helper is on PATH yet (early bootstrap on a fresh machine).
 if ! command -v ollama &>/dev/null; then
-    echo "Installing Ollama..."
-    curl -fsSL https://ollama.com/install.sh | sh
+    if command -v yay >/dev/null 2>&1; then
+        echo "Installing Ollama (via yay → AUR, signature-verified)..."
+        yay -S --needed --noconfirm ollama-bin \
+            || { echo "  ! AUR install failed; falling back to upstream script"; \
+                 curl -fsSL https://ollama.com/install.sh | sh; }
+    elif command -v paru >/dev/null 2>&1; then
+        echo "Installing Ollama (via paru → AUR, signature-verified)..."
+        paru -S --needed --noconfirm ollama-bin \
+            || { echo "  ! AUR install failed; falling back to upstream script"; \
+                 curl -fsSL https://ollama.com/install.sh | sh; }
+    else
+        echo "Installing Ollama via upstream script (no AUR helper on PATH)..."
+        curl -fsSL https://ollama.com/install.sh | sh
+    fi
 else
     echo "Ollama already installed."
 fi
@@ -1131,9 +1181,25 @@ echo "Pulling embedding model (nomic-embed-text)..."
 ollama pull nomic-embed-text
 
 if $INSTALL_AI; then
-
-        echo "Installing OpenCode CLI..."
-        curl -fsSL https://opencode.ai/install | bash
+        # Same AUR-first policy for OpenCode. `opencode-bin` ships the
+        # signed upstream binary; AUR sig check catches a malicious
+        # release tarball.
+        if command -v opencode &>/dev/null; then
+            echo "OpenCode already installed."
+        elif command -v yay >/dev/null 2>&1; then
+            echo "Installing OpenCode (via yay → AUR)..."
+            yay -S --needed --noconfirm opencode-bin \
+                || { echo "  ! AUR install failed; falling back to upstream script"; \
+                     curl -fsSL https://opencode.ai/install | bash; }
+        elif command -v paru >/dev/null 2>&1; then
+            echo "Installing OpenCode (via paru → AUR)..."
+            paru -S --needed --noconfirm opencode-bin \
+                || { echo "  ! AUR install failed; falling back to upstream script"; \
+                     curl -fsSL https://opencode.ai/install | bash; }
+        else
+            echo "Installing OpenCode via upstream script (no AUR helper on PATH)..."
+            curl -fsSL https://opencode.ai/install | bash
+        fi
         echo "  AI Tools binary installed."
     fi
 

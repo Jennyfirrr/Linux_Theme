@@ -7,11 +7,70 @@
 #include <mutex>
 #include <chrono>
 #include <thread>
+#include <cstring>
+#include <initializer_list>
+#include <sys/wait.h>
+#include <unistd.h>
 #include "json.hpp"
 #include <curl/curl.h>
 
 using json = nlohmann::json;
 namespace fs = std::filesystem;
+
+// run_cmd — safe replacement for system(). See the equivalent helper in
+// fask.cpp for rationale: fork + execvp, no shell, explicit argv only.
+// Returns child exit status or -1 on fork/exec failure.
+static int run_cmd(std::initializer_list<const char*> argv) {
+    pid_t pid = fork();
+    if (pid < 0) return -1;
+    if (pid == 0) {
+        std::vector<const char*> args(argv.begin(), argv.end());
+        args.push_back(nullptr);
+        execvp(args[0], const_cast<char* const*>(args.data()));
+        _exit(127);
+    }
+    int status = 0;
+    if (waitpid(pid, &status, 0) < 0) return -1;
+    return WIFEXITED(status) ? WEXITSTATUS(status) : -1;
+}
+
+// ollama_has_model — replaces the previous shell pipeline
+//     system("ollama list | grep -q PATTERN")
+// with a fork+pipe+exec equivalent. We read `ollama list` output in
+// the parent and scan it line-by-line in C++; no shell involved.
+// Returns true if PATTERN is found anywhere in stdout.
+static bool ollama_has_model(const char* pattern) {
+    int pipefd[2];
+    if (pipe(pipefd) < 0) return false;
+    pid_t pid = fork();
+    if (pid < 0) {
+        close(pipefd[0]); close(pipefd[1]);
+        return false;
+    }
+    if (pid == 0) {
+        // Child: redirect stdout to pipe-write, exec ollama list.
+        close(pipefd[0]);
+        dup2(pipefd[1], STDOUT_FILENO);
+        close(pipefd[1]);
+        execlp("ollama", "ollama", "list", (char*)nullptr);
+        _exit(127);
+    }
+    close(pipefd[1]);
+    FILE* f = fdopen(pipefd[0], "r");
+    bool found = false;
+    if (f) {
+        char buf[4096];
+        while (fgets(buf, sizeof(buf), f)) {
+            if (strstr(buf, pattern)) { found = true; break; }
+        }
+        fclose(f);
+    } else {
+        close(pipefd[0]);
+    }
+    int status = 0;
+    waitpid(pid, &status, 0);
+    return found;
+}
 
 // --- Multi-threading Config ---
 const int MAX_THREADS = 8; 
@@ -56,18 +115,20 @@ struct FileTask {
 int main() {
     auto start_time = std::chrono::high_resolution_clock::now();
     
-    // Pre-flight check: ensure Ollama is running
-    int check = system("ollama list &>/dev/null");
-    if (check != 0) {
+    // Pre-flight: ensure Ollama is running. Use run_cmd with explicit
+    // /dev/null redirection via spawn — we just care about exit status.
+    if (run_cmd({"ollama", "list"}) != 0) {
         std::cout << "\033[1;33m[Fox Brain is asleep. Waking up...]\033[0m" << std::endl;
-        system("sudo systemctl start ollama");
-        std::this_thread::sleep_for(std::chrono::seconds(2)); // Wait for service to initialize
+        run_cmd({"sudo", "systemctl", "start", "ollama"});
+        std::this_thread::sleep_for(std::chrono::seconds(2));
     }
 
-    // Ensure embedding model exists
-    if (system("ollama list | grep -q nomic-embed-text") != 0) {
+    // Ensure embedding model exists. Pattern-matching the model name
+    // happens in C++ now (ollama_has_model), so there's no shell
+    // pipeline to inject into.
+    if (!ollama_has_model("nomic-embed-text")) {
         std::cout << "Model not found. Pulling now..." << std::endl;
-        system("ollama pull nomic-embed-text");
+        run_cmd({"ollama", "pull", "nomic-embed-text"});
     }
 
     // Load existing index for mtime check

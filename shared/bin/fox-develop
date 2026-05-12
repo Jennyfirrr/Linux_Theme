@@ -92,6 +92,13 @@ case "${1:-status}" in
         mkdir -p "$STATE_DIR"
         echo "  → linking shared/ files into live config..."
         _link_all
+        # Wire the in-repo .githooks/pre-commit so commit attempts get
+        # scanned for secrets before they land. Idempotent — git just
+        # rewrites core.hooksPath each time.
+        if [[ -d "$FOXML_DIR/.githooks" ]]; then
+            ( cd "$FOXML_DIR" && git config core.hooksPath .githooks ) \
+                && echo "  → git pre-commit secret scanner enabled (.githooks/pre-commit)"
+        fi
         date -Iseconds > "$STATE"
         echo "develop mode: ON"
         echo "  edits in $FOXML_DIR/shared/ take effect immediately"
@@ -100,6 +107,10 @@ case "${1:-status}" in
     off|disable)
         echo "  → flattening symlinks back to copies..."
         _flatten_all
+        if [[ -d "$FOXML_DIR/.githooks" ]]; then
+            ( cd "$FOXML_DIR" && git config --unset core.hooksPath 2>/dev/null ) || true
+            echo "  → git pre-commit secret scanner unwired"
+        fi
         rm -f "$STATE"
         echo "develop mode: OFF"
         ;;

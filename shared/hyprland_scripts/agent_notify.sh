@@ -15,7 +15,22 @@
 # red "stop hook error" banner if they do, even though the failure is harmless
 # from the user's perspective). Trap any unexpected error and exit 0 with the
 # real reason logged to a sidecar so we can debug without polluting the TUI.
-LOG_FILE="${XDG_RUNTIME_DIR:-/tmp}/foxml-agent-notify.log"
+#
+# Runtime dir: prefer XDG_RUNTIME_DIR (systemd creates it 0700 per-user).
+# Fall back to /tmp/foxml-$USER with explicit 0700 perms so AI payloads
+# — which may contain code snippets, file paths, prompt content — don't
+# end up world-readable on systems without XDG_RUNTIME_DIR.
+if [[ -d "${XDG_RUNTIME_DIR:-}" ]]; then
+    FOXML_RUNTIME_DIR="$XDG_RUNTIME_DIR"
+else
+    FOXML_RUNTIME_DIR="/tmp/foxml-$USER"
+    mkdir -p "$FOXML_RUNTIME_DIR" 2>/dev/null
+    chmod 700 "$FOXML_RUNTIME_DIR" 2>/dev/null
+fi
+LOG_FILE="$FOXML_RUNTIME_DIR/foxml-agent-notify.log"
+# Lock down log perms even when in XDG_RUNTIME_DIR — defense in depth in
+# case the dir mode ever drifts. umask handles the create-time perms.
+( umask 077; : >> "$LOG_FILE" )
 trap 'echo "[$(date -Iseconds)] $0 ${LINENO} ${BASH_COMMAND}" >> "$LOG_FILE" 2>/dev/null; exit 0' ERR
 
 src="${1:-claude}"
@@ -147,10 +162,10 @@ if command -v notify-send >/dev/null 2>&1; then
 fi
 
 # Append to the triage queue (JSONL). flock serializes concurrent appends
-# from multiple panes.
-queue_dir="${XDG_RUNTIME_DIR:-/tmp}"
-mkdir -p "$queue_dir" 2>/dev/null || true
-queue_file="$queue_dir/foxml-agent-queue.jsonl"
+# from multiple panes. Uses the same FOXML_RUNTIME_DIR computed above so
+# the queue file isn't world-readable on /tmp-fallback systems.
+queue_file="$FOXML_RUNTIME_DIR/foxml-agent-queue.jsonl"
+( umask 077; : >> "$queue_file" )
 
 if command -v jq >/dev/null 2>&1; then
     entry="$(jq -cn \

@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# pre-commit — scan staged changes for secrets and personal identifiers.
+#
+# Activated per-clone with:    git config core.hooksPath .githooks
+# (`fox develop on` does this automatically.)
+#
+# Catches the common leak patterns: private keys, cloud / SaaS tokens,
+# absolute $HOME paths, personal email addresses. Bypass for a known
+# false positive with `git commit --no-verify`.
+
+set -u
+
+staged=$(git diff --cached --diff-filter=AM)
+[[ -z "$staged" ]] && exit 0
+
+# pattern → human label, tab-separated. Each entry is two array items so
+# bash's positional pairing stays obvious.
+patterns=(
+    'BEGIN (RSA |OPENSSH |EC |DSA )?PRIVATE KEY'        'private key'
+    'AKIA[0-9A-Z]{16}'                                  'AWS access key id'
+    'ghp_[A-Za-z0-9]{36}'                               'GitHub personal token'
+    'gho_[A-Za-z0-9]{36}'                               'GitHub oauth token'
+    'github_pat_[A-Za-z0-9_]{20,}'                      'GitHub fine-grained PAT'
+    'sk-[A-Za-z0-9_-]{40,}'                             'API key (Anthropic/OpenAI/etc.)'
+    'xox[abprs]-[A-Za-z0-9-]{10,}'                      'Slack token'
+    'glpat-[A-Za-z0-9_-]{20}'                           'GitLab personal token'
+    '/home/[a-z][a-z0-9_-]+/'                           'absolute /home path'
+    '[a-zA-Z0-9._-]+@(gmail|yahoo|hotmail|protonmail|fastmail|outlook|icloud)\.[a-z]{2,}'  'personal email'
+)
+
+found=0
+red()    { printf '\033[31m%s\033[0m' "$1"; }
+yellow() { printf '\033[33m%s\033[0m' "$1"; }
+dim()    { printf '\033[2m%s\033[0m' "$1"; }
+
+n=${#patterns[@]}
+for ((i=0; i<n; i+=2)); do
+    pattern="${patterns[$i]}"
+    label="${patterns[$((i+1))]}"
+    matches=$(grep -nE "$pattern" <<<"$staged" || true)
+    if [[ -n "$matches" ]]; then
+        found=1
+        printf '%s potential %s in staged diff:\n' "$(red '✗')" "$label"
+        head -3 <<<"$matches" | sed 's/^/    /'
+    fi
+done
+
+if (( found )); then
+    echo ""
+    echo "$(yellow 'pre-commit blocked.') Either:"
+    echo "  $(dim '-') remove the secret from your staged changes"
+    echo "  $(dim '-') bypass with $(dim 'git commit --no-verify') if it's actually a false positive"
+    exit 1
+fi

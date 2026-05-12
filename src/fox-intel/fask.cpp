@@ -7,10 +7,37 @@
 #include <future>
 #include <mutex>
 #include <thread>
+#include <initializer_list>
+#include <sys/wait.h>
+#include <unistd.h>
 #include "json.hpp"
 #include <curl/curl.h>
 
 using json = nlohmann::json;
+
+// run_cmd — safe replacement for system(). Uses fork + execvp so no
+// shell is ever invoked. Forces the caller to pass an explicit argv
+// vector, so a future "let's interpolate a variable in here" change
+// can't smuggle in shell metacharacters. Returns the child exit
+// status, or -1 on fork/exec failure.
+//
+// All callers in this file pass compile-time-constant strings, so
+// there's no current injection risk — but the pattern was flagged in
+// audit as a future-bug magnet, and execvp costs us essentially
+// nothing (no /bin/sh fork).
+static int run_cmd(std::initializer_list<const char*> argv) {
+    pid_t pid = fork();
+    if (pid < 0) return -1;
+    if (pid == 0) {
+        std::vector<const char*> args(argv.begin(), argv.end());
+        args.push_back(nullptr);
+        execvp(args[0], const_cast<char* const*>(args.data()));
+        _exit(127);
+    }
+    int status = 0;
+    if (waitpid(pid, &status, 0) < 0) return -1;
+    return WIFEXITED(status) ? WEXITSTATUS(status) : -1;
+}
 
 // --- Helper: Curl Write Callback for Embeddings (Full Response) ---
 size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* userp) {
@@ -92,7 +119,7 @@ int main(int argc, char* argv[]) {
     std::vector<float> query_vec = get_embedding(query);
     if (query_vec.empty()) {
         std::cout << "\033[1;33m[Fox Brain is asleep. Waking up...]\033[0m" << std::endl;
-        system("sudo systemctl start ollama");
+        run_cmd({"sudo", "systemctl", "start", "ollama"});
         // Give it a moment to boot the port
         int retries = 5;
         while (retries--) {
@@ -163,7 +190,8 @@ int main(int argc, char* argv[]) {
         std::cout << std::endl;
 
         // Notify user when prompt is finished
-        system("notify-send -u low -i dialog-information 'Fox Assistant' 'Response complete.'");
+        run_cmd({"notify-send", "-u", "low", "-i", "dialog-information",
+                 "Fox Assistant", "Response complete."});
 
         curl_easy_cleanup(curl);
         curl_slist_free_all(headers);
