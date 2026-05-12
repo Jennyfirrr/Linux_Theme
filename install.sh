@@ -202,9 +202,15 @@ _foxml_finalize() {
     if [[ -f "$HOME/.config/foxml/monitor-layout.conf" ]]; then
         (
             set +e
-            _generate_per_monitor_wallpapers 2>/dev/null
-            _personalize_hyprlock            2>/dev/null
-            _personalize_workspace_rules     2>/dev/null
+            # Silence ALL output here. On normal install exit, the main
+            # configure_monitors call already emitted these lines. On
+            # abort, the user has bigger concerns than "personalised"
+            # success messages — the ERR trap above already printed
+            # what failed. The trap is here to guarantee state, not
+            # to chat about it.
+            _generate_per_monitor_wallpapers >/dev/null 2>&1
+            _personalize_hyprlock            >/dev/null 2>&1
+            _personalize_workspace_rules     >/dev/null 2>&1
         ) || true
     fi
 
@@ -2006,11 +2012,14 @@ foxml_section "Configuring monitors"
 configure_monitors
 
 # Backstop: regenerate per-monitor wallpaper variants, re-personalise
-# hyprlock, re-pin workspace 1. Idempotent; safe on every re-run.
+# hyprlock, re-pin workspace 1. configure_monitors above already
+# emitted these lines once — redirect this backstop run so we don't
+# print the same "+ hyprlock personalised" + "+ workspace pin" twice.
+# Output silenced; exit codes preserved (errors still trigger ERR trap).
 if [[ -f "$HOME/.config/foxml/monitor-layout.conf" ]]; then
-    _generate_per_monitor_wallpapers
-    _personalize_hyprlock
-    _personalize_workspace_rules
+    _generate_per_monitor_wallpapers >/dev/null 2>&1
+    _personalize_hyprlock            >/dev/null 2>&1
+    _personalize_workspace_rules     >/dev/null 2>&1
 fi
 
 # Render waybar AFTER configure_monitors so start_waybar.sh sees the
