@@ -2962,10 +2962,37 @@ EOF
                 fi
             fi
 
+            # Default posture: keys-only when keys exist, password+keys
+            # when no keys. The prompt now defaults to secure (Y) when
+            # keys are detected — Enter / empty input picks keys-only.
+            # Only an explicit "n" or "N" keeps password auth on.
+            #
+            # Test your key BEFORE answering Y:
+            #     ssh -p $custom_port -o BatchMode=yes -o ConnectTimeout=5 \\
+            #         "$USER@127.0.0.1" true
+            # If the test succeeds, the key works and disabling passwords
+            # is safe. Physical TTY login at the laptop is your fallback
+            # if you ever lose the key entirely.
             local disable_pass="yes"
             if $has_keys; then
-                if foxml_prompt_yn "  Disable password authentication? (Keys detected) [y/N] "; then
-                    disable_pass="no"
+                # Sanity-probe the key actually loads (rules out a corrupt
+                # or empty authorized_keys file that exists but is useless).
+                local key_count
+                key_count=$(grep -cE '^(ssh-(rsa|ed25519|dss|ecdsa)|sk-) ' "$HOME/.ssh/authorized_keys" 2>/dev/null || echo 0)
+                if (( key_count == 0 )); then
+                    echo "  ! authorized_keys exists but contains no recognised public keys"
+                    echo "    keeping password auth ENABLED to avoid lockout"
+                    disable_pass="yes"
+                else
+                    echo "  Detected ${key_count} authorized public key(s)."
+                    echo "  Disabling password auth is the recommended secure default."
+                    local _reply=""
+                    read -p "  Disable password authentication (keys-only)? [Y/n] " -n 1 -r _reply || true
+                    echo ""
+                    case "$_reply" in
+                        [Nn]) disable_pass="yes" ;;   # explicit no → keep passwords
+                        *)    disable_pass="no"  ;;   # Enter or Y → keys-only
+                    esac
                 fi
             else
                 echo "  No authorized_keys found. Forcing 'PasswordAuthentication yes' to prevent lockout."
