@@ -769,8 +769,21 @@ if $INSTALL_DEPS; then
     )
 
     # Security hardening — only added when --secure is passed.
+    # Covers every dep for the fox-* security tools that can lazy-install
+    # their AUR-only siblings (fwknop, opensnitch, endlessh, etckeeper,
+    # cowrie's Python venv). Adding them here means `fox arm` doesn't
+    # have to pause + ask the user to install knockd/wg/etc. mid-run.
     if $INSTALL_SECURITY; then
-        PACMAN_PKGS+=(fail2ban audit lynis)
+        PACMAN_PKGS+=(
+            fail2ban audit lynis
+            knockd                # fox knock (official repo)
+            wireguard-tools       # fox vpn
+            inotify-tools         # fox tripwire (inotifywait)
+            python-virtualenv     # fox honeypot (Cowrie venv)
+            qrencode              # fox spa (QR for phone key transfer)
+            usbutils              # fox usb / fox deadman (lsusb / udevadm)
+            etckeeper             # /etc git versioning
+        )
     fi
 
     # Performance — only added when --perf is passed.
