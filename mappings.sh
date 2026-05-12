@@ -2083,12 +2083,19 @@ install_resolved_dnssec() {
         echo "  commented active DNSSEC= line in /etc/systemd/resolved.conf"
     fi
 
-    # 2. Drop-in.
+    # 2. Drop-in — DNSSEC=allow-downgrade is the security-vs-stability
+    # middle ground:
+    #   • Signed answers from the upstream resolver → validated
+    #   • Unsigned answers → accepted (no wedge)
+    #   • Clock-skew → answers might be invalid but resolver just
+    #     drops the validation, doesn't wedge resolution
+    # Strictly better than DNSSEC=no (no validation ever) but doesn't
+    # cause the v2.4.7 NTP-startup deadlock that pure DNSSEC=yes did.
     local conf=/etc/systemd/resolved.conf.d/00-foxml-dnssec.conf
     sudo install -d /etc/systemd/resolved.conf.d
-    if [[ ! -f "$conf" ]] || ! grep -q '^DNSSEC=no' "$conf"; then
-        printf '[Resolve]\nDNSSEC=no\n' | sudo tee "$conf" >/dev/null
-        echo "  DNSSEC=no → $conf"
+    if [[ ! -f "$conf" ]] || ! grep -qE '^DNSSEC=allow-downgrade' "$conf"; then
+        printf '[Resolve]\nDNSSEC=allow-downgrade\n' | sudo tee "$conf" >/dev/null
+        echo "  DNSSEC=allow-downgrade → $conf"
     fi
 
     # 3. Clear NetworkManager per-connection DNSSEC overrides. Empty value
@@ -3327,18 +3334,19 @@ install_privacy() {
     # 1. Update resolved.conf
     # Uses Cloudflare (1.1.1.1) and Google (8.8.8.8) with DoH enabled
     sudo mkdir -p /etc/systemd/resolved.conf.d/
-    # DNSSEC=no matches install_resolved_dnssec's auto-fix. The original
-    # DNSSEC=yes here silently re-introduced the v2.4.7 NTP-failure mode
-    # (resolvers that advertise DNSSEC support but return unsigned
-    # answers cause systemd-resolved to fail validation, which wedges
-    # chrony's source resolution). DoH still encrypts the query path —
-    # DNSSEC=yes only adds answer-validation, which is the part that
-    # was breaking. Keep DoH on, leave DNSSEC off.
+    # DNSSEC=allow-downgrade — validate when the upstream resolver
+    # returns signed answers, accept gracefully when it doesn't. The
+    # original DNSSEC=yes caused v2.4.7 NTP-startup deadlock; the
+    # interim DNSSEC=no gave up validation entirely. allow-downgrade
+    # is the audit-aware compromise: you get DNSSEC's tamper-detect
+    # against compliant resolvers (Cloudflare 1.1.1.1, Google 8.8.8.8
+    # both serve signed responses), don't get wedged when an unsigned
+    # path is hit. DoH still handles path encryption either way.
     sudo tee /etc/systemd/resolved.conf.d/foxml-doh.conf >/dev/null <<EOF
 [Resolve]
 DNS=1.1.1.1#cloudflare-dns.com 1.0.0.1#cloudflare-dns.com 8.8.8.8#dns.google 8.8.4.4#dns.google
 DNSOverHTTPS=yes
-DNSSEC=no
+DNSSEC=allow-downgrade
 FallbackDNS=1.1.1.1 8.8.8.8
 EOF
 
