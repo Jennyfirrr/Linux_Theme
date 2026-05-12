@@ -2309,6 +2309,25 @@ fs.protected_hardlinks           = 1
 fs.protected_symlinks            = 1
 fs.protected_fifos               = 2
 fs.protected_regular             = 2
+
+# SysRq hardening. Default Arch kernel exposes the full Magic-SysRq
+# command set, which an attacker with physical keyboard access can use
+# to bypass the lock screen entirely (REISUB → sync + remount-readonly
+# + kill all + reboot, no auth needed). =4 keeps only the "control
+# console keyboard" subset (Alt-SysRq-K kills X/Wayland sessions, etc.)
+# without granting reboot / kill-all. Set to 0 to fully disable.
+kernel.sysrq                     = 4
+
+# ARP / MITM protection on hostile networks (café WiFi, conferences).
+# arp_ignore=1: only respond to ARP requests for IPs we explicitly
+# configured (no broadcasting "I am that IP" for stuff we shouldn't).
+# arp_announce=2: when sending ARPs, only use the source IP of the
+# outgoing interface — never leak our other-interface IPs.
+# Closes the "I'm the router, send your traffic to me" attack class.
+net.ipv4.conf.all.arp_ignore     = 1
+net.ipv4.conf.default.arp_ignore = 1
+net.ipv4.conf.all.arp_announce   = 2
+net.ipv4.conf.default.arp_announce = 2
 EOF
 )"
 

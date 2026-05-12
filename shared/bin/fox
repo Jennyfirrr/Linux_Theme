@@ -120,6 +120,10 @@ case "$1" in
         shift
         exec fox-vpn "$@"
         ;;
+    offline)
+        shift
+        exec fox-offline "$@"
+        ;;
     sec|security)
         shift
         exec fox-sec "$@"
@@ -155,6 +159,7 @@ case "$1" in
         echo "  vault            Password store (pass) wrapper — init / lock / audit"
         echo "  fingerprint      fprintd wrapper — enroll / delete / test / status"
         echo "  vpn              WireGuard manager + UFW kill-switch (up / down / killswitch)"
+        echo "  offline          Run a command in a network-blackholed namespace (untrusted code sandbox)"
         echo "  sec              Unified security dashboard (alerts, posture, bans, listeners, failed auth)"
         echo ""
         echo "Custom Tools (found in ~/.local/bin):"
