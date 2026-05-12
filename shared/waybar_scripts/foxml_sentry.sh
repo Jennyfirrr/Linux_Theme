@@ -50,7 +50,7 @@ _svc chronyd   && _bump ok "Time sync"              || _bump warn "chronyd inact
 # Kernel hardening layers
 sysrq=$(cat /proc/sys/kernel/sysrq 2>/dev/null)
 if [[ "$sysrq" == "4" || "$sysrq" == "0" ]]; then _bump ok "SysRq hardened"; else _bump warn "SysRq full default"; fi
-if findmnt /proc 2>/dev/null | grep -qE 'hidepid=[12]'; then _bump ok "hidepid /proc"; else _bump warn "/proc not hidepid"; fi
+if findmnt /proc 2>/dev/null | grep -qE 'hidepid=(1|2|noaccess|invisible|ptraceable)'; then _bump ok "hidepid /proc"; else _bump warn "/proc not hidepid"; fi
 if findmnt /tmp     2>/dev/null | grep -q noexec; then _bump ok "noexec /tmp"; else _bump warn "/tmp exec allowed"; fi
 if findmnt /dev/shm 2>/dev/null | grep -q noexec; then _bump ok "noexec /dev/shm"; else _bump warn "/dev/shm exec allowed"; fi
 if grep -qE 'intel_iommu=on|amd_iommu=on' /proc/cmdline 2>/dev/null; then _bump ok "IOMMU active"; fi
