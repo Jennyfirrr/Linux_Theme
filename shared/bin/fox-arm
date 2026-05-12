@@ -121,6 +121,8 @@ _arm() {
     _step "knock OR spa (SSH access gating)"
     if [[ -f "$HOME/.config/foxml/spa.conf" ]] || [[ -f "$HOME/.config/foxml/knock.conf" ]]; then
         _ok "already configured"
+    elif [[ -f "$HOME/.config/foxml/.skipped-ssh-gating" ]]; then
+        _skip "previously declined (rm ~/.config/foxml/.skipped-ssh-gating to re-offer)"
     else
         echo "  [1] knock (port-sequence, simpler, sniffable on same LAN)"
         echo "  [2] spa   (single encrypted packet, replay-immune, recommended)"
@@ -130,7 +132,9 @@ _arm() {
         case "$c" in
             1) fox-knock --setup ;;
             2) fox-spa --setup ;;
-            *) _skip "skipped" ;;
+            *) mkdir -p "$HOME/.config/foxml" 2>/dev/null
+               touch "$HOME/.config/foxml/.skipped-ssh-gating"
+               _skip "skipped" ;;
         esac
     fi
 

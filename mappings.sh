@@ -3883,6 +3883,8 @@ EOF
                     fi
                     ;;
                 3|*)
+                    mkdir -p "$HOME/.config/foxml" 2>/dev/null
+                    touch "$HOME/.config/foxml/.skipped-ssh-gating"
                     echo "  • skipped — run later:  fox spa --setup  OR  fox knock --setup"
                     ;;
             esac
