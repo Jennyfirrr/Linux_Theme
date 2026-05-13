@@ -42,4 +42,17 @@ fi
 # 8192 fits most files comfortably; user can override via env.
 export OLLAMA_CONTEXT_LENGTH="${OLLAMA_CONTEXT_LENGTH:-8192}"
 
-exec aider --model "$MODEL" "$@"
+# Theme colors — pulled from FoxML_Classic palette so aider's UI matches
+# the rest of the desktop. gruvbox-dark is the closest Pygments style to
+# the warm peach/sage/cream palette. Override per-call via the
+# corresponding aider flag if you want something different.
+exec aider \
+    --model "$MODEL" \
+    --dark-mode \
+    --code-theme gruvbox-dark \
+    --user-input-color       "#d4985a" \
+    --assistant-output-color "#d5c4b0" \
+    --tool-output-color      "#8a9a7a" \
+    --tool-warning-color     "#c4b48a" \
+    --tool-error-color       "#b05555" \
+    "$@"
