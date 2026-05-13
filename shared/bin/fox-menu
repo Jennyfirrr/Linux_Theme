@@ -13,7 +13,7 @@ set -euo pipefail
 
 # Collect (name, description) tuples. Skip self + the umbrella wrapper.
 declare -a entries=()
-for cmd in "$HOME/.local/bin/"fox-* "$HOME/.local/bin/"fask "$HOME/.local/bin/"findex "$HOME/.local/bin/"fhelp; do
+for cmd in "$HOME/.local/bin/"fox-* "$HOME/.local/bin/"fask "$HOME/.local/bin/"findex "$HOME/.local/bin/"fhelp "$HOME/.local/bin/"fox-tail; do
     [[ -x "$cmd" && -f "$cmd" ]] || continue
     name=$(basename "$cmd")
     case "$name" in

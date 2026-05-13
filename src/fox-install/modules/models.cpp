@@ -80,6 +80,16 @@ std::vector<std::string> discover_custom_models(const Context& ctx) {
         }
     }
 
+    // 3. ~/code/custom_models/*.txt (bulk model registration)
+    fs::path custom_dir = code_dir / "custom_models";
+    if (fs::is_directory(custom_dir, ec)) {
+        for (const auto& entry : fs::directory_iterator(custom_dir, ec)) {
+            if (entry.is_regular_file() && entry.path().extension() == ".txt") {
+                candidates.push_back(entry.path());
+            }
+        }
+    }
+
     for (const auto& p : candidates) {
         if (!fs::exists(p, ec)) continue;
         std::ifstream f(p);
@@ -140,9 +150,39 @@ void run_models(Context& ctx) {
     models.erase(std::unique(models.begin(), models.end()), models.end());
 
     for (const auto& m : models) {
-        ui::substep("pulling " + m);
-        if (sh::run({"ollama", "pull", m}) != 0) {
-            ui::warn("pull failed: " + m + " — retry with `ollama pull " + m + "`");
+        std::string target = m;
+        // Fix common typos/aliases for known community "unlocked" models.
+        if (target == "hermes-3:8b") target = "hermes3:8b";
+
+        // Ollama Library (the default registry) REQUIRES lowercase.
+        // Hugging Face (hf.co/) is case-sensitive for the path.
+        bool has_upper = std::any_of(target.begin(), target.end(), ::isupper);
+        bool has_namespace = (target.find('/') != std::string::npos);
+        bool has_host = (target.find("hf.co/") == 0 || target.find("huggingface.co/") == 0);
+
+        bool success = false;
+        if (!has_upper && !has_host) {
+            ui::substep("pulling " + target);
+            if (sh::run({"ollama", "pull", target}) == 0) {
+                success = true;
+            }
+        }
+
+        if (!success && has_namespace && !has_host) {
+            std::string hf_target = "hf.co/" + target;
+            ui::substep("pulling from Hugging Face: " + hf_target);
+            if (sh::run({"ollama", "pull", hf_target}) == 0) {
+                success = true;
+            }
+        } else if (!success && has_host) {
+            ui::substep("pulling " + target);
+            if (sh::run({"ollama", "pull", target}) == 0) {
+                success = true;
+            }
+        }
+
+        if (!success) {
+            ui::warn("pull failed: " + target + " — retry with `ollama pull " + target + "`");
         }
     }
     ui::ok(std::to_string(models.size()) + " models requested");

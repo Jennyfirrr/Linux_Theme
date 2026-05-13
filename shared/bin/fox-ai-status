@@ -11,6 +11,20 @@ fi
 # Extract model tag (e.g., 7b, 14b, 32b)
 MODEL_TAG=$(grep '"model"' "$CONFIG_FILE" | cut -d: -f3 | tr -d '", ')
 
+# Generic Sanitization (extract Family + Size, ignore metadata/unlocked tags)
+# Input example: "huihui_ai/qwen2.5-coder-32b-instruct-abliterated"
+NAME_ONLY="${MODEL_TAG##*/}"    # qwen2.5-coder-32b-instruct-abliterated
+FAMILY=$(echo "$NAME_ONLY" | cut -d- -f1 | cut -d: -f1) # qwen2.5
+SIZE=$(echo "$NAME_ONLY" | grep -ioP '\d+[bB]' | head -n1 | tr '[:upper:]' '[:lower:]') # 32b
+
+if [[ -n "$FAMILY" && -n "$SIZE" ]]; then
+    DISPLAY_TAG="${FAMILY}-${SIZE}"
+elif [[ -n "$SIZE" ]]; then
+    DISPLAY_TAG="$SIZE"
+else
+    DISPLAY_TAG="${NAME_ONLY:0:8}"
+fi
+
 # Determine icon and label
 VRAM_INFO=""
 VRAM_PERCENT=0
@@ -29,7 +43,7 @@ LOAD_LABEL="Safe"
 [[ $VRAM_PERCENT -gt 95 ]] && LOAD_LABEL="CRITICAL"
 
 ICON=" "
-LABEL="$MODEL_TAG$VRAM_INFO"
+LABEL="$DISPLAY_TAG$VRAM_INFO"
 CLASS="smart"
 
 # Apply tier-based coloring based on name (generic)
@@ -46,4 +60,4 @@ case "$MODEL_TAG" in
         ;;
 esac
 
-echo "{\"text\": \"$ICON $LABEL\", \"tooltip\": \"Model: $MODEL_TAG\\nStatus: $LOAD_LABEL$VRAM_INFO\", \"class\": \"$CLASS\"}"
+echo "{\"text\": \"$ICON $LABEL\", \"tooltip\": \"Model: $DISPLAY_TAG\\nStatus: $LOAD_LABEL$VRAM_INFO\", \"class\": \"$CLASS\"}"

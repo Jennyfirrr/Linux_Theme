@@ -2,6 +2,16 @@
 
 All notable changes to the Fox ML theme.
 
+## 2026-05-13 — v2.7.1
+
+### AI Tooling & Workflow Polish
+
+- **Enhanced Model Status Display (`fox-ai-status`)** — Improved model tag parsing to show a standardized `Family-Size` format.
+- **Custom Model Discovery** — Updated the `fox-install` models module to support additional discovery paths for user-defined model lists.
+- **Improved Pull Resilience** — Added a fallback mechanism for namespaced model pulls and refined library aliasing.
+- **Dev Workflow Helper (`fox-tail`)** — Added a utility to consolidate local project metadata into a temporary markdown file for tool ingestion.
+- **Project Maintenance** — Updated `.gitignore` to exclude local metadata files and refined tool discovery in `fox-menu`.
+
 ---
 
 ## 2026-05-13 — v2.7.0
