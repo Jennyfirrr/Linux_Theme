@@ -126,9 +126,11 @@ if [[ ! -f "$SCRIPT_DIR/src/fox-intel/json.hpp" ]]; then
 fi
 
 if [[ ! -x "$FOX_INSTALL_BIN" ]]; then
-    echo ":: Building native orchestrator (fox-install + libfox-intel)..."
+    echo ":: Building native orchestrator (fox-install + libfox-intel + ~10 fox-* tools)"
+    echo "   First-time compile: ~30-90s on a laptop. Don't kill it — terminal stays"
+    echo "   quiet while make runs. Errors will surface loudly if something breaks."
 elif [[ "${FOXML_UPDATED:-0}" == "1" ]]; then
-    echo ":: Recompiling after self-update..."
+    echo ":: Recompiling after self-update — ~5-30s, give it a moment."
 fi
 if ! make -C "$SCRIPT_DIR" install >/dev/null 2>&1; then
     # Rerun loudly so the user sees the actual compile error.
