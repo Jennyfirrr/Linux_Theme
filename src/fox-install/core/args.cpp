@@ -28,12 +28,18 @@ std::size_t find_by_flag(const std::string& flag) {
     return SIZE_MAX;
 }
 
-// Look up a module by its `--no-<slug>` form.
+// Look up a module by its negated form. Accepts both:
+//   * --no-<flag-tail>  e.g. --no-mac-random  (matches MODULES[].flag)
+//   * --no-<slug>       e.g. --no-mac_random  (matches MODULES[].slug)
+// The flag form is the user-facing convention (hyphens); the slug form
+// (underscores) is the internal name. Either works.
 std::size_t find_by_no_slug(const std::string& flag) {
     if (flag.rfind("--no-", 0) != 0) return SIZE_MAX;
-    std::string slug = flag.substr(5);
+    std::string tail = flag.substr(5);
+    std::string reconstructed_flag = "--" + tail;
     for (std::size_t i = 0; i < MODULES_COUNT; ++i) {
-        if (slug == MODULES[i].slug) return i;
+        if (reconstructed_flag == MODULES[i].flag) return i;
+        if (tail == MODULES[i].slug) return i;
     }
     return SIZE_MAX;
 }
@@ -49,9 +55,9 @@ void print_help(const char* argv0) {
         "      --resume      resume from the last successful module\n"
         "      --phase <s.>  skip ahead to a specific module slug\n"
         "      --dry-run     print every command without executing it\n"
-        "      --full        deps + perf + vault + ai + models + github +\n"
-        "                    all default-on modules (excludes xgboost / mac-random /\n"
-        "                    polkit-strict / cpp-pro — opt in to those explicitly)\n"
+        "      --full        enable every registered module + every sub-toggle\n"
+        "                    (polkit-strict, cpp-pro). Use --no-<slug> to exclude\n"
+        "                    individual modules (e.g. --full --no-mac-random).\n"
         "      --quick       skip slow + network-heavy parts (deps, github, models)\n"
         "      --only <slugs> comma-separated allow-list; everything else skipped\n"
         "      --polkit-strict   add polkit strict mode (every GUI sudo re-prompts)\n"
@@ -111,40 +117,24 @@ bool parse(int argc, char** argv, Parsed& out, Context& ctx) {
 
         if (a == "--full" || a == "--all") {
             out.full = true;
-            // Curated --full: matches bash's INSTALL_* set. Every
-            // default_on=true module already runs by default; --full
-            // adds the major opt-in slugs from bash --full:
+            // --full means FULL. Every registered module is enabled,
+            // every fine-grained sub-toggle (install_polkit_strict,
+            // cpp_pro) is flipped on. The user opts out of specific
+            // modules with --no-<slug>, e.g.
+            //   ./install.sh --full --yes --no-mac-random --no-fprint-pam
             //
-            //   deps, perf, vault, ai, models, github
+            // Hardware-gated modules (nvidia/amd_gpu/intel_gpu/fprint)
+            // still bail internally when ctx.has_* is false, so enabling
+            // them here on hardware-less boxes is a cheap no-op.
             //
-            // Bash --full explicitly EXCLUDES (off-by-default,
-            // require an explicit flag to opt in):
-            //   xgboost          5-10 min from-source build
-            //   mac_random       breaks captive-portal/dorm/enterprise WiFi
-            //   polkit_strict    every GUI sudo re-prompts (daily-use pain)
-            //   cpp_pro          dev-only toolchain extras
-            //   throttling       interactive multi-step wizard
-            //   ssh_harden       interactive multi-step wizard
-            //   endlessh         depends on --ssh-harden moving sshd first
-            //   fprint           detect.cpp gates this on hardware presence
-            //
-            // GPU modules (nvidia/amd_gpu/intel_gpu) and fprint are
-            // auto-enabled in fox-install.cpp main() AFTER the detect
-            // module runs, based on ctx.has_*. That gives "always on if
-            // hardware present" semantics for every entry point —
-            // --full, plain interactive, and curl-pipe via bootstrap.sh
-            // — without listing them here.
-            static const char* FULL_OPT_INS[] = {
-                "deps", "perf", "vault", "ai", "models", "github", nullptr,
-            };
-            for (auto** s = FULL_OPT_INS; *s; ++s) {
-                for (std::size_t k = 0; k < MODULES_COUNT; ++k) {
-                    if (std::string(MODULES[k].slug) == *s) {
-                        out.module_enabled[k] = true;
-                        break;
-                    }
-                }
+            // Interactive wizards (throttling, ssh_harden, monitors)
+            // honor ctx.assume_yes — --full --yes runs them
+            // non-interactively with sane defaults.
+            for (std::size_t k = 0; k < MODULES_COUNT; ++k) {
+                out.module_enabled[k] = true;
             }
+            ctx.install_polkit_strict = true;
+            ctx.cpp_pro = true;
             continue;
         }
 
