@@ -92,6 +92,21 @@ void progress_finalize() {
     std::fflush(stdout);
 }
 
+void module_progress(std::size_t current, std::size_t total, const std::string& name) {
+    if (total == 0) return;
+    constexpr int bar_w = 30;
+    int pct    = static_cast<int>((current * 100) / total);
+    int filled = static_cast<int>((current * bar_w) / total);
+    std::string bar(filled, '#');
+    bar.append(bar_w - filled, '-');
+    std::printf("\n%s::%s [%s%s%s] %s%zu/%zu%s %s(%d%%)%s %s%s%s\n",
+        c(C_BOLD), c(C_RESET),
+        c(C_CYN), bar.c_str(), c(C_RESET),
+        c(C_BOLD), current, total, c(C_RESET),
+        c(C_DIM), pct, c(C_RESET),
+        c(C_BOLD), name.c_str(), c(C_RESET));
+}
+
 void summary_row(const std::string& label, const std::string& value) {
     std::printf("  %s%-22s%s : %s\n",
         c(C_DIM), label.c_str(), c(C_RESET), value.c_str());

@@ -26,6 +26,12 @@ void err    (const std::string& msg);         // "error: msg"
 void progress(std::size_t current, std::size_t total, const std::string& label);
 void progress_finalize();
 
+// Header-style step indicator for the module dispatcher. Prints one
+// full line with a fixed-width bar, the count, and the module name.
+// Unlike progress(), this terminates with \n and is meant to print
+// once per module rather than animate.
+void module_progress(std::size_t current, std::size_t total, const std::string& name);
+
 // "  label                : value"  — used by the end-of-install summary.
 void summary_row(const std::string& label, const std::string& value);
 

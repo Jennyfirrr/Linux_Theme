@@ -167,6 +167,16 @@ int main(int argc, char** argv) {
 
     ui::section("FoxML installer (fox-install) — theme: " + ctx.theme_name);
 
+    // Upper bound for the progress bar denominator. Interactive prompts
+    // may push the actually-run count lower if the user answers 'n', but
+    // counting up to the planned total still gives a meaningful sense
+    // of "how much of the install is left."
+    std::size_t total_enabled = 0;
+    for (std::size_t k = 0; k < MODULES_COUNT; ++k) {
+        if (parsed.module_enabled[k]) ++total_enabled;
+    }
+    std::size_t ran_count = 0;
+
     std::vector<std::string> failed_modules;
     for (std::size_t i = 0; i < MODULES_COUNT; ++i) {
         if (ctx.resume_idx > 0 && static_cast<int>(i) < ctx.resume_idx) continue;
@@ -206,6 +216,9 @@ int main(int argc, char** argv) {
         }
 
         if (!should_run) continue;
+
+        ++ran_count;
+        ui::module_progress(ran_count, total_enabled, m.slug);
 
         try {
             m.fn(ctx);
