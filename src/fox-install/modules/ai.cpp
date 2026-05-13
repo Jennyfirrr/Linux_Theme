@@ -150,9 +150,16 @@ void run_ai(Context& ctx) {
             sh::pacman({"gcc-fortran", "openblas"});
             if (have("pipx")) {
                 ok = (sh::run({"pipx", "install", "aider-chat"}) == 0);
+                if (ok) {
+                    // Python 3.14 removed stdlib `audioop`. pydub (a
+                    // transitive aider dep for voice mode) still imports
+                    // it. Inject the community shim so `aider` doesn't
+                    // ImportError at startup. Harmless on older Pythons.
+                    sh::run({"pipx", "inject", "aider-chat", "pyaudioop"});
+                }
             }
             if (!ok) {
-                ui::warn("aider not installed — `pacman -S python-pipx gcc-fortran openblas && pipx install aider-chat`");
+                ui::warn("aider not installed — `pacman -S python-pipx gcc-fortran openblas && pipx install aider-chat && pipx inject aider-chat pyaudioop`");
             }
         }
     }
