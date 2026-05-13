@@ -8,8 +8,9 @@
 #include "../core/shell.hpp"
 #include "../core/ui.hpp"
 
-#include <vector>
+#include <fstream>
 #include <string>
+#include <vector>
 
 namespace fox_install {
 
@@ -92,10 +93,46 @@ void run_deps(Context& ctx) {
 
     int rc = sh::pacman(pkgs);
     if (rc != 0) {
-        ui::err("pacman failed (exit " + std::to_string(rc) + ")");
-        return;
+        ui::err("pacman failed (exit " + std::to_string(rc) + ") — "
+                "if it was a dep conflict, run `sudo pacman -Syu` then re-run --deps");
+        // Continue to post-install hooks anyway; user may want the
+        // service enables / browser config even if a single package
+        // refused to install.
+    } else {
+        ui::ok(std::to_string(pkgs.size()) + " base packages ensured");
     }
-    ui::ok(std::to_string(pkgs.size()) + " base packages ensured");
+
+    // ─── Post-install hooks ───────────────────────────────────────
+    // Things bash did in the same --deps section: enable bluez,
+    // power-profiles-daemon, point xdg-open at Firefox. Each is a
+    // small command and idempotent — re-runs are cheap no-ops.
+
+    if (!sh::dry_run()) {
+        // Default web browser → Firefox (so CLI auth flows like
+        // gcloud / gh / oauth helpers actually spawn a browser).
+        std::string out;
+        if (sh::capture({"sh", "-c", "command -v xdg-settings"}, out) && !out.empty()
+            && std::ifstream("/usr/share/applications/firefox.desktop")) {
+            if (sh::run({"xdg-settings", "set", "default-web-browser",
+                         "firefox.desktop"}) == 0) {
+                ui::ok("default browser set to Firefox");
+            }
+        }
+
+        auto enable_if_installed = [](const std::string& pkg,
+                                       const std::string& unit,
+                                       const std::string& label) {
+            if (sh::run({"sh", "-c", "pacman -Qi " + pkg + " &>/dev/null"}) != 0) return;
+            if (sh::run({"systemctl", "is-active", "--quiet", unit}) == 0) return;
+            if (sh::run({"sh", "-c",
+                         "sudo systemctl enable --now " + unit + " >/dev/null 2>&1"}) == 0) {
+                ui::ok(label + " enabled");
+            }
+        };
+        enable_if_installed("power-profiles-daemon", "power-profiles-daemon",
+                            "power-profiles-daemon");
+        enable_if_installed("bluez", "bluetooth", "bluetooth service");
+    }
 }
 
 }  // namespace fox_install

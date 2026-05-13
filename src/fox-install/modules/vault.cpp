@@ -52,13 +52,18 @@ void run_vault(Context& ctx) {
 
     fs::path unit_dir  = ctx.config_home / "systemd/user";
     fs::path unit_path = unit_dir / UNIT_NAME;
+    // Type=simple + `fox-vault start --foreground` is the right shape.
+    // The first attempt (Type=forking with double-fork in the binary)
+    // race'd systemd's PID tracking and the service was marked failed
+    // even when the daemon was running. With Type=simple, systemd is
+    // the daemon's parent and tracks it directly — no PIDFile dance.
     std::string unit =
         "[Unit]\n"
         "Description=fox-vault — mlock()'d in-RAM secret store\n"
         "After=default.target\n\n"
         "[Service]\n"
-        "Type=forking\n"
-        "ExecStart=%h/.local/bin/fox-vault start\n"
+        "Type=simple\n"
+        "ExecStart=%h/.local/bin/fox-vault start --foreground\n"
         "ExecStop=%h/.local/bin/fox-vault stop\n"
         "Restart=on-failure\n"
         "RestartSec=2\n\n"

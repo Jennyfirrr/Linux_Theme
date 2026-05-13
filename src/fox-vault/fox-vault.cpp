@@ -127,7 +127,15 @@ bool read_line(int fd, std::string& out) {
 }
 
 // ─── daemon ─────────────────────────────────────────────────────────────
-int run_daemon() {
+//
+// `daemonize` controls whether we double-fork into the background.
+//   * true  — CLI invocation: parent exits 0, child runs the loop.
+//             Used when a user runs `fox-vault start` from a shell.
+//   * false — systemd Type=simple invocation. The unit runs the binary
+//             as its own main process; if we double-fork here systemd
+//             loses the PID and marks the service failed. Used for
+//             ExecStart=fox-vault start --foreground.
+int run_daemon(bool daemonize) {
     std::string sock = socket_path();
     if (sock.empty()) {
         std::fprintf(stderr, "fox-vault: XDG_RUNTIME_DIR unset\n");
@@ -139,21 +147,23 @@ int run_daemon() {
         return 1;
     }
 
-    // Daemonize: double-fork, detach from controlling tty.
-    pid_t pid = ::fork();
-    if (pid < 0) { std::perror("fox-vault: fork"); return 1; }
-    if (pid > 0) return 0;                          // parent exits, CLI returns
-    ::setsid();
-    pid = ::fork();
-    if (pid < 0) ::_exit(1);
-    if (pid > 0) ::_exit(0);
-    ::chdir("/");
-    int dn = ::open("/dev/null", O_RDWR | O_CLOEXEC);
-    if (dn >= 0) {
-        ::dup2(dn, STDIN_FILENO);
-        ::dup2(dn, STDOUT_FILENO);
-        ::dup2(dn, STDERR_FILENO);
-        if (dn > 2) ::close(dn);
+    if (daemonize) {
+        // Double-fork, detach from controlling tty.
+        pid_t pid = ::fork();
+        if (pid < 0) { std::perror("fox-vault: fork"); return 1; }
+        if (pid > 0) return 0;                       // parent exits, CLI returns
+        ::setsid();
+        pid = ::fork();
+        if (pid < 0) ::_exit(1);
+        if (pid > 0) ::_exit(0);
+        ::chdir("/");
+        int dn = ::open("/dev/null", O_RDWR | O_CLOEXEC);
+        if (dn >= 0) {
+            ::dup2(dn, STDIN_FILENO);
+            ::dup2(dn, STDOUT_FILENO);
+            ::dup2(dn, STDERR_FILENO);
+            if (dn > 2) ::close(dn);
+        }
     }
     ::signal(SIGPIPE, SIG_IGN);
 
@@ -329,11 +339,13 @@ int cmd_list() {
 void usage(const char* a0) {
     std::fprintf(stderr,
         "Usage:\n"
-        "  %s start | stop | clear | list\n"
-        "  %s set <name>   # value from stdin\n"
+        "  %s start [--foreground]   # start daemon (background by default;\n"
+        "                            # --foreground for systemd Type=simple)\n"
+        "  %s stop | clear | list\n"
+        "  %s set <name>             # value from stdin\n"
         "  %s get <name>\n"
         "  %s del <name>\n",
-        a0, a0, a0, a0);
+        a0, a0, a0, a0, a0);
 }
 
 }  // namespace
@@ -342,7 +354,14 @@ int main(int argc, char** argv) {
     if (argc < 2) { usage(argv[0]); return 2; }
     std::string sub = argv[1];
 
-    if (sub == "start")     return run_daemon();
+    if (sub == "start") {
+        bool foreground = false;
+        for (int i = 2; i < argc; ++i) {
+            std::string a = argv[i];
+            if (a == "--foreground" || a == "-f") foreground = true;
+        }
+        return run_daemon(/*daemonize=*/!foreground);
+    }
     if (sub == "stop")      return send_simple("SHUTDOWN");
     if (sub == "clear")     return send_simple("CLEAR");
     if (sub == "list")      return cmd_list();

@@ -12,7 +12,8 @@ namespace fox_install {
 void run_intel_gpu(Context& ctx) {
     ui::section("Intel GPU userspace (Vulkan + VA-API)");
     if (!ctx.has_intel_gpu) {
-        ui::warn("no Intel GPU detected — skipping (re-run with --intel to force)");
+        ui::ok("no Intel GPU detected — skipping (set ctx.has_intel_gpu=true to force)");
+        return;
     }
     if (!sh::dry_run() && !sh::sudo_warmup()) {
         ui::err("sudo cache cold — `sudo -v` first");

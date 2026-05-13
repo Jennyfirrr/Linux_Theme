@@ -17,6 +17,7 @@
 #include <ctime>
 #include <filesystem>
 #include <string>
+#include <vector>
 #include <unistd.h>
 
 namespace fs = std::filesystem;
@@ -105,7 +106,7 @@ int main(int argc, char** argv) {
 
     ui::section("FoxML installer (fox-install) — theme: " + ctx.theme_name);
 
-    int failures = 0;
+    std::vector<std::string> failed_modules;
     for (std::size_t i = 0; i < MODULES_COUNT; ++i) {
         if (!parsed.module_enabled[i]) continue;
         const Module& m = MODULES[i];
@@ -113,13 +114,31 @@ int main(int argc, char** argv) {
             m.fn(ctx);
         } catch (const std::exception& e) {
             ui::err(std::string(m.slug) + ": " + e.what());
-            ++failures;
+            failed_modules.emplace_back(m.slug);
         }
     }
 
     ui::section("Done");
     ui::summary_row("theme",     ctx.theme_name);
     ui::summary_row("modules",   std::to_string(MODULES_COUNT) + " registered");
-    ui::summary_row("failures",  std::to_string(failures));
-    return failures == 0 ? 0 : 1;
+    ui::summary_row("failures",  std::to_string(failed_modules.size()));
+
+    // Mid-install errors (failed pacman calls, missing packages, etc.)
+    // can scroll past while the user is watching. Re-list them at the
+    // tail so they're impossible to miss, with the suggested fix in
+    // one line. This keeps the bash habit of "run --deps after a
+    // pacman -Syu" actionable instead of buried.
+    if (!failed_modules.empty()) {
+        std::printf("\n");
+        ui::err("modules with failures (scroll up for details):");
+        for (auto& m : failed_modules) {
+            std::printf("    • %s — re-run with: fox-install --only %s\n",
+                        m.c_str(), m.c_str());
+        }
+        std::printf("\n  Common fixes:\n"
+                    "    • pacman dep-resolution errors → sudo pacman -Syu, then retry\n"
+                    "    • systemctl enable failures → sudo -v, then retry\n"
+                    "    • module-specific errors → check the error line above\n");
+    }
+    return failed_modules.empty() ? 0 : 1;
 }
