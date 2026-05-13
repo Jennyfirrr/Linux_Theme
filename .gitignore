@@ -58,3 +58,4 @@ src/fox-ask/fox-ask
 # Vendored nlohmann json header — bootstrap.sh / install.sh wrapper
 # fetches it on first build. Don't commit a 25k-line vendored copy.
 src/fox-intel/json.hpp
+.aider*

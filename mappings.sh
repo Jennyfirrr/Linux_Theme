@@ -124,6 +124,7 @@ SHARED_MAPPINGS=(
     "zsh_paths.zsh|~/.config/zsh/paths.zsh"
     "zsh_conda.zsh|~/.config/zsh/conda.zsh"
     "zsh_history_scrub.zsh|~/.config/zsh/history-scrub.zsh"
+    "bin/fox-aider|~/.local/bin/fox-aider"
     "bin/fox-ai-swap|~/.local/bin/fox-ai-swap"
     "bin/fox-ai-status|~/.local/bin/fox-ai-status"
     "bin/fox-ai-commit|~/.local/bin/fox-ai-commit"

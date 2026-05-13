@@ -132,6 +132,7 @@ inline constexpr Mapping SHARED_MAPPINGS[] = {
     { "zsh_history_scrub.zsh",        "~/.config/zsh/history-scrub.zsh" },
 
     // User-facing fox-* shell wrappers
+    { "bin/fox-aider",                "~/.local/bin/fox-aider" },
     { "bin/fox-ai-swap",              "~/.local/bin/fox-ai-swap" },
     { "bin/fox-ai-status",            "~/.local/bin/fox-ai-status" },
     { "bin/fox-ai-commit",            "~/.local/bin/fox-ai-commit" },
