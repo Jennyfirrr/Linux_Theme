@@ -1,139 +1,141 @@
-// fox-ai-audit — priority sorter for lynis / arch-audit / fox-audit output.
-//
-// Raw security-audit reports dump dozens of findings, most of which are
-// noise for a personal Arch+Hyprland laptop (server-only recommendations,
-// generic Lynis suggestions, etc.). This binary captures whichever
-// auditor outputs the user has and asks the model to surface the top 3
-// genuinely actionable findings.
-
 #include "../fox-intel/fox_intel.hpp"
-
-#include <cerrno>
-#include <cstdio>
 #include <iostream>
-#include <sstream>
-#include <string>
-#include <sys/wait.h>
-#include <unistd.h>
+#include <fstream>
 #include <vector>
+#include <string>
+#include <sstream>
+#include <algorithm>
 
-namespace {
+struct AuditItem {
+    std::string type; // "suggestion" or "warning"
+    std::string text;
+    std::string id;
+};
 
-bool capture(const std::vector<const char*>& argv, std::string& out) {
-    int p[2];
-    if (::pipe(p) < 0) return false;
-    pid_t pid = ::fork();
-    if (pid < 0) { ::close(p[0]); ::close(p[1]); return false; }
-    if (pid == 0) {
-        ::close(p[0]);
-        ::dup2(p[1], STDOUT_FILENO);
-        ::dup2(p[1], STDERR_FILENO);
-        ::close(p[1]);
-        std::vector<const char*> v(argv);
-        v.push_back(nullptr);
-        ::execvp(v[0], const_cast<char* const*>(v.data()));
-        ::_exit(127);
+std::vector<AuditItem> parse_lynis_report(const std::string& path) {
+    std::vector<AuditItem> items;
+    std::ifstream file(path);
+    if (!file.is_open()) return items;
+
+    std::string line;
+    while (std::getline(file, line)) {
+        if (line.find("suggestion[]=") == 0) {
+            std::string content = line.substr(13);
+            auto pipe = content.find('|');
+            if (pipe != std::string::npos) {
+                items.push_back({"suggestion", content.substr(0, pipe), content.substr(pipe + 1)});
+            } else {
+                items.push_back({"suggestion", content, ""});
+            }
+        } else if (line.find("warning[]=") == 0) {
+            std::string content = line.substr(10);
+            auto pipe = content.find('|');
+            if (pipe != std::string::npos) {
+                items.push_back({"warning", content.substr(0, pipe), content.substr(pipe + 1)});
+            } else {
+                items.push_back({"warning", content, ""});
+            }
+        }
     }
-    ::close(p[1]);
-    char buf[4096];
-    for (;;) {
-        ssize_t n = ::read(p[0], buf, sizeof(buf));
-        if (n > 0) out.append(buf, static_cast<size_t>(n));
-        else if (n == 0) break;
-        else if (errno != EINTR) break;
-    }
-    ::close(p[0]);
-    int status = 0;
-    while (::waitpid(pid, &status, 0) < 0) if (errno != EINTR) return false;
-    return WIFEXITED(status) && WEXITSTATUS(status) == 0;
+    return items;
 }
 
-bool have(const std::string& bin) {
-    std::string out;
-    std::string cmd = "command -v " + bin;
-    return capture({"sh", "-c", cmd.c_str()}, out) && !out.empty();
+void print_help() {
+    std::cout << "fox-ai-audit — AI-powered security audit analyzer\n\n"
+              << "Usage:\n"
+              << "  fox-ai-audit [flags]\n\n"
+              << "Flags:\n"
+              << "  -h, --help    Show this help\n"
+              << "  --explain     Analyze all suggestions and prioritize\n"
+              << "  --fix [id]    Explain and generate fix for a specific ID\n";
 }
-
-std::string trim_tail(std::string s, size_t limit) {
-    if (s.size() > limit) {
-        s = s.substr(0, limit);
-        s += "\n(... truncated)\n";
-    }
-    return s;
-}
-
-}  // namespace
 
 int main(int argc, char** argv) {
-    std::string model;
+    std::string report_path = "/var/log/lynis-report.dat";
+    bool explain_all = false;
+    std::string fix_id = "";
+
     for (int i = 1; i < argc; ++i) {
-        std::string a = argv[i];
-        if (a == "-h" || a == "--help") {
-            std::printf("Usage: fox-ai-audit [--model <name>]\n\n"
-                "Runs arch-audit + lynis (if installed) and asks the local model\n"
-                "to rank the top 3 actionable findings for this machine.\n");
-            return 0;
-        }
-        if (a == "--model" && i + 1 < argc) { model = argv[++i]; continue; }
+        std::string arg = argv[i];
+        if (arg == "-h" || arg == "--help") { print_help(); return 0; }
+        if (arg == "--explain") { explain_all = true; }
+        if (arg == "--fix" && i + 1 < argc) { fix_id = argv[++i]; }
     }
 
-    FoxIntel ai = model.empty() ? FoxIntel{} : FoxIntel{model};
-    if (!ai.ensure_ollama_running()) {
-        std::fprintf(stderr, "fox-ai-audit: Ollama daemon unavailable\n");
+    auto items = parse_lynis_report(report_path);
+    if (items.empty()) {
+        std::cerr << "No Lynis report found or no issues detected.\n"
+                  << "Run 'fox audit' first to generate a report.\n";
         return 1;
     }
 
-    std::cout << "\033[1;32m[fox-ai-audit: running scanners...]\033[0m\n";
-
-    std::ostringstream ctx;
-
-    if (have("arch-audit")) {
-        std::string out;
-        capture({"arch-audit", "-uf"}, out);
-        ctx << "=== arch-audit -uf (upgradable CVEs) ===\n"
-            << (out.empty() ? "(no upgradable CVEs)\n" : trim_tail(out, 4000)) << "\n";
+    FoxIntel intel("qwen2.5-coder:7b");
+    if (!intel.ensure_ollama_running()) {
+        std::cerr << "Error: Ollama is not running.\n";
+        return 1;
     }
 
-    if (have("lynis")) {
-        std::string out;
-        capture({"sudo", "lynis", "audit", "system", "--quick"}, out);
-        // Lynis is verbose. Grep for findings + warnings only.
-        std::string filtered;
-        std::istringstream is(out);
-        std::string line;
-        while (std::getline(is, line)) {
-            if (line.find("[ WARNING ]") != std::string::npos ||
-                line.find("[ SUGGESTION ]") != std::string::npos ||
-                line.find("Hardening index") != std::string::npos) {
-                filtered += line + "\n";
-            }
+    if (!fix_id.empty()) {
+        auto it = std::find_if(items.begin(), items.end(), [&](const AuditItem& item) {
+            return item.id == fix_id;
+        });
+
+        if (it == items.end()) {
+            std::cerr << "Issue ID " << fix_id << " not found in report.\n";
+            return 1;
         }
-        ctx << "=== lynis (warnings + suggestions + hardening index) ===\n"
-            << trim_tail(filtered, 4000) << "\n";
-    }
 
-    if (have("fox-audit")) {
-        std::string out;
-        capture({"fox-audit"}, out);
-        ctx << "=== fox-audit (foxml-specific posture) ===\n"
-            << trim_tail(out, 3000) << "\n";
-    }
-
-    if (ctx.str().size() < 30) {
-        std::cout << "\033[1;33m[no audit tools installed — install arch-audit / lynis / fox-audit]\033[0m\n";
+        std::cout << ":: Analyzing " << it->type << ": " << it->text << " (ID: " << it->id << ")\n\n";
+        
+        std::string prompt = "You are a Linux security expert. The user has a security audit finding from Lynis:\n"
+                             "Type: " + it->type + "\n"
+                             "Description: " + it->text + "\n"
+                             "ID: " + it->id + "\n\n"
+                             "Please:\n"
+                             "1. Explain the risk concisely.\n"
+                             "2. Provide the EXACT shell command(s) to fix it on Arch Linux.\n"
+                             "Format the command inside a single markdown code block.";
+        
+        std::cout << intel.ask(prompt) << std::endl;
         return 0;
     }
 
-    std::string prompt =
-        "You are reviewing security audit output on an Arch + Hyprland personal\n"
-        "laptop that also runs trading software. Surface the top 3 findings ranked\n"
-        "by severity. For each, give: (a) the finding, (b) the exact command/edit\n"
-        "to fix it, (c) what NOT to bother with (e.g. server-only Lynis suggestions\n"
-        "that don't apply to a desktop). Be terse. No markdown headings.\n\n"
-        + ctx.str();
+    if (explain_all) {
+        std::cout << ":: Analyzing " << items.size() << " security findings...\n\n";
+        
+        std::stringstream ss;
+        ss << "Here are the findings from a Lynis security audit on an Arch Linux system. "
+           << "Please prioritize the top 3 most critical ones and explain how to fix them.\n\n";
+        for (const auto& item : items) {
+            ss << "- [" << item.type << "] " << item.text << " (ID: " << item.id << ")\n";
+        }
 
-    std::cout << "\033[1;32m[asking the model...]\033[0m\n\n";
-    ai.ask(prompt, /*stream=*/true);
-    std::cout << "\n";
+        std::cout << intel.ask(ss.str()) << std::endl;
+        return 0;
+    }
+
+    // Default: list items and prompt for one to fix
+    std::cout << ":: Found " << items.size() << " security findings in Lynis report:\n\n";
+    for (size_t i = 0; i < items.size(); ++i) {
+        std::cout << "  " << (i + 1) << ". [" << items[i].type << "] " << items[i].text 
+                  << " (ID: " << items[i].id << ")\n";
+    }
+
+    std::cout << "\nEnter a number to explain/fix, or 'q' to quit: ";
+    std::string input;
+    std::cin >> input;
+    if (input == "q") return 0;
+
+    try {
+        int idx = std::stoi(input) - 1;
+        if (idx >= 0 && idx < (int)items.size()) {
+            std::string prompt = "Explain this Lynis finding and provide an Arch Linux fix command:\n"
+                                 + items[idx].text + " (ID: " + items[idx].id + ")";
+            std::cout << "\n:: AI Analysis:\n" << intel.ask(prompt) << std::endl;
+        }
+    } catch (...) {
+        std::cerr << "Invalid input.\n";
+    }
+
     return 0;
 }

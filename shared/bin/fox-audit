@@ -15,6 +15,7 @@
 #   fox audit --warnings   list warnings from last run
 #   fox audit --install    install lynis (extra repo)
 #   fox audit --status     last-scan timestamp + score
+#   fox audit --ai         AI-powered explanation of findings
 
 set -u
 C_GRN=$'\e[38;5;108m'; C_YEL=$'\e[38;5;221m'; C_RED=$'\e[38;5;167m'
@@ -158,6 +159,7 @@ case "${1:-}" in
     --warnings)    _warnings ;;
     --status)      _status ;;
     --install)     _install ;;
+    --ai)          fox-ai-audit ;;
     -h|--help|help) cat <<EOF
 fox audit — lynis hardening posture audit
 
@@ -168,6 +170,7 @@ fox audit — lynis hardening posture audit
   fox audit --warnings     warnings from last run
   fox audit --status       lynis version + last-run timestamp + score
   fox audit --install      install lynis (extra repo, idempotent)
+  fox audit --ai           AI-powered explanation of findings
 
 Notes:
   • Hardening index is 0-100. >=85 is excellent for a desktop / dev box;
