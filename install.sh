@@ -127,15 +127,51 @@ fi
 
 if [[ ! -x "$FOX_INSTALL_BIN" ]]; then
     echo ":: Building native orchestrator (fox-install + libfox-intel + ~10 fox-* tools)"
-    echo "   First-time compile: ~30-90s on a laptop. Don't kill it — terminal stays"
-    echo "   quiet while make runs. Errors will surface loudly if something breaks."
 elif [[ "${FOXML_UPDATED:-0}" == "1" ]]; then
-    echo ":: Recompiling after self-update — ~5-30s, give it a moment."
+    echo ":: Recompiling after self-update"
 fi
-if ! make -C "$SCRIPT_DIR" install >/dev/null 2>&1; then
-    # Rerun loudly so the user sees the actual compile error.
-    make -C "$SCRIPT_DIR" install
-    echo "error: native orchestrator build failed; see output above." >&2
+
+# ─────────────────────────────────────────
+# Pacman-style progress bar for the C++ build. Pre-counts compile steps
+# via `make -n`, runs the real make in the background writing to a log,
+# polls every 200ms and renders a bar based on how many g++/ar/cp steps
+# have completed. On failure dumps the tail of the log so the error is
+# never hidden.
+# ─────────────────────────────────────────
+build_total=$(make -C "$SCRIPT_DIR" -n install 2>/dev/null \
+              | grep -cE '^(g\+\+|ar |cp )' || true)
+[[ -z "$build_total" || "$build_total" -lt 1 ]] && build_total=1
+build_log=$(mktemp -t foxml-build.XXXXXX.log)
+trap 'rm -f "$build_log"' EXIT
+
+if [[ -t 1 ]]; then
+    make -C "$SCRIPT_DIR" install >"$build_log" 2>&1 &
+    build_pid=$!
+    width=40
+    while kill -0 "$build_pid" 2>/dev/null; do
+        done_n=$(grep -cE '^(g\+\+|ar |cp )' "$build_log" 2>/dev/null || echo 0)
+        pct=$(( done_n * 100 / build_total ))
+        (( pct > 100 )) && pct=100
+        filled=$(( pct * width / 100 ))
+        bar=$(printf '%*s' "$filled" | tr ' ' '#')
+        empty=$(printf '%*s' $(( width - filled )) | tr ' ' '-')
+        printf '\r   building [%s%s] %3d%% (%d/%d)  ' "$bar" "$empty" "$pct" "$done_n" "$build_total"
+        sleep 0.2
+    done
+    wait "$build_pid"; build_rc=$?
+    # Render final 100% so the bar doesn't visually freeze partway.
+    bar=$(printf '%*s' "$width" | tr ' ' '#')
+    printf '\r   building [%s] 100%% (%d/%d)  \n' "$bar" "$build_total" "$build_total"
+else
+    # Non-TTY (CI, piped): just run quietly, dump on error.
+    make -C "$SCRIPT_DIR" install >"$build_log" 2>&1
+    build_rc=$?
+fi
+
+if [[ "$build_rc" -ne 0 ]]; then
+    echo "" >&2
+    echo "error: native orchestrator build failed:" >&2
+    tail -50 "$build_log" >&2
     exit 1
 fi
 
