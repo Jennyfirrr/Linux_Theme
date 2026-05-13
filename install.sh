@@ -106,17 +106,14 @@ fi
 
 # ─────────────────────────────────────────
 # Build / rebuild the native orchestrator.
-#
-# We ALWAYS run `make`, not just when the binary is missing. `make`
-# itself is the right place to decide what's stale — it checks source
-# mtimes against object/binary mtimes and only rebuilds what changed.
-# Skipping `make` when the binary exists was a real bug: after a
-# self-update pull the binary stayed on the old code and the new
-# sources never got compiled.
-#
-# Cost when everything's up to date: a few hundred ms (make stats files
-# and prints "Nothing to be done"). Cheap enough to do every invocation.
 # ─────────────────────────────────────────
+
+# Ensure we have build tools. bootstrap.sh handles this for curl-pipe users,
+# but manual git-cloners might be missing base-devel.
+if ! command -v make >/dev/null 2>&1 || ! command -v g++ >/dev/null 2>&1; then
+    echo ":: Build tools missing — installing base-devel..."
+    sudo pacman -S --needed --noconfirm base-devel
+fi
 
 # nlohmann json.hpp is a fox-intel build dep. Network-dependent, so we
 # still gate the fetch on "is the file missing?" rather than re-fetching
@@ -133,9 +130,9 @@ if [[ ! -x "$FOX_INSTALL_BIN" ]]; then
 elif [[ "${FOXML_UPDATED:-0}" == "1" ]]; then
     echo ":: Recompiling after self-update..."
 fi
-if ! make -C "$SCRIPT_DIR" >/dev/null 2>&1; then
+if ! make -C "$SCRIPT_DIR" install >/dev/null 2>&1; then
     # Rerun loudly so the user sees the actual compile error.
-    make -C "$SCRIPT_DIR"
+    make -C "$SCRIPT_DIR" install
     echo "error: native orchestrator build failed; see output above." >&2
     exit 1
 fi

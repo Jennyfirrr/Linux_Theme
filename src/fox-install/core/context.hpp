@@ -41,6 +41,7 @@ struct Context {
     bool install_polkit_strict = false;   // --polkit-strict (off by default,
                                           // NOT enabled by --full — too
                                           // annoying for daily GUI sudo)
+    bool cpp_pro = false;                 // --cpp-pro (opt-in)
 
     // Hardware detection (filled by the detect module).
     bool has_nvidia   = false;
@@ -48,6 +49,9 @@ struct Context {
     bool has_intel_gpu = false;
     bool is_laptop    = false;
     bool has_fprint   = false;
+
+    // Resumable install state.
+    int resume_idx = -1;                  // if >= 0, skip modules before this index
 };
 
 }  // namespace fox_install

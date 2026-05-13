@@ -115,19 +115,19 @@ There is no AI framework, no plugin system, no "AI module" class to derive from.
 
 **Migration complete.** `install.sh` is a 90-line wrapper (self-update + sudo keepalive + build + exec). All 21 install modules are native C++ — there is no longer any `bridge::call()` site in the fox-install codebase. The bridge infrastructure (`core/mappings_bridge.*`) has been deleted.
 
-**Native module index (all 21):**
+**Native module index (all 50, source of truth: `core/modules.def`):**
 
 | Phase           | Modules                                                                                  |
 | --------------- | ---------------------------------------------------------------------------------------- |
 | 0 — discovery   | detect, preflight, theme                                                                 |
-| 1 — system      | deps, privacy, perf, security (UFW + sysctls + USBGuard + AppArmor + polkit + fail2ban + auditd + waybar-sudoers) |
-| 2 — render      | render, symlinks                                                                         |
-| 3 — opt-in      | vault, ai, models, github                                                                |
-| 4 — GPU         | amd_gpu, intel_gpu, nvidia                                                               |
-| 5 — hardware    | fprint                                                                                   |
-| 6 — build       | xgboost                                                                                  |
+| 1 — system      | deps, privacy, perf, clock_sync, ufw, security, arch_audit, no_coredumps, hidepid, noexec_tmp, iommu, makepkg_harden, etckeeper, mac_random, gpg_agent_cache, catppuccin_cursor, papirus_icons, zsh_plugins, keyring_full, endlessh, browser_hardening, dispatch_hooks, throttling, greetd, greetd_fingerprint |
+| 2 — render      | render, symlinks, specials                                                               |
+| 3 — opt-in      | vault, ai, ollama_hardening, models, opencode, github                                    |
+| 4 — GPU         | amd_gpu, intel_gpu, nvidia (auto-enabled by `detect` when hardware present)              |
+| 5 — hardware    | fprint, fprint_pam, ssh_harden                                                           |
+| 6 — build       | xgboost, cpp_pro                                                                         |
 | 7 — per-machine | monitors, personalize                                                                    |
-| 8 — report      | summary                                                                                  |
+| 8 — report      | post_install, summary, next_steps                                                        |
 
 **`install.sh.legacy` is gone.** Every install step has a native module, including the SSH hardening wizard (`--ssh-harden`). Git history retains the legacy bash forever: `git show <pre-cutover-sha>:install.sh`.
 

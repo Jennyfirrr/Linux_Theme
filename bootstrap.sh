@@ -45,6 +45,7 @@ trap 'kill "$SUDO_PID" 2>/dev/null || true' EXIT
 need_install=()
 command -v git  >/dev/null 2>&1 || need_install+=(git)
 command -v curl >/dev/null 2>&1 || need_install+=(curl)
+command -v make >/dev/null 2>&1 || need_install+=(base-devel)
 if [[ ${#need_install[@]} -gt 0 ]]; then
     echo "Installing bootstrap deps: ${need_install[*]}"
     sudo pacman -S --needed --noconfirm "${need_install[@]}"

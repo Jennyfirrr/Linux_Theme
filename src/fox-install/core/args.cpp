@@ -1,6 +1,7 @@
 #include "args.hpp"
 
 #include "module.hpp"
+#include "ui.hpp"
 
 #include <cstdio>
 #include <cstdlib>
@@ -10,6 +11,14 @@
 namespace fox_install::args {
 
 namespace {
+
+// Look up a module by its slug. Returns SIZE_MAX if no match.
+std::size_t find_by_slug(const std::string& slug) {
+    for (std::size_t i = 0; i < MODULES_COUNT; ++i) {
+        if (slug == MODULES[i].slug) return i;
+    }
+    return SIZE_MAX;
+}
 
 // Look up a module by its `--foo` flag. Returns SIZE_MAX if no match.
 std::size_t find_by_flag(const std::string& flag) {
@@ -36,13 +45,17 @@ void print_help(const char* argv0) {
         "fox-install — FoxML Theme Hub installer (C++ orchestrator)\n\n"
         "Usage: %s [theme] [flags]\n\n"
         "Global flags:\n"
-        "  -y, --yes         assume yes for every prompt\n"
+        "  -y, --yes         assume yes for every prompt (disables wizard)\n"
+        "      --resume      resume from the last successful module\n"
+        "      --phase <s.>  skip ahead to a specific module slug\n"
         "      --dry-run     print every command without executing it\n"
         "      --full        deps + perf + vault + ai + models + github +\n"
         "                    all default-on modules (excludes xgboost / mac-random /\n"
         "                    polkit-strict / cpp-pro — opt in to those explicitly)\n"
+        "      --quick       skip slow + network-heavy parts (deps, github, models)\n"
         "      --only <slugs> comma-separated allow-list; everything else skipped\n"
         "      --polkit-strict   add polkit strict mode (every GUI sudo re-prompts)\n"
+        "      --cpp-pro     C++ toolchain extras (clang/lldb/mold/perf/etc)\n"
         "      --arm, --paranoid chain into fox-arm at end of install\n"
         "      --arm-heavy, --heavy   ditto, runs fox-arm --heavy\n"
         "      --quiet       suppress per-step chatter (errors still print)\n"
@@ -76,8 +89,26 @@ bool parse(int argc, char** argv, Parsed& out, Context& ctx) {
         if (a == "-h" || a == "--help")    { out.show_help = true;    continue; }
         if (a == "--version")              { out.show_version = true; continue; }
         if (a == "-y" || a == "--yes")     { ctx.assume_yes = true;   continue; }
+        if (a == "--resume")               { out.resume = true;       continue; }
         if (a == "--dry-run")              { ctx.dry_run = true;      continue; }
         if (a == "--quiet")                { ctx.quiet = true; out.quiet = true; continue; }
+
+        if (a == "--phase" && i + 1 < argc) {
+            out.phase = argv[++i];
+            continue;
+        }
+
+        if (a == "--cpp-pro") {
+            ctx.cpp_pro = true;
+            for (std::size_t k = 0; k < MODULES_COUNT; ++k) {
+                if (std::string(MODULES[k].slug) == "cpp_pro") {
+                    out.module_enabled[k] = true;
+                    break;
+                }
+            }
+            continue;
+        }
+
         if (a == "--full" || a == "--all") {
             out.full = true;
             // Curated --full: matches bash's INSTALL_* set. Every
@@ -97,9 +128,12 @@ bool parse(int argc, char** argv, Parsed& out, Context& ctx) {
             //   endlessh         depends on --ssh-harden moving sshd first
             //   fprint           detect.cpp gates this on hardware presence
             //
-            // GPU modules (nvidia/amd_gpu/intel_gpu) gate on the
-            // hardware-detect flags in ctx, so they're "always on if
-            // hardware present" — same effect as bash's --full + auto-detect.
+            // GPU modules (nvidia/amd_gpu/intel_gpu) and fprint are
+            // auto-enabled in fox-install.cpp main() AFTER the detect
+            // module runs, based on ctx.has_*. That gives "always on if
+            // hardware present" semantics for every entry point —
+            // --full, plain interactive, and curl-pipe via bootstrap.sh
+            // — without listing them here.
             static const char* FULL_OPT_INS[] = {
                 "deps", "perf", "vault", "ai", "models", "github", nullptr,
             };
@@ -222,6 +256,64 @@ bool parse(int argc, char** argv, Parsed& out, Context& ctx) {
         return false;
     }
     return true;
+}
+
+void run_wizard(Parsed& out, Context& ctx) {
+    if (ctx.assume_yes || !ui::tty()) return;
+
+    ui::section("Interactive Wizard: Opt-in Modules");
+    std::printf("  You can opt into extra security, AI models, and dev tools below.\n"
+                "  Default-on modules are already queued (use --no-<slug> to skip them).\n\n");
+
+    auto ask = [&](const std::string& slug, const std::string& desc, bool& flag_out) {
+        std::size_t idx = find_by_slug(slug);
+        if (idx == SIZE_MAX) return;
+        // If already enabled by flag, don't ask.
+        if (out.module_enabled[idx]) return;
+
+        if (ui::ask_yn("  • " + slug + " (" + desc + ")?", false, false)) {
+            out.module_enabled[idx] = true;
+            flag_out = true;
+        }
+    };
+
+    // Group 1: Core Security
+    std::printf("  [ Security & Privacy ]\n");
+    bool dummy = false;
+    ask("noexec_tmp", "mount /tmp and /dev/shm with noexec", dummy);
+    ask("iommu",      "IOMMU + kernel lockdown=integrity", dummy);
+    ask("mac_random", "Randomize MAC addresses on every connection", dummy);
+    if (!ctx.install_polkit_strict) {
+        if (ui::ask_yn("  • polkit-strict (every GUI sudo re-prompts)?", false, false)) {
+            ctx.install_polkit_strict = true;
+        }
+    }
+
+    // Group 2: Productivity & AI
+    std::printf("\n  [ Productivity & AI ]\n");
+    ask("vault",      "fox-vault: systemd user service for encrypted secrets", dummy);
+    ask("ai",         "Ollama + OpenCode local LLM stack", dummy);
+    ask("models",     "Pull tier-appropriate Ollama chat/coder models", dummy);
+    ask("github",     "Clone workspace repos + gh CLI auth", dummy);
+
+    // Group 3: Hardware & Power
+    std::printf("\n  [ Hardware & Services ]\n");
+    ask("throttling", "CPU power management / thermal wizard", dummy);
+    ask("fprint",     "Fingerprint reader support (fprintd)", dummy);
+    ask("ssh_harden", "SSH hardening wizard (custom port + keys only)", dummy);
+    ask("endlessh",   "SSH tarpit on port 22", dummy);
+
+    // Group 4: Dev Extras
+    std::printf("\n  [ Development Extras ]\n");
+    ask("xgboost",    "Build XGBoost from source (5-10 min)", dummy);
+    if (!ctx.cpp_pro) {
+        if (ui::ask_yn("  • cpp-pro (clang/lldb/mold/perf/valgrind)?", false, false)) {
+            ctx.cpp_pro = true;
+            std::size_t idx = find_by_slug("cpp_pro");
+            if (idx != SIZE_MAX) out.module_enabled[idx] = true;
+        }
+    }
+    std::printf("\n");
 }
 
 }  // namespace fox_install::args

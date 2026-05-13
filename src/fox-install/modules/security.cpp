@@ -35,7 +35,6 @@ bool have(const std::string& bin) {
     std::string out;
     return sh::capture({"sh", "-c", "command -v " + bin}, out) && !out.empty();
 }
-bool tty_in() { return ::isatty(STDIN_FILENO); }
 
 std::string strip(std::string s) {
     auto a = s.find_first_not_of(" \t\r\n");

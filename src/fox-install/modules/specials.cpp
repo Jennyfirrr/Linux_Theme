@@ -172,10 +172,52 @@ void do_cursor_vscode(const Context& ctx) {
 }
 
 // ─── Bat cache rebuild ─────────────────────────────────────────────
+void do_bat_config(const Context& ctx) {
+    if (!have("bat")) return;
+    fs::path bat_dir = ctx.home / ".config/bat";
+    if (fs::is_directory(bat_dir / "themes")) {
+        fs::path conf = bat_dir / "config";
+        std::string theme_line = "--theme=\"Fox ML\"";
+        if (fs::exists(conf)) {
+            std::string body;
+            sh::capture({"grep", "-q", "^--theme=", conf.string()}, body);
+            if (sh::run({"grep", "-q", "^--theme=", conf.string()}) == 0) {
+                sh::run({"sed", "-i", "-E", "s|^--theme=.*|" + theme_line + "|", conf.string()});
+            } else {
+                std::ofstream o(conf, std::ios::app);
+                o << theme_line << "\n";
+            }
+        } else {
+            fs::create_directories(bat_dir);
+            std::ofstream o(conf);
+            o << theme_line << "\n";
+        }
+        ui::substep("bat --theme=\"Fox ML\"");
+    }
+}
+
 void do_bat_cache() {
     if (!have("bat")) return;
     sh::run({"sh", "-c", "bat cache --build >/dev/null 2>&1"});
     ui::substep("Bat cache rebuilt");
+}
+
+// ─── Git Delta include ─────────────────────────────────────────────
+void do_git_delta(const Context& ctx) {
+    if (!have("delta")) return;
+    fs::path delta_inc = ctx.home / ".config/git/delta-foxml.gitconfig";
+    if (fs::exists(ctx.rendered_dir / "git/delta.gitconfig")) {
+        // We use git config --global --add include.path to wire it in.
+        std::string current;
+        if (sh::capture({"git", "config", "--global", "--get-all", "include.path"}, current)) {
+            if (current.find(delta_inc.string()) == std::string::npos) {
+                sh::run({"git", "config", "--global", "--add", "include.path", delta_inc.string()});
+            }
+        } else {
+            sh::run({"git", "config", "--global", "--add", "include.path", delta_inc.string()});
+        }
+        ui::substep("git delta include → " + delta_inc.string());
+    }
 }
 
 // ─── Gemini settings jq-merge ──────────────────────────────────────
@@ -427,7 +469,9 @@ void run_specials(Context& ctx) {
 
     do_firefox(ctx);
     do_cursor_vscode(ctx);
+    do_bat_config(ctx);
     do_bat_cache();
+    do_git_delta(ctx);
     do_gemini(ctx);
     do_claude_hooks(ctx);
 

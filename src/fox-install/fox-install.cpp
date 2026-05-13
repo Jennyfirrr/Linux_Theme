@@ -91,10 +91,78 @@ int main(int argc, char** argv) {
     fill_paths(ctx, argv[0]);
     sh::set_dry_run(ctx.dry_run);
 
+    // Call interactive wizard if no specialized flags are set.
+    if (!ctx.assume_yes && !parsed.full && parsed.phase.empty() && !parsed.resume) {
+        args::run_wizard(parsed, ctx);
+    }
+
+    fs::path state_file = ctx.home / ".local/share/foxml/install_state";
+
+    // Handle --resume
+    if (parsed.resume) {
+        if (fs::exists(state_file)) {
+            std::ifstream f(state_file);
+            int last_idx = -1;
+            if (f >> last_idx) {
+                ctx.resume_idx = last_idx + 1;
+                ui::substep("resuming from module index " + std::to_string(ctx.resume_idx));
+            }
+        } else {
+            ui::warn("no resume state found; starting from beginning");
+        }
+    }
+
+    // Handle --phase <slug> (overrides --resume if both set)
+    if (!parsed.phase.empty()) {
+        bool found = false;
+        for (std::size_t i = 0; i < MODULES_COUNT; ++i) {
+            if (parsed.phase == MODULES[i].slug) {
+                ctx.resume_idx = static_cast<int>(i);
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            ui::err("unknown phase: " + parsed.phase);
+            return 1;
+        }
+        ui::substep("skipping to phase: " + parsed.phase);
+    }
+
     if (!fs::exists(ctx.palette_path)) {
         ui::err("theme palette not found: " + ctx.palette_path.string());
         ui::err("available themes live under " + ctx.themes_dir.string());
         return 1;
+    }
+
+    // Run `detect` upfront so the dry-run plan and main loop see the
+    // final enable state of hardware-gated modules (nvidia/amd_gpu/
+    // intel_gpu/fprint). detect is read-only — re-running it is cheap.
+    // confirm_hw inside detect honors ctx.assume_yes (--yes auto-accepts;
+    // interactive mode still asks per-piece). After detect we toggle
+    // module_enabled to mirror the resolved ctx.has_* flags, then mark
+    // detect as already-run so the main loop skips it.
+    {
+        auto find_idx = [](const char* slug) -> int {
+            for (std::size_t k = 0; k < MODULES_COUNT; ++k) {
+                if (std::string(MODULES[k].slug) == slug) return static_cast<int>(k);
+            }
+            return -1;
+        };
+        int detect_idx = find_idx("detect");
+        if (detect_idx >= 0 && parsed.module_enabled[detect_idx]) {
+            MODULES[detect_idx].fn(ctx);
+            parsed.module_enabled[detect_idx] = false;
+
+            auto enable_slug = [&](const char* slug) {
+                int k = find_idx(slug);
+                if (k >= 0) parsed.module_enabled[k] = true;
+            };
+            if (ctx.has_nvidia)    enable_slug("nvidia");
+            if (ctx.has_amd_gpu)   enable_slug("amd_gpu");
+            if (ctx.has_intel_gpu) enable_slug("intel_gpu");
+            if (ctx.has_fprint)    enable_slug("fprint");
+        }
     }
 
     // Pre-install marker detect. Bash printed a nudge about --quick on
@@ -122,8 +190,11 @@ int main(int argc, char** argv) {
     if (ctx.dry_run) {
         ui::section("Dry-run plan");
         for (std::size_t i = 0; i < MODULES_COUNT; ++i) {
-            ui::summary_row(MODULES[i].slug,
-                parsed.module_enabled[i] ? "will run" : "skipped");
+            std::string status = parsed.module_enabled[i] ? "will run" : "skipped";
+            if (ctx.resume_idx > 0 && static_cast<int>(i) < ctx.resume_idx) {
+                status = "skipped (before resume point)";
+            }
+            ui::summary_row(MODULES[i].slug, status);
         }
     }
 
@@ -132,13 +203,30 @@ int main(int argc, char** argv) {
     std::vector<std::string> failed_modules;
     for (std::size_t i = 0; i < MODULES_COUNT; ++i) {
         if (!parsed.module_enabled[i]) continue;
+        if (ctx.resume_idx > 0 && static_cast<int>(i) < ctx.resume_idx) continue;
+
         const Module& m = MODULES[i];
         try {
             m.fn(ctx);
+            
+            // Update resume state after success
+            if (!ctx.dry_run) {
+                fs::create_directories(state_file.parent_path());
+                std::ofstream f(state_file);
+                f << i << std::endl;
+            }
         } catch (const std::exception& e) {
             ui::err(std::string(m.slug) + ": " + e.what());
             failed_modules.emplace_back(m.slug);
+            // On failure, we don't advance the state_file so --resume
+            // will retry the failing module.
+            break; 
         }
+    }
+
+    // Clear resume state on clean completion
+    if (failed_modules.empty() && !ctx.dry_run && fs::exists(state_file)) {
+        fs::remove(state_file);
     }
 
     ui::section("Done");
