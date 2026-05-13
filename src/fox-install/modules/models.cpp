@@ -11,6 +11,7 @@
 
 #include <fstream>
 #include <string>
+#include <sys/statvfs.h>
 #include <vector>
 
 namespace fox_install {
@@ -59,9 +60,28 @@ std::vector<std::string> models_for(const std::string& tier) {
 
 }  // namespace
 
+// Returns $HOME free space in GB, or -1 if statvfs fails.
+long home_free_gb(const Context& ctx) {
+    struct statvfs vfs{};
+    if (::statvfs(ctx.home.c_str(), &vfs) != 0) return -1;
+    return static_cast<long>((vfs.f_bavail * vfs.f_bsize) / (1024L * 1024L * 1024L));
+}
+
 void run_models(Context& ctx) {
-    (void)ctx;
     ui::section("Pulling Ollama model stack");
+
+    // Disk-space gate: bash auto-disabled --models when $HOME had less
+    // than 25 GB free (qwen2.5-coder:32b alone is ~20 GB, plus the
+    // chat sibling and intermediate sizes). Skip cleanly with a clear
+    // message rather than letting `ollama pull` half-finish and leave
+    // a partial model on disk.
+    long free_gb = home_free_gb(ctx);
+    if (free_gb >= 0 && free_gb < 25) {
+        ui::warn("$HOME has only " + std::to_string(free_gb) +
+                 " GB free — models module needs 25+ GB. Skipping.");
+        ui::substep("free space then re-run: fox-install --only models");
+        return;
+    }
 
     int ram  = read_ram_gb();
     int vram = read_vram_gb();

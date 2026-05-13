@@ -63,8 +63,9 @@ FOX_MODULE( fprint,      run_fprint,        "--fprint",      "Install fprintd (n
 FOX_MODULE( fprint_pam,  run_fprint_pam,    "--fprint-pam",  "Splice pam_fprintd into /etc/pam.d/system-local-login (TTY login)", false )
 FOX_MODULE( ssh_harden,  run_ssh_harden,    "--ssh-harden",  "Interactive SSH wizard (custom port + keys-only)", false )
 
-// ── Phase 6: heavy build-from-source extras ───────────────────────
+// ── Phase 6: heavy build-from-source / dev extras ─────────────────
 FOX_MODULE( xgboost,     run_xgboost,       "--xgboost",     "Build XGBoost from source",                        false )
+FOX_MODULE( cpp_pro,     run_cpp_pro,       "--cpp-pro",     "C++ toolchain extras (clang/lldb/mold/valgrind/perf)", false )
 
 // ── Phase 7: per-machine personalization ──────────────────────────
 FOX_MODULE( monitors,    run_monitors,      "--monitors",    "Configure Hyprland multi-monitor layout",          true  )
