@@ -1,0 +1,73 @@
+// modules/no_coredumps.cpp — refuse to write core dumps to disk.
+//
+// systemd-coredump drop-in (Storage=none + ProcessSizeMax=0) plus a
+// belt-and-suspenders /etc/security/limits.d hard core=0 line. Mirrors
+// mappings.sh::install_no_coredumps.
+
+#include "../core/context.hpp"
+#include "../core/shell.hpp"
+#include "../core/ui.hpp"
+
+#include <filesystem>
+#include <fstream>
+
+namespace fs = std::filesystem;
+
+namespace fox_install {
+
+namespace {
+
+constexpr const char* COREDUMP_BODY =
+    "# foxml-managed — refuse to write core dumps to disk.\n"
+    "[Coredump]\n"
+    "Storage=none\n"
+    "ProcessSizeMax=0\n";
+
+bool write_root_file(const fs::path& dst, const std::string& body,
+                     const std::string& mode = "0644") {
+    fs::path tmp = "/tmp/foxin-coredump.tmp";
+    {
+        std::ofstream o(tmp);
+        o << body;
+    }
+    int rc = sh::run({"sudo", "install", "-d", dst.parent_path().string()});
+    if (rc != 0) { fs::remove(tmp); return false; }
+    rc = sh::run({"sudo", "install", "-m", mode, "-o", "root", "-g", "root",
+                  tmp.string(), dst.string()});
+    fs::remove(tmp);
+    return rc == 0;
+}
+
+}  // namespace
+
+void run_no_coredumps(Context&) {
+    ui::section("Disable core dumps");
+
+    if (sh::dry_run()) {
+        ui::substep("[dry-run] would write /etc/systemd/coredump.conf.d/foxml-no-coredumps.conf + "
+                    "/etc/security/limits.d/99-foxml-no-coredumps.conf");
+        return;
+    }
+    if (!sh::sudo_warmup()) {
+        ui::err("sudo cache cold — `sudo -v` first");
+        return;
+    }
+
+    fs::path coredump = "/etc/systemd/coredump.conf.d/foxml-no-coredumps.conf";
+    if (write_root_file(coredump, COREDUMP_BODY)) {
+        ui::ok("systemd-coredump set to Storage=none (no crash RAM hits disk)");
+    } else {
+        ui::warn("could not write " + coredump.string());
+    }
+
+    fs::path limits = "/etc/security/limits.d/99-foxml-no-coredumps.conf";
+    if (write_root_file(limits, "* hard core 0\n")) {
+        ui::ok("/etc/security/limits.d hard core=0 (applies next login)");
+    } else {
+        ui::warn("/etc/security/limits.d not writable — systemd-coredump is the primary defense");
+    }
+
+    sh::run({"sh", "-c", "sudo systemctl daemon-reexec 2>/dev/null || true"});
+}
+
+}  // namespace fox_install

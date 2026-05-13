@@ -62,8 +62,8 @@ Caches sudo, installs git+curl, clones the repo to `~/code/Linux_Theme`, runs th
 |------|--------------|
 | `--deps` | Install Arch packages, Oh My Zsh, zsh plugins |
 | `--yes` | Auto-confirm every prompt |
-| `--ai` | Install Ollama + OpenCode TUI (see [AI layer](#ai-layer-optional)) |
-| `--models` | Pull Qwen models (7B/14B/32B) for the AI layer |
+| `--ai` | Install Ollama + OpenCode + aider + `mxbai-embed-large` (see [AI layer](#ai-layer-optional)) |
+| `--models` | Pull tier-appropriate Qwen chat/coder stack (1.5B → 32B based on RAM+VRAM) |
 | `--github` | Clone all your repos into `~/code` |
 | `--secure` | UFW + Fail2ban + Auditd + SSH hardening wizard |
 | `--perf` | Chrony for high-precision time sync |
@@ -103,6 +103,52 @@ If you've already edited a live config and want to keep the changes:
 
 This reverse-renders your live configs back into templates, replacing rendered colors with `{{PLACEHOLDER}}` tokens so the edits survive theme swaps.
 
+## Security hardening
+
+`--secure` installs the kernel/userspace baseline:
+
+- **UFW firewall** with default-deny outbound + curated allowlist
+- **Fail2ban** brute-force protection on sshd
+- **Auditd** kernel honeypot rules (`foxml_honey` tag → `fox-dispatch` phone alert)
+- **SSH hardening wizard** — passphrase enforcement, no password auth, agent-hijack masking of newer `gnome-keyring-daemon` units
+- **USBGuard** allowlist with `fox-bouncer` alerting when blocked devices appear during screen-lock
+- **AppArmor**, **polkit-strict** (under `--full`), kernel sysctls, IOMMU, `noexec_tmp`, `hidepid`, `no_coredumps`, makepkg signing
+- **arch-audit** systemd-user timer (daily CVE surface)
+- **DNS sinkhole** — StevenBlack blocklist + DNSSEC strict-mode picker
+
+Opt-in via dedicated flags: `--browser-harden` (arkenfox + Firejail), `--vault` (mlock-protected secret store), `--endlessh` (SSH tarpit on `:22`, real sshd moved to high port), `--mac-random` (NetworkManager randomization), `--fprint` + `--fprint-pam` (fingerprint + safe PAM splice into `system-local-login` only — never `/etc/pam.d/sudo`).
+
+Day-to-day tooling:
+
+| Command | What it does |
+|---|---|
+| `fox doctor [--ai]` | Config drift + posture check |
+| `fox sec [--live]` | Unified security dashboard |
+| `fox audit [--score]` | Lynis wrapper, 0-100 hardening score |
+| `fox snitch` | Per-app outbound firewall (OpenSnitch) |
+| `fox honey plant <dir>` | Honeytoken + auditd watch in a repo |
+| `fox vpn [up\|down]` | WireGuard wizard with UFW kill-switch |
+| `fox cafe` | Auto-tighten on untrusted WiFi (NetworkManager dispatcher) |
+
+See `fox help` for the full surface (70+ subcommands).
+
+## Architecture
+
+`install.sh` used to be a 2400-line bash script. It's now a 90-line wrapper that self-updates, warms sudo, builds the native orchestrator, and `exec`s it. Every install step lives as a module under `src/fox-install/modules/` — 50 modules registered via an X-macro in `core/modules.def`. The same registry drives `--help`, the dry-run plan, the args parser, and the dispatcher, so adding a step is one `.cpp` and one line.
+
+Native C++ tools under `src/`:
+
+| Tool | Role |
+|---|---|
+| `fox-install` | Module-registry-driven install orchestrator |
+| `fox-intel` | `libfox-intel.a` — Ollama client + embedding API, linked into every AI tool |
+| `fox-render-fast` | Concurrent template engine; drop-in for the old `render.sh` |
+| `fox-pulse` | Single-epoll daemon multiplexing Hyprland IPC + inotify + debouncers |
+| `fox-vault` | `mlock()`-protected in-RAM secret store with Unix-socket CLI |
+| `fox-ask`, `fox-ai-doctor`, `fox-ai-oracle`, `fox-ai-snitch`, `fox-ai-audit`, `fox-ai-bouncer`, `fox-ai-review`, `fox-ai-swap` | One-shot AI tools that link `libfox-intel.a` — pattern is `#include "fox_intel.hpp"` + `ai.ask(prompt)`. No plugin framework. |
+
+Bash is retained where it makes sense — small wrappers, Hyprland event scripts, `mappings.sh` as a runtime helper sourced by `~/.config/hypr/scripts/`. `aider` is the one Python install (~60 transitive deps, slow but worth it).
+
 ## How it works
 
 ```
@@ -111,6 +157,7 @@ templates/                 config files with {{PLACEHOLDER}} tokens
   nvim/init.lua            colors with #{{RED}}, ...
   waybar/style.css         @define-color bg #{{BG}}, ...
   ...                      (30+ files across 25 app directories)
+  foxml/ansi_colors.json   palette → libfox-intel theme bridge
 
 themes/
   FoxML_Classic/
@@ -118,10 +165,9 @@ themes/
     theme.conf             name, type=dark, description
 
 shared/                    non-color files copied as-is (keybinds, scripts)
+src/                       C++ orchestrator + tools (see Architecture above)
 
-render.sh                  template engine (hex, RGB, ANSI, metadata)
-mappings.sh                source → destination routing + handlers
-install.sh                 renders templates → copies to system
+install.sh                 wrapper → builds + execs fox-install
 update.sh                  reverse-renders system configs → templates
 swap.sh                    interactive theme switcher
 ```
@@ -255,25 +301,35 @@ On first login, pick your Hyprland session from the dropdown — regreet remembe
 
 ## AI layer (optional)
 
-Installed via `--ai`. Wraps Ollama + OpenCode (a Claude-Code-style local TUI):
+Installed via `--ai`. Provides three local-model surfaces (terminal agent, in-editor, one-shot Q&A) all backed by Ollama. `--ai` installs Ollama itself, the `mxbai-embed-large` embedder, OpenCode (terminal agent), and aider (git-native pair programmer). `--models` pulls the chat/coder stack sized to your RAM+VRAM.
 
-- **FoxML theme** — palette-driven OpenCode theme (`templates/opencode/foxml.json`) rendered through the same `{{TOKEN}}` system. Theme swaps re-render OpenCode too.
-- **Multi-model picker** — provider config generated from `ollama list`, so every pulled model appears in the picker.
-- **Skill discovery** — `skills.paths` populated by globbing `~/code/*/claude-skills/`.
-- **Auto-wake** — `opencode` is shell-wrapped to start the Ollama daemon on demand.
+### Agents
 
-Adds these shell commands:
+- **OpenCode** — Claude-Code-style terminal agent. Multi-provider; in this install pointed at local Ollama. Theme + skill paths + model picker generated from `ollama list` and `~/code/*/claude-skills/`. Auto-wakes the daemon on launch.
+- **aider** — git-native pair programmer. Commits its own edits per change. Useful for surgical "make this change" workflows where OpenCode's multi-turn agent loop is overkill.
+
+### RAG (`fask` / `findex`)
+
+`findex` builds a chunked semantic index of the current directory using `mxbai-embed-large`. Files are split into 100-line chunks with 10-line overlap so functions spanning chunk boundaries still appear whole somewhere. The model name is persisted in the index — re-running with a different embedder triggers a clean rebuild instead of mixing incompatible vectors. `fask` cosine-ranks chunks against your question, opens each top-K match at its exact line range (not the whole file), and streams a model answer.
 
 | Command | What it does |
 |---------|--------------|
-| `fask` | Ask questions about the project (RAG over indexed code) |
-| `findex` | Generate semantic embeddings for the current project |
-| `fcommit` | AI-analyzed commit messages |
-| `fstatus` | Monitor AI stack, VRAM, project drift |
-| `fproject` | Bootstrap a new project with `AGENT.md`/`INVARIANTS.md` |
+| `fask "<question>"` | RAG Q&A over the current project's `.foxml_index.json` |
+| `findex` | Build/refresh the chunk index for the current directory |
+| `fox ask "<question>"` | One-shot terminal Q&A — no index needed; uses the OpenCode-configured model |
+| `fox-ai-commit` | AI-drafted commit message from staged diff |
+| `fox-ai-explain <file>` | Plain-English explanation of code/logs/errors |
+| `fox-ai-swap [tag]` | Switch the default model + free VRAM via `ollama stop` |
+| `fox-ai-doctor` | AI-augmented system diagnostics |
+| `fox-ai-review` | Pre-commit guardrail (`BLOCK:` / `WARN:` lines from local model) |
 | `fhelp` | Full command reference |
 
 `cd`-ing into a directory containing an `AGENT.md` auto-exports project context, scoping `fask`/`findex` to that workspace.
+
+### Theme integration
+
+- Palette-driven OpenCode theme (`templates/opencode/foxml.json`) rendered through the same `{{TOKEN}}` system — theme swaps re-render OpenCode too.
+- `fask`/`fox-ask` pick up the active palette's `ANSI_ACCENT1` via `~/.config/foxml/ansi_colors.json` for status banners like `[Thinking...]`.
 
 ## Creating a new theme
 

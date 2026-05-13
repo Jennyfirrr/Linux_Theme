@@ -3,6 +3,7 @@
 #
 # Usage: fox-doctor          # diagnose only
 #        fox-doctor --fix    # diagnose + offer to auto-fix detected issues
+#        fox-doctor --ai     # AI-powered explanation of findings (via fox-ai-doctor)
 #        fox-doctor --help
 
 set -u
@@ -12,8 +13,9 @@ UFW_NEEDS_BASELINE=0
 for arg in "$@"; do
     case "$arg" in
         --fix)  FIX_MODE=1 ;;
+        --ai)   exec fox-ai-doctor ;;
         --help|-h)
-            sed -n '2,5p' "$0" | sed 's/^# \?//'
+            sed -n '2,6p' "$0" | sed 's/^# \?//'
             exit 0
             ;;
         *) echo "unknown arg: $arg" >&2; exit 2 ;;

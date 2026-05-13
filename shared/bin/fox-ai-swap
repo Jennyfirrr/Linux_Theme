@@ -1,6 +1,11 @@
 #!/bin/bash
 # FoxML AI Switcher — Toggle OpenCode models
 
+# Delegate to the improved C++ binary if available
+if [[ -f "$HOME/.local/bin/fox-ai-swap" ]]; then
+    exec "$HOME/.local/bin/fox-ai-swap" "$@"
+fi
+
 CONFIG_FILE="$HOME/.config/opencode/opencode.json"
 
 if [[ ! -f "$CONFIG_FILE" ]]; then

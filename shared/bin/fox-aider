@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# fox-aider — aider wrapper that stays in sync with the global model choice.
+#
+# Reads the current model from ~/.config/opencode/opencode.json (the same
+# file fox-ai-swap edits) so swapping the model once swaps it for OpenCode
+# AND aider in one shot. Also bumps OLLAMA_CONTEXT_LENGTH from 2048
+# (Ollama's default — too small for code) to 8192.
+#
+# Usage:
+#   fox-aider                       # interactive REPL in cwd
+#   fox-aider path/to/file          # add file to chat
+#   fox-aider --message "<prompt>"  # one-shot prompt
+#   FOXAI_MODEL=ollama_chat/qwen2.5-coder:14b fox-aider   # explicit override
+#
+# Anything passed after the wrapper is forwarded to aider verbatim.
+
+set -u
+
+if ! command -v aider >/dev/null 2>&1; then
+    echo "fox-aider: aider not installed. Run \`fox-install --only ai\` or" >&2
+    echo "  \`pipx install aider-chat && pipx inject aider-chat audioop-lts\`" >&2
+    exit 1
+fi
+
+# Resolve the model:
+#   1. FOXAI_MODEL env wins
+#   2. ~/.config/opencode/opencode.json's "model" field (set by fox-ai-swap)
+#   3. Hardcoded fallback so the command never refuses to launch
+MODEL="${FOXAI_MODEL:-}"
+if [[ -z "$MODEL" && -f "$HOME/.config/opencode/opencode.json" ]] && command -v jq >/dev/null 2>&1; then
+    MODEL=$(jq -r '.model // empty' "$HOME/.config/opencode/opencode.json" 2>/dev/null)
+fi
+MODEL="${MODEL:-ollama/qwen2.5-coder:7b}"
+
+# aider/litellm requires a provider prefix. Add ollama/ if the model name
+# is bare. (Tags from opencode.json already have it.)
+if [[ "$MODEL" != */* ]]; then
+    MODEL="ollama/$MODEL"
+fi
+
+# Ollama's default context is 2048 tokens — too small for code work.
+# 8192 fits most files comfortably; user can override via env.
+export OLLAMA_CONTEXT_LENGTH="${OLLAMA_CONTEXT_LENGTH:-8192}"
+
+exec aider --model "$MODEL" "$@"

@@ -48,8 +48,12 @@ _set_ssid() {
         random|stable|preserve|permanent) ;;
         *) echo "${C_RED}mode must be: random | stable | preserve | permanent${C_RST}" >&2; return 1 ;;
     esac
-    nmcli connection modify "$ssid" wifi.cloned-mac-address "$mode" 2>&1 | sed 's/^/  /'
-    echo "${C_GRN}✓ $ssid → wifi.cloned-mac-address=$mode${C_RST}"
+    if sudo nmcli connection modify "$ssid" wifi.cloned-mac-address "$mode" 2>&1 | sed 's/^/  /'; then
+        echo "${C_GRN}✓ $ssid → wifi.cloned-mac-address=$mode${C_RST}"
+    else
+        echo "${C_RED}✗ failed to modify $ssid${C_RST}" >&2
+        return 1
+    fi
 }
 
 case "${1:-}" in

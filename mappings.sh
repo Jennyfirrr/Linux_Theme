@@ -82,6 +82,9 @@ TEMPLATE_MAPPINGS=(
     # Git (delta pager — included from ~/.gitconfig, doesn't touch user identity)
     "git/delta.gitconfig|~/.config/git/delta-foxml.gitconfig"
 
+    # FoxML Shared ANSI colors (for C++ CLI tools)
+    "foxml/ansi_colors.json|~/.config/foxml/ansi_colors.json"
+
     # Cursor/VS Code
     "cursor/foxml-color-theme.json|~/.cursor/extensions/foxml-theme/themes/foxml-color-theme.json"
 
@@ -121,6 +124,7 @@ SHARED_MAPPINGS=(
     "zsh_paths.zsh|~/.config/zsh/paths.zsh"
     "zsh_conda.zsh|~/.config/zsh/conda.zsh"
     "zsh_history_scrub.zsh|~/.config/zsh/history-scrub.zsh"
+    "bin/fox-aider|~/.local/bin/fox-aider"
     "bin/fox-ai-swap|~/.local/bin/fox-ai-swap"
     "bin/fox-ai-status|~/.local/bin/fox-ai-status"
     "bin/fox-ai-commit|~/.local/bin/fox-ai-commit"
@@ -1294,15 +1298,17 @@ install_etckeeper() {
     # will commit organically via the hook.
     if [[ ! -d /etc/.git ]]; then
         sudo etckeeper init >/dev/null 2>&1 || true
-        # Set a default git identity for root if missing (etckeeper commits
-        # as root and refuses without user.email).
-        sudo git -C /etc config user.email "etckeeper@$(hostname)" 2>/dev/null || true
-        sudo git -C /etc config user.name  "etckeeper" 2>/dev/null || true
-        sudo etckeeper commit "foxml: initial /etc snapshot" >/dev/null 2>&1 || true
         echo "  + etckeeper initialised /etc/.git"
     else
         echo "  • etckeeper already initialised in /etc"
     fi
+
+    # Always ensure a default git identity for root if missing (etckeeper commits
+    # as root and refuses without user.email/user.name).
+    sudo git -C /etc config user.email "etckeeper@$(uname -n)" 2>/dev/null || true
+    sudo git -C /etc config user.name  "etckeeper" 2>/dev/null || true
+    # Attempt an initial or catch-up commit; fails silently if tree is clean
+    sudo etckeeper commit "foxml: /etc snapshot" >/dev/null 2>&1 || true
 
     # Drop a systemd path unit that fires fox-dispatch when sensitive
     # subdirs change outside of pacman / etckeeper's own commits.

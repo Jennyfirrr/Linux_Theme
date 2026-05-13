@@ -85,6 +85,23 @@ if not vim.uv.fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
+-- === AI ===
+
+-- Helper to read global AI model preference
+local function get_global_model(fallback)
+  local path = vim.fn.expand("~/.config/opencode/opencode.json")
+  if vim.fn.filereadable(path) == 1 then
+    local content = table.concat(vim.fn.readfile(path), "")
+    local ok, data = pcall(vim.fn.json_decode, content)
+    if ok and data.model then
+      return data.model:gsub("^ollama/", "")
+    end
+  end
+  return fallback
+end
+
+local global_model = get_global_model("qwen2.5-coder:7b")
+
 local plugins = {
   { "nvim-lualine/lualine.nvim",           dependencies = { "nvim-tree/nvim-web-devicons" } },
   { "lukas-reineke/indent-blankline.nvim", main = "ibl",
@@ -494,8 +511,6 @@ local plugins = {
     dependencies = { "nvim-lua/plenary.nvim" },
   },
 
-  -- === AI ===
-
   -- CodeCompanion (Inline AI, Chat, and Agents using local Ollama)
   {
     "olimorris/codecompanion.nvim",
@@ -510,7 +525,7 @@ local plugins = {
             return require("codecompanion.adapters").extend("ollama", {
               schema = {
                 model = {
-                  default = "qwen2.5-coder:14b", -- Default to 14b for smart logic
+                  default = get_global_model("qwen2.5-coder:14b"), -- Use global or smart default
                 },
               },
             })
@@ -582,7 +597,7 @@ local plugins = {
           __inherited_from = "openai",
           api_key_name = "",
           endpoint = "http://localhost:11434/v1",
-          model = "qwen2.5-coder:7b",
+          model = global_model,
         },
       },
       behaviour = {

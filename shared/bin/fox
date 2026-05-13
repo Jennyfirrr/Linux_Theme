@@ -237,20 +237,52 @@ case "$1" in
         ;;
     help|--help|-h)
         # `fox help <command>` → forward to the tool's own help.
-        # Falls through to the full overview below when no <command>
-        # is given, matching the existing behaviour.
-        if [[ -n "${2:-}" ]]; then
+        # `fox help --ai <command>` → AI deep-dive into the command's logic.
+        local use_ai=false
+        local sub=""
+
+        # Check for --ai in any position
+        for arg in "$@"; do
+            if [[ "$arg" == "--ai" ]]; then use_ai=true; fi
+        done
+
+        # Identify the subcommand
+        if [[ "$1" == "help" || "$1" == "--help" || "$1" == "-h" ]]; then
             shift
-            sub="$1"
-            # Look up the binary for this subcommand; mirror the
-            # routing table above for the common aliases.
+            if [[ "$1" == "--ai" ]]; then shift; fi
+            sub="${1:-}"
+        fi
+
+        if [[ -n "$sub" ]]; then
+            if $use_ai; then
+                # Find the source code for this command
+                local src_path=""
+                if [[ -f "$FOXML_DIR/shared/bin/fox-$sub" ]]; then
+                    src_path="$FOXML_DIR/shared/bin/fox-$sub"
+                elif [[ -d "$FOXML_DIR/src/fox-$sub" ]]; then
+                    # Check for C++ source
+                    src_path=$(find "$FOXML_DIR/src/fox-$sub" -name "*.cpp" | head -n 1)
+                elif [[ -f "$FOXML_DIR/src/fox-intel/$sub.cpp" ]]; then
+                    src_path="$FOXML_DIR/src/fox-intel/$sub.cpp"
+                fi
+
+                if [[ -n "$src_path" ]]; then
+                    echo -e "\033[1;32m[Fox Brain: Analyzing source for '$sub'...]\033[0m"
+                    fox-ai-explain "$src_path"
+                    exit 0
+                else
+                    echo "Error: Could not find source code for '$sub' to explain." >&2
+                    exit 1
+                fi
+            fi
+
+            # Standard help routing
             case "$sub" in
                 fp|fingerprint)     exec fox-fingerprint --help ;;
                 dns|dns-shield)     exec fox-dns-shield --help ;;
                 cafe|cafe-mode)     exec fox-cafe --help ;;
                 sec|security)       exec fox-sec --help ;;
-                install|setup)      exec ./install.sh --help 2>/dev/null \
-                                    || exec "$FOXML_DIR/install.sh" --help ;;
+                install|setup)      exec "$FOXML_DIR/install.sh" --help ;;
                 *)
                     if command -v "fox-$sub" >/dev/null 2>&1; then
                         exec "fox-$sub" --help
