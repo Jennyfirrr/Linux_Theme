@@ -117,19 +117,6 @@ bool parse(int argc, char** argv, Parsed& out, Context& ctx) {
 
         if (a == "--full" || a == "--all") {
             out.full = true;
-            // --full means FULL. Every registered module is enabled,
-            // every fine-grained sub-toggle (install_polkit_strict,
-            // cpp_pro) is flipped on. The user opts out of specific
-            // modules with --no-<slug>, e.g.
-            //   ./install.sh --full --yes --no-mac-random --no-fprint-pam
-            //
-            // Hardware-gated modules (nvidia/amd_gpu/intel_gpu/fprint)
-            // still bail internally when ctx.has_* is false, so enabling
-            // them here on hardware-less boxes is a cheap no-op.
-            //
-            // Interactive wizards (throttling, ssh_harden, monitors)
-            // honor ctx.assume_yes — --full --yes runs them
-            // non-interactively with sane defaults.
             for (std::size_t k = 0; k < MODULES_COUNT; ++k) {
                 out.module_enabled[k] = true;
             }
@@ -139,8 +126,6 @@ bool parse(int argc, char** argv, Parsed& out, Context& ctx) {
             continue;
         }
 
-        // --paranoid: bash alias for --arm. Both flip the env var that
-        // next_steps.cpp reads to chain into `fox-arm` at end-of-install.
         if (a == "--arm" || a == "--paranoid") {
             ::setenv("FOXML_ARM", "1", 1);
             continue;
@@ -151,16 +136,11 @@ bool parse(int argc, char** argv, Parsed& out, Context& ctx) {
             continue;
         }
 
-        // --polkit-strict: enable the security module's polkit-strict
-        // sub-step (off by default, NOT included in --full per above).
         if (a == "--polkit-strict") {
             ctx.install_polkit_strict = true;
             continue;
         }
 
-        // --quick: bash mode that skips the slow + network-heavy parts
-        // (pacman --needed sweep, github clone, ollama model pulls)
-        // when re-running just to refresh themes/configs.
         if (a == "--quick") {
             for (std::size_t k = 0; k < MODULES_COUNT; ++k) {
                 std::string s = MODULES[k].slug;
@@ -171,9 +151,6 @@ bool parse(int argc, char** argv, Parsed& out, Context& ctx) {
             continue;
         }
 
-        // --render-only: bash had it. Run render + symlinks + specials +
-        // personalize + post_install only — everything else off. Useful
-        // for "just push the rendered configs out, don't touch system".
         if (a == "--render-only") {
             static const char* KEEP[] = {
                 "detect", "preflight", "theme",
@@ -194,15 +171,8 @@ bool parse(int argc, char** argv, Parsed& out, Context& ctx) {
             continue;
         }
 
-        // --only <slug>[,<slug>...]  → disable every module except the
-        // listed ones. Used by fox-pulse handlers and any other caller
-        // that wants a focused partial run (e.g.
-        // `fox-install --only monitors,personalize --yes` on Hyprland
-        // monitor hot-swap).
         if (a == "--only" && i + 1 < argc) {
             std::string list = argv[++i];
-            // Reset all modules to disabled, then enable the requested
-            // ones by slug.
             for (std::size_t k = 0; k < MODULES_COUNT; ++k) {
                 out.module_enabled[k] = false;
             }
@@ -238,7 +208,6 @@ bool parse(int argc, char** argv, Parsed& out, Context& ctx) {
         idx = find_by_no_slug(a);
         if (idx != SIZE_MAX) { out.module_enabled[idx] = false; continue; }
 
-        // Positional: first non-flag token is the theme name.
         if (!a.empty() && a[0] != '-') {
             if (ctx.theme_name.empty()) { ctx.theme_name = a; continue; }
         }
@@ -247,122 +216,6 @@ bool parse(int argc, char** argv, Parsed& out, Context& ctx) {
         return false;
     }
     return true;
-}
-
-void run_full_review_wizard(Parsed& out, Context& ctx) {
-    if (ctx.assume_yes || !ui::tty()) return;
-
-    ui::section("--full review: every module is selectable");
-    std::printf(
-        "  Default is YES for each module. Press Enter to accept, n to skip.\n"
-        "  Lockout-risk modules (fprint_pam, greetd_fingerprint) default to\n"
-        "  NO even under --full — opt in only if you know the recovery path\n"
-        "  (su -, faillock --reset, restore .foxml-bak).\n\n");
-
-    // Backbone modules always run — no prompt.
-    static const char* BACKBONE[] = {
-        "detect", "preflight", "theme",
-        "render", "symlinks", "specials",
-        "post_install", "summary", "next_steps",
-        nullptr,
-    };
-    auto is_in = [](const char* slug, const char* const* list) -> bool {
-        for (const char* const* s = list; *s; ++s) {
-            if (std::string(*s) == slug) return true;
-        }
-        return false;
-    };
-
-    // Default-N modules: lockout-risk PAM edits.
-    static const char* DEFAULT_NO[] = {
-        "fprint_pam", "greetd_fingerprint", nullptr,
-    };
-
-    for (std::size_t i = 0; i < MODULES_COUNT; ++i) {
-        const char* slug = MODULES[i].slug;
-        if (is_in(slug, BACKBONE)) continue;
-
-        bool risky = is_in(slug, DEFAULT_NO);
-        std::string warning = risky ? " [LOCKOUT RISK]" : "";
-        std::string prompt = "  • " + std::string(slug) + warning + " — " +
-                             MODULES[i].description + "?";
-        out.module_enabled[i] = ui::ask_yn(prompt, /*default_yes=*/!risky,
-                                           /*assume_yes=*/false);
-    }
-
-    // Sub-flag inside the security module: polkit-strict.
-    ctx.install_polkit_strict = ui::ask_yn(
-        "  • polkit-strict (every GUI sudo re-prompts — annoying for daily use)?",
-        /*default_yes=*/true, /*assume_yes=*/false);
-    // cpp_pro is its own module — already covered by the loop above. Keep
-    // ctx.cpp_pro in sync with the user's choice on the module prompt so
-    // post-install hooks that read ctx.cpp_pro see the right state.
-    for (std::size_t k = 0; k < MODULES_COUNT; ++k) {
-        if (std::string(MODULES[k].slug) == "cpp_pro") {
-            ctx.cpp_pro = out.module_enabled[k];
-            break;
-        }
-    }
-
-    std::printf("\n");
-}
-
-void run_wizard(Parsed& out, Context& ctx) {
-    if (ctx.assume_yes || !ui::tty()) return;
-
-    ui::section("Interactive Wizard: Opt-in Modules");
-    std::printf("  You can opt into extra security, AI models, and dev tools below.\n"
-                "  Default-on modules are already queued (use --no-<slug> to skip them).\n\n");
-
-    auto ask = [&](const std::string& slug, const std::string& desc, bool& flag_out) {
-        std::size_t idx = find_by_slug(slug);
-        if (idx == SIZE_MAX) return;
-        // If already enabled by flag, don't ask.
-        if (out.module_enabled[idx]) return;
-
-        if (ui::ask_yn("  • " + slug + " (" + desc + ")?", false, false)) {
-            out.module_enabled[idx] = true;
-            flag_out = true;
-        }
-    };
-
-    // Group 1: Core Security
-    std::printf("  [ Security & Privacy ]\n");
-    bool dummy = false;
-    ask("noexec_tmp", "mount /tmp and /dev/shm with noexec", dummy);
-    ask("iommu",      "IOMMU + kernel lockdown=integrity", dummy);
-    ask("mac_random", "Randomize MAC addresses on every connection", dummy);
-    if (!ctx.install_polkit_strict) {
-        if (ui::ask_yn("  • polkit-strict (every GUI sudo re-prompts)?", false, false)) {
-            ctx.install_polkit_strict = true;
-        }
-    }
-
-    // Group 2: Productivity & AI
-    std::printf("\n  [ Productivity & AI ]\n");
-    ask("vault",      "fox-vault: systemd user service for encrypted secrets", dummy);
-    ask("ai",         "Ollama + OpenCode local LLM stack", dummy);
-    ask("models",     "Pull tier-appropriate Ollama chat/coder models", dummy);
-    ask("github",     "Clone workspace repos + gh CLI auth", dummy);
-
-    // Group 3: Hardware & Power
-    std::printf("\n  [ Hardware & Services ]\n");
-    ask("throttling", "CPU power management / thermal wizard", dummy);
-    ask("fprint",     "Fingerprint reader support (fprintd)", dummy);
-    ask("ssh_harden", "SSH hardening wizard (custom port + keys only)", dummy);
-    ask("endlessh",   "SSH tarpit on port 22", dummy);
-
-    // Group 4: Dev Extras
-    std::printf("\n  [ Development Extras ]\n");
-    ask("xgboost",    "Build XGBoost from source (5-10 min)", dummy);
-    if (!ctx.cpp_pro) {
-        if (ui::ask_yn("  • cpp-pro (clang/lldb/mold/perf/valgrind)?", false, false)) {
-            ctx.cpp_pro = true;
-            std::size_t idx = find_by_slug("cpp_pro");
-            if (idx != SIZE_MAX) out.module_enabled[idx] = true;
-        }
-    }
-    std::printf("\n");
 }
 
 }  // namespace fox_install::args

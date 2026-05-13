@@ -91,65 +91,14 @@ int main(int argc, char** argv) {
     fill_paths(ctx, argv[0]);
     sh::set_dry_run(ctx.dry_run);
 
-    // Interactive wizard. Two flavors:
-    //   * --full      → walk every prompt-worthy module with sane defaults
-    //   * default     → group prompt for opt-in modules only
-    // Both honor --yes / no-TTY by no-oping; --phase and --resume skip
-    // either wizard since the user has already declared their intent.
-    if (!ctx.assume_yes && parsed.phase.empty() && !parsed.resume) {
-        if (parsed.full) {
-            args::run_full_review_wizard(parsed, ctx);
-        } else {
-            args::run_wizard(parsed, ctx);
-        }
-    }
-
-    fs::path state_file = ctx.home / ".local/share/foxml/install_state";
-
-    // Handle --resume
-    if (parsed.resume) {
-        if (fs::exists(state_file)) {
-            std::ifstream f(state_file);
-            int last_idx = -1;
-            if (f >> last_idx) {
-                ctx.resume_idx = last_idx + 1;
-                ui::substep("resuming from module index " + std::to_string(ctx.resume_idx));
-            }
-        } else {
-            ui::warn("no resume state found; starting from beginning");
-        }
-    }
-
-    // Handle --phase <slug> (overrides --resume if both set)
-    if (!parsed.phase.empty()) {
-        bool found = false;
-        for (std::size_t i = 0; i < MODULES_COUNT; ++i) {
-            if (parsed.phase == MODULES[i].slug) {
-                ctx.resume_idx = static_cast<int>(i);
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            ui::err("unknown phase: " + parsed.phase);
-            return 1;
-        }
-        ui::substep("skipping to phase: " + parsed.phase);
-    }
-
-    if (!fs::exists(ctx.palette_path)) {
-        ui::err("theme palette not found: " + ctx.palette_path.string());
-        ui::err("available themes live under " + ctx.themes_dir.string());
-        return 1;
-    }
-
-    // Run `detect` upfront so the dry-run plan and main loop see the
-    // final enable state of hardware-gated modules (nvidia/amd_gpu/
-    // intel_gpu/fprint). detect is read-only — re-running it is cheap.
-    // confirm_hw inside detect honors ctx.assume_yes (--yes auto-accepts;
-    // interactive mode still asks per-piece). After detect we toggle
-    // module_enabled to mirror the resolved ctx.has_* flags, then mark
-    // detect as already-run so the main loop skips it.
+    // Run `detect` upfront so the dry-run plan, interactive wizards,
+    // and main loop see the final enable state of hardware-gated
+    // modules (nvidia/amd_gpu/intel_gpu/fprint). detect is read-only
+    // — re-running it is cheap. confirm_hw inside detect honors
+    // ctx.assume_yes (--yes auto-accepts; interactive mode still asks
+    // per-piece). After detect we toggle module_enabled to mirror the
+    // resolved ctx.has_* flags, then mark detect as already-run so
+    // the main loop skips it.
     {
         auto find_idx = [](const char* slug) -> int {
             for (std::size_t k = 0; k < MODULES_COUNT; ++k) {
@@ -166,12 +115,22 @@ int main(int argc, char** argv) {
                 int k = find_idx(slug);
                 if (k >= 0) parsed.module_enabled[k] = true;
             };
+            // Default-disable hardware modules; they'll be flipped on only
+            // if detected + confirmed during the detect phase.
+            int k;
+            if ((k = find_idx("nvidia"))    >= 0) parsed.module_enabled[k] = false;
+            if ((k = find_idx("amd_gpu"))   >= 0) parsed.module_enabled[k] = false;
+            if ((k = find_idx("intel_gpu")) >= 0) parsed.module_enabled[k] = false;
+            if ((k = find_idx("fprint"))    >= 0) parsed.module_enabled[k] = false;
+
             if (ctx.has_nvidia)    enable_slug("nvidia");
             if (ctx.has_amd_gpu)   enable_slug("amd_gpu");
             if (ctx.has_intel_gpu) enable_slug("intel_gpu");
             if (ctx.has_fprint)    enable_slug("fprint");
         }
     }
+
+    fs::path state_file = ctx.home / ".local/share/foxml/install_state";
 
     // Pre-install marker detect. Bash printed a nudge about --quick on
     // every invocation when ~/.local/share/foxml/.installed-version
@@ -196,7 +155,7 @@ int main(int argc, char** argv) {
     }
 
     if (ctx.dry_run) {
-        ui::section("Dry-run plan");
+        ui::section("Dry-run plan (baseline)");
         for (std::size_t i = 0; i < MODULES_COUNT; ++i) {
             std::string status = parsed.module_enabled[i] ? "will run" : "skipped";
             if (ctx.resume_idx > 0 && static_cast<int>(i) < ctx.resume_idx) {
@@ -210,10 +169,44 @@ int main(int argc, char** argv) {
 
     std::vector<std::string> failed_modules;
     for (std::size_t i = 0; i < MODULES_COUNT; ++i) {
-        if (!parsed.module_enabled[i]) continue;
         if (ctx.resume_idx > 0 && static_cast<int>(i) < ctx.resume_idx) continue;
 
         const Module& m = MODULES[i];
+        bool should_run = parsed.module_enabled[i];
+
+        // --- Inline Interactive Decision ---
+        if (!ctx.assume_yes && ui::tty()) {
+            auto is_backbone = [](const char* s) {
+                static const char* B[] = { "detect", "preflight", "theme", "render",
+                    "symlinks", "specials", "post_install", "summary", "next_steps", nullptr };
+                for (auto** p = B; *p; ++p) if (std::string(*p) == s) return true;
+                return false;
+            };
+            auto is_hw = [](const char* s) {
+                static const char* H[] = { "nvidia", "amd_gpu", "intel_gpu", "fprint", nullptr };
+                for (auto** p = H; *p; ++p) if (std::string(*p) == s) return true;
+                return false;
+            };
+
+            if (!is_backbone(m.slug) && !is_hw(m.slug)) {
+                // Skip laptop-only modules on desktops
+                if (std::string(m.slug) == "throttling" && !ctx.is_laptop) {
+                    should_run = false;
+                } else {
+                    bool risky = (std::string(m.slug) == "fprint_pam" ||
+                                  std::string(m.slug) == "greetd_fingerprint");
+                    std::string prompt = "Execute module " + std::string(m.slug);
+                    if (risky) prompt += " [LOCKOUT RISK]";
+                    prompt += " (" + std::string(m.description) + ")?";
+                    
+                    // We use the current enabled state as the default.
+                    should_run = ui::ask_yn(prompt, should_run, false);
+                }
+            }
+        }
+
+        if (!should_run) continue;
+
         try {
             m.fn(ctx);
             

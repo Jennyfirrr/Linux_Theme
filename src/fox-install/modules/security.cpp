@@ -589,11 +589,17 @@ void run_security(Context& ctx) {
     install_kernel_hardening(ctx);
     install_usbguard(ctx);
     install_apparmor();
-    // Polkit strict mode is gated separately: bash's --full doesn't
-    // enable it (the every-admin-action reprompt is annoying for daily
-    // GUI sudo). Only runs when ctx.install_polkit_strict is true,
-    // set by the --polkit-strict CLI flag.
+
+    // Polkit strict mode: require fresh password auth for every admin action.
+    // The every-admin-action reprompt can be annoying for daily GUI use,
+    // so we prompt for it here unless it was already enabled via flag.
+    if (!ctx.assume_yes && ui::tty() && !ctx.install_polkit_strict) {
+        if (ui::ask_yn("  • polkit-strict (every GUI sudo re-prompts — annoying for daily use)?", false, false)) {
+            ctx.install_polkit_strict = true;
+        }
+    }
     if (ctx.install_polkit_strict) install_polkit_strict();
+
     install_fail2ban();
     install_auditd();
     install_waybar_sudoers(ctx);
