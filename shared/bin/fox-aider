@@ -42,14 +42,14 @@ fi
 # 8192 fits most files comfortably; user can override via env.
 export OLLAMA_CONTEXT_LENGTH="${OLLAMA_CONTEXT_LENGTH:-8192}"
 
-# Theme colors — pulled from FoxML_Classic palette so aider's UI matches
-# the rest of the desktop. gruvbox-dark is the closest Pygments style to
-# the warm peach/sage/cream palette. Override per-call via the
-# corresponding aider flag if you want something different.
+# Theme: --no-pretty drops aider's Rich-rendered chrome (frames, "Warning:"
+# headers, hyperlink underlines) which were leaning on terminal ANSI
+# bright-green and clashing with FoxML. The per-color flags still apply
+# to user input and assistant output, so chat itself stays warmly tinted.
+# Per-call overrides win because they're later in argv.
 exec aider \
     --model "$MODEL" \
-    --dark-mode \
-    --code-theme gruvbox-dark \
+    --no-pretty \
     --user-input-color       "#d4985a" \
     --assistant-output-color "#d5c4b0" \
     --tool-output-color      "#8a9a7a" \
