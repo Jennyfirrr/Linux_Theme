@@ -1,0 +1,74 @@
+// fox-install module registry (X-macro source of truth).
+//
+// One line per module. Order determines run order — modules earlier
+// in the list run first. Mutate this file to add / remove / reorder
+// install steps; everything else (--help, arg parser, dispatcher,
+// registry-validation test) is generated from this list.
+//
+// See module.hpp for the FOX_MODULE() argument shape.
+//
+//          slug         function           flag             description                                          default_on
+
+// ── Phase 0: discovery + sanity (read-only / no side effects) ─────
+FOX_MODULE( detect,      run_detect,        "--detect",      "Auto-detect GPU/chassis/fingerprint hardware",      true  )
+FOX_MODULE( preflight,   run_preflight,     "--preflight",   "Disk space + connectivity + session sanity check", true  )
+FOX_MODULE( theme,       run_theme,         "--theme",       "Resolve / prompt for the active theme",            true  )
+
+// ── Phase 1: package + system setup ───────────────────────────────
+FOX_MODULE( deps,        run_deps,          "--deps",        "Install pacman base packages",                     false )
+FOX_MODULE( privacy,     run_privacy,       "--privacy",     "DNS-over-HTTPS via systemd-resolved",              true  )
+FOX_MODULE( perf,            run_perf,             "--perf",         "Performance tuning (chrony over timesyncd)",       false )
+FOX_MODULE( clock_sync,      run_clock_sync,       "--clock-sync",   "One-shot NTP correction at install time",          true  )
+FOX_MODULE( ufw,             run_ufw,              "--ufw",          "Default-deny inbound firewall (runs even when --no-secure)", true  )
+FOX_MODULE( security,        run_security,         "--secure",       "Kernel sysctls + USBGuard + AppArmor + polkit + fail2ban + auditd", true )
+FOX_MODULE( arch_audit,      run_arch_audit,       "--arch-audit",   "Daily arch-audit systemd-user timer",              true  )
+FOX_MODULE( no_coredumps,    run_no_coredumps,     "--no-coredumps", "Disable core dumps (systemd + limits.d)",          true  )
+FOX_MODULE( hidepid,         run_hidepid,          "--hidepid",      "/proc hidepid=2 (hide other users' processes)",    true  )
+FOX_MODULE( noexec_tmp,      run_noexec_tmp,       "--noexec-tmp",   "noexec/nosuid/nodev on /tmp + /dev/shm (opt-in)",  false )
+FOX_MODULE( iommu,           run_iommu,            "--iommu",        "IOMMU + lockdown=integrity kernel cmdline",        false )
+FOX_MODULE( makepkg_harden,  run_makepkg_hardening,"--makepkg-harden","Hardened CFLAGS/LDFLAGS for AUR builds",          true  )
+FOX_MODULE( etckeeper,       run_etckeeper,        "--etckeeper",    "git-track /etc + drift watcher",                   true  )
+FOX_MODULE( mac_random,      run_mac_random,       "--mac-random",   "NetworkManager MAC randomization (opt-in)",        false )
+FOX_MODULE( gpg_agent_cache, run_gpg_agent_cache,  "--gpg-cache",    "Extend gpg-agent passphrase cache TTL",            true  )
+FOX_MODULE( catppuccin_cursor,run_catppuccin_cursor,"--cursor-theme","Catppuccin Mocha Peach cursor theme (download)",   true  )
+FOX_MODULE( zsh_plugins,     run_zsh_plugins,      "--zsh-plugins",  "Clone oh-my-zsh syntax/autosuggestions/completions", true )
+FOX_MODULE( keyring_full,      run_keyring_full,       "--keyring-full",     "Mask gnome-keyring limited autostart (ssh+gpg full)",         true )
+FOX_MODULE( endlessh,          run_endlessh,           "--endlessh",         "SSH tarpit on port 22 (after --ssh-harden moves real sshd)",  false )
+FOX_MODULE( browser_hardening, run_browser_hardening,  "--browser-harden",   "arkenfox user.js + firejail Firefox wrapping",                true )
+FOX_MODULE( dispatch_hooks,    run_dispatch_hooks,     "--dispatch-hooks",   "Phone alerts: fail2ban + fox-bouncer + fox-sentry-audit",     true )
+FOX_MODULE( throttling,        run_throttling,         "--throttling",       "Interactive CPU throttling / power wizard (TTY only)",        false )
+FOX_MODULE( greetd,            run_greetd,             "--greetd",           "Themed regreet login screen deploy to /etc/greetd/",          true )
+FOX_MODULE( greetd_fingerprint,run_greetd_fingerprint, "--greetd-fingerprint","pam_fprintd in /etc/pam.d/greetd ONLY (NOT sudo)",          false )
+
+// ── Phase 2: rendering + deploy ───────────────────────────────────
+FOX_MODULE( render,      run_render,        "--render",      "Render templates with the theme palette",          true  )
+FOX_MODULE( symlinks,    run_symlinks,      "--symlinks",    "Deploy rendered + shared configs (mapping tables)", true  )
+FOX_MODULE( specials,    run_specials,      "--specials",    "Firefox + Cursor + Bat + Gemini + Claude + bulk dirs", true )
+
+// ── Phase 3: opt-in services ──────────────────────────────────────
+FOX_MODULE( vault,       run_vault,         "--vault",       "Install fox-vault systemd user service",           false )
+FOX_MODULE( ai,              run_ai,                "--ai",              "Install Ollama + OpenCode + embedding model",      false )
+FOX_MODULE( ollama_hardening,run_ollama_hardening,  "--ollama-harden",   "systemd sandbox drop-in for ollama.service",       true  )
+FOX_MODULE( models,          run_models,            "--models",          "Pull tier-appropriate Ollama chat/coder stack",    false )
+FOX_MODULE( opencode,        run_configure_opencode,"--opencode-config", "Generate ~/.config/opencode/{opencode,tui}.json",  true  )
+FOX_MODULE( github,      run_github,        "--github",      "gh CLI auth + clone workspace repos",              false )
+
+// ── Phase 4: GPU userspace ────────────────────────────────────────
+FOX_MODULE( amd_gpu,     run_amd_gpu,       "--amd",         "AMD GPU userspace (vulkan-radeon, VA-API)",        false )
+FOX_MODULE( intel_gpu,   run_intel_gpu,     "--intel",       "Intel GPU userspace (intel-media-driver, VA-API)", false )
+FOX_MODULE( nvidia,      run_nvidia,        "--nvidia",      "NVIDIA driver + Hyprland Aquamarine + initramfs",  false )
+
+// ── Phase 5: hardware-specific opt-ins ────────────────────────────
+FOX_MODULE( fprint,      run_fprint,        "--fprint",      "Install fprintd (no PAM wiring; sudo lockout risk)", false )
+FOX_MODULE( ssh_harden,  run_ssh_harden,    "--ssh-harden",  "Interactive SSH wizard (custom port + keys-only)", false )
+
+// ── Phase 6: heavy build-from-source extras ───────────────────────
+FOX_MODULE( xgboost,     run_xgboost,       "--xgboost",     "Build XGBoost from source",                        false )
+
+// ── Phase 7: per-machine personalization ──────────────────────────
+FOX_MODULE( monitors,    run_monitors,      "--monitors",    "Configure Hyprland multi-monitor layout",          true  )
+FOX_MODULE( personalize, run_personalize,   "--personalize", "Per-monitor wallpapers + hyprlock + workspace rules", true  )
+
+// ── Phase 8: post-install live-apply + end-of-install report (last) ─
+FOX_MODULE( post_install,run_post_install,  "--post-install","Restart waybar/dunst, Nvim Lazy sync, IDE theme",  true  )
+FOX_MODULE( summary,     run_summary,       "--summary",     "Print end-of-install summary",                     true  )

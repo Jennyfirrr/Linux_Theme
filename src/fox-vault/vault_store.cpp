@@ -1,0 +1,144 @@
+#include "vault_store.hpp"
+
+#include <cstring>
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/random.h>
+#include <unistd.h>
+
+namespace fox_vault {
+
+namespace {
+
+size_t page_size() {
+    long p = ::sysconf(_SC_PAGESIZE);
+    return p > 0 ? static_cast<size_t>(p) : 4096;
+}
+
+size_t round_to_page(size_t n) {
+    size_t ps = page_size();
+    if (n == 0) return ps;
+    return ((n + ps - 1) / ps) * ps;
+}
+
+void xor_inplace(uint8_t* buf, size_t len, const uint8_t* key, size_t key_len) {
+    if (key_len == 0) return;
+    for (size_t i = 0; i < len; ++i) buf[i] ^= key[i % key_len];
+}
+
+// Best-effort explicit zeroing that survives optimizer DCE. glibc 2.25+
+// ships explicit_bzero; we forward-declare it here to keep the include
+// surface small.
+extern "C" void explicit_bzero(void* s, size_t n);
+
+}  // namespace
+
+SecureBuffer::SecureBuffer(const uint8_t* data, size_t len,
+                           const uint8_t* key, size_t key_len) {
+    map_size_ = round_to_page(len > 0 ? len : 1);
+    page_ = ::mmap(nullptr, map_size_, PROT_READ | PROT_WRITE,
+                   MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (page_ == MAP_FAILED) {
+        page_ = nullptr;
+        map_size_ = 0;
+        return;
+    }
+    // mlock failure is non-fatal (may exceed RLIMIT_MEMLOCK on default
+    // installs); the secret is still XOR-obfuscated, just not swap-proof.
+    ::mlock(page_, map_size_);
+    auto* p = static_cast<uint8_t*>(page_);
+    std::memcpy(p, data, len);
+    xor_inplace(p, len, key, key_len);
+    len_ = len;
+}
+
+SecureBuffer::SecureBuffer(SecureBuffer&& other) noexcept
+    : page_(other.page_), map_size_(other.map_size_), len_(other.len_) {
+    other.page_ = nullptr;
+    other.map_size_ = 0;
+    other.len_ = 0;
+}
+
+SecureBuffer& SecureBuffer::operator=(SecureBuffer&& other) noexcept {
+    if (this != &other) {
+        reset();
+        page_ = other.page_;
+        map_size_ = other.map_size_;
+        len_ = other.len_;
+        other.page_ = nullptr;
+        other.map_size_ = 0;
+        other.len_ = 0;
+    }
+    return *this;
+}
+
+SecureBuffer::~SecureBuffer() { reset(); }
+
+void SecureBuffer::reset() noexcept {
+    if (page_) {
+        explicit_bzero(page_, map_size_);
+        ::munlock(page_, map_size_);
+        ::munmap(page_, map_size_);
+    }
+    page_ = nullptr;
+    map_size_ = 0;
+    len_ = 0;
+}
+
+std::string SecureBuffer::reveal(const uint8_t* key, size_t key_len) const {
+    if (!page_ || len_ == 0) return {};
+    std::string out;
+    out.resize(len_);
+    auto* dst = reinterpret_cast<uint8_t*>(&out[0]);
+    std::memcpy(dst, page_, len_);
+    xor_inplace(dst, len_, key, key_len);
+    return out;
+}
+
+Vault::Vault() {
+    // getrandom is the standard kernel entropy source on Linux 3.17+.
+    ssize_t r = ::getrandom(session_key_, sizeof(session_key_), 0);
+    if (r != static_cast<ssize_t>(sizeof(session_key_))) {
+        // Highly unlikely. Fall back to /dev/urandom; if that also fails
+        // we leave the key zeroed (XOR becomes a no-op — still mlock'd,
+        // but no obfuscation). Don't crash a long-running daemon over it.
+        int fd = ::open("/dev/urandom", O_RDONLY | O_CLOEXEC);
+        if (fd >= 0) { (void)::read(fd, session_key_, sizeof(session_key_)); ::close(fd); }
+    }
+}
+
+Vault::~Vault() {
+    clear();
+    explicit_bzero(session_key_, sizeof(session_key_));
+}
+
+bool Vault::set(const std::string& name, const uint8_t* data, size_t len) {
+    SecureBuffer buf(data, len, session_key_, sizeof(session_key_));
+    if (buf.size() != len) return false;
+    store_[name] = std::move(buf);
+    return true;
+}
+
+bool Vault::get(const std::string& name, std::string& out) const {
+    auto it = store_.find(name);
+    if (it == store_.end()) return false;
+    out = it->second.reveal(session_key_, sizeof(session_key_));
+    return true;
+}
+
+bool Vault::del(const std::string& name) {
+    return store_.erase(name) > 0;
+}
+
+void Vault::clear() {
+    store_.clear();
+}
+
+std::vector<std::string> Vault::list() const {
+    std::vector<std::string> out;
+    out.reserve(store_.size());
+    for (auto& kv : store_) out.push_back(kv.first);
+    return out;
+}
+
+}  // namespace fox_vault

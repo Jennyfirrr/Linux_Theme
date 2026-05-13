@@ -33,3 +33,20 @@ rendered/
 # Compiled fox-intel binaries — install.sh rebuilds them
 src/fox-intel/fask
 src/fox-intel/findex
+src/fox-intel/libfox-intel.a
+
+# fox-* native binaries + their .o / .a build artefacts.
+# The repo ships sources; install.sh runs `make` to produce these.
+src/*/*.o
+src/*/core/*.o
+src/*/modules/*.o
+src/*/tests/test_*
+src/fox-install/fox-install
+src/fox-render/fox-render-fast
+src/fox-pulse/fox-pulse
+src/fox-vault/fox-vault
+src/fox-ai-doctor/fox-ai-doctor
+
+# Vendored nlohmann json header — bootstrap.sh / install.sh wrapper
+# fetches it on first build. Don't commit a 25k-line vendored copy.
+src/fox-intel/json.hpp

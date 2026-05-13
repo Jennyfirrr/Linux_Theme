@@ -1,0 +1,48 @@
+#ifndef FOX_INSTALL_CONTEXT_HPP
+#define FOX_INSTALL_CONTEXT_HPP
+
+#include <filesystem>
+#include <string>
+
+namespace fox_install {
+
+// Shared state passed by reference into every module's run_*() function.
+// Modules read fields they care about and may set fields others depend
+// on (e.g. detect.cpp sets has_nvidia; nvidia.cpp reads it).
+struct Context {
+    // Paths derived from argv[0] / CWD at startup.
+    std::filesystem::path script_dir;       // repo root
+    std::filesystem::path templates_dir;    // <script_dir>/templates
+    std::filesystem::path themes_dir;       // <script_dir>/themes
+    std::filesystem::path shared_dir;       // <script_dir>/shared
+    std::filesystem::path rendered_dir;     // <script_dir>/rendered
+    std::filesystem::path home;             // $HOME
+    std::filesystem::path config_home;      // $XDG_CONFIG_HOME or ~/.config
+
+    // Backup root for this install run. Set once in main() before any
+    // module runs (e.g. ~/.theme_backups/foxml-backup-20260512-180317).
+    // symlinks/specials/security/etc. snapshot pre-existing files here
+    // before overwrite — same convention as the bash backup_and_copy.
+    std::filesystem::path backup_dir;
+
+    // Theme selection.
+    std::string theme_name;
+    std::filesystem::path palette_path;     // <themes_dir>/<theme>/palette.sh
+
+    // Global flags.
+    bool assume_yes = false;
+    bool dry_run    = false;
+    bool quiet      = false;
+    bool render_only = false;
+
+    // Hardware detection (filled by the detect module).
+    bool has_nvidia   = false;
+    bool has_amd_gpu  = false;
+    bool has_intel_gpu = false;
+    bool is_laptop    = false;
+    bool has_fprint   = false;
+};
+
+}  // namespace fox_install
+
+#endif
