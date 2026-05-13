@@ -38,10 +38,16 @@ struct Context {
     // Opt-in fine-grained hardening. Bash kept these as separate
     // INSTALL_* flags so --full could enable the security suite
     // without flipping every annoying daily-use toggle on.
-    bool install_polkit_strict = false;   // --polkit-strict (off by default,
-                                          // NOT enabled by --full — too
-                                          // annoying for daily GUI sudo)
+    bool install_polkit_strict = false;   // --polkit-strict (off by default;
+                                          // enabled by --full unless wizard
+                                          // declines it)
     bool cpp_pro = false;                 // --cpp-pro (opt-in)
+
+    // Set by --full. Modules that have "already done — skipping" early
+    // returns honor this by re-applying their work instead of bailing.
+    // Genuinely expensive ops (Ollama model downloads, big archive
+    // pulls) keep their skip-if-present checks regardless.
+    bool force_reapply = false;
 
     // Hardware detection (filled by the detect module).
     bool has_nvidia   = false;

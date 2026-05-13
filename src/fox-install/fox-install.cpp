@@ -91,9 +91,17 @@ int main(int argc, char** argv) {
     fill_paths(ctx, argv[0]);
     sh::set_dry_run(ctx.dry_run);
 
-    // Call interactive wizard if no specialized flags are set.
-    if (!ctx.assume_yes && !parsed.full && parsed.phase.empty() && !parsed.resume) {
-        args::run_wizard(parsed, ctx);
+    // Interactive wizard. Two flavors:
+    //   * --full      → walk every prompt-worthy module with sane defaults
+    //   * default     → group prompt for opt-in modules only
+    // Both honor --yes / no-TTY by no-oping; --phase and --resume skip
+    // either wizard since the user has already declared their intent.
+    if (!ctx.assume_yes && parsed.phase.empty() && !parsed.resume) {
+        if (parsed.full) {
+            args::run_full_review_wizard(parsed, ctx);
+        } else {
+            args::run_wizard(parsed, ctx);
+        }
     }
 
     fs::path state_file = ctx.home / ".local/share/foxml/install_state";

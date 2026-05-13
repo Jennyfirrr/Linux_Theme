@@ -135,6 +135,7 @@ bool parse(int argc, char** argv, Parsed& out, Context& ctx) {
             }
             ctx.install_polkit_strict = true;
             ctx.cpp_pro = true;
+            ctx.force_reapply = true;
             continue;
         }
 
@@ -246,6 +247,64 @@ bool parse(int argc, char** argv, Parsed& out, Context& ctx) {
         return false;
     }
     return true;
+}
+
+void run_full_review_wizard(Parsed& out, Context& ctx) {
+    if (ctx.assume_yes || !ui::tty()) return;
+
+    ui::section("--full review: every module is selectable");
+    std::printf(
+        "  Default is YES for each module. Press Enter to accept, n to skip.\n"
+        "  Lockout-risk modules (fprint_pam, greetd_fingerprint) default to\n"
+        "  NO even under --full — opt in only if you know the recovery path\n"
+        "  (su -, faillock --reset, restore .foxml-bak).\n\n");
+
+    // Backbone modules always run — no prompt.
+    static const char* BACKBONE[] = {
+        "detect", "preflight", "theme",
+        "render", "symlinks", "specials",
+        "post_install", "summary", "next_steps",
+        nullptr,
+    };
+    auto is_in = [](const char* slug, const char* const* list) -> bool {
+        for (const char* const* s = list; *s; ++s) {
+            if (std::string(*s) == slug) return true;
+        }
+        return false;
+    };
+
+    // Default-N modules: lockout-risk PAM edits.
+    static const char* DEFAULT_NO[] = {
+        "fprint_pam", "greetd_fingerprint", nullptr,
+    };
+
+    for (std::size_t i = 0; i < MODULES_COUNT; ++i) {
+        const char* slug = MODULES[i].slug;
+        if (is_in(slug, BACKBONE)) continue;
+
+        bool risky = is_in(slug, DEFAULT_NO);
+        std::string warning = risky ? " [LOCKOUT RISK]" : "";
+        std::string prompt = "  • " + std::string(slug) + warning + " — " +
+                             MODULES[i].description + "?";
+        out.module_enabled[i] = ui::ask_yn(prompt, /*default_yes=*/!risky,
+                                           /*assume_yes=*/false);
+    }
+
+    // Sub-flag inside the security module: polkit-strict.
+    ctx.install_polkit_strict = ui::ask_yn(
+        "  • polkit-strict (every GUI sudo re-prompts — annoying for daily use)?",
+        /*default_yes=*/true, /*assume_yes=*/false);
+    // cpp_pro is its own module — already covered by the loop above. Keep
+    // ctx.cpp_pro in sync with the user's choice on the module prompt so
+    // post-install hooks that read ctx.cpp_pro see the right state.
+    for (std::size_t k = 0; k < MODULES_COUNT; ++k) {
+        if (std::string(MODULES[k].slug) == "cpp_pro") {
+            ctx.cpp_pro = out.module_enabled[k];
+            break;
+        }
+    }
+
+    std::printf("\n");
 }
 
 void run_wizard(Parsed& out, Context& ctx) {

@@ -30,6 +30,13 @@ void print_version();
 // Updates `out.module_enabled` and `ctx` flags based on user input.
 void run_wizard(Parsed& out, Context& ctx);
 
+// Runs an interactive TTY wizard for --full. Walks every prompt-worthy
+// module (skipping the always-on backbone) and asks [Y/n] with sane
+// defaults — Y for safe modules, N for lockout-risk ones (fprint_pam,
+// greetd_fingerprint). Skipped under --yes / no-TTY (those paths use
+// the defaults that --full already set).
+void run_full_review_wizard(Parsed& out, Context& ctx);
+
 }  // namespace fox_install::args
 
 #endif
