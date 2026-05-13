@@ -141,11 +141,18 @@ void run_ai(Context& ctx) {
                 ui::substep("installing python-pipx (required for aider fallback)");
                 sh::pacman({"python-pipx"});
             }
+            // aider transitively depends on scipy. On bleeding-edge Python
+            // (e.g. 3.14) PyPI wheels aren't always available yet, so uv
+            // falls back to source builds. scipy's source build needs a
+            // Fortran compiler and a BLAS/LAPACK implementation — pre-pull
+            // both so the build doesn't bomb mid-compile.
+            ui::substep("ensuring scipy build deps (gcc-fortran + openblas)");
+            sh::pacman({"gcc-fortran", "openblas"});
             if (have("pipx")) {
                 ok = (sh::run({"pipx", "install", "aider-chat"}) == 0);
             }
             if (!ok) {
-                ui::warn("aider not installed — `pacman -S python-pipx && pipx install aider-chat`");
+                ui::warn("aider not installed — `pacman -S python-pipx gcc-fortran openblas && pipx install aider-chat`");
             }
         }
     }
