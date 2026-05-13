@@ -94,10 +94,11 @@ void run_summary(Context& ctx) {
     // fox-doctor headline result, matching the bash summary's
     // "Health check" row. fox-doctor's last line is "Result: ...";
     // we strip ANSI codes for clean alignment. Skipped when fox-doctor
-    // isn't on PATH yet (first install).
+    // isn't on PATH yet (first install). 10s timeout so a hung
+    // doctor invocation can't wedge the end-of-install.
     if (!ctx.dry_run) {
         std::string doctor_out;
-        if (sh::capture({"sh", "-c", "fox-doctor 2>&1 | tail -40"}, doctor_out)) {
+        if (sh::capture({"sh", "-c", "timeout 10 fox-doctor 2>&1 | tail -40"}, doctor_out)) {
             std::string result_line;
             std::istringstream is(doctor_out);
             std::string line;
