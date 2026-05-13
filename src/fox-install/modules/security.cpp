@@ -590,7 +590,11 @@ void run_security(Context& ctx) {
     install_kernel_hardening();
     install_usbguard(ctx);
     install_apparmor();
-    install_polkit_strict();
+    // Polkit strict mode is gated separately: bash's --full doesn't
+    // enable it (the every-admin-action reprompt is annoying for daily
+    // GUI sudo). Only runs when ctx.install_polkit_strict is true,
+    // set by the --polkit-strict CLI flag.
+    if (ctx.install_polkit_strict) install_polkit_strict();
     install_fail2ban();
     install_auditd();
     install_waybar_sudoers();

@@ -60,6 +60,7 @@ FOX_MODULE( nvidia,      run_nvidia,        "--nvidia",      "NVIDIA driver + Hy
 
 // ── Phase 5: hardware-specific opt-ins ────────────────────────────
 FOX_MODULE( fprint,      run_fprint,        "--fprint",      "Install fprintd (no PAM wiring; sudo lockout risk)", false )
+FOX_MODULE( fprint_pam,  run_fprint_pam,    "--fprint-pam",  "Splice pam_fprintd into /etc/pam.d/system-local-login (TTY login)", false )
 FOX_MODULE( ssh_harden,  run_ssh_harden,    "--ssh-harden",  "Interactive SSH wizard (custom port + keys-only)", false )
 
 // ── Phase 6: heavy build-from-source extras ───────────────────────

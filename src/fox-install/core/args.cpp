@@ -3,6 +3,7 @@
 #include "module.hpp"
 
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <string>
 
@@ -37,8 +38,13 @@ void print_help(const char* argv0) {
         "Global flags:\n"
         "  -y, --yes         assume yes for every prompt\n"
         "      --dry-run     print every command without executing it\n"
-        "      --full        enable every default-on + every major opt-in module\n"
+        "      --full        deps + perf + vault + ai + models + github +\n"
+        "                    all default-on modules (excludes xgboost / mac-random /\n"
+        "                    polkit-strict / cpp-pro — opt in to those explicitly)\n"
         "      --only <slugs> comma-separated allow-list; everything else skipped\n"
+        "      --polkit-strict   add polkit strict mode (every GUI sudo re-prompts)\n"
+        "      --arm, --paranoid chain into fox-arm at end of install\n"
+        "      --arm-heavy, --heavy   ditto, runs fox-arm --heavy\n"
         "      --quiet       suppress per-step chatter (errors still print)\n"
         "  -h, --help        show this help and exit\n"
         "      --version     print version and exit\n\n"
@@ -74,11 +80,91 @@ bool parse(int argc, char** argv, Parsed& out, Context& ctx) {
         if (a == "--quiet")                { ctx.quiet = true; out.quiet = true; continue; }
         if (a == "--full" || a == "--all") {
             out.full = true;
-            // For now this just turns every module on; later we'll honor
-            // `default_on` as the discriminator between "default" and
-            // "major opt-in" vs niche flags like --xgboost.
+            // Curated --full: matches bash's INSTALL_* set. Every
+            // default_on=true module already runs by default; --full
+            // adds the major opt-in slugs from bash --full:
+            //
+            //   deps, perf, vault, ai, models, github
+            //
+            // Bash --full explicitly EXCLUDES (off-by-default,
+            // require an explicit flag to opt in):
+            //   xgboost          5-10 min from-source build
+            //   mac_random       breaks captive-portal/dorm/enterprise WiFi
+            //   polkit_strict    every GUI sudo re-prompts (daily-use pain)
+            //   cpp_pro          dev-only toolchain extras
+            //   throttling       interactive multi-step wizard
+            //   ssh_harden       interactive multi-step wizard
+            //   endlessh         depends on --ssh-harden moving sshd first
+            //   fprint           detect.cpp gates this on hardware presence
+            //
+            // GPU modules (nvidia/amd_gpu/intel_gpu) gate on the
+            // hardware-detect flags in ctx, so they're "always on if
+            // hardware present" — same effect as bash's --full + auto-detect.
+            static const char* FULL_OPT_INS[] = {
+                "deps", "perf", "vault", "ai", "models", "github", nullptr,
+            };
+            for (auto** s = FULL_OPT_INS; *s; ++s) {
+                for (std::size_t k = 0; k < MODULES_COUNT; ++k) {
+                    if (std::string(MODULES[k].slug) == *s) {
+                        out.module_enabled[k] = true;
+                        break;
+                    }
+                }
+            }
+            continue;
+        }
+
+        // --paranoid: bash alias for --arm. Both flip the env var that
+        // next_steps.cpp reads to chain into `fox-arm` at end-of-install.
+        if (a == "--arm" || a == "--paranoid") {
+            ::setenv("FOXML_ARM", "1", 1);
+            continue;
+        }
+        if (a == "--arm-heavy" || a == "--heavy") {
+            ::setenv("FOXML_ARM", "1", 1);
+            ::setenv("FOXML_ARM_HEAVY", "1", 1);
+            continue;
+        }
+
+        // --polkit-strict: enable the security module's polkit-strict
+        // sub-step (off by default, NOT included in --full per above).
+        if (a == "--polkit-strict") {
+            ctx.install_polkit_strict = true;
+            continue;
+        }
+
+        // --quick: bash mode that skips the slow + network-heavy parts
+        // (pacman --needed sweep, github clone, ollama model pulls)
+        // when re-running just to refresh themes/configs.
+        if (a == "--quick") {
             for (std::size_t k = 0; k < MODULES_COUNT; ++k) {
-                out.module_enabled[k] = true;
+                std::string s = MODULES[k].slug;
+                if (s == "deps" || s == "github" || s == "models") {
+                    out.module_enabled[k] = false;
+                }
+            }
+            continue;
+        }
+
+        // --render-only: bash had it. Run render + symlinks + specials +
+        // personalize + post_install only — everything else off. Useful
+        // for "just push the rendered configs out, don't touch system".
+        if (a == "--render-only") {
+            static const char* KEEP[] = {
+                "detect", "preflight", "theme",
+                "render", "symlinks", "specials",
+                "personalize", "post_install", "summary", nullptr,
+            };
+            for (std::size_t k = 0; k < MODULES_COUNT; ++k) {
+                out.module_enabled[k] = false;
+            }
+            for (auto** s = KEEP; *s; ++s) {
+                for (std::size_t k = 0; k < MODULES_COUNT; ++k) {
+                    if (std::string(MODULES[k].slug) == *s) {
+                        out.module_enabled[k] = true;
+                        break;
+                    }
+                }
             }
             continue;
         }

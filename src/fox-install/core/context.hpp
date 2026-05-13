@@ -35,6 +35,13 @@ struct Context {
     bool quiet      = false;
     bool render_only = false;
 
+    // Opt-in fine-grained hardening. Bash kept these as separate
+    // INSTALL_* flags so --full could enable the security suite
+    // without flipping every annoying daily-use toggle on.
+    bool install_polkit_strict = false;   // --polkit-strict (off by default,
+                                          // NOT enabled by --full — too
+                                          // annoying for daily GUI sudo)
+
     // Hardware detection (filled by the detect module).
     bool has_nvidia   = false;
     bool has_amd_gpu  = false;

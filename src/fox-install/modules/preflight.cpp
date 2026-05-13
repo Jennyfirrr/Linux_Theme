@@ -60,6 +60,33 @@ void run_preflight(Context& ctx) {
         ui::warn(std::string("current session is `") + desktop +
                  "` — Hyprland-specific steps will succeed but apply on next login");
     }
+
+    // Installed WM/DE coexistence check via pacman -Qi. Catches the
+    // installed-but-not-active case that the XDG_CURRENT_DESKTOP check
+    // above misses (e.g. plasma-desktop installed alongside Hyprland —
+    // configs coexist fine but Hyprland binds only apply inside a
+    // Hyprland session). Mirrors install.sh.legacy's preflight.
+    static const char* WM_PKGS[][2] = {
+        {"plasma-desktop", "KDE Plasma"},
+        {"gnome-shell",    "GNOME"},
+        {"sway",           "sway"},
+        {"i3-wm",          "i3"},
+        {"xfce4-session",  "XFCE"},
+        {nullptr, nullptr},
+    };
+    std::string conflicts;
+    for (auto* pair : WM_PKGS) {
+        if (!pair[0]) break;
+        if (sh::run({"sh", "-c",
+                     std::string("pacman -Qi ") + pair[0] + " &>/dev/null"}) == 0) {
+            if (!conflicts.empty()) conflicts += ", ";
+            conflicts += pair[1];
+        }
+    }
+    if (!conflicts.empty()) {
+        ui::warn("another desktop / WM installed: " + conflicts);
+        ui::substep("configs coexist; Hyprland binds only apply inside a Hyprland session");
+    }
 }
 
 }  // namespace fox_install

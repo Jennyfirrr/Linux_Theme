@@ -16,6 +16,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <filesystem>
+#include <fstream>
 #include <string>
 #include <vector>
 #include <unistd.h>
@@ -94,6 +95,28 @@ int main(int argc, char** argv) {
         ui::err("theme palette not found: " + ctx.palette_path.string());
         ui::err("available themes live under " + ctx.themes_dir.string());
         return 1;
+    }
+
+    // Pre-install marker detect. Bash printed a nudge about --quick on
+    // every invocation when ~/.local/share/foxml/.installed-version
+    // existed. We do the same — silent first install, nudge thereafter.
+    {
+        fs::path marker = ctx.home / ".local/share/foxml/.installed-version";
+        if (fs::exists(marker) && !ctx.dry_run) {
+            std::ifstream f(marker);
+            std::string line;
+            std::string prior_theme;
+            while (std::getline(f, line)) {
+                if (line.rfind("theme=", 0) == 0) {
+                    prior_theme = line.substr(6);
+                    break;
+                }
+            }
+            std::printf(" -> existing FoxML install detected"
+                        "%s%s — pass --quick to skip deps + clones + model pulls\n",
+                        prior_theme.empty() ? "" : " (",
+                        prior_theme.empty() ? "" : (prior_theme + ")").c_str());
+        }
     }
 
     if (ctx.dry_run) {
