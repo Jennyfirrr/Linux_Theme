@@ -113,11 +113,26 @@ void run_etckeeper(Context& ctx) {
 
     if (!fs::exists(path_unit) || ctx.force_reapply) {
         fs::create_directories(units);
+
+        // A masked unit is a symlink to /dev/null; ofstream on that
+        // path would follow the symlink and silently black-hole the
+        // content, and the subsequent enable would fail with "is
+        // masked". Unmask + delete any leftover symlinks before we
+        // write the real unit files.
+        sh::run({"systemctl", "--user", "unmask",
+                 "fox-etcwatch.path", "fox-etcwatch.service"});
+        std::error_code ec;
+        if (fs::is_symlink(path_unit, ec)) fs::remove(path_unit, ec);
+        if (fs::is_symlink(svc_unit,  ec)) fs::remove(svc_unit,  ec);
+
         std::ofstream p(path_unit);     p << PATH_UNIT;
         std::ofstream s(svc_unit);      s << SERVICE_UNIT;
         sh::systemctl_daemon_reload(/*user=*/true);
-        sh::systemctl_enable("fox-etcwatch.path", /*user=*/true);
-        ui::ok("fox-etcwatch.path enabled (alerts on /etc/{ssh,sudoers.d,pam.d,ufw,fail2ban,audit,sysctl.d} changes)");
+        if (sh::systemctl_enable("fox-etcwatch.path", /*user=*/true) == 0) {
+            ui::ok("fox-etcwatch.path enabled (alerts on /etc/{ssh,sudoers.d,pam.d,ufw,fail2ban,audit,sysctl.d} changes)");
+        } else {
+            ui::warn("fox-etcwatch.path enable failed — try `systemctl --user unmask fox-etcwatch.path` then re-run --etckeeper");
+        }
     } else {
         ui::ok("fox-etcwatch already configured");
     }
