@@ -134,6 +134,13 @@ void run_ai(Context& ctx) {
             }
         }
         if (!ok) {
+            // pipx is the canonical fallback. If it isn't on PATH, install
+            // it ourselves rather than asking the user to do step-1-of-2 by
+            // hand — the whole point of the fallback is to be self-sufficient.
+            if (!have("pipx")) {
+                ui::substep("installing python-pipx (required for aider fallback)");
+                sh::pacman({"python-pipx"});
+            }
             if (have("pipx")) {
                 ok = (sh::run({"pipx", "install", "aider-chat"}) == 0);
             }
