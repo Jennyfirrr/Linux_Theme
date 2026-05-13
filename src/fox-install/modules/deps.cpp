@@ -17,6 +17,48 @@ namespace fs = std::filesystem;
 
 namespace fox_install {
 
+// pacman_conf_ensure_uncomment — uncomment the [multilib] block in
+// /etc/pacman.conf. Mirrors bash:
+//   sed -i '/#\[multilib\]/,/#Include = \/etc\/pacman.d\/mirrorlist/ s/^#//'
+// Returns true on a state change (file was edited).
+bool enable_multilib() {
+    if (sh::run({"sh", "-c", "grep -q '^\\[multilib\\]' /etc/pacman.conf"}) == 0) {
+        return false;        // already enabled
+    }
+    int rc = sh::run({"sudo", "sed", "-i",
+        "/#\\[multilib\\]/,/#Include = \\/etc\\/pacman.d\\/mirrorlist/ s/^#//",
+        "/etc/pacman.conf"});
+    if (rc != 0) return false;
+    // After enable, refresh pacman's package db so the new repo's
+    // packages become resolvable.
+    sh::run({"sudo", "pacman", "-Sy"});
+    return true;
+}
+
+// ParallelDownloads in /etc/pacman.conf for faster pacman fetches.
+// Bash mostly assumed Arch's stock 5 was fine; we ensure it's >= 5
+// (uncomment if commented out, leave alone if already set).
+bool enable_parallel_downloads() {
+    // Already a non-commented ParallelDownloads line?
+    if (sh::run({"sh", "-c",
+                 "grep -qE '^ParallelDownloads' /etc/pacman.conf"}) == 0) {
+        return false;
+    }
+    // Commented version present? Uncomment it.
+    if (sh::run({"sh", "-c",
+                 "grep -qE '^#ParallelDownloads' /etc/pacman.conf"}) == 0) {
+        sh::run({"sudo", "sed", "-i",
+                 "s/^#ParallelDownloads/ParallelDownloads/",
+                 "/etc/pacman.conf"});
+        return true;
+    }
+    // Neither — append a line in the [options] section.
+    sh::run({"sh", "-c",
+             "sudo sed -i '/^\\[options\\]/a ParallelDownloads = 5' "
+             "/etc/pacman.conf"});
+    return true;
+}
+
 void run_deps(Context& ctx) {
     (void)ctx;
     ui::section("Installing base packages");
@@ -24,6 +66,19 @@ void run_deps(Context& ctx) {
     if (!sh::dry_run() && !sh::sudo_warmup()) {
         ui::err("sudo cache cold and no TTY — run `sudo -v` first");
         return;
+    }
+
+    // ─── pacman.conf prep ─────────────────────────────────────────
+    // Run BEFORE the package install so the [multilib] repo is
+    // queryable when we try to pull `steam`, and so ParallelDownloads
+    // speeds up the rest of this module's pacman call.
+    if (!sh::dry_run()) {
+        if (enable_parallel_downloads()) {
+            ui::ok("ParallelDownloads enabled in /etc/pacman.conf");
+        }
+        if (enable_multilib()) {
+            ui::ok("[multilib] enabled in /etc/pacman.conf (Steam install ready)");
+        }
     }
 
     // Grouped by purpose so future contributors can find the right

@@ -599,14 +599,9 @@ void run_security(Context& ctx) {
     install_auditd();
     install_waybar_sudoers();
 
-    // SSH hardening wizard (custom port + key-only auth) is deferred to
-    // a future opt-in module. The bash version is still in
-    // install.sh.legacy if a user wants to run it manually.
-    if (tty_in() && !ctx.assume_yes) {
-        ui::substep("SSH hardening wizard deferred — run install.sh.legacy "
-                    "section if you want custom port + key-only auth");
-    }
-
+    // SSH hardening wizard lives in its own --ssh-harden module now.
+    // Runs separately so security doesn't drag the user through the
+    // interactive port + keys-only flow on every --secure invocation.
     ui::ok("security hardening complete");
 }
 

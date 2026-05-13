@@ -370,6 +370,48 @@ void do_keybinds_md(const Context& ctx) {
     if (deploy_file(ctx, src, dst)) ui::substep("KEYBINDS.md → ~/.local/share/foxml/");
 }
 
+// Stage ReGreet (themed login screen) files to ~/.config/regreet/.
+// The greetd module reads them from there and `sudo install`s them
+// to /etc/greetd/. Without this staging, run_greetd bails with
+// "staged regreet files missing". Mirrors mappings.sh:install_specials
+// lines 428-435.
+void do_regreet_stage(const Context& ctx) {
+    fs::path rendered_css = ctx.rendered_dir / "regreet/regreet.css";
+    if (!fs::exists(rendered_css)) return;       // no regreet templates rendered
+
+    fs::path stage = ctx.home / ".config/regreet";
+    fs::create_directories(stage);
+    deploy_file(ctx, rendered_css,
+                stage / "regreet.css");
+    deploy_file(ctx, ctx.script_dir / "shared/regreet.toml",
+                stage / "regreet.toml");
+    deploy_file(ctx, ctx.script_dir / "shared/greetd_hyprland.conf",
+                stage / "hyprland.conf");
+    fs::path picker_src = ctx.script_dir / "shared/greetd_select_monitor.sh";
+    fs::path picker_dst = stage / "select-monitor.sh";
+    if (deploy_file(ctx, picker_src, picker_dst)) chmod_exec(picker_dst);
+    ui::substep("ReGreet staged to ~/.config/regreet/ (greetd module will deploy)");
+}
+
+// btop: set color_theme="foxml" in ~/.config/btop/btop.conf. The btop
+// theme file lands via TEMPLATE_MAPPINGS but the .conf still defaults
+// to the stock theme until this sed runs.
+void do_btop_theme(const Context& ctx) {
+    fs::path conf = ctx.home / ".config/btop/btop.conf";
+    if (!fs::exists(conf)) return;
+    // If the line already says foxml, no-op.
+    if (sh::run({"sh", "-c",
+                 "grep -qE '^color_theme = \"foxml\"' " + conf.string()}) == 0) {
+        return;
+    }
+    // Match commented OR uncommented color_theme line. -i.bak preserves
+    // the original for revert.
+    sh::run({"sed", "-i",
+             "-E", "s|^#?color_theme = \".*\"|color_theme = \"foxml\"|",
+             conf.string()});
+    ui::substep("btop color_theme → foxml");
+}
+
 }  // namespace
 
 void run_specials(Context& ctx) {
@@ -404,6 +446,8 @@ void run_specials(Context& ctx) {
 
     do_hyprland_modules(ctx);
     do_keybinds_md(ctx);
+    do_regreet_stage(ctx);
+    do_btop_theme(ctx);
 }
 
 }  // namespace fox_install
