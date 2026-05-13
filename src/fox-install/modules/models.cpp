@@ -9,10 +9,14 @@
 #include "../core/shell.hpp"
 #include "../core/ui.hpp"
 
+#include <algorithm>
+#include <filesystem>
 #include <fstream>
 #include <string>
 #include <sys/statvfs.h>
 #include <vector>
+
+namespace fs = std::filesystem;
 
 namespace fox_install {
 
@@ -58,6 +62,41 @@ std::vector<std::string> models_for(const std::string& tier) {
     return {"qwen2.5:14b", "qwen2.5-coder:14b", "qwen2.5-coder:32b"};
 }
 
+std::vector<std::string> discover_custom_models(const Context& ctx) {
+    std::vector<std::string> out;
+    std::vector<fs::path> candidates;
+
+    // 1. ~/.config/foxml/models.private (one-off local overrides)
+    candidates.push_back(ctx.config_home / "foxml" / "models.private");
+
+    // 2. ~/code/*/foxml-models.txt (private repository discovery)
+    fs::path code_dir = ctx.home / "code";
+    std::error_code ec;
+    if (fs::is_directory(code_dir, ec)) {
+        for (const auto& entry : fs::directory_iterator(code_dir, ec)) {
+            if (entry.is_directory()) {
+                candidates.push_back(entry.path() / "foxml-models.txt");
+            }
+        }
+    }
+
+    for (const auto& p : candidates) {
+        if (!fs::exists(p, ec)) continue;
+        std::ifstream f(p);
+        std::string line;
+        while (std::getline(f, line)) {
+            // Trim whitespace
+            line.erase(0, line.find_first_not_of(" \t\r\n"));
+            auto last = line.find_last_not_of(" \t\r\n");
+            if (last != std::string::npos) line.erase(last + 1);
+
+            if (line.empty() || line[0] == '#') continue;
+            out.push_back(line);
+        }
+    }
+    return out;
+}
+
 }  // namespace
 
 // Returns $HOME free space in GB, or -1 if statvfs fails.
@@ -90,6 +129,16 @@ void run_models(Context& ctx) {
            std::to_string(vram) + "GB — tier: " + tier);
 
     auto models = models_for(tier);
+    auto custom = discover_custom_models(ctx);
+    if (!custom.empty()) {
+        ui::ok("discovered " + std::to_string(custom.size()) + " custom models");
+        models.insert(models.end(), custom.begin(), custom.end());
+    }
+
+    // Uniquify
+    std::sort(models.begin(), models.end());
+    models.erase(std::unique(models.begin(), models.end()), models.end());
+
     for (const auto& m : models) {
         ui::substep("pulling " + m);
         if (sh::run({"ollama", "pull", m}) != 0) {
