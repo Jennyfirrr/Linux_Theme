@@ -11,7 +11,9 @@
 #include <cctype>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <string>
+#include <unistd.h>
 
 namespace fs = std::filesystem;
 
@@ -56,6 +58,20 @@ bool fprint_via_lsusb() {
 
 }  // namespace
 
+// Confirm a detected piece of hardware. Returns the user's decision
+// (default = accept). Skipped silently under --yes / no-TTY — bash's
+// _gpu_prompt only ran interactively too.
+bool confirm_hw(const Context& ctx, const std::string& msg) {
+    if (ctx.assume_yes || !::isatty(STDIN_FILENO)) return true;
+    std::cout << "  " << msg << " [Y/n] " << std::flush;
+    std::string line;
+    if (!std::getline(std::cin, line)) return true;
+    auto a = line.find_first_not_of(" \t\r\n");
+    if (a == std::string::npos) return true;
+    char c = line[a];
+    return c == 'y' || c == 'Y' || c == '\n';
+}
+
 void run_detect(Context& ctx) {
     ui::section("Detecting hardware");
 
@@ -73,6 +89,30 @@ void run_detect(Context& ctx) {
            ((!ctx.has_nvidia && !ctx.has_amd_gpu && !ctx.has_intel_gpu) ? "(none detected)" : ""));
     ui::ok(std::string("Chassis: ") + (ctx.is_laptop ? "laptop" : "desktop"));
     if (ctx.has_fprint) ui::ok("Fingerprint reader present");
+
+    // Interactive confirmation per detected GPU — mirrors install.sh.legacy's
+    // _gpu_prompt. Lets the user opt out of e.g. the proprietary NVIDIA
+    // driver on a hybrid system without pre-knowing the right flag.
+    if (ctx.has_nvidia && !confirm_hw(ctx,
+        "NVIDIA detected — install nvidia-open-dkms + Hyprland Aquamarine tweaks?")) {
+        ctx.has_nvidia = false;
+        ui::ok("NVIDIA hardware acknowledged but install will skip it");
+    }
+    if (ctx.has_amd_gpu && !confirm_hw(ctx,
+        "AMD GPU detected — install vulkan-radeon + libva-mesa-driver?")) {
+        ctx.has_amd_gpu = false;
+        ui::ok("AMD hardware acknowledged but install will skip it");
+    }
+    if (ctx.has_intel_gpu && !confirm_hw(ctx,
+        "Intel GPU detected — install intel-media-driver + libva-intel-driver?")) {
+        ctx.has_intel_gpu = false;
+        ui::ok("Intel hardware acknowledged but install will skip it");
+    }
+    if (ctx.has_fprint && !confirm_hw(ctx,
+        "Fingerprint reader detected — install fprintd?")) {
+        ctx.has_fprint = false;
+        ui::ok("fingerprint hardware acknowledged but install will skip it");
+    }
 }
 
 }  // namespace fox_install

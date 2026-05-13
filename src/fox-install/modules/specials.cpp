@@ -287,12 +287,23 @@ void do_claude_hooks(const Context& ctx) {
 
 // ─── Bulk-dir deploys ──────────────────────────────────────────────
 struct BulkSpec {
-    const char* src_subdir;    // relative to script_dir
-    const char* dest_dir;      // relative to $HOME
-    const char* glob_ext;      // ".sh", ".conf", or "" for all files
-    bool        make_exec;     // chmod +x after deploy
+    const char* src_subdir;          // relative to script_dir
+    const char* dest_dir;            // relative to $HOME
+    const char* glob_ext;            // ".sh", ".conf", or "" for all files
+    bool        make_exec;           // chmod +x after deploy
     const char* label;
+    // Filenames to skip (nullptr-terminated). Used to exclude legacy
+    // bash scripts that have been replaced by native binaries.
+    const char* const* skip_names;
 };
+
+bool name_in_skip_list(const std::string& name, const char* const* skips) {
+    if (!skips) return false;
+    for (auto** s = const_cast<const char**>(skips); *s; ++s) {
+        if (name == *s) return true;
+    }
+    return false;
+}
 
 // Deploy every file matching glob_ext under src_subdir to dest_dir.
 // Idempotent — backup_and_copy snapshots existing files first.
@@ -308,6 +319,9 @@ std::size_t deploy_dir_files(const Context& ctx, const BulkSpec& spec) {
         if (!e.is_regular_file()) continue;
         if (spec.glob_ext && *spec.glob_ext) {
             if (e.path().extension() != spec.glob_ext) continue;
+        }
+        if (name_in_skip_list(e.path().filename().string(), spec.skip_names)) {
+            continue;
         }
         files.push_back(e.path());
     }
@@ -375,11 +389,16 @@ void run_specials(Context& ctx) {
     do_gemini(ctx);
     do_claude_hooks(ctx);
 
+    // fox-monitor-watch.sh has been replaced by fox-pulse + the
+    // `fox-install --only monitors,personalize` handler — skip it so
+    // the deployed runtime no longer depends on mappings.sh.
+    static const char* HYPR_SKIPS[] = { "fox-monitor-watch.sh", nullptr };
+
     static const BulkSpec BULK[] = {
-        { "shared/bin",                 ".local/bin",                "",    true,  "bin tools" },
-        { "shared/hyprland_scripts",    ".config/hypr/scripts",      ".sh", true,  "hyprland scripts" },
-        { "shared/waybar_scripts",      ".config/waybar/scripts",    ".sh", true,  "waybar scripts" },
-        { "shared/wallpapers",          ".wallpapers",               "",    false, "wallpapers" },
+        { "shared/bin",              ".local/bin",             "",    true,  "bin tools",        nullptr },
+        { "shared/hyprland_scripts", ".config/hypr/scripts",   ".sh", true,  "hyprland scripts", HYPR_SKIPS },
+        { "shared/waybar_scripts",   ".config/waybar/scripts", ".sh", true,  "waybar scripts",   nullptr },
+        { "shared/wallpapers",       ".wallpapers",            "",    false, "wallpapers",       nullptr },
     };
     for (auto& s : BULK) deploy_dir_files(ctx, s);
 

@@ -55,13 +55,19 @@ constexpr int   MONITOR_DEBOUNCE_MS = 2000;
 constexpr int   CONFIG_DEBOUNCE_MS = 500;
 
 struct HandlerSpec {
-    const char* name;        // class name used for handler script lookup
-    const char* fallback;    // legacy shell command to run if script absent
+    const char* name;            // class name used for handler script lookup
+    const char* legacy_script;   // legacy ~/.config/hypr/scripts/* fallback
+    const char* native_cmd;      // native fallback if neither script is present
 };
 
-const HandlerSpec FOCUS_HANDLER   = { "focus",   "focus-pulse.sh" };
-const HandlerSpec MONITOR_HANDLER = { "monitor", "fox-monitor-watch.sh" };
-const HandlerSpec CONFIG_HANDLER  = { "config",  "" };
+// Native fallbacks point at fox-install with --only — that orchestrator
+// drives the same logic the bash scripts used to source from mappings.sh.
+// Order of resolution: ~/.config/foxml/pulse.d/<name>.sh override →
+// legacy ~/.config/hypr/scripts/<script> → native command.
+const HandlerSpec FOCUS_HANDLER   = { "focus",   "focus-pulse.sh",       nullptr };
+const HandlerSpec MONITOR_HANDLER = { "monitor", "fox-monitor-watch.sh",
+    "fox-install --only monitors,personalize --yes" };
+const HandlerSpec CONFIG_HANDLER  = { "config",  nullptr, nullptr };
 
 std::string env_or(const char* k, const std::string& fallback) {
     const char* v = std::getenv(k);
@@ -93,9 +99,14 @@ void spawn_handler(const HandlerSpec& spec) {
     std::string cmd;
     if (have_script) {
         cmd = script;
-    } else if (spec.fallback && *spec.fallback) {
-        cmd = legacy_script_dir() + "/" + spec.fallback;
-        if (::access(cmd.c_str(), X_OK) != 0) return;
+    } else if (spec.legacy_script && *spec.legacy_script) {
+        cmd = legacy_script_dir() + "/" + spec.legacy_script;
+        if (::access(cmd.c_str(), X_OK) != 0) {
+            if (spec.native_cmd && *spec.native_cmd) cmd = spec.native_cmd;
+            else return;
+        }
+    } else if (spec.native_cmd && *spec.native_cmd) {
+        cmd = spec.native_cmd;
     } else {
         return;
     }
@@ -245,13 +256,11 @@ int main(int argc, char** argv) {
         if (std::strcmp(argv[i], "--help") == 0) {
             std::printf(
                 "Usage: fox-pulse [--verbose] [--version]\n\n"
-                "Handler scripts (override with FOX_PULSE_DIR):\n"
-                "  ~/.config/foxml/pulse.d/focus.sh\n"
-                "  ~/.config/foxml/pulse.d/monitor.sh\n"
-                "  ~/.config/foxml/pulse.d/config.sh\n"
-                "Fallback (when handler script absent):\n"
-                "  ~/.config/hypr/scripts/focus-pulse.sh\n"
-                "  ~/.config/hypr/scripts/fox-monitor-watch.sh\n");
+                "Handler resolution order (per event class):\n"
+                "  1. ~/.config/foxml/pulse.d/<class>.sh (user override)\n"
+                "  2. ~/.config/hypr/scripts/<legacy>.sh (legacy bash, if deployed)\n"
+                "  3. native fallback command (e.g. fox-install --only ...)\n\n"
+                "Event classes: focus, monitor, config\n");
             return 0;
         }
     }

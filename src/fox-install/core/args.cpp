@@ -35,12 +35,13 @@ void print_help(const char* argv0) {
         "fox-install — FoxML Theme Hub installer (C++ orchestrator)\n\n"
         "Usage: %s [theme] [flags]\n\n"
         "Global flags:\n"
-        "  -y, --yes        assume yes for every prompt\n"
-        "      --dry-run    print every command without executing it\n"
-        "      --full       enable every default-on + every major opt-in module\n"
-        "      --quiet      suppress per-step chatter (errors still print)\n"
-        "  -h, --help       show this help and exit\n"
-        "      --version    print version and exit\n\n"
+        "  -y, --yes         assume yes for every prompt\n"
+        "      --dry-run     print every command without executing it\n"
+        "      --full        enable every default-on + every major opt-in module\n"
+        "      --only <slugs> comma-separated allow-list; everything else skipped\n"
+        "      --quiet       suppress per-step chatter (errors still print)\n"
+        "  -h, --help        show this help and exit\n"
+        "      --version     print version and exit\n\n"
         "Modules (default-on shown with *):\n",
         argv0);
     for (std::size_t i = 0; i < MODULES_COUNT; ++i) {
@@ -78,6 +79,44 @@ bool parse(int argc, char** argv, Parsed& out, Context& ctx) {
             // "major opt-in" vs niche flags like --xgboost.
             for (std::size_t k = 0; k < MODULES_COUNT; ++k) {
                 out.module_enabled[k] = true;
+            }
+            continue;
+        }
+
+        // --only <slug>[,<slug>...]  → disable every module except the
+        // listed ones. Used by fox-pulse handlers and any other caller
+        // that wants a focused partial run (e.g.
+        // `fox-install --only monitors,personalize --yes` on Hyprland
+        // monitor hot-swap).
+        if (a == "--only" && i + 1 < argc) {
+            std::string list = argv[++i];
+            // Reset all modules to disabled, then enable the requested
+            // ones by slug.
+            for (std::size_t k = 0; k < MODULES_COUNT; ++k) {
+                out.module_enabled[k] = false;
+            }
+            std::size_t pos = 0;
+            while (pos <= list.size()) {
+                std::size_t comma = list.find(',', pos);
+                std::string slug = list.substr(
+                    pos, comma == std::string::npos ? std::string::npos : comma - pos);
+                if (!slug.empty()) {
+                    bool found = false;
+                    for (std::size_t k = 0; k < MODULES_COUNT; ++k) {
+                        if (slug == MODULES[k].slug) {
+                            out.module_enabled[k] = true;
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        std::fprintf(stderr,
+                            "fox-install: --only: unknown slug '%s'\n", slug.c_str());
+                        return false;
+                    }
+                }
+                if (comma == std::string::npos) break;
+                pos = comma + 1;
             }
             continue;
         }

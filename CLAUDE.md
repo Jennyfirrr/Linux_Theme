@@ -137,9 +137,20 @@ There is no AI framework, no plugin system, no "AI module" class to derive from.
 
 **Don't add new install steps to `install.sh` or `mappings.sh`** — write a `fox-install` module instead. The X-macro registry is the single source of truth.
 
-## AI integration (worked example)
+## AI integration (worked examples)
 
-The pattern documented in "Reusable headers" / "AI integration recipe" is now live in `src/fox-ai-doctor/`. It gathers system context (failed systemd units, `journalctl -p err`, kernel ring buffer), shapes a prompt, and streams the local Ollama model's response:
+The pattern documented in "Reusable headers" / "AI integration recipe" is live in **six** `src/fox-ai-*/` binaries:
+
+| Tool             | Captures                                          | Asks the model to |
+| ---------------- | ------------------------------------------------- | ----------------- |
+| `fox-ai-doctor`  | failed systemd units + `journalctl -p err` + kernel ring buffer | diagnose + suggest surgical fixes |
+| `fox-ai-snitch`  | `ss -tupn state established` + listening sockets + ufw rules    | flag suspicious egress (beaconing / exfil) |
+| `fox-ai-review`  | `git diff --cached` + CLAUDE.md + INVARIANTS.md   | emit `BLOCK:` / `WARN:` / `OK` lines (exits non-zero on BLOCK — wire as pre-commit hook) |
+| `fox-ai-oracle`  | KEYBINDS.md + README.md + installed fox-* + active theme | answer the user's natural-language `how do I…` question |
+| `fox-ai-audit`   | `arch-audit -uf` + lynis filtered output + `fox-audit` | rank top 3 actionable findings for THIS host |
+| `fox-ai-bouncer` | `journalctl -u usbguard --since -30min` + USBGuard policy | classify a blocked USB device as BENIGN/SUSPICIOUS/HOSTILE |
+
+The recipe behind each is identical:
 
 ```cpp
 #include "../fox-intel/fox_intel.hpp"
