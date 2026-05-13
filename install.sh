@@ -139,17 +139,26 @@ fi
 # never hidden.
 # ─────────────────────────────────────────
 build_total=$(make -C "$SCRIPT_DIR" -n install 2>/dev/null \
-              | grep -cE '^(g\+\+|ar |cp )' || true)
+              | grep -E '^(g\+\+|ar |cp )' | wc -l)
 [[ -z "$build_total" || "$build_total" -lt 1 ]] && build_total=1
 build_log=$(mktemp -t foxml-build.XXXXXX.log)
 trap 'rm -f "$build_log"' EXIT
+# Default build_rc up-front. If the polling loop bails early for any
+# reason (signal, arithmetic glitch, set -e foot-gun) we still have a
+# well-defined value for the failure check below.
+build_rc=0
 
 if [[ -t 1 ]]; then
     make -C "$SCRIPT_DIR" install >"$build_log" 2>&1 &
     build_pid=$!
     width=40
     while kill -0 "$build_pid" 2>/dev/null; do
-        done_n=$(grep -cE '^(g\+\+|ar |cp )' "$build_log" 2>/dev/null || echo 0)
+        # grep | wc -l always exits 0 and produces a single integer.
+        # `grep -c ... || echo 0` produces "0\n0" when count is zero
+        # (grep prints "0" then exits 1, then echo also prints "0"),
+        # which kills arithmetic. wc -l avoids that entirely.
+        done_n=$(grep -E '^(g\+\+|ar |cp )' "$build_log" 2>/dev/null | wc -l)
+        done_n=${done_n:-0}
         pct=$(( done_n * 100 / build_total ))
         (( pct > 100 )) && pct=100
         filled=$(( pct * width / 100 ))
