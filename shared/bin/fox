@@ -238,8 +238,8 @@ case "$1" in
     help|--help|-h)
         # `fox help <command>` → forward to the tool's own help.
         # `fox help --ai <command>` → AI deep-dive into the command's logic.
-        local use_ai=false
-        local sub=""
+        use_ai=false
+        sub=""
 
         # Check for --ai in any position
         for arg in "$@"; do
@@ -256,7 +256,7 @@ case "$1" in
         if [[ -n "$sub" ]]; then
             if $use_ai; then
                 # Find the source code for this command
-                local src_path=""
+                src_path=""
                 if [[ -f "$FOXML_DIR/shared/bin/fox-$sub" ]]; then
                     src_path="$FOXML_DIR/shared/bin/fox-$sub"
                 elif [[ -d "$FOXML_DIR/src/fox-$sub" ]]; then
