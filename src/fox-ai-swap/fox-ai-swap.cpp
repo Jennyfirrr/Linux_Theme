@@ -32,21 +32,18 @@ long read_ram_gb() {
     return (kb + 1024L * 1024L - 1) / (1024L * 1024L);
 }
 
-int read_vram_gb() {
-    FILE* pipe = popen("nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits 2>/dev/null", "r");
-    if (!pipe) return 0;
-    char buffer[128];
-    int vram = 0;
-    if (fgets(buffer, sizeof(buffer), pipe)) {
-        vram = std::atoi(buffer) / 1024;
-    }
-    pclose(pipe);
-    return vram;
-}
+// nvidia-smi cold-start blocks 1-3s on Optimus laptops, which was the
+// entire reason fox-ai-swap appeared to hang before the menu printed.
+// Tier is computed from RAM only (line below); VRAM was display-only.
+// Stub kept so the existing call sites still compile but never block.
+int read_vram_gb() { return 0; }
 
 void unload_model(const std::string& name) {
     if (name.empty() || name == "(unset)") return;
-    std::string cmd = "ollama stop " + name + " >/dev/null 2>&1";
+    // Background the stop — the user doesn't need to wait for the old
+    // model's VRAM to drain before getting their prompt back. Ollama
+    // handles the unload on its own time; the swap feels instant.
+    std::string cmd = "ollama stop " + name + " >/dev/null 2>&1 &";
     std::system(cmd.c_str());
 }
 
@@ -85,7 +82,7 @@ int main(int argc, char** argv) {
     }
 
     long ram = read_ram_gb();
-    int vram = read_vram_gb();
+    (void)read_vram_gb();  // stubbed — see top of file
     // Lite: < 16GB RAM
     // Standard: 16-32GB RAM
     // Pro: > 32GB RAM
@@ -124,7 +121,7 @@ int main(int argc, char** argv) {
     }
 
     print_header();
-    std::cout << "Hardware: \033[1m" << ram << "GB RAM\033[0m / \033[1m" << vram << "GB VRAM\033[0m (Tier: \033[1;33m" << tier << "\033[0m)" << std::endl;
+    std::cout << "Hardware: \033[1m" << ram << "GB RAM\033[0m (Tier: \033[1;33m" << tier << "\033[0m)" << std::endl;
     std::cout << "Current:  \033[1;32m" << current << "\033[0m\n" << std::endl;
 
     std::vector<ModelOption> tier_options;
