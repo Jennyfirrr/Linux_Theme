@@ -149,6 +149,42 @@ void do_firejail(const Context& ctx) {
         ui::ok("firejail already wired for firefox");
     }
 
+    // Walk back firecfg's overreach. The default firecfg wraps ~60
+    // binaries in /usr/local/bin/<name> → /usr/bin/firejail symlinks,
+    // and several of them are critically broken under the sandbox:
+    //
+    //   ssh / ssh-add / ssh-agent / ssh-keygen / ssh-askpass
+    //     — inside firejail, /dev/shm is a private noexec tmpfs;
+    //       gdk-pixbuf can't memfd_create() and ssh-askpass dies
+    //       loading the Papirus icon set (the user-visible symptom
+    //       is "Memfd: cannot create a memfd" + git push failure).
+    //   gnome-keyring / gnome-keyring-3 / gnome-keyring-daemon
+    //     — running the keyring inside a sandbox defeats the whole
+    //       SSH+GPG+secrets agent layer keyring_full sets up.
+    //   gh — the GitHub CLI needs free access to ~/.ssh.
+    //
+    // Remove these symlinks unconditionally; this is idempotent
+    // (re-runs are no-ops if the symlinks aren't there).
+    static const char* UNJAIL[] = {
+        "ssh", "ssh-add", "ssh-agent", "ssh-keygen", "ssh-askpass",
+        "gnome-keyring", "gnome-keyring-3", "gnome-keyring-daemon",
+        "gh",
+        nullptr,
+    };
+    int removed = 0;
+    for (auto** name = UNJAIL; *name; ++name) {
+        fs::path link = std::string("/usr/local/bin/") + *name;
+        std::error_code lec;
+        if (!fs::is_symlink(link, lec)) continue;
+        fs::path tgt = fs::read_symlink(link, lec);
+        if (tgt.string().find("firejail") == std::string::npos) continue;
+        if (sh::run({"sudo", "rm", link.string()}) == 0) ++removed;
+    }
+    if (removed > 0) {
+        ui::ok("de-jailed " + std::to_string(removed) +
+               " ssh/keyring/gh binaries (firejail breaks SSH agent + memfd)");
+    }
+
     fs::path firejail_dir = ctx.config_home / "firejail";
     fs::path local        = firejail_dir / "firefox.local";
     fs::create_directories(firejail_dir);
