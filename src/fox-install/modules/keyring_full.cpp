@@ -55,9 +55,29 @@ void run_keyring_full(Context& ctx) {
     }
     if (masked > 0) {
         ui::ok("masked " + std::to_string(masked) + " gnome-keyring autostart unit(s)");
-        ui::ok("on next login Hyprland will start gnome-keyring with ssh+gpg components");
     } else {
         ui::ok("gnome-keyring limited autostart units already masked");
+    }
+
+    // Bridge the current session. Masking the limited units stops new
+    // sessions from starting them, and the daemon that was holding
+    // SSH_AUTH_SOCK alive will go away on logout — but the user's
+    // current shells still point at /run/user/$UID/keyring/ssh and
+    // will appear broken until next Hyprland login.
+    //
+    // --replace makes a running gnome-keyring-daemon hand its socket
+    // over to the new full-components one in-place, so SSH agent
+    // stays live without re-login.
+    std::string keyring_bin;
+    if (sh::capture({"sh", "-c", "command -v gnome-keyring-daemon"}, keyring_bin) &&
+        !keyring_bin.empty()) {
+        sh::run({"sh", "-c",
+                 "/usr/bin/gnome-keyring-daemon --start --replace "
+                 "--components=pkcs11,secrets,ssh,gpg "
+                 ">/dev/null 2>&1 &"});
+        ui::ok("started gnome-keyring (ssh+gpg+secrets+pkcs11) — SSH agent live now");
+    } else {
+        ui::ok("on next login Hyprland will start gnome-keyring with ssh+gpg components");
     }
 
     // De-jail ssh if firejail symlinked /usr/local/bin/ssh.
