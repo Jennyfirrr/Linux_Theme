@@ -127,60 +127,19 @@ fi
 
 if [[ ! -x "$FOX_INSTALL_BIN" ]]; then
     echo ":: Building native orchestrator (fox-install + libfox-intel + ~10 fox-* tools)"
+    echo "   First-time compile: ~30-90s. Terminal stays quiet while make runs."
 elif [[ "${FOXML_UPDATED:-0}" == "1" ]]; then
     echo ":: Recompiling after self-update"
 fi
-
-# ─────────────────────────────────────────
-# Pacman-style progress bar for the C++ build. Pre-counts compile steps
-# via `make -n`, runs the real make in the background writing to a log,
-# polls every 200ms and renders a bar based on how many g++/ar/cp steps
-# have completed. On failure dumps the tail of the log so the error is
-# never hidden.
-# ─────────────────────────────────────────
-build_total=$(make -C "$SCRIPT_DIR" -n install 2>/dev/null \
-              | grep -E '^(g\+\+|ar |cp )' | wc -l)
-[[ -z "$build_total" || "$build_total" -lt 1 ]] && build_total=1
-build_log=$(mktemp -t foxml-build.XXXXXX.log)
-trap 'rm -f "$build_log"' EXIT
-# Default build_rc up-front. If the polling loop bails early for any
-# reason (signal, arithmetic glitch, set -e foot-gun) we still have a
-# well-defined value for the failure check below.
-build_rc=0
-
-if [[ -t 1 ]]; then
-    make -C "$SCRIPT_DIR" install >"$build_log" 2>&1 &
-    build_pid=$!
-    width=40
-    while kill -0 "$build_pid" 2>/dev/null; do
-        # grep | wc -l always exits 0 and produces a single integer.
-        # `grep -c ... || echo 0` produces "0\n0" when count is zero
-        # (grep prints "0" then exits 1, then echo also prints "0"),
-        # which kills arithmetic. wc -l avoids that entirely.
-        done_n=$(grep -E '^(g\+\+|ar |cp )' "$build_log" 2>/dev/null | wc -l)
-        done_n=${done_n:-0}
-        pct=$(( done_n * 100 / build_total ))
-        (( pct > 100 )) && pct=100
-        filled=$(( pct * width / 100 ))
-        bar=$(printf '%*s' "$filled" | tr ' ' '#')
-        empty=$(printf '%*s' $(( width - filled )) | tr ' ' '-')
-        printf '\r   building [%s%s] %3d%% (%d/%d)  ' "$bar" "$empty" "$pct" "$done_n" "$build_total"
-        sleep 0.2
-    done
-    wait "$build_pid"; build_rc=$?
-    # Render final 100% so the bar doesn't visually freeze partway.
-    bar=$(printf '%*s' "$width" | tr ' ' '#')
-    printf '\r   building [%s] 100%% (%d/%d)  \n' "$bar" "$build_total" "$build_total"
-else
-    # Non-TTY (CI, piped): just run quietly, dump on error.
-    make -C "$SCRIPT_DIR" install >"$build_log" 2>&1
-    build_rc=$?
-fi
-
-if [[ "$build_rc" -ne 0 ]]; then
-    echo "" >&2
-    echo "error: native orchestrator build failed:" >&2
-    tail -50 "$build_log" >&2
+# Silent build with loud-on-failure rerun. Earlier attempts at a bash-side
+# progress bar (commits 6fc790f / da8b111) tripped set -e / pipefail in
+# subtle ways depending on which subshell context the script was running
+# under; reverted to the simple pattern. The module-level progress bar
+# inside the C++ orchestrator (ui::module_progress) handles the per-step
+# pretty output once make hands off to fox-install.
+if ! make -C "$SCRIPT_DIR" install >/dev/null 2>&1; then
+    echo "error: native orchestrator build failed; rerunning loudly:" >&2
+    make -C "$SCRIPT_DIR" install
     exit 1
 fi
 
