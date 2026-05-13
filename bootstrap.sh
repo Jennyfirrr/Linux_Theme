@@ -74,10 +74,54 @@ for dev in /sys/bus/pci/devices/*/; do
 done
 
 cd "$FOXML_DIR"
+
+# ─── Choose installer ──────────────────────────────────────────────
+# C++ (./install.sh + native fox-install) is the default. Legacy bash
+# (./legacy/install.sh, frozen at pre-cutover SHA 596a81a) is the
+# fallback for users who hit a C++ bug on a fresh laptop.
+#
+# Override the prompt with FOXML_INSTALLER=cpp|bash, or via --yes in
+# the bootstrap args (curl-pipe path defaults to C++ silently).
+INSTALLER_PATH="./install.sh"
+INSTALLER_LABEL="C++ orchestrator"
+_force=""
+case "${FOXML_INSTALLER:-}" in
+    cpp|c++)        _force=cpp ;;
+    bash|legacy)    _force=bash ;;
+esac
+
+if [[ -z "$_force" && -t 0 ]]; then
+    echo ""
+    echo "  ╭───────────────────────────────────────────╮"
+    echo "  │  FoxML Theme Hub — pick install path      │"
+    echo "  ├───────────────────────────────────────────┤"
+    echo "  │   1) C++ (recommended)                    │"
+    echo "  │      Native orchestrator + --full review  │"
+    echo "  │      wizard + --resume / --phase / --only │"
+    echo "  │      Mostly works — in progress for       │"
+    echo "  │      testing.                             │"
+    echo "  │                                           │"
+    echo "  │   2) Bash (legacy fallback)               │"
+    echo "  │      Pre-cutover bash installer, frozen   │"
+    echo "  │      at the migration cutover. Safe       │"
+    echo "  │      fallback if the C++ path breaks.     │"
+    echo "  ╰───────────────────────────────────────────╯"
+    read -r -p "  Pick [1/2, default 1]: " _pick
+    case "$_pick" in
+        2|bash|legacy|b) _force=bash ;;
+        *) _force=cpp ;;
+    esac
+fi
+
+if [[ "$_force" == "bash" ]]; then
+    INSTALLER_PATH="./legacy/install.sh"
+    INSTALLER_LABEL="bash legacy installer"
+fi
+
 echo ""
-echo "Running install.sh $THEME_NAME ${INSTALL_FLAGS[*]} ..."
+echo "Running $INSTALLER_LABEL: $INSTALLER_PATH $THEME_NAME ${INSTALL_FLAGS[*]}"
 echo ""
-./install.sh "$THEME_NAME" "${INSTALL_FLAGS[@]}"
+"$INSTALLER_PATH" "$THEME_NAME" "${INSTALL_FLAGS[@]}"
 
 echo ""
 echo "╭──────────────────────────────────────────────────────────────────╮"
