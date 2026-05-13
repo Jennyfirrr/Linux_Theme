@@ -5,11 +5,35 @@
 #include <algorithm>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <cstdlib>
 #include <cstring>
 #include <thread>
 #include <chrono>
 
 FoxIntel::FoxIntel(std::string model) : default_model(model) {
+    // Allow user/env override of the default model.
+    // Precedence: FOXAI_MODEL env > ~/.config/foxml/ai-model.conf > ctor arg.
+    // Config file is written by `fox-ai-default`.
+    if (const char* env = std::getenv("FOXAI_MODEL"); env && *env) {
+        default_model = env;
+    } else if (const char* home = std::getenv("HOME"); home && *home) {
+        std::ifstream f(std::string(home) + "/.config/foxml/ai-model.conf");
+        std::string line;
+        while (std::getline(f, line)) {
+            if (line.empty() || line[0] == '#') continue;
+            auto eq = line.find('=');
+            if (eq == std::string::npos) continue;
+            if (line.substr(0, eq) != "MODEL") continue;
+            std::string v = line.substr(eq + 1);
+            while (!v.empty() && (v.front() == ' '  || v.front() == '\t' ||
+                                  v.front() == '"'  || v.front() == '\'')) v.erase(0, 1);
+            while (!v.empty() && (v.back()  == ' '  || v.back()  == '\t' ||
+                                  v.back()  == '\r' || v.back()  == '\n' ||
+                                  v.back()  == '"'  || v.back()  == '\'')) v.pop_back();
+            if (!v.empty()) { default_model = v; break; }
+        }
+    }
+
     curl_global_init(CURL_GLOBAL_DEFAULT);
     curl = curl_easy_init();
 }
