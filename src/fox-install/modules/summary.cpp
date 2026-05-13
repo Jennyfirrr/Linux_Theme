@@ -13,7 +13,9 @@
 #include "../core/ui.hpp"
 
 #include <filesystem>
+#include <sstream>
 #include <string>
+#include <system_error>
 
 namespace fs = std::filesystem;
 
@@ -82,6 +84,52 @@ void run_summary(Context& ctx) {
     // Wallpaper count.
     std::size_t w = count_wallpapers(ctx.home / ".wallpapers");
     if (w > 0) ui::summary_row("wallpapers", std::to_string(w) + " file(s)");
+
+    // Backup directory (only meaningful if symlinks actually wrote any).
+    std::error_code ec;
+    if (fs::is_directory(ctx.backup_dir, ec) && !ec) {
+        ui::summary_row("backups saved to", ctx.backup_dir.string());
+    }
+
+    // fox-doctor headline result, matching the bash summary's
+    // "Health check" row. fox-doctor's last line is "Result: ...";
+    // we strip ANSI codes for clean alignment. Skipped when fox-doctor
+    // isn't on PATH yet (first install).
+    if (!ctx.dry_run) {
+        std::string doctor_out;
+        if (sh::capture({"sh", "-c", "fox-doctor 2>&1 | tail -40"}, doctor_out)) {
+            std::string result_line;
+            std::istringstream is(doctor_out);
+            std::string line;
+            while (std::getline(is, line)) {
+                if (line.rfind("Result:", 0) == 0 ||
+                    line.find("Result:") != std::string::npos) {
+                    result_line = line;
+                }
+            }
+            if (!result_line.empty()) {
+                // Strip ANSI \033[…m sequences for column alignment.
+                std::string clean;
+                clean.reserve(result_line.size());
+                for (std::size_t i = 0; i < result_line.size(); ++i) {
+                    if (result_line[i] == '\033') {
+                        while (i < result_line.size() && result_line[i] != 'm') ++i;
+                        continue;
+                    }
+                    clean.push_back(result_line[i]);
+                }
+                // Strip leading "Result: " if present.
+                auto pos = clean.find("Result:");
+                if (pos != std::string::npos) clean = clean.substr(pos + 7);
+                auto a = clean.find_first_not_of(" \t");
+                if (a != std::string::npos) clean = clean.substr(a);
+                if (!clean.empty()) {
+                    ui::summary_row("health check", clean);
+                    ui::substep("run `fox doctor` for the full report");
+                }
+            }
+        }
+    }
 
     if (ctx.dry_run) {
         ui::substep("dry-run: no changes were applied");

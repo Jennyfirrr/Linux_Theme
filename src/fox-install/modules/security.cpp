@@ -96,15 +96,9 @@ std::string read_file(const fs::path& p) {
     return ss.str();
 }
 
-bool prompt_yn(const std::string& msg, bool default_yes) {
-    if (!tty_in()) return default_yes;
-    std::cout << msg << " [" << (default_yes ? "Y/n" : "y/N") << "] " << std::flush;
-    std::string line;
-    if (!std::getline(std::cin, line)) return default_yes;
-    line = strip(line);
-    if (line.empty()) return default_yes;
-    return line[0] == 'y' || line[0] == 'Y';
-}
+// prompt_yn deleted — use ui::ask_yn(msg, default, ctx.assume_yes) at
+// callsites. ui::ask_yn reads a single char without Enter and guards
+// against stray keypresses.
 
 // (install_ufw_baseline moved to modules/ufw.cpp — runs as the --ufw
 // module unconditionally before --secure dispatches.)
@@ -292,7 +286,7 @@ void install_usbguard(const Context& ctx) {
         } else {
             sh::run({"sh", "-c", "sudo usbguard list-devices 2>/dev/null | sed 's/^/    /'"});
         }
-        if (tty_in() && !prompt_yn("Whitelist all of these as trusted devices?", false)) {
+        if (!ui::ask_yn("Whitelist all of these as trusted devices?", false, ctx.assume_yes)) {
             ui::warn("USBGuard install aborted — unplug suspicious devices and re-run --secure");
             return;
         }

@@ -137,12 +137,9 @@ void maybe_offer_setup(const Context& ctx) {
                                       marker.string() + " to re-prompt"); return; }
     if (!have("fox-dispatch")) return;
 
-    std::cout << "\n  fox-dispatch (phone alerts) is not yet configured.\n"
-                 "  Set up Discord/Telegram webhook now? [y/N] " << std::flush;
-    std::string line;
-    if (!std::getline(std::cin, line)) line = "n";
-    bool yes = !line.empty() && (line[0] == 'y' || line[0] == 'Y');
-    if (yes) {
+    std::cout << "\n  fox-dispatch (phone alerts) is not yet configured.\n";
+    if (ui::ask_yn("  Set up Discord/Telegram webhook now?",
+                   /*default_yes=*/false, ctx.assume_yes)) {
         sh::run({"fox-dispatch", "--setup"});
     } else {
         fs::create_directories(marker.parent_path());

@@ -52,14 +52,7 @@ std::string read_text(const fs::path& p) {
     return strip(ss.str());
 }
 
-bool prompt_yn(const std::string& msg, bool default_yes) {
-    std::cout << "  " << msg << " [" << (default_yes ? "Y/n" : "y/N") << "] " << std::flush;
-    std::string line;
-    if (!std::getline(std::cin, line)) return default_yes;
-    line = strip(line);
-    if (line.empty()) return default_yes;
-    return line[0] == 'y' || line[0] == 'Y';
-}
+// y/n prompts go through ui::ask_yn now — see callsites below.
 
 std::string prompt_line(const std::string& msg) {
     std::cout << "    " << msg << std::flush;
@@ -108,7 +101,7 @@ void persist_cpupower(const std::string& key, const std::string& val) {
 
 }  // namespace
 
-void run_throttling(Context&) {
+void run_throttling(Context& ctx) {
     ui::section("CPU throttling / power wizard");
 
     if (sh::dry_run()) {
@@ -134,7 +127,7 @@ void run_throttling(Context&) {
         "│ ThinkPads) the 'throttled' MSR fix. Each step is opt-in.        │\n"
         "╰──────────────────────────────────────────────────────────────────╯\n";
 
-    if (!prompt_yn("Configure CPU throttling now?", false)) return;
+    if (!ui::ask_yn("Configure CPU throttling now?", false, ctx.assume_yes)) return;
 
     bool is_intel = is_intel_cpu();
     bool thinkpad = is_thinkpad();
@@ -145,7 +138,7 @@ void run_throttling(Context&) {
     if (is_intel && fs::exists(no_turbo)) {
         std::string state = read_text(no_turbo) == "1" ? "disabled" : "enabled";
         std::cout << "\n  Intel Turbo Boost is currently: " << state << "\n";
-        if (prompt_yn("Disable Intel turbo on every boot?", false)) {
+        if (ui::ask_yn("Disable Intel turbo on every boot?", false, ctx.assume_yes)) {
             sh::run({"sudo", "install", "-d", "/etc/tmpfiles.d"});
             sh::run({"sh", "-c",
                      "printf '%s\\n' '# Re-applied on every boot by systemd-tmpfiles' "
@@ -161,7 +154,7 @@ void run_throttling(Context&) {
 
     // 2. cpupower max frequency.
     std::cout << "\n";
-    if (prompt_yn("Cap CPU max frequency via cpupower?", false)) {
+    if (ui::ask_yn("Cap CPU max frequency via cpupower?", false, ctx.assume_yes)) {
         if (!pacman_has("cpupower")) {
             std::cout << "    Installing cpupower...\n";
             sh::run({"sudo", "pacman", "-S", "--needed", "--noconfirm", "cpupower"});
@@ -224,7 +217,7 @@ void run_throttling(Context&) {
         std::cout << "\n"
             "  ThinkPad detected — 'throttled' applies an MSR-based undervolt\n"
             "  + thermal-cap fix, configured via /etc/throttled.conf.\n";
-        if (prompt_yn("Install throttled from AUR?", false)) {
+        if (ui::ask_yn("Install throttled from AUR?", false, ctx.assume_yes)) {
             if (!pacman_has("throttled")) {
                 if (!aur.empty()) {
                     sh::run({aur, "-S", "--needed", "throttled"});

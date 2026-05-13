@@ -4,11 +4,18 @@
 //   * foxml-doh.conf  — DNS servers + DoH (NO DNSSEC line; lives in the
 //                       separate drop-in below so a sibling-strip pass
 //                       doesn't have to touch this file).
-//   * 00-foxml-dnssec.conf — DNSSEC=allow-downgrade (laptop-safe default).
+//   * 00-foxml-dnssec.conf — DNSSEC level. Defaults to allow-downgrade
+//                       (laptop-safe). Interactive 0/1/2 picker prompts
+//                       when running on a TTY; --yes / no-TTY accepts
+//                       the default.
 //   * comment out any explicit DNSSEC= in /etc/systemd/resolved.conf
 //     (main config wins against drop-ins in some load orders).
 //   * strip DNSSEC= from any sibling drop-ins so the lexically-first
 //     foxml-dnssec.conf is the sole source of truth.
+//   * clear NetworkManager per-connection DNSSEC overrides — NM pushes
+//     per-link DNSSEC settings to resolved that beat the global one;
+//     a connection with connection.dnssec=yes will keep failing even
+//     after the drop-in lands.
 
 #include "../core/context.hpp"
 #include "../core/shell.hpp"
@@ -31,8 +38,16 @@ constexpr const char* DOH_BODY =
     "FallbackDNS=1.1.1.1 8.8.8.8\n";
 
 constexpr const char* DOH_PATH       = "/etc/systemd/resolved.conf.d/foxml-doh.conf";
-constexpr const char* DNSSEC_BODY    = "[Resolve]\nDNSSEC=allow-downgrade\n";
 constexpr const char* DNSSEC_PATH    = "/etc/systemd/resolved.conf.d/00-foxml-dnssec.conf";
+
+// Map the bash picker's 0/1/2 to the literal resolved.conf value.
+const char* dnssec_value(char choice) {
+    switch (choice) {
+        case '0': return "no";
+        case '2': return "yes";
+        default:  return "allow-downgrade";   // '1' or anything unexpected
+    }
+}
 
 bool write_root_file(const fs::path& path, const std::string& body) {
     fs::path tmp = "/tmp/foxin-priv.conf.tmp";
@@ -72,10 +87,22 @@ void run_privacy(Context& ctx) {
     }
     ui::ok("wrote " + std::string(DOH_PATH));
 
-    if (!write_root_file(DNSSEC_PATH, DNSSEC_BODY)) {
+    // DNSSEC strictness picker. Mirrors the bash install_resolved_dnssec
+    // [0/1/2] choice. Defaults to '1' (allow-downgrade) for the
+    // recommended laptop posture: validate when upstream supports it,
+    // accept gracefully when it doesn't.
+    std::printf("  DNSSEC strictness:\n"
+                "    [0] off — DoH only (no validation)\n"
+                "    [1] relaxed (allow-downgrade) [recommended]\n"
+                "    [2] strict (yes) — can wedge DNS on hotel/cafe wifi\n"
+                "  choose [1]: ");
+    char picked = ui::ask_choice("", "012", '1', ctx.assume_yes);
+    const char* val = dnssec_value(picked);
+    std::string dnssec_body = std::string("[Resolve]\nDNSSEC=") + val + "\n";
+    if (!write_root_file(DNSSEC_PATH, dnssec_body)) {
         ui::warn("could not install " + std::string(DNSSEC_PATH));
     } else {
-        ui::ok("wrote " + std::string(DNSSEC_PATH) + " (DNSSEC=allow-downgrade)");
+        ui::ok("wrote " + std::string(DNSSEC_PATH) + " (DNSSEC=" + val + ")");
     }
 
     // Comment any active DNSSEC= line in the main resolved.conf — leaving
@@ -107,7 +134,28 @@ void run_privacy(Context& ctx) {
         ui::ok("linked /etc/resolv.conf → stub-resolv.conf");
     }
 
-    ui::ok("DoH + DNSSEC=allow-downgrade active");
+    // Clear NetworkManager per-connection DNSSEC overrides — NM pushes
+    // per-link DNSSEC settings to resolved that beat the global setting
+    // outright. A connection with connection.dnssec=yes will keep
+    // failing regardless of what 00-foxml-dnssec.conf says. Empty value
+    // means "inherit from systemd-resolved global". Cheap + idempotent.
+    if (sh::run({"sh", "-c",
+                 "command -v nmcli >/dev/null 2>&1 && "
+                 "systemctl is-active --quiet NetworkManager"}) == 0) {
+        sh::run({"sh", "-c",
+                 "_cleared=0; "
+                 "while IFS= read -r uuid; do "
+                 "  [ -z \"$uuid\" ] && continue; "
+                 "  cur=$(nmcli -t -g connection.dnssec connection show \"$uuid\" 2>/dev/null); "
+                 "  if [ -n \"$cur\" ] && [ \"$cur\" != \"--\" ] && [ \"$cur\" != \"default\" ]; then "
+                 "    sudo nmcli connection modify \"$uuid\" connection.dnssec \"\" 2>/dev/null && "
+                 "    _cleared=$((_cleared + 1)); "
+                 "  fi; "
+                 "done < <(nmcli -t -f UUID connection show 2>/dev/null); "
+                 "[ \"$_cleared\" -gt 0 ] && echo \"  + cleared NM DNSSEC overrides on $_cleared connection(s)\" || true"});
+    }
+
+    ui::ok("DoH + DNSSEC active");
 }
 
 }  // namespace fox_install

@@ -6,6 +6,7 @@
 #include <iostream>
 #include <string>
 #include <sys/ioctl.h>
+#include <termios.h>
 #include <unistd.h>
 
 namespace fox_install::ui {
@@ -96,14 +97,87 @@ void summary_row(const std::string& label, const std::string& value) {
         c(C_DIM), label.c_str(), c(C_RESET), value.c_str());
 }
 
+namespace {
+
+// RAII helper: put STDIN into cbreak (non-canonical, no echo) for the
+// duration of one prompt, then restore the original termios. Restore
+// even on early return / exception. Falls through silently to "no-op"
+// when stdin isn't a TTY — caller already gates on isatty().
+class CbreakMode {
+public:
+    CbreakMode() {
+        if (::tcgetattr(STDIN_FILENO, &old_) != 0) return;
+        struct termios n = old_;
+        n.c_lflag &= ~(ICANON | ECHO);
+        n.c_cc[VMIN]  = 1;          // read returns after 1 byte
+        n.c_cc[VTIME] = 0;          // no inter-char timeout
+        if (::tcsetattr(STDIN_FILENO, TCSANOW, &n) == 0) active_ = true;
+    }
+    ~CbreakMode() {
+        if (active_) ::tcsetattr(STDIN_FILENO, TCSANOW, &old_);
+    }
+    CbreakMode(const CbreakMode&)            = delete;
+    CbreakMode& operator=(const CbreakMode&) = delete;
+private:
+    struct termios old_{};
+    bool active_ = false;
+};
+
+// Read one byte. Returns 0 on EOF / read error.
+char read_one_char() {
+    char c = 0;
+    ssize_t n = ::read(STDIN_FILENO, &c, 1);
+    return n == 1 ? c : 0;
+}
+
+}  // namespace
+
 bool ask_yn(const std::string& question, bool default_yes, bool assume_yes) {
     if (assume_yes || !::isatty(STDIN_FILENO)) return default_yes;
     std::printf("%s [%s] ", question.c_str(), default_yes ? "Y/n" : "y/N");
     std::fflush(stdout);
-    std::string line;
-    if (!std::getline(std::cin, line)) return default_yes;
-    if (line.empty()) return default_yes;
-    return line[0] == 'y' || line[0] == 'Y';
+
+    CbreakMode raw;
+    bool result = default_yes;
+    for (;;) {
+        char c = read_one_char();
+        if (c == 0) break;                                    // EOF / closed stdin
+        if (c == '\n' || c == '\r') { result = default_yes; break; }
+        if (c == 'y' || c == 'Y')    { result = true;        break; }
+        if (c == 'n' || c == 'N')    { result = false;       break; }
+        if (c == 3 /* Ctrl-C */)     { std::printf("^C\n"); std::exit(130); }
+        // Anything else: ignore + re-loop (guards against typos / arrow
+        // keys / accidental key bumps).
+    }
+    // Echo the resolved choice ourselves since ECHO was off.
+    std::printf("%c\n", result ? 'y' : 'n');
+    return result;
+}
+
+char ask_choice(const std::string& question,
+                const std::string& valid_chars,
+                char default_c,
+                bool assume_yes) {
+    if (assume_yes || !::isatty(STDIN_FILENO)) return default_c;
+    if (valid_chars.find(default_c) == std::string::npos) {
+        // Caller bug — silently return default anyway rather than loop forever.
+        return default_c;
+    }
+    std::printf("%s ", question.c_str());
+    std::fflush(stdout);
+
+    CbreakMode raw;
+    char result = default_c;
+    for (;;) {
+        char c = read_one_char();
+        if (c == 0) break;
+        if (c == '\n' || c == '\r') { result = default_c; break; }
+        if (c == 3 /* Ctrl-C */)    { std::printf("^C\n"); std::exit(130); }
+        if (valid_chars.find(c) != std::string::npos) { result = c; break; }
+        // Anything else: ignore + keep waiting.
+    }
+    std::printf("%c\n", result);
+    return result;
 }
 
 }  // namespace fox_install::ui

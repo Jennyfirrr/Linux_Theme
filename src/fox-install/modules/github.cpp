@@ -62,15 +62,7 @@ std::string prompt_line(const std::string& msg, const std::string& fallback = ""
     return line.empty() ? fallback : line;
 }
 
-bool prompt_yn(const std::string& msg, bool default_yes) {
-    if (!tty_in()) return default_yes;
-    std::cout << msg << " [" << (default_yes ? "Y/n" : "y/N") << "] " << std::flush;
-    std::string line;
-    if (!std::getline(std::cin, line)) return default_yes;
-    line = strip(line);
-    if (line.empty()) return default_yes;
-    return line[0] == 'y' || line[0] == 'Y';
-}
+// y/n prompts go through ui::ask_yn now.
 
 // Random 40-char alphanumeric passphrase. Matches the bash _gen_passphrase
 // (LC_ALL=C tr -dc 'A-Za-z0-9' </dev/urandom | head -c 40).
@@ -142,7 +134,7 @@ void ensure_ssh_key_protected(const Context& ctx, const std::string& gh_user) {
     ui::warn(key.string() + " has no passphrase");
     ui::substep("anyone with this file has your GitHub push access until revoked");
     if (tty_in() && !ctx.assume_yes) {
-        if (!prompt_yn("Set a passphrase now?", true)) {
+        if (!ui::ask_yn("Set a passphrase now?", true, ctx.assume_yes)) {
             ui::substep("skipped — set later with: ssh-keygen -p -f " + key.string());
             return;
         }
@@ -311,7 +303,7 @@ void run_github(Context& ctx) {
         "╰──────────────────────────────────────────────────────────────────╯\n";
 
     if (tty_in() && !ctx.assume_yes) {
-        if (!prompt_yn("Set up GitHub workspace?", false)) return;
+        if (!ui::ask_yn("Set up GitHub workspace?", false, ctx.assume_yes)) return;
     }
 
     if (!have("gh")) {

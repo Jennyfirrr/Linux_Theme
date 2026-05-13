@@ -52,14 +52,7 @@ std::string prompt_line(const std::string& msg, const std::string& def = "") {
     return line.empty() ? def : line;
 }
 
-bool prompt_yn(const std::string& msg, bool default_yes) {
-    std::cout << msg << " [" << (default_yes ? "Y/n" : "y/N") << "] " << std::flush;
-    std::string line;
-    if (!std::getline(std::cin, line)) return default_yes;
-    line = strip(line);
-    if (line.empty()) return default_yes;
-    return line[0] == 'y' || line[0] == 'Y';
-}
+// Use ui::ask_yn for y/n prompts (single-char, no Enter, guards stray keys).
 
 bool write_root_file(const fs::path& path, const std::string& body,
                      const std::string& mode = "0644") {
@@ -143,7 +136,7 @@ void run_ssh_harden(Context& ctx) {
         "│ login. WARNING: ensure you have SSH keys before disabling pwd.  │\n"
         "╰──────────────────────────────────────────────────────────────────╯\n";
 
-    if (!prompt_yn("Run SSH hardening wizard?", false)) return;
+    if (!ui::ask_yn("Run SSH hardening wizard?", false, ctx.assume_yes)) return;
 
     if (!sh::sudo_warmup()) {
         ui::err("sudo cache cold — `sudo -v` first");
@@ -177,7 +170,7 @@ void run_ssh_harden(Context& ctx) {
         } else {
             std::cout << "  Detected " << n << " authorized public key(s).\n"
                          "  Disabling password auth is the recommended secure default.\n";
-            if (prompt_yn("  Disable password authentication (keys-only)?", true)) {
+            if (ui::ask_yn("  Disable password authentication (keys-only)?", true, ctx.assume_yes)) {
                 disable_pass = "no";          // "PasswordAuthentication no" = keys-only
             }
         }

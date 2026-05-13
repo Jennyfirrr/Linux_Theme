@@ -58,18 +58,12 @@ bool fprint_via_lsusb() {
 
 }  // namespace
 
-// Confirm a detected piece of hardware. Returns the user's decision
-// (default = accept). Skipped silently under --yes / no-TTY — bash's
-// _gpu_prompt only ran interactively too.
+// Default-accept y/n confirmation per detected piece of hardware.
+// Goes through ui::ask_yn so the prompt picks up the single-char read +
+// stray-key guard from the central helper. Skipped silently under
+// --yes / no-TTY.
 bool confirm_hw(const Context& ctx, const std::string& msg) {
-    if (ctx.assume_yes || !::isatty(STDIN_FILENO)) return true;
-    std::cout << "  " << msg << " [Y/n] " << std::flush;
-    std::string line;
-    if (!std::getline(std::cin, line)) return true;
-    auto a = line.find_first_not_of(" \t\r\n");
-    if (a == std::string::npos) return true;
-    char c = line[a];
-    return c == 'y' || c == 'Y' || c == '\n';
+    return ui::ask_yn(msg, /*default_yes=*/true, ctx.assume_yes);
 }
 
 void run_detect(Context& ctx) {
