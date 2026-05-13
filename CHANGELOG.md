@@ -4,6 +4,19 @@ All notable changes to the Fox ML theme.
 
 ---
 
+## 2026-05-13 — v2.7.0
+
+### Unified AI Model Management & Dynamic Sync
+
+- **Unified C++ AI Hotswapper (`fox-ai-swap`)** — A new, fast C++ utility replacing the bash-based model switcher. Features improved hardware detection (RAM/VRAM), a "Show All Models" browser, and intelligent model tag expansion.
+- **Dynamic Neovim AI Integration** — Updated Neovim configuration (`init.lua`) to dynamically read the preferred AI model from `~/.config/opencode/opencode.json` on startup. CodeCompanion and Avante now stay perfectly in sync with the global system choice.
+- **AI-Powered CLI Help** — Added `fox help --ai [command]` support. It identifies the source code for any tool (C++ or Bash) and uses the local AI model to provide a technical deep-dive into its logic and invariants.
+- **C++ Core Synchronization** — Updated the `FoxIntel` library to prioritize global OpenCode settings, ensuring all C++ CLI tools (`fox-ai-review`, `fask`, etc.) respect the user's selected model.
+- **Neovim Syntax Stability** — Fixed a Lua syntax regression in the plugin configuration to ensure reliable headless syncs and startup.
+- **Network Compatibility** — Added the ability to easily toggle MAC randomization to ensure compatibility with restricted environments like dorm WiFi.
+
+---
+
 ## 2026-05-12 — v2.6.1
 
 ### Install/CI follow-ups for v2.6.0
