@@ -1,0 +1,11 @@
+{
+  "accent1": "{{ANSI_ACCENT1}}",
+  "accent2": "{{ANSI_ACCENT2}}",
+  "accent3": "{{ANSI_ACCENT3}}",
+  "accent4": "{{ANSI_ACCENT4}}",
+  "accent5": "{{ANSI_ACCENT5}}",
+  "text": "{{ANSI_TEXT}}",
+  "muted": "{{ANSI_MUTED}}",
+  "error": "{{ANSI_ERROR}}",
+  "ok": "{{ANSI_OK}}"
+}

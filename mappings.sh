@@ -82,6 +82,9 @@ TEMPLATE_MAPPINGS=(
     # Git (delta pager — included from ~/.gitconfig, doesn't touch user identity)
     "git/delta.gitconfig|~/.config/git/delta-foxml.gitconfig"
 
+    # FoxML Shared ANSI colors (for C++ CLI tools)
+    "foxml/ansi_colors.json|~/.config/foxml/ansi_colors.json"
+
     # Cursor/VS Code
     "cursor/foxml-color-theme.json|~/.cursor/extensions/foxml-theme/themes/foxml-color-theme.json"
 

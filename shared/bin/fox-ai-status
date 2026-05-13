@@ -8,32 +8,40 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
     exit 0
 fi
 
-# Extract model tag (e.g., 7b, 14b, 32b)
-MODEL_TAG=$(grep '"model"' "$CONFIG_FILE" | cut -d: -f3 | tr -d '", ')
+# Use jq for robust extraction
+MODEL_FULL=$(jq -r '.model // empty' "$CONFIG_FILE")
+if [[ -z "$MODEL_FULL" || "$MODEL_FULL" == "null" ]]; then
+    echo '{"text": "  OFF", "tooltip": "No model set in config", "class": "offline"}'
+    exit 0
+fi
 
-# Generic Sanitization (extract Family + Size, ignore metadata/unlocked tags)
-# Input example: "huihui_ai/qwen2.5-coder-32b-instruct-abliterated"
-NAME_ONLY="${MODEL_TAG##*/}"    # qwen2.5-coder-32b-instruct-abliterated
-FAMILY=$(echo "$NAME_ONLY" | cut -d- -f1 | cut -d: -f1) # qwen2.5
-SIZE=$(echo "$NAME_ONLY" | grep -ioP '\d+[bB]' | head -n1 | tr '[:upper:]' '[:lower:]') # 32b
+# Strip provider prefix (e.g., ollama/)
+MODEL_NAME="${MODEL_FULL#*/}"
 
-if [[ -n "$FAMILY" && -n "$SIZE" ]]; then
-    DISPLAY_TAG="${FAMILY}-${SIZE}"
-elif [[ -n "$SIZE" ]]; then
+# Extract Size (e.g. 7b, 14B)
+SIZE=$(echo "$MODEL_NAME" | grep -ioP '\d+[bB]' | head -n1 | tr '[:lower:]' '[:upper:]')
+
+if [[ -n "$SIZE" ]]; then
+    # User requested concise display (e.g. "7B")
     DISPLAY_TAG="$SIZE"
 else
-    DISPLAY_TAG="${NAME_ONLY:0:8}"
+    # Fallback to a truncated version of the name if no size detected
+    DISPLAY_TAG="${MODEL_NAME:0:8}"
 fi
 
 # Determine icon and label
 VRAM_INFO=""
 VRAM_PERCENT=0
 if command -v nvidia-smi &>/dev/null; then
-    VRAM_RAW=$(nvidia-smi --query-gpu=memory.used,memory.total --format=csv,noheader,nounits | tr -d ' ')
-    VRAM_USED=${VRAM_RAW%,*}
-    VRAM_TOTAL=${VRAM_RAW#*,}
-    VRAM_PERCENT=$(( VRAM_USED * 100 / VRAM_TOTAL ))
-    VRAM_INFO=" (VRAM: ${VRAM_PERCENT}%)"
+    VRAM_RAW=$(nvidia-smi --query-gpu=memory.used,memory.total --format=csv,noheader,nounits 2>/dev/null | tr -d ' ')
+    if [[ -n "$VRAM_RAW" ]]; then
+        VRAM_USED=${VRAM_RAW%,*}
+        VRAM_TOTAL=${VRAM_RAW#*,}
+        if [[ "$VRAM_TOTAL" -gt 0 ]]; then
+            VRAM_PERCENT=$(( VRAM_USED * 100 / VRAM_TOTAL ))
+            VRAM_INFO=" (VRAM: ${VRAM_PERCENT}%)"
+        fi
+    fi
 fi
 
 # Categorize current load for the tooltip
@@ -46,18 +54,18 @@ ICON=" "
 LABEL="$DISPLAY_TAG$VRAM_INFO"
 CLASS="smart"
 
-# Apply tier-based coloring based on name (generic)
-case "$MODEL_TAG" in
-    *b) # Numeric models like 7b, 14b, etc.
-        SIZE=$(echo "$MODEL_TAG" | tr -dc '0-9.')
-        if [[ $SIZE -le 7 ]]; then
+# Apply tier-based coloring based on size
+if [[ -n "$SIZE" ]]; then
+    NUM_SIZE=$(echo "$SIZE" | tr -dc '0-9')
+    if [[ -n "$NUM_SIZE" ]]; then
+        if [[ "$NUM_SIZE" -le 8 ]]; then
             CLASS="fast"
-        elif [[ $SIZE -le 14 ]]; then
+        elif [[ "$NUM_SIZE" -le 20 ]]; then
             CLASS="smart"
         else
             CLASS="expert"
         fi
-        ;;
-esac
+    fi
+fi
 
-echo "{\"text\": \"$ICON $LABEL\", \"tooltip\": \"Model: $DISPLAY_TAG\\nStatus: $LOAD_LABEL$VRAM_INFO\", \"class\": \"$CLASS\"}"
+echo "{\"text\": \"$ICON $LABEL\", \"tooltip\": \"Model: $MODEL_NAME\\nStatus: $LOAD_LABEL$VRAM_INFO\", \"class\": \"$CLASS\"}"

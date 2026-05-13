@@ -1,55 +1,108 @@
+// fask — semantic Q&A over the .foxml_index.json chunk index.
+//
+//   fask "where is the per-core risk seqlock built"
+//
+// Loads the chunked index, cosine-ranks chunks against the query
+// embedding, opens each top-K file and reads only that chunk's line
+// range (not the whole file or a prefix), concats into a context
+// block, and streams the model's answer.
+
 #include "fox_intel.hpp"
-#include <iostream>
+
+#include <algorithm>
 #include <fstream>
+#include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <algorithm>
+
+namespace {
+
+constexpr int TOP_K = 8;
+constexpr int MAX_CONTEXT_BYTES = 24000;  // safety bound on prompt size
+
+// Read lines [from, to] (1-based inclusive) of path. Returns "" on miss.
+std::string read_range(const std::string& path, int from, int to) {
+    std::ifstream f(path);
+    if (!f) return "";
+    std::string line;
+    std::ostringstream out;
+    int n = 0;
+    while (std::getline(f, line)) {
+        ++n;
+        if (n >= from && n <= to) out << line << '\n';
+        if (n > to) break;
+    }
+    return out.str();
+}
+
+}  // namespace
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        std::cout << "usage: fask \"question\"" << std::endl;
+        std::cerr << "usage: fask \"question\"\n";
         return 1;
     }
-
     std::string query = argv[1];
-    FoxIntel intel;
+    for (int i = 2; i < argc; ++i) { query += ' '; query += argv[i]; }
 
+    FoxIntel intel;
     if (!intel.ensure_ollama_running()) return 1;
 
-    // Load index
     std::ifstream f_in(".foxml_index.json");
-    if (!f_in.is_open()) {
-        std::cout << "Index not found. Run 'findex' first." << std::endl;
+    if (!f_in) {
+        std::cerr << "Index not found. Run 'findex' first.\n";
         return 1;
     }
-    json index_data = json::parse(f_in);
+    json idx;
+    try { idx = json::parse(f_in); }
+    catch (...) { std::cerr << "Index file is corrupt.\n"; return 1; }
 
-    // Get query embedding
-    auto query_vec = intel.get_embedding(query);
-    if (query_vec.empty()) return 1;
-
-    // Semantic Search (RAG)
-    struct Match { std::string path; double score; };
-    std::vector<Match> matches;
-    for (auto& el : index_data) {
-        double score = FoxIntel::cosine_similarity(query_vec, el["vector"].get<std::vector<float>>());
-        matches.push_back({el["path"], score});
+    if (!idx.is_array() || idx.empty()) {
+        std::cerr << "Index is empty. Run 'findex' first.\n";
+        return 1;
     }
-    std::sort(matches.begin(), matches.end(), [](const Match& a, const Match& b) { return a.score > b.score; });
 
-    // Build context
+    auto qvec = intel.get_embedding(query);
+    if (qvec.empty()) { std::cerr << "Embedding failed.\n"; return 1; }
+
+    struct Match {
+        std::string path;
+        int line_start, line_end;
+        double score;
+    };
+    std::vector<Match> matches;
+    matches.reserve(idx.size());
+    for (auto& e : idx) {
+        if (!e.contains("vector") || !e.contains("line_start")) continue;
+        double s = FoxIntel::cosine_similarity(
+            qvec, e["vector"].get<std::vector<float>>());
+        matches.push_back({e["path"], e["line_start"], e["line_end"], s});
+    }
+    std::sort(matches.begin(), matches.end(),
+              [](const Match& a, const Match& b) { return a.score > b.score; });
+
     std::string context = "Context from the project:\n";
-    for (int i = 0; i < std::min((int)matches.size(), 5); ++i) {
-        std::ifstream f(matches[i].path);
-        std::string content((std::istreambuf_iterator<char>(f)), std::istreambuf_iterator<char>());
-        if (content.size() > 2000) content = content.substr(0, 2000);
-        context += "--- File: " + matches[i].path + " ---\n" + content + "\n\n";
+    int included = 0;
+    for (const auto& m : matches) {
+        if (included >= TOP_K) break;
+        std::string chunk = read_range(m.path, m.line_start, m.line_end);
+        if (chunk.empty()) continue;
+        std::ostringstream hdr;
+        hdr << "--- " << m.path << " (lines " << m.line_start << "-"
+            << m.line_end << "; score=" << m.score << ") ---\n";
+        if ((int)(context.size() + hdr.str().size() + chunk.size())
+            > MAX_CONTEXT_BYTES) break;
+        context += hdr.str();
+        context += chunk;
+        context += "\n";
+        ++included;
     }
 
     std::string prompt = context + "\nQuestion: " + query + "\nAnswer:";
-    std::cout << "\033[1;32m[Thinking...]\033[0m" << std::endl;
-    intel.ask(prompt, true); // Streaming answer
+    std::cout << intel.color_accent() << "[Thinking...]"
+              << intel.color_reset() << std::endl;
+    intel.ask(prompt, true);
     std::cout << std::endl;
-
     return 0;
 }

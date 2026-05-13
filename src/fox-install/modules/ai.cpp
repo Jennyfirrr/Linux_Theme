@@ -1,13 +1,15 @@
-// modules/ai.cpp — Ollama + OpenCode install (no models).
+// modules/ai.cpp — Ollama + OpenCode + aider install (no models).
 //
 // Mirrors install.sh's --ai block:
 //   1. Install Ollama (AUR signature-verified via yay/paru, fallback to
 //      curl|sh only if no AUR helper is present).
 //   2. Ensure ollama.service is enabled and the HTTP endpoint is up.
-//   3. Pull nomic-embed-text (the embedding model libfox-intel depends
+//   3. Pull mxbai-embed-large (the embedding model libfox-intel depends
 //      on for RAG; pulling it here so every fox-* AI tool can rely on
 //      it being present).
 //   4. Install OpenCode (AUR-first, same fallback).
+//   5. Install aider (AUR-first, pipx fallback).
+//   6. Smoke test the stack — embedding endpoint actually responds.
 //
 // Models module (--models) is separate so users can pull big stuff
 // independently of getting ollama running.
@@ -62,7 +64,7 @@ void wait_for_http(const std::string& url, int max_attempts, int sleep_ms) {
 
 void run_ai(Context& ctx) {
     (void)ctx;
-    ui::section("Installing AI tooling (Ollama + OpenCode)");
+    ui::section("Installing AI tooling (Ollama + OpenCode + aider)");
 
     if (!sh::dry_run() && !sh::sudo_warmup()) {
         ui::err("sudo cache cold — `sudo -v` first");
@@ -94,12 +96,12 @@ void run_ai(Context& ctx) {
         }
     }
 
-    // 3. Embedding model (libfox-intel RAG dep)
-    ui::substep("pulling nomic-embed-text (embedding model)");
+    // 3. Embedding model (libfox-intel RAG dep — used by findex/fask)
+    ui::substep("pulling mxbai-embed-large (embedding model, ~670 MB)");
     for (int attempt = 1; attempt <= 3; ++attempt) {
-        if (sh::run({"ollama", "pull", "nomic-embed-text"}) == 0) break;
+        if (sh::run({"ollama", "pull", "mxbai-embed-large"}) == 0) break;
         if (attempt == 3) {
-            ui::warn("nomic-embed-text pull failed after 3 attempts — retry: `ollama pull nomic-embed-text`");
+            ui::warn("mxbai-embed-large pull failed after 3 attempts — retry: `ollama pull mxbai-embed-large`");
             break;
         }
         ui::substep("retrying in 3s (attempt " + std::to_string(attempt + 1) + "/3)");
@@ -113,6 +115,53 @@ void run_ai(Context& ctx) {
         ui::substep("installing OpenCode");
         install_via_aur_or_script("opencode-bin",
             "https://opencode.ai/install", "bash");
+    }
+
+    // 5. aider — git-native pair programmer. Complements OpenCode for
+    // commit-per-edit workflows. Python tool, so AUR (aider-chat) first,
+    // pipx fallback — no curl|sh path makes sense here.
+    if (have("aider")) {
+        ui::ok("aider already installed");
+    } else {
+        ui::substep("installing aider-chat (pulls ~60 Python deps — 2-5 min)");
+        std::string aur = aur_helper();
+        bool ok = false;
+        if (!aur.empty()) {
+            if (sh::run({aur, "-S", "--needed", "--noconfirm", "aider-chat"}) == 0) {
+                ok = true;
+            } else {
+                ui::warn("AUR aider-chat failed, trying pipx fallback");
+            }
+        }
+        if (!ok) {
+            if (have("pipx")) {
+                ok = (sh::run({"pipx", "install", "aider-chat"}) == 0);
+            }
+            if (!ok) {
+                ui::warn("aider not installed — `pacman -S python-pipx && pipx install aider-chat`");
+            }
+        }
+    }
+
+    // 6. Smoke test — fail loudly if the stack is broken so the user
+    // doesn't first discover it from a silently-failing fox-ask.
+    if (!sh::dry_run()) {
+        ui::substep("smoke testing AI stack");
+        int tags = sh::run({"sh", "-c",
+            "curl -sf -m 3 http://127.0.0.1:11434/api/tags >/dev/null"});
+        if (tags != 0) {
+            ui::warn("Ollama HTTP endpoint not reachable — RAG / fox-ask will not work");
+        } else {
+            int embed = sh::run({"sh", "-c",
+                "curl -sf -m 15 http://127.0.0.1:11434/api/embeddings "
+                "-d '{\"model\":\"mxbai-embed-large\",\"prompt\":\"smoke test\"}' "
+                "| grep -q embedding"});
+            if (embed != 0) {
+                ui::warn("mxbai-embed-large embedding query failed — findex/fask will not work");
+            } else {
+                ui::ok("AI stack smoke test passed (embeddings + http both OK)");
+            }
+        }
     }
 
     ui::ok("AI tooling ready");

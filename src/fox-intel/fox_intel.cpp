@@ -9,15 +9,16 @@
 #include <cstring>
 #include <thread>
 #include <chrono>
+#include <fcntl.h>
 
-FoxIntel::FoxIntel(std::string model) : default_model(model) {
-    // Allow user/env override of the default model.
-    // Precedence: FOXAI_MODEL env > ~/.config/opencode/opencode.json > ~/.config/foxml/ai-model.conf > ctor arg.
+FoxIntel::FoxIntel(std::string model) : default_model(model), accent_color("\033[1;32m") {
+    const char* home = std::getenv("HOME");
+    std::string home_str = home ? home : "";
+
+    // 1. Load active AI model
     if (const char* env = std::getenv("FOXAI_MODEL"); env && *env) {
         default_model = env;
-    } else if (const char* home = std::getenv("HOME"); home && *home) {
-        std::string home_str = home;
-        // 1. Try OpenCode config (modern standard)
+    } else if (!home_str.empty()) {
         std::ifstream f_opencode(home_str + "/.config/opencode/opencode.json");
         bool found = false;
         if (f_opencode.is_open()) {
@@ -31,8 +32,6 @@ FoxIntel::FoxIntel(std::string model) : default_model(model) {
                 }
             } catch (...) {}
         }
-
-        // 2. Fallback to legacy FoxML config
         if (!found) {
             std::ifstream f_legacy(home_str + "/.config/foxml/ai-model.conf");
             std::string line;
@@ -52,6 +51,20 @@ FoxIntel::FoxIntel(std::string model) : default_model(model) {
         }
     }
 
+    // 2. Load theme colors
+    if (!home_str.empty()) {
+        std::ifstream f_colors(home_str + "/.config/foxml/ansi_colors.json");
+        if (f_colors.is_open()) {
+            try {
+                json colors;
+                f_colors >> colors;
+                if (colors.contains("accent1")) {
+                    accent_color = "\033[38;5;" + colors["accent1"].get<std::string>() + "m";
+                }
+            } catch (...) {}
+        }
+    }
+
     curl_global_init(CURL_GLOBAL_DEFAULT);
     curl = curl_easy_init();
 }
@@ -60,6 +73,10 @@ FoxIntel::~FoxIntel() {
     if (curl) curl_easy_cleanup(curl);
     curl_global_cleanup();
 }
+
+std::string FoxIntel::color_accent() { return accent_color; }
+std::string FoxIntel::color_dim() { return "\033[2m"; }
+std::string FoxIntel::color_reset() { return "\033[0m"; }
 
 size_t FoxIntel::WriteCallback(void* contents, size_t size, size_t nmemb, std::string* userp) {
     userp->append((char*)contents, size * nmemb);
@@ -82,7 +99,7 @@ std::vector<float> FoxIntel::get_embedding(const std::string& text) {
     std::vector<float> embedding;
 
     if(curl) {
-        json body = {{"model", "nomic-embed-text"}, {"prompt", text}};
+        json body = {{"model", "mxbai-embed-large"}, {"prompt", text}};
         std::string json_str = body.dump();
         struct curl_slist* headers = curl_slist_append(NULL, "Content-Type: application/json");
 
@@ -144,11 +161,12 @@ double FoxIntel::cosine_similarity(const std::vector<float>& v1, const std::vect
 }
 
 bool FoxIntel::ensure_ollama_running() {
-    if (FoxUtils::run_cmd({"ollama", "list"}) != 0) {
-        std::cout << "\033[1;33m[Fox Brain is asleep. Waking up...]\033[0m" << std::endl;
+    // Silent check (redirect stdout/stderr to /dev/null)
+    if (FoxUtils::run_cmd({"ollama", "list"}, true) != 0) {
+        std::cout << color_accent() << "[Fox Brain is asleep. Waking up...]" << color_reset() << std::endl;
         FoxUtils::run_cmd({"sudo", "systemctl", "start", "ollama"});
         std::this_thread::sleep_for(std::chrono::seconds(2));
-        return FoxUtils::run_cmd({"ollama", "list"}) == 0;
+        return FoxUtils::run_cmd({"ollama", "list"}, true) == 0;
     }
     return true;
 }
@@ -161,10 +179,18 @@ bool FoxIntel::ensure_model_present(const std::string& model_name) {
     return true;
 }
 
-int FoxUtils::run_cmd(std::initializer_list<const char*> argv) {
+int FoxUtils::run_cmd(std::initializer_list<const char*> argv, bool silent) {
     pid_t pid = fork();
     if (pid < 0) return -1;
     if (pid == 0) {
+        if (silent) {
+            int devnull = open("/dev/null", O_WRONLY);
+            if (devnull >= 0) {
+                dup2(devnull, STDOUT_FILENO);
+                dup2(devnull, STDERR_FILENO);
+                close(devnull);
+            }
+        }
         std::vector<const char*> args(argv.begin(), argv.end());
         args.push_back(nullptr);
         execvp(args[0], const_cast<char* const*>(args.data()));

@@ -26,8 +26,14 @@ public:
     bool ensure_ollama_running();
     bool ensure_model_present(const std::string& model_name);
 
+    // Color helpers
+    std::string color_accent();
+    std::string color_dim();
+    std::string color_reset();
+
 private:
     std::string default_model;
+    std::string accent_color;
     CURL* curl;
 
     static size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* userp);
@@ -36,7 +42,7 @@ private:
 
 // Utilities for safe process execution (no shell)
 namespace FoxUtils {
-    int run_cmd(std::initializer_list<const char*> argv);
+    int run_cmd(std::initializer_list<const char*> argv, bool silent = false);
     bool has_model(const char* pattern);
 }
 

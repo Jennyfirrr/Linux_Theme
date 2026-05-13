@@ -139,6 +139,9 @@ void run_models(Context& ctx) {
            std::to_string(vram) + "GB — tier: " + tier);
 
     auto models = models_for(tier);
+    // Embedding model (mxbai-embed-large) is pulled by the `ai` module —
+    // it's a hard dep of fox-intel / findex / fask, so it lives there
+    // alongside Ollama itself rather than being duplicated here.
     auto custom = discover_custom_models(ctx);
     if (!custom.empty()) {
         ui::ok("discovered " + std::to_string(custom.size()) + " custom models");
@@ -154,35 +157,44 @@ void run_models(Context& ctx) {
         // Fix common typos/aliases for known community "unlocked" models.
         if (target == "hermes-3:8b") target = "hermes3:8b";
 
-        // Ollama Library (the default registry) REQUIRES lowercase.
-        // Hugging Face (hf.co/) is case-sensitive for the path.
-        bool has_upper = std::any_of(target.begin(), target.end(), ::isupper);
+        // Ollama strictly requires lowercase for model names/tags. Hugging Face
+        // (hf.co/) paths are case-insensitive for the download, so we can
+        // safely lowercase the entire string to satisfy Ollama's regex.
+        std::string pull_target = target;
+        std::transform(pull_target.begin(), pull_target.end(), pull_target.begin(),
+                       [](unsigned char c){ return std::tolower(c); });
+
         bool has_namespace = (target.find('/') != std::string::npos);
         bool has_host = (target.find("hf.co/") == 0 || target.find("huggingface.co/") == 0);
 
-        bool success = false;
-        if (!has_upper && !has_host) {
-            ui::substep("pulling " + target);
-            if (sh::run({"ollama", "pull", target}) == 0) {
-                success = true;
+        // Ollama's auth realm check rejects `hf.co/...` because the
+        // manifest server redirects to `huggingface.co`. Use the long
+        // form so the original host matches the auth realm.
+        std::string hf_target;
+        if (has_host) {
+            hf_target = pull_target;
+            if (hf_target.rfind("hf.co/", 0) == 0) {
+                hf_target.replace(0, 6, "huggingface.co/");
             }
+        } else if (has_namespace) {
+            hf_target = "huggingface.co/" + pull_target;
         }
 
-        if (!success && has_namespace && !has_host) {
-            std::string hf_target = "hf.co/" + target;
-            ui::substep("pulling from Hugging Face: " + hf_target);
-            if (sh::run({"ollama", "pull", hf_target}) == 0) {
-                success = true;
-            }
-        } else if (!success && has_host) {
-            ui::substep("pulling " + target);
-            if (sh::run({"ollama", "pull", target}) == 0) {
-                success = true;
-            }
+        bool success = false;
+        std::string attempted;
+        if (!has_namespace && !has_host) {
+            attempted = pull_target;
+            ui::substep("pulling " + attempted);
+            if (sh::run({"ollama", "pull", attempted}) == 0) success = true;
+        } else {
+            attempted = hf_target;
+            ui::substep("pulling from Hugging Face: " + attempted);
+            if (sh::run({"ollama", "pull", attempted}) == 0) success = true;
         }
 
         if (!success) {
-            ui::warn("pull failed: " + target + " — retry with `ollama pull " + target + "`");
+            ui::warn("pull failed: " + target +
+                     " — retry with `ollama pull " + attempted + "`");
         }
     }
     ui::ok(std::to_string(models.size()) + " models requested");

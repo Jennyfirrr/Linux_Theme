@@ -2,6 +2,35 @@
 
 All notable changes to the Fox ML theme.
 
+## 2026-05-13 — v2.8.0
+
+### Local RAG quality pass + install hardening
+
+- **Chunked RAG index** — `findex` now splits files into 100-line chunks with 10-line overlap (was: one whole-file embedding capped at 8 KB). A 25k-line file gets ~277 chunks instead of vanishing into a single average vector. Schema: `{path, chunk_id, line_start, line_end, vector, mtime, model}`. Embedding model name is persisted alongside each vector; re-running with a different model triggers a clean rebuild rather than mixing incompatible vector spaces.
+- **Embedding model: `nomic-embed-text` → `mxbai-embed-large`** (768-d → 1024-d). Better semantic discrimination on code. Re-index required (`findex` auto-detects the model mismatch and rebuilds).
+- **`fask` reads chunk line-ranges** instead of file prefixes. Top-K=8 chunks, scored. Long files no longer have their tails invisible to retrieval.
+- **`findex` exclusions and extensions widened** — skips `build/ target/ dist/ node_modules/ .venv/ __pycache__/ .cache/ .cargo/ rendered/ distro/`; covers `.py .yaml .toml .rs .ts .tsx .js .sql .proto` in addition to the existing list. 2 MB per-file cap.
+- **`fox-ask` (new C++ binary)** — one-shot terminal Q&A. `fox ask "<question>"` or pipe via stdin. Streams the answer using whatever model OpenCode is configured for. No index required.
+- **`fox-ai-swap` unloads the previous model** via `ollama stop` after writing the new config. VRAM freed immediately instead of waiting for the 5-minute idle timer.
+- **Theme-matched accent in `FoxIntel`** — reads `~/.config/foxml/ansi_colors.json` (rendered from the active palette) and uses palette `ANSI_ACCENT1` for the `[Thinking...]` banner. Falls back to hardcoded green if the JSON isn't deployed.
+- **`templates/foxml/ansi_colors.json`** — new template wired into `mappings.sh` and `symlinks_data.hpp` so `fox-render` + `--symlinks` deploy it as part of any install.
+
+### Install hardening (`fox-install`)
+
+- **`ai` module installs aider** — AUR `aider-chat` → `pipx install aider-chat` fallback. Alongside OpenCode for a full local-model agent stack. Module description + section header updated to reflect aider inclusion.
+- **`ai` module post-install smoke test** — curls `/api/tags`, then runs a real embedding query against `mxbai-embed-large`. Warns loudly on failure so broken stacks surface at install time, not when `fox-ask` silently does nothing.
+- **`ai` module pulls `mxbai-embed-large`** (was: `nomic-embed-text`).
+- **`models` module HF realm fix** — Ollama rejects `hf.co/...` because the manifest server redirects to `huggingface.co`. Switched to the long form so the auth realm matches. Retry hint now points at the actual attempted target.
+- **`models` module dedupes embedding pull** — `mxbai-embed-large` lives in `ai` only.
+
+### Fixes
+
+- **`.gitignore` no longer hides `fox-ai-*` source files** — the bare `src/fox-ai-*/fox-ai-*` pattern was meant for compiled binaries but also matched `.cpp/.hpp/.h`. Added explicit negations so sources commit but binaries stay out. Same fix for `src/fox-ask/`.
+- **`fox-mac` requires sudo for `nmcli connection modify`** — was failing silently when polkit didn't authorize the user.
+- **`fox-ai-status` uses `jq`** for model field extraction instead of `grep | cut | tr` chains. Handles tags with provider prefixes and missing-VRAM cases without crashing.
+
+---
+
 ## 2026-05-13 — v2.7.1
 
 ### AI Tooling & Workflow Polish
