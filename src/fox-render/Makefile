@@ -5,7 +5,7 @@ CXXFLAGS ?= -std=c++17 -O3 -Wall -Wextra -pthread
 LDFLAGS  ?= -pthread
 PREFIX   ?= $(HOME)/.local/bin
 
-OBJ = palette.o render.o
+OBJ = palette.o render.o reverse.o
 BIN = fox-render-fast
 
 all: $(BIN)
@@ -15,6 +15,9 @@ palette.o: palette.cpp palette.hpp
 
 render.o: render.cpp render.hpp
 	$(CXX) $(CXXFLAGS) -c render.cpp -o $@
+
+reverse.o: reverse.cpp reverse.hpp
+	$(CXX) $(CXXFLAGS) -c reverse.cpp -o $@
 
 $(BIN): fox-render-fast.cpp $(OBJ)
 	$(CXX) $(CXXFLAGS) fox-render-fast.cpp $(OBJ) -o $@ $(LDFLAGS)
