@@ -246,9 +246,9 @@ constexpr const char* KERNEL_HARDENING_BODY =
     "net.ipv4.conf.all.arp_announce   = 2\n"
     "net.ipv4.conf.default.arp_announce = 2\n";
 
-void install_kernel_hardening() {
+void install_kernel_hardening(const Context& ctx) {
     fs::path conf = "/etc/sysctl.d/99-foxml-hardening.conf";
-    if (read_file(conf) == KERNEL_HARDENING_BODY) {
+    if (read_file(conf) == KERNEL_HARDENING_BODY && !ctx.force_reapply) {
         ui::ok("kernel hardening sysctls already in place");
         return;
     }
@@ -544,7 +544,7 @@ void install_auditd() {
 // ════════════════════════════════════════════════════════════════════
 // waybar sudoers (tight allow-list) — for the waybar overwatch module
 // ════════════════════════════════════════════════════════════════════
-void install_waybar_sudoers() {
+void install_waybar_sudoers(const Context& ctx) {
     fs::path sudoers = "/etc/sudoers.d/99-foxml-waybar";
     // /etc/sudoers.d/ is mode 0750 — non-root stat() returns EACCES.
     // The error_code overload swallows the throw and returns false; we
@@ -553,7 +553,7 @@ void install_waybar_sudoers() {
     // when content matches, which it isn't quite — but the bash version
     // had the same `! -f` gate and lived with the same race.
     std::error_code ec;
-    if (fs::exists(sudoers, ec) && !ec) {
+    if (fs::exists(sudoers, ec) && !ec && !ctx.force_reapply) {
         ui::ok("waybar sudoers already configured");
         return;
     }
@@ -586,7 +586,7 @@ void run_security(Context& ctx) {
 
     // UFW baseline runs as its own --ufw module (default-on, executes
     // before --secure in registry order). Not re-called here.
-    install_kernel_hardening();
+    install_kernel_hardening(ctx);
     install_usbguard(ctx);
     install_apparmor();
     // Polkit strict mode is gated separately: bash's --full doesn't
@@ -596,7 +596,7 @@ void run_security(Context& ctx) {
     if (ctx.install_polkit_strict) install_polkit_strict();
     install_fail2ban();
     install_auditd();
-    install_waybar_sudoers();
+    install_waybar_sudoers(ctx);
 
     // SSH hardening wizard lives in its own --ssh-harden module now.
     // Runs separately so security doesn't drag the user through the

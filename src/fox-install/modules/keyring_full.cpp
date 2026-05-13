@@ -39,7 +39,7 @@ bool is_masked(const std::string& unit) {
 
 }  // namespace
 
-void run_keyring_full(Context&) {
+void run_keyring_full(Context& ctx) {
     ui::section("gnome-keyring — mask limited-autostart units");
 
     if (sh::dry_run()) {
@@ -50,7 +50,7 @@ void run_keyring_full(Context&) {
 
     int masked = 0;
     for (auto u : AUTOSTART_UNITS) {
-        if (is_masked(u)) continue;
+        if (is_masked(u) && !ctx.force_reapply) continue;
         if (sh::run({"systemctl", "--user", "mask", u}) == 0) ++masked;
     }
     if (masked > 0) {

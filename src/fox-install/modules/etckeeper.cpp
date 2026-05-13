@@ -111,7 +111,7 @@ void run_etckeeper(Context& ctx) {
     fs::path path_unit = units / "fox-etcwatch.path";
     fs::path svc_unit  = units / "fox-etcwatch.service";
 
-    if (!fs::exists(path_unit)) {
+    if (!fs::exists(path_unit) || ctx.force_reapply) {
         fs::create_directories(units);
         std::ofstream p(path_unit);     p << PATH_UNIT;
         std::ofstream s(svc_unit);      s << SERVICE_UNIT;

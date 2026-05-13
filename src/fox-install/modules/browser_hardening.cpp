@@ -141,7 +141,7 @@ void do_firejail(const Context& ctx) {
             already_wired = true;
         }
     }
-    if (!already_wired) {
+    if (!already_wired || ctx.force_reapply) {
         if (sh::run({"sh", "-c", "sudo firecfg >/dev/null 2>&1"}) == 0) {
             ui::ok("firejail symlinks applied (firefox now runs sandboxed)");
         }
@@ -164,7 +164,7 @@ void do_firejail(const Context& ctx) {
             }
         }
     }
-    if (needs_write) {
+    if (needs_write || ctx.force_reapply) {
         std::ofstream o(local);
         o << FIREJAIL_LOCAL_BODY;
         ui::ok("firejail firefox.local override (DNS pinned to 127.0.0.53 for DoH)");

@@ -38,7 +38,7 @@ std::string detect_vendor() {
 
 }  // namespace
 
-void run_iommu(Context&) {
+void run_iommu(Context& ctx) {
     ui::section("IOMMU + lockdown=integrity (DMA protection)");
 
     fs::path bootloader_systemd = "/boot/loader/entries/arch.conf";
@@ -77,9 +77,12 @@ void run_iommu(Context&) {
         return;
     }
 
-    // Idempotency: bail if the args are already present.
+    // Idempotency: bail if the args are already present (unless --full
+    // wants to force-reapply, in which case appending is a no-op edit
+    // since the matched-substring sed below won't double-add).
     if (sh::run({"sh", "-c",
-                 "sudo grep -q \"" + iommu_args + "\" " + cmdline_file.string()}) == 0) {
+                 "sudo grep -q \"" + iommu_args + "\" " + cmdline_file.string()}) == 0
+        && !ctx.force_reapply) {
         ui::ok("IOMMU already enabled in " + cmdline_file.string());
         return;
     }

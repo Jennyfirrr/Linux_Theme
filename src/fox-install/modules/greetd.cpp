@@ -122,7 +122,7 @@ void run_greetd(Context& ctx) {
     bool stock = !fs::exists(cfg) ||
                   sh::run({"sh", "-c",
                            "sudo grep -qE '^command = \"agreety' /etc/greetd/config.toml"}) == 0;
-    if (stock) {
+    if (stock || ctx.force_reapply) {
         if (write_root_inline(cfg, CONFIG_TOML_BODY)) {
             ui::ok("/etc/greetd/config.toml (Hyprland greeter session)");
         }

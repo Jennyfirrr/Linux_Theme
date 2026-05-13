@@ -111,11 +111,13 @@ void wire_fail2ban() {
     }
 }
 
-void wire_fox_service(const std::string& bin, const std::string& unit_name,
+void wire_fox_service(const Context& ctx,
+                      const std::string& bin, const std::string& unit_name,
                       const std::string& install_msg) {
     if (!have(bin)) return;
     if (sh::run({"systemctl", "--user", "is-enabled", "--quiet",
-                 unit_name + ".service"}) == 0) {
+                 unit_name + ".service"}) == 0
+        && !ctx.force_reapply) {
         ui::ok(bin + " already enabled");
         return;
     }
@@ -170,9 +172,9 @@ void run_dispatch_hooks(Context& ctx) {
 
     install_helper_script(ctx);
     wire_fail2ban();
-    wire_fox_service("fox-bouncer",      "fox-bouncer",      "fox-bouncer.service enabled");
+    wire_fox_service(ctx, "fox-bouncer",      "fox-bouncer",      "fox-bouncer.service enabled");
     if (pacman_has("audit")) {
-        wire_fox_service("fox-sentry-audit", "fox-sentry-audit",
+        wire_fox_service(ctx, "fox-sentry-audit", "fox-sentry-audit",
                           "fox-sentry-audit.service enabled (kernel-level honeypot)");
     }
     maybe_offer_setup(ctx);

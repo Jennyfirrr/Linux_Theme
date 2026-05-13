@@ -84,7 +84,7 @@ void run_papirus_icons(Context& ctx) {
         ? papirus_root / ".foxml-catppuccin-injected"
         : ctx.config_home / "foxml/catppuccin-papirus-injected.marker";
 
-    if (fs::exists(cat_marker)) {
+    if (fs::exists(cat_marker) && !ctx.force_reapply) {
         ui::ok("Catppuccin folder palette already injected");
     } else {
         if (sh::dry_run()) {
