@@ -96,11 +96,33 @@ void run_deps(Context& ctx) {
 
     int rc = sh::pacman(pkgs);
     if (rc != 0) {
-        ui::err("pacman failed (exit " + std::to_string(rc) + ") — "
-                "if it was a dep conflict, run `sudo pacman -Syu` then re-run --deps");
-        // Continue to post-install hooks anyway; user may want the
-        // service enables / browser config even if a single package
-        // refused to install.
+        // Most common failure mode: a single package has an unresolvable
+        // dep (libtree-sitter ABI skew on neovim, etc.) and pacman
+        // aborts the ENTIRE --needed transaction, so packages that
+        // would've installed fine get skipped along with it. Auto-
+        // recover: run a full system upgrade (pulls newer co-deps),
+        // then retry the original batch. If THAT still fails, fall
+        // back to per-package installs so at least the ones with no
+        // conflicts land.
+        ui::warn("pacman batch failed — running `sudo pacman -Syu` to refresh deps, then retrying");
+        if (sh::run({"sudo", "pacman", "-Syu", "--noconfirm"}) == 0) {
+            rc = sh::pacman(pkgs);
+        }
+        if (rc != 0) {
+            ui::warn("batch still failing — falling back to per-package install");
+            int fallback_ok = 0, fallback_skipped = 0;
+            for (const auto& p : pkgs) {
+                if (sh::run({"sudo", "pacman", "-S", "--needed", "--noconfirm", p}) == 0) {
+                    ++fallback_ok;
+                } else {
+                    ++fallback_skipped;
+                }
+            }
+            ui::ok(std::to_string(fallback_ok) + " packages installed individually, " +
+                   std::to_string(fallback_skipped) + " skipped (re-run after manual fix)");
+        } else {
+            ui::ok(std::to_string(pkgs.size()) + " base packages ensured (after -Syu)");
+        }
     } else {
         ui::ok(std::to_string(pkgs.size()) + " base packages ensured");
     }

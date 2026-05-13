@@ -69,14 +69,25 @@ void run_next_steps(Context& ctx) {
                "mkinitcpio MODULES + nvidia_drm.modeset=1");
     }
 
-    if (ctx.has_fprint) {
-        std::cout << "\n"
-            "  ╭──────────────────────────────────────────────────────────────────╮\n"
-            "  │  Hardware Detected: Fingerprint Reader                           │\n"
-            "  ├──────────────────────────────────────────────────────────────────┤\n"
-            "  │  To automate your biometric setup (sudo + login + git):          │\n"
-            "  │    Run: fox-fingerprint                                          │\n"
-            "  ╰──────────────────────────────────────────────────────────────────╯\n";
+    // Fingerprint setup hint — only show if the reader is present AND
+    // the user doesn't have any fingerprints enrolled yet. Suppressing
+    // it once enrolled means re-runs don't keep nagging about
+    // fox-fingerprint when there's nothing to set up.
+    if (ctx.has_fprint && have("fprintd-list")) {
+        std::string out;
+        sh::capture({"sh", "-c",
+                     "fprintd-list \"$USER\" 2>/dev/null"}, out);
+        bool enrolled = out.find("#") != std::string::npos &&
+                        out.find("No fingerprints enrolled") == std::string::npos;
+        if (!enrolled) {
+            std::cout << "\n"
+                "  ╭──────────────────────────────────────────────────────────────────╮\n"
+                "  │  Hardware Detected: Fingerprint Reader (no enrollment yet)       │\n"
+                "  ├──────────────────────────────────────────────────────────────────┤\n"
+                "  │  To enroll a finger + wire it into the login screen + sudo:      │\n"
+                "  │    Run: fox-fingerprint                                          │\n"
+                "  ╰──────────────────────────────────────────────────────────────────╯\n";
+        }
     }
 
     // fox-arm interactive defense walkthrough. Only fires when:
