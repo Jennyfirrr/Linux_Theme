@@ -140,7 +140,16 @@ int systemctl_daemon_reload(bool user) {
 }
 
 bool sudo_warmup() {
-    return run({ "sudo", "-v" }) == 0;
+    // Use -n (non-interactive) so this is a silent cache check, NOT a
+    // PAM prompt. install.sh's wrapper keepalive loop runs `sudo -n true`
+    // every 50s, keeping the timestamp file fresh; modules just need to
+    // verify the cache is still warm. Crucially, `sudo -v` would invoke
+    // PAM and — on systems with pam_fprintd wired into /etc/pam.d/sudo —
+    // pop a fingerprint prompt for every module that needs root. That's
+    // jarring during a 30-min --full run. `-n true` skips PAM entirely:
+    // success if the timestamp is valid, failure otherwise. Modules that
+    // want to do privileged work check this and skip cleanly if cold.
+    return run({ "sudo", "-n", "true" }) == 0;
 }
 
 }  // namespace fox_install::sh
