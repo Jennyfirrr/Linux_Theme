@@ -45,7 +45,7 @@ src/fox-install/fox-install
 src/fox-render/fox-render-fast
 src/fox-pulse/fox-pulse
 src/fox-vault/fox-vault
-src/fox-ai-doctor/fox-ai-doctor
+src/fox-ai-*/fox-ai-*
 
 # Vendored nlohmann json header — bootstrap.sh / install.sh wrapper
 # fetches it on first build. Don't commit a 25k-line vendored copy.
