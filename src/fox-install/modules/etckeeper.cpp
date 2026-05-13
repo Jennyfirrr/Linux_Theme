@@ -114,20 +114,38 @@ void run_etckeeper(Context& ctx) {
     if (!fs::exists(path_unit) || ctx.force_reapply) {
         fs::create_directories(units);
 
-        // A masked unit is a symlink to /dev/null; ofstream on that
-        // path would follow the symlink and silently black-hole the
-        // content, and the subsequent enable would fail with "is
-        // masked". Unmask + delete any leftover symlinks before we
-        // write the real unit files.
+        // 1. Unmask aggressively + flush systemd's cached view BEFORE
+        //    writing the new unit body. The explicit daemon-reload
+        //    matters: without it, the eventual enable() races with
+        //    systemd's async cache refresh and still sees a stale
+        //    "masked" state — which is the bug fox-install reported
+        //    on a previous run even though the on-disk mask symlinks
+        //    were already gone.
         sh::run({"systemctl", "--user", "unmask",
                  "fox-etcwatch.path", "fox-etcwatch.service"});
+        sh::systemctl_daemon_reload(/*user=*/true);
+
+        // 2. Belt-and-suspenders: drop any leftover /dev/null symlinks
+        //    at our target paths so the upcoming ofstream creates a
+        //    real file instead of writing through a dead symlink.
         std::error_code ec;
         if (fs::is_symlink(path_unit, ec)) fs::remove(path_unit, ec);
         if (fs::is_symlink(svc_unit,  ec)) fs::remove(svc_unit,  ec);
 
+        // 3. Write the real unit bodies + reload so systemd sees them.
         std::ofstream p(path_unit);     p << PATH_UNIT;
         std::ofstream s(svc_unit);      s << SERVICE_UNIT;
         sh::systemctl_daemon_reload(/*user=*/true);
+
+        // 4. Clear any previous failure state. The .path triggers the
+        //    .service on every /etc write, and during a --full install
+        //    /etc changes a lot — easily hits Restart= rate limit and
+        //    leaves the unit in "failed (unit-start-limit-hit)". The
+        //    reset-failed below makes the freshly-enabled unit start
+        //    clean instead of inheriting that limit-hit state.
+        sh::run({"systemctl", "--user", "reset-failed",
+                 "fox-etcwatch.path", "fox-etcwatch.service"});
+
         if (sh::systemctl_enable("fox-etcwatch.path", /*user=*/true) == 0) {
             ui::ok("fox-etcwatch.path enabled (alerts on /etc/{ssh,sudoers.d,pam.d,ufw,fail2ban,audit,sysctl.d} changes)");
         } else {
