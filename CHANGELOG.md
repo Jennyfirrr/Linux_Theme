@@ -2,6 +2,19 @@
 
 All notable changes to the Fox ML theme.
 
+## 2026-05-13 — v2.8.1
+
+### Orchestrator & RAG Stability
+
+- **Command-style module execution** — `fox-install` now accepts module slugs as positional arguments. `fox install monitors` runs exactly that wizard; `fox install monitors render` runs both. Bypasses the main loop for surgical configuration.
+- **Strict `--only` mode** — running a subset of modules (via `--only` or positional names) now suppresses prompts for unrelated "default-on" modules. No more `Execute module deps?` noise during a monitor re-run.
+- **`--monitor` shorthand** — new dedicated flag for re-running the multi-monitor layout wizard (`--only monitors`).
+- **Fixed `findex` threading race** — the RAG indexer now uses isolated `CURL` handles per thread and thread-safe global initialization. No more random segmentation faults during 8-thread parallel indexing.
+- **Fixed `fox-install` progress bar crash** — `std::length_error` no longer fires if more modules are run than originally planned (happened when interactively enabling skipped steps).
+- **Cleaned build warnings** — removed unused internal parser helpers in `fox-install`.
+
+---
+
 ## 2026-05-13 — v2.8.0
 
 ### Local RAG quality pass + install hardening

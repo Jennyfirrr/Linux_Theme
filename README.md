@@ -53,6 +53,8 @@ Caches sudo, installs git+curl, clones the repo to `~/code/Linux_Theme`, runs th
 **Already cloned, fine-grained control:**
 ```bash
 ./install.sh                                       # interactive, prompts at each step
+./install.sh monitors                              # surgical run: just the monitor wizard
+./install.sh Cave_Data_Center monitors render      # specific theme + specific modules only
 ./install.sh FoxML_Classic --deps --yes            # specific flags, no prompts
 ```
 
@@ -60,6 +62,7 @@ Caches sudo, installs git+curl, clones the repo to `~/code/Linux_Theme`, runs th
 
 | Flag | What it does |
 |------|--------------|
+| `--monitor` | Surgical run of the multi-monitor layout wizard only |
 | `--deps` | Install Arch packages, Oh My Zsh, zsh plugins |
 | `--yes` | Auto-confirm every prompt |
 | `--ai` | Install Ollama + OpenCode + aider + `mxbai-embed-large` (see [AI layer](#ai-layer-optional)) |
