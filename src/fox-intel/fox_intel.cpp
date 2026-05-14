@@ -99,13 +99,15 @@ size_t FoxIntel::StreamCallback(void* contents, size_t size, size_t nmemb, void*
     return size * nmemb;
 }
 
-std::vector<float> FoxIntel::get_embedding(const std::string& text) {
+std::vector<float> FoxIntel::get_embedding(const std::string& text, const std::string& model) {
     std::string readBuffer;
     std::vector<float> embedding;
 
+    std::string model_name = model.empty() ? "mxbai-embed-large" : model;
+
     CURL* curl = curl_easy_init();
     if(curl) {
-        json body = {{"model", "mxbai-embed-large"}, {"prompt", text}};
+        json body = {{"model", model_name}, {"prompt", text}};
         std::string json_str = body.dump();
         struct curl_slist* headers = curl_slist_append(NULL, "Content-Type: application/json");
 

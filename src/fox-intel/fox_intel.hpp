@@ -17,8 +17,8 @@ public:
     // Core LLM interaction
     std::string ask(const std::string& prompt, bool stream = false);
     
-    // Embedding generation (uses nomic-embed-text)
-    std::vector<float> get_embedding(const std::string& text);
+    // Embedding generation (uses model name, defaults to mxbai-embed-large)
+    std::vector<float> get_embedding(const std::string& text, const std::string& model = "");
     
     // Similarity calculation
     static double cosine_similarity(const std::vector<float>& v1, const std::vector<float>& v2);

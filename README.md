@@ -317,8 +317,8 @@ Installed via `--ai`. Provides three local-model surfaces (terminal agent, in-ed
 
 | Command | What it does |
 |---------|--------------|
-| `fask "<question>"` | RAG Q&A over the current project's `.foxml_index.json` |
-| `findex` | Build/refresh the chunk index for the current directory |
+| `findex [opts]` | Build semantic index (tunable via `--size`, `--model`, etc.) |
+| `fask "<q>"` | RAG Q&A over the current project's `.foxml_index.json` |
 | `fox ask "<question>"` | One-shot terminal Q&A — no index needed; uses the OpenCode-configured model |
 | `fox-ai-commit` | AI-drafted commit message from staged diff |
 | `fox-ai-explain <file>` | Plain-English explanation of code/logs/errors |

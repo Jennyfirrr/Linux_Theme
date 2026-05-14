@@ -3,7 +3,7 @@
 // Schema (per row, written as .foxml_index.json array):
 //   {path, chunk_id, line_start, line_end, vector, mtime, model}
 //
-// Chunks are CHUNK_LINES long with OVERLAP_LINES overlap so a function
+// Chunks are chunk_lines long with overlap_lines overlap so a function
 // straddling a chunk boundary still appears whole in at least one chunk.
 // The model name is stored alongside each vector — re-running findex
 // after the embedding model changes (or after the schema changed)
@@ -30,11 +30,7 @@ namespace fs = std::filesystem;
 
 namespace {
 
-constexpr int  MAX_THREADS    = 8;
-constexpr int  CHUNK_LINES    = 100;
-constexpr int  OVERLAP_LINES  = 10;
 constexpr long MAX_FILE_BYTES = 2L * 1024 * 1024;  // skip > 2 MB
-constexpr const char* EMBED_MODEL = "mxbai-embed-large";
 
 // Extensions worth embedding. Add freely; cost is per-file.
 const std::set<std::string> EXTENSIONS = {
@@ -71,7 +67,7 @@ struct Chunk {
     std::string text;  // populated lazily; not stored in index
 };
 
-std::vector<Chunk> chunk_file(const std::string& path, long long mtime) {
+std::vector<Chunk> chunk_file(const std::string& path, long long mtime, int chunk_lines, int overlap_lines) {
     std::vector<Chunk> chunks;
     std::ifstream f(path);
     if (!f) return chunks;
@@ -88,10 +84,10 @@ std::vector<Chunk> chunk_file(const std::string& path, long long mtime) {
         for (const auto& l : buffer) joined << l << '\n';
         chunks.push_back({path, chunk_id++, chunk_start_line, line_no,
                           mtime, joined.str()});
-        if (!final && (int)buffer.size() > OVERLAP_LINES) {
-            // Keep last OVERLAP_LINES for the next chunk.
-            buffer.erase(buffer.begin(), buffer.end() - OVERLAP_LINES);
-            chunk_start_line = line_no - OVERLAP_LINES + 1;
+        if (!final && (int)buffer.size() > overlap_lines) {
+            // Keep last overlap_lines for the next chunk.
+            buffer.erase(buffer.begin(), buffer.end() - overlap_lines);
+            chunk_start_line = line_no - overlap_lines + 1;
         } else {
             buffer.clear();
         }
@@ -100,7 +96,7 @@ std::vector<Chunk> chunk_file(const std::string& path, long long mtime) {
     while (std::getline(f, line)) {
         ++line_no;
         buffer.push_back(line);
-        if ((int)buffer.size() >= CHUNK_LINES) flush(false);
+        if ((int)buffer.size() >= chunk_lines) flush(false);
     }
     flush(true);
     return chunks;
@@ -115,14 +111,59 @@ struct CacheKey {
     }
 };
 
+void show_help(const std::string& accent, const std::string& reset) {
+    std::cout << accent << "findex" << reset << " — Build a semantic index of your project\n\n"
+              << "Usage: findex [options]\n\n"
+              << "Options:\n"
+              << "  -s, --size <int>      Lines per chunk (default: 100)\n"
+              << "  -o, --overlap <int>   Line overlap between chunks (default: 10)\n"
+              << "  -t, --threads <int>   Max worker threads (default: 8)\n"
+              << "  -m, --model <string>  Embedding model (default: mxbai-embed-large)\n"
+              << "  -h, --help            Show this help\n\n"
+              << "Fine-Tuning Tips:\n"
+              << "  • " << accent << "Granularity:" << reset << " Smaller sizes (30-50) are best for finding specific functions\n"
+              << "    or variables. Larger sizes (150-200) preserve more context for logic flow.\n"
+              << "  • " << accent << "Overlap:" << reset << " Keep at ~10-20% of your chunk size. This ensures logic\n"
+              << "    spanning across a chunk boundary is still captured as a whole unit.\n"
+              << "  • " << accent << "Models:" << reset << " 'mxbai-embed-large' is state-of-the-art for retrieval.\n"
+              << "    'nomic-embed-text' is faster and works well for simple keyword-like lookup.\n"
+              << "  • " << accent << "Rebuilding:" << reset << " Re-running with a different model triggers a full rebuild.\n"
+              << "    Incremental updates (mtime-based) are used if the model remains the same.\n";
+}
+
 }  // namespace
 
-int main() {
-    auto t0 = std::chrono::steady_clock::now();
+int main(int argc, char* argv[]) {
+    int chunk_lines = 100;
+    int overlap_lines = 10;
+    int max_threads = 8;
+    std::string model = "mxbai-embed-large";
+
     FoxIntel intel;
+
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        if (arg == "-h" || arg == "--help") {
+            show_help(intel.color_accent(), intel.color_reset());
+            return 0;
+        } else if ((arg == "-s" || arg == "--size") && i + 1 < argc) {
+            chunk_lines = std::stoi(argv[++i]);
+        } else if ((arg == "-o" || arg == "--overlap") && i + 1 < argc) {
+            overlap_lines = std::stoi(argv[++i]);
+        } else if ((arg == "-t" || arg == "--threads") && i + 1 < argc) {
+            max_threads = std::stoi(argv[++i]);
+        } else if ((arg == "-m" || arg == "--model") && i + 1 < argc) {
+            model = argv[++i];
+        } else {
+            std::cerr << "Unknown option: " << arg << "\nUse --help for usage.\n";
+            return 1;
+        }
+    }
+
+    auto t0 = std::chrono::steady_clock::now();
     if (!intel.ensure_ollama_running()) return 1;
-    if (!intel.ensure_model_present(EMBED_MODEL)) {
-        std::cerr << "Embed model '" << EMBED_MODEL
+    if (!intel.ensure_model_present(model)) {
+        std::cerr << "Embed model '" << model
                   << "' missing and could not be pulled.\n";
         return 1;
     }
@@ -135,7 +176,7 @@ int main() {
         try {
             json old = json::parse(f_in);
             for (auto& e : old) {
-                if (!e.contains("model") || e["model"] != EMBED_MODEL) continue;
+                if (!e.contains("model") || e["model"] != model) continue;
                 if (!e.contains("chunk_id")) continue;
                 cache[{e["path"], e["chunk_id"]}] = e;
             }
@@ -144,8 +185,8 @@ int main() {
     }
 
     std::cout << "Indexing " << fs::current_path() << " ("
-              << EMBED_MODEL << ", " << CHUNK_LINES << "-line chunks, "
-              << OVERLAP_LINES << "-line overlap)\n";
+              << model << ", " << chunk_lines << "-line chunks, "
+              << overlap_lines << "-line overlap)\n";
 
     std::vector<Chunk> tasks;
     int files_seen = 0, files_skipped_size = 0, files_indexed = 0;
@@ -166,7 +207,7 @@ int main() {
         long long mtime = std::chrono::duration_cast<std::chrono::seconds>(
             entry.last_write_time().time_since_epoch()).count();
 
-        auto chunks = chunk_file(path, mtime);
+        auto chunks = chunk_file(path, mtime, chunk_lines, overlap_lines);
         for (auto& c : chunks) tasks.push_back(std::move(c));
         if (!chunks.empty()) ++files_indexed;
     }
@@ -182,7 +223,7 @@ int main() {
     std::atomic<int> done{0}, hit{0}, miss{0};
 
     auto submit = [&](const Chunk& c) {
-        workers.push_back(std::async(std::launch::async, [&, c]() {
+        workers.push_back(std::async(std::launch::async, [&, c, model]() {
             // Cache hit: mtime + chunk_id match → reuse vector.
             auto it = cache.find({c.path, c.chunk_id});
             if (it != cache.end() && it->second["mtime"] == c.mtime &&
@@ -193,7 +234,7 @@ int main() {
                 ++hit; ++done;
                 return;
             }
-            auto vec = intel.get_embedding(c.text);
+            auto vec = intel.get_embedding(c.text, model);
             if (!vec.empty()) {
                 std::lock_guard<std::mutex> lk(out_mu);
                 new_index.push_back({
@@ -202,7 +243,7 @@ int main() {
                     {"line_start", c.line_start},
                     {"line_end",   c.line_end},
                     {"mtime",      c.mtime},
-                    {"model",      EMBED_MODEL},
+                    {"model",      model},
                     {"vector",     vec},
                 });
             }
@@ -218,7 +259,7 @@ int main() {
     int progress_total = tasks.size();
     int last_pct = -1;
     for (size_t i = 0; i < tasks.size(); ++i) {
-        if (workers.size() >= MAX_THREADS) drain_one();
+        if ((int)workers.size() >= max_threads) drain_one();
         submit(tasks[i]);
         int pct = (int)((i + 1) * 100 / std::max(1, progress_total));
         if (pct != last_pct && pct % 5 == 0) {

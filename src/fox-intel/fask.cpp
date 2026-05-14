@@ -82,7 +82,12 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    auto qvec = intel.get_embedding(query);
+    std::string model = "mxbai-embed-large";
+    if (idx[0].contains("model")) {
+        model = idx[0]["model"].get<std::string>();
+    }
+
+    auto qvec = intel.get_embedding(query, model);
     if (qvec.empty()) { std::cerr << "Embedding failed.\n"; return 1; }
 
     struct Match {
