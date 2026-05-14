@@ -257,21 +257,25 @@ int main(int argc, char* argv[]) {
     };
 
     int progress_total = tasks.size();
-    int last_pct = -1;
+    auto print_progress = [&](int current) {
+        int pct = (int)(current * 100 / std::max(1, progress_total));
+        std::cout << "\r  " << pct << "% (" << done.load() << "/"
+                  << progress_total << "  hit=" << hit.load()
+                  << " miss=" << miss.load() << ")" << std::flush;
+    };
+
     for (size_t i = 0; i < tasks.size(); ++i) {
-        if ((int)workers.size() >= max_threads) drain_one();
-        submit(tasks[i]);
-        int pct = (int)((i + 1) * 100 / std::max(1, progress_total));
-        if (pct != last_pct && pct % 5 == 0) {
-            std::cout << "\r  " << pct << "% (" << done.load() << "/"
-                      << progress_total << "  hit=" << hit.load()
-                      << " miss=" << miss.load() << ")" << std::flush;
-            last_pct = pct;
+        if ((int)workers.size() >= max_threads) {
+            drain_one();
+            print_progress(done.load());
         }
+        submit(tasks[i]);
     }
-    while (!workers.empty()) drain_one();
-    std::cout << "\r  100% (" << done.load() << "/" << progress_total
-              << "  hit=" << hit.load() << " miss=" << miss.load() << ")\n";
+    while (!workers.empty()) {
+        drain_one();
+        print_progress(done.load());
+    }
+    std::cout << "\n";
 
     std::ofstream out(".foxml_index.json");
     out << new_index.dump() << '\n';
