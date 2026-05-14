@@ -46,6 +46,30 @@ _rm() {
     fi
 }
 
+_allow() {
+    local app="$1"
+    local dir="${2:-}"
+    if [[ -z "$dir" ]]; then
+        echo "usage: fox jail allow <app> <dir>"
+        return 1
+    fi
+    local override="$HOME/.config/firejail/${app}.local"
+    mkdir -p "$(dirname "$override")"
+    
+    # Resolve absolute path (handles ~ and relative paths if provided)
+    local abs_dir
+    abs_dir="$(realpath -m "$dir")"
+    
+    if grep -q "^whitelist ${abs_dir}$" "$override" 2>/dev/null; then
+        echo "${C_YEL}✓ $abs_dir is already allowed for $app${C_RST}"
+        return 0
+    fi
+    
+    echo "noblacklist ${abs_dir}" >> "$override"
+    echo "whitelist ${abs_dir}" >> "$override"
+    echo "${C_GRN}✓ Allowed $abs_dir for $app (restart $app to apply)${C_RST}"
+}
+
 _refresh_firefox() {
     pkill -SIGTERM -x firefox 2>/dev/null
     sleep 1
@@ -62,6 +86,7 @@ case "${1:-}" in
         ;;
     add)        [[ -n "${2:-}" ]] && _add "$2" || { echo "usage: fox jail add <app>"; exit 2; } ;;
     rm|remove)  [[ -n "${2:-}" ]] && _rm  "$2" || { echo "usage: fox jail rm <app>"; exit 2; } ;;
+    allow)      [[ -n "${2:-}" ]] && _allow "$2" "${3:-}" || { echo "usage: fox jail allow <app> <dir>"; exit 2; } ;;
     apply-all)  sudo firecfg && echo "${C_GRN}✓ firecfg applied (every supported app wrapped)${C_RST}" ;;
     restart-firefox) _refresh_firefox ;;
     log)        sudo tail -n 50 /var/log/firejail.log 2>/dev/null || sudo journalctl -t firejail --no-pager -n 50 ;;
@@ -70,6 +95,7 @@ fox jail — firejail mgmt
   fox jail [status]      show active sandboxes + wrapped-app symlinks
   fox jail add <app>     route <app> through firejail (creates /usr/local/bin/<app>)
   fox jail rm  <app>     un-jail <app>
+  fox jail allow <app> <dir>  whitelist a directory for a sandboxed app
   fox jail apply-all     run firecfg (wraps every supported app)
   fox jail restart-firefox  kill + relaunch firefox sandboxed
   fox jail log           recent firejail log
