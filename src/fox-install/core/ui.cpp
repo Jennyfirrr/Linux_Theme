@@ -74,6 +74,9 @@ void progress(std::size_t current, std::size_t total, const std::string& label) 
     constexpr int bar_w = 30;
     int pct    = static_cast<int>((current * 100) / total);
     int filled = static_cast<int>((current * bar_w) / total);
+    if (pct > 100) pct = 100;
+    if (filled > bar_w) filled = bar_w;
+
     std::string bar(filled, '#');
     bar.append(bar_w - filled, '-');
 
@@ -97,6 +100,9 @@ void module_progress(std::size_t current, std::size_t total, const std::string& 
     constexpr int bar_w = 30;
     int pct    = static_cast<int>((current * 100) / total);
     int filled = static_cast<int>((current * bar_w) / total);
+    if (pct > 100) pct = 100;
+    if (filled > bar_w) filled = bar_w;
+
     std::string bar(filled, '#');
     bar.append(bar_w - filled, '-');
     std::printf("\n%s::%s [%s%s%s] %s%zu/%zu%s %s(%d%%)%s %s%s%s\n",

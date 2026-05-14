@@ -186,31 +186,36 @@ int main(int argc, char** argv) {
 
         // --- Inline Interactive Decision ---
         if (!ctx.assume_yes && ui::tty()) {
-            auto is_backbone = [](const char* s) {
-                static const char* B[] = { "detect", "preflight", "theme", "render",
-                    "symlinks", "specials", "post_install", "summary", "next_steps", nullptr };
-                for (auto** p = B; *p; ++p) if (std::string(*p) == s) return true;
-                return false;
-            };
-            auto is_hw = [](const char* s) {
-                static const char* H[] = { "nvidia", "amd_gpu", "intel_gpu", "fprint", nullptr };
-                for (auto** p = H; *p; ++p) if (std::string(*p) == s) return true;
-                return false;
-            };
+            if (parsed.only && !should_run) {
+                // In --only mode, we don't prompt for things that aren't 
+                // in the allow-list. 
+            } else {
+                auto is_backbone = [](const char* s) {
+                    static const char* B[] = { "detect", "preflight", "theme", "render",
+                        "symlinks", "specials", "post_install", "summary", "next_steps", nullptr };
+                    for (auto** p = B; *p; ++p) if (std::string(*p) == s) return true;
+                    return false;
+                };
+                auto is_hw = [](const char* s) {
+                    static const char* H[] = { "nvidia", "amd_gpu", "intel_gpu", "fprint", nullptr };
+                    for (auto** p = H; *p; ++p) if (std::string(*p) == s) return true;
+                    return false;
+                };
 
-            if (!is_backbone(m.slug) && !is_hw(m.slug)) {
-                // Skip laptop-only modules on desktops
-                if (std::string(m.slug) == "throttling" && !ctx.is_laptop) {
-                    should_run = false;
-                } else {
-                    bool risky = (std::string(m.slug) == "fprint_pam" ||
-                                  std::string(m.slug) == "greetd_fingerprint");
-                    std::string prompt = "Execute module " + std::string(m.slug);
-                    if (risky) prompt += " [LOCKOUT RISK]";
-                    prompt += " (" + std::string(m.description) + ")?";
-                    
-                    // We use the current enabled state as the default.
-                    should_run = ui::ask_yn(prompt, should_run, false);
+                if (!is_backbone(m.slug) && !is_hw(m.slug)) {
+                    // Skip laptop-only modules on desktops
+                    if (std::string(m.slug) == "throttling" && !ctx.is_laptop) {
+                        should_run = false;
+                    } else {
+                        bool risky = (std::string(m.slug) == "fprint_pam" ||
+                                      std::string(m.slug) == "greetd_fingerprint");
+                        std::string prompt = "Execute module " + std::string(m.slug);
+                        if (risky) prompt += " [LOCKOUT RISK]";
+                        prompt += " (" + std::string(m.description) + ")?";
+                        
+                        // We use the current enabled state as the default.
+                        should_run = ui::ask_yn(prompt, should_run, false);
+                    }
                 }
             }
         }

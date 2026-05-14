@@ -5,6 +5,7 @@
 #include <vector>
 #include "json.hpp"
 #include <curl/curl.h>
+#include <mutex>
 
 using json = nlohmann::json;
 
@@ -34,7 +35,6 @@ public:
 private:
     std::string default_model;
     std::string accent_color;
-    CURL* curl;
 
     static size_t WriteCallback(void* contents, size_t size, size_t nmemb, std::string* userp);
     static size_t StreamCallback(void* contents, size_t size, size_t nmemb, void* userp);

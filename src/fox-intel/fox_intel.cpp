@@ -11,6 +11,9 @@
 #include <chrono>
 #include <fcntl.h>
 
+static int g_curl_ref_count = 0;
+static std::mutex g_curl_ref_mu;
+
 FoxIntel::FoxIntel(std::string model) : default_model(model), accent_color("\033[1;32m") {
     const char* home = std::getenv("HOME");
     std::string home_str = home ? home : "";
@@ -65,13 +68,15 @@ FoxIntel::FoxIntel(std::string model) : default_model(model), accent_color("\033
         }
     }
 
-    curl_global_init(CURL_GLOBAL_DEFAULT);
-    curl = curl_easy_init();
+    std::lock_guard<std::mutex> lk(g_curl_ref_mu);
+    if (g_curl_ref_count == 0) curl_global_init(CURL_GLOBAL_DEFAULT);
+    g_curl_ref_count++;
 }
 
 FoxIntel::~FoxIntel() {
-    if (curl) curl_easy_cleanup(curl);
-    curl_global_cleanup();
+    std::lock_guard<std::mutex> lk(g_curl_ref_mu);
+    g_curl_ref_count--;
+    if (g_curl_ref_count == 0) curl_global_cleanup();
 }
 
 std::string FoxIntel::color_accent() { return accent_color; }
@@ -98,6 +103,7 @@ std::vector<float> FoxIntel::get_embedding(const std::string& text) {
     std::string readBuffer;
     std::vector<float> embedding;
 
+    CURL* curl = curl_easy_init();
     if(curl) {
         json body = {{"model", "mxbai-embed-large"}, {"prompt", text}};
         std::string json_str = body.dump();
@@ -116,12 +122,14 @@ std::vector<float> FoxIntel::get_embedding(const std::string& text) {
             } catch (...) {}
         }
         curl_slist_free_all(headers);
+        curl_easy_cleanup(curl);
     }
     return embedding;
 }
 
 std::string FoxIntel::ask(const std::string& prompt, bool stream) {
     std::string readBuffer;
+    CURL* curl = curl_easy_init();
     if(curl) {
         json body = {{"model", default_model}, {"prompt", prompt}, {"stream", stream}};
         std::string json_str = body.dump();
@@ -141,11 +149,15 @@ std::string FoxIntel::ask(const std::string& prompt, bool stream) {
         if(curl_easy_perform(curl) == CURLE_OK && !stream) {
             try {
                 auto j = json::parse(readBuffer);
-                if (j.contains("response")) return j["response"].get<std::string>();
+                if (j.contains("response")) {
+                    readBuffer = j["response"].get<std::string>();
+                }
             } catch (...) {}
         }
         curl_slist_free_all(headers);
+        curl_easy_cleanup(curl);
     }
+    if (stream) return "";
     return readBuffer;
 }
 

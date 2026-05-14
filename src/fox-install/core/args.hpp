@@ -14,6 +14,7 @@ struct Parsed {
     bool show_version = false;
     bool quiet        = false;
     bool full         = false;            // alias for "enable every default + every major opt-in"
+    bool only         = false;            // --only <list> was used
     bool resume       = false;            // --resume
     std::string phase;                    // --phase <slug>
 };

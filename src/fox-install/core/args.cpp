@@ -20,8 +20,9 @@ std::size_t find_by_slug(const std::string& slug) {
     return SIZE_MAX;
 }
 
-// Look up a module by its `--foo` flag. Returns SIZE_MAX if no match.
+// Look up a module by its --foo flag. Returns SIZE_MAX if no match.
 std::size_t find_by_flag(const std::string& flag) {
+
     for (std::size_t i = 0; i < MODULES_COUNT; ++i) {
         if (flag == MODULES[i].flag) return i;
     }
@@ -59,6 +60,7 @@ void print_help(const char* argv0) {
         "                    (polkit-strict, cpp-pro). Use --no-<slug> to exclude\n"
         "                    individual modules (e.g. --full --no-mac-random).\n"
         "      --quick       skip slow + network-heavy parts (deps, github, models)\n"
+        "      --monitor     surgical run of the multi-monitor wizard only\n"
         "      --only <slugs> comma-separated allow-list; everything else skipped\n"
         "      --polkit-strict   add polkit strict mode (every GUI sudo re-prompts)\n"
         "      --cpp-pro     C++ toolchain extras (clang/lldb/mold/perf/etc)\n"
@@ -151,7 +153,16 @@ bool parse(int argc, char** argv, Parsed& out, Context& ctx) {
             continue;
         }
 
+        if (a == "--monitor") {
+            out.only = true;
+            for (std::size_t k = 0; k < MODULES_COUNT; ++k) {
+                out.module_enabled[k] = (std::string(MODULES[k].slug) == "monitors");
+            }
+            continue;
+        }
+
         if (a == "--render-only") {
+            out.only = true;
             static const char* KEEP[] = {
                 "detect", "preflight", "theme",
                 "render", "symlinks", "specials",
@@ -172,6 +183,7 @@ bool parse(int argc, char** argv, Parsed& out, Context& ctx) {
         }
 
         if (a == "--only" && i + 1 < argc) {
+            out.only = true;
             std::string list = argv[++i];
             for (std::size_t k = 0; k < MODULES_COUNT; ++k) {
                 out.module_enabled[k] = false;
@@ -209,7 +221,25 @@ bool parse(int argc, char** argv, Parsed& out, Context& ctx) {
         if (idx != SIZE_MAX) { out.module_enabled[idx] = false; continue; }
 
         if (!a.empty() && a[0] != '-') {
-            if (ctx.theme_name.empty()) { ctx.theme_name = a; continue; }
+            std::size_t slug_idx = find_by_slug(a);
+            if (slug_idx != SIZE_MAX) {
+                // Positional module slug (e.g. `fox install monitors`)
+                // On the FIRST module slug we see, if --only hasn't already
+                // been set, we flip to exclusive mode.
+                if (!out.only) {
+                    out.only = true;
+                    for (std::size_t k = 0; k < MODULES_COUNT; ++k) {
+                        out.module_enabled[k] = false;
+                    }
+                }
+                out.module_enabled[slug_idx] = true;
+                continue;
+            }
+
+            if (ctx.theme_name.empty()) {
+                ctx.theme_name = a;
+                continue;
+            }
         }
 
         std::fprintf(stderr, "fox-install: unknown argument: %s\n", a.c_str());
