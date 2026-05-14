@@ -46,19 +46,22 @@ indices=()  # parallel: file line number (1-based) for each menu row; 0 = clear-
 entries+=("<span foreground=\"#${C_RED}\"></span>  Clear all (${total})")
 indices+=("0")
 
+if ! command -v fox-agent-parse >/dev/null 2>&1; then
+    # Fallback to jq if C++ parser not built/installed yet
+    mapfile -t parsed_lines < <(jq -R -r 'try (fromjson | [.source // "", .event // "", .project // "?", .tmux // "", .message // ""] | @tsv) catch ""' "$queue_file" 2>/dev/null)
+else
+    mapfile -t parsed_lines < <(fox-agent-parse "$queue_file" 2>/dev/null)
+fi
+
 for (( raw=total-1; raw>=0; raw-- )); do
     line="${lines[$raw]}"
     [[ -z "$line" ]] && continue
 
-    src="$(printf '%s' "$line" | jq -r '.source // ""' 2>/dev/null)"
-    event="$(printf '%s' "$line" | jq -r '.event // ""' 2>/dev/null)"
-    project="$(printf '%s' "$line" | jq -r '.project // "?"' 2>/dev/null)"
-    target="$(printf '%s' "$line" | jq -r '.tmux // ""' 2>/dev/null)"
-    msg="$(printf '%s' "$line" | jq -r '.message // ""' 2>/dev/null)"
+    IFS=$'\t' read -r src event project target msg <<< "${parsed_lines[$raw]:-}"
 
-    project_e="$(pango_escape "$project")"
-    msg_e="$(pango_escape "$msg")"
-    target_e="$(pango_escape "$target")"
+    project_e="$project"
+    msg_e="$msg"
+    target_e="$target"
 
     case "$src" in
         claude)   src_color="$C_PRIMARY";   src_label="Claude"   ;;
@@ -127,13 +130,12 @@ if [[ -n "$target" ]] && command -v tmux >/dev/null 2>&1; then
         if [[ -n "${TMUX:-}" ]]; then
             tmux switch-client -t "${sess}:${win}.${pane}" 2>/dev/null || true
         else
-            # Outside tmux (Hyprland keybind): switch any attached client
-            # whose current session differs, then nudge focus to a kitty
-            # window so the user actually sees it.
-            while read -r tty cur_sess; do
-                [[ "$cur_sess" != "$sess" ]] && \
-                    tmux switch-client -c "$tty" -t "${sess}:${win}.${pane}" 2>/dev/null
-            done < <(tmux list-clients -F '#{client_tty} #{session_name}' 2>/dev/null)
+            # Outside tmux (Hyprland keybind): switch only the most recently 
+            # active client to avoid hijacking every open terminal.
+            target_tty=$(tmux list-clients -F '#{client_activity} #{client_tty}' 2>/dev/null | sort -nr | head -n1 | cut -d' ' -f2)
+            if [[ -n "$target_tty" ]]; then
+                tmux switch-client -c "$target_tty" -t "${sess}:${win}.${pane}" 2>/dev/null
+            fi
 
             if command -v hyprctl >/dev/null 2>&1; then
                 hyprctl dispatch focuswindow "kitty" >/dev/null 2>&1 || true
