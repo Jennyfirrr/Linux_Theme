@@ -10,6 +10,7 @@
 #include "fox_intel.hpp"
 
 #include <algorithm>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -49,9 +50,27 @@ int main(int argc, char* argv[]) {
     FoxIntel intel;
     if (!intel.ensure_ollama_running()) return 1;
 
+    std::filesystem::path idx_dir = std::filesystem::current_path();
+    bool found = false;
+    while (true) {
+        if (std::filesystem::exists(idx_dir / ".foxml_index.json")) {
+            found = true;
+            break;
+        }
+        if (idx_dir == idx_dir.root_path()) break;
+        idx_dir = idx_dir.parent_path();
+    }
+
+    if (!found) {
+        std::cerr << "Index not found in current or parent directories. Run 'findex' first.\n";
+        return 1;
+    }
+
+    // Paths in the index are relative to the directory where findex was run.
+    std::filesystem::current_path(idx_dir);
     std::ifstream f_in(".foxml_index.json");
     if (!f_in) {
-        std::cerr << "Index not found. Run 'findex' first.\n";
+        std::cerr << "Failed to open .foxml_index.json\n";
         return 1;
     }
     json idx;
