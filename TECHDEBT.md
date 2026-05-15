@@ -1,0 +1,31 @@
+# Technical Debt - FoxML Installation Logic
+
+This document tracks identified areas for improvement, consolidation, and cleanup within the installation pipeline (`bootstrap.sh`, `install.sh`, and `src/fox-install/`).
+
+## High Priority: Consolidation & Redundancy
+
+- **Triple-Checked Logic:** Disk space verification and hardware detection (NVIDIA) are currently implemented in `bootstrap.sh`, `install.sh`, and the C++ `preflight`/`detect` modules.
+  - *Goal:* Centralize all environment discovery in the C++ orchestrator; wrappers should only check for build dependencies.
+- **Bash/C++ Mirroring:** `mappings.sh` still contains logic that has been ported to C++ (e.g., Firefox profile discovery, JSON merging).
+  - *Goal:* Decommission legacy bash logic once the C++ path is confirmed 100% stable across all edge cases.
+- **Sudo Keepalive:** Multiple background loops in Bash scripts managing the sudo cache.
+  - *Goal:* Standardize on a single keepalive mechanism.
+
+## Architectural Improvements
+
+- **Shell Escaping in C++:** Frequent use of `sh::run({"sh", "-c", "..."})` to handle pipes and redirection.
+  - *Goal:* Refactor `sh::run` to handle piping natively or move more logic into C++ filesystem/stream operations to avoid shell overhead and escaping risks.
+- **Bulk Deploy "Ghosts":** `specials.cpp` copies directories (scripts/bin) but never prunes old files. Renamed or removed scripts persist in the user's `~/.local/bin` indefinitely.
+  - *Goal:* Implement a manifest-based or "sync" style deploy that removes files no longer present in the repository.
+- **Hardcoded Dependencies:** The base package list in `deps.cpp` is a static vector.
+  - *Goal:* Move package lists to a sidecar JSON or YAML file to allow updates without recompilation.
+
+## UX & Interactivity
+
+- **Inconsistent Prompts:** While major prompts use `read -n 1`, some deeper configuration wizards might still rely on older `read` patterns.
+  - *Goal:* Audit all modules for consistent single-key input usage.
+
+## Maintenance Notes
+
+- **Date of Audit:** 2026-05-14
+- **Status:** "If it ain't broke, don't fix it" — these are tracked for future refactors but not currently impacting installation success.
