@@ -1,5 +1,5 @@
 font={{FONT_FAMILY}} 10
-background-color=#{{BG}}E6
+background-color=#{{BG}}{{POPUP_BG_OPACITY_HEX}}
 text-color=#{{FG}}
 border-color=#{{PRIMARY}}
 # OSD progress bar (volume / brightness) — mako defaults to blue,
@@ -22,13 +22,13 @@ ignore-timeout=1
 icon-path=/usr/share/icons/{{MAKO_ICON_THEME}}
 
 [urgency=low]
-background-color=#{{BG}}E6
+background-color=#{{BG}}{{POPUP_BG_OPACITY_HEX}}
 text-color=#{{FG_DIM}}
 border-color=#{{SURFACE}}
 default-timeout=2000
 
 [urgency=critical]
-background-color=#{{BG}}E6
+background-color=#{{BG}}{{POPUP_BG_OPACITY_HEX}}
 text-color=#{{FG}}
 border-color=#{{RED}}
 default-timeout=15000
@@ -41,8 +41,9 @@ default-timeout=4000
 border-color=#{{ACCENT}}
 default-timeout=4000
 
-# AI agents — primary accent for Claude, secondary for Gemini, so a glance
-# tells you which agent is asking. Critical urgency (Notification hook,
+# AI agents — both Claude and Gemini share the primary peach accent
+# so notification chrome reads as "an agent is talking to you", not
+# "which agent is talking." Critical urgency (Notification hook,
 # i.e. permission/input prompts) still gets the red border from the
 # urgency=critical block above.
 [app-name=Claude]
@@ -50,5 +51,5 @@ border-color=#{{PRIMARY}}
 default-timeout=6000
 
 [app-name=Gemini]
-border-color=#{{ACCENT}}
+border-color=#{{PRIMARY}}
 default-timeout=6000

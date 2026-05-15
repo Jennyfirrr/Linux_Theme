@@ -21,6 +21,7 @@
 #   --bg <hex>           Set background color (no #)
 #   --fg <hex>           Set foreground color (no #)
 #   --opacity <0.0-1.0>  Set kitty/window transparency
+#   --popup-opacity <0.0-1.0>  Set rofi/mako/dunst popup transparency
 #   --render             Just re-render without changing values
 #   --help
 
@@ -73,6 +74,7 @@ while [[ $# -gt 0 ]]; do
         --bg)           _update_val "BG" "$2";          changed=true; shift 2 ;;
         --fg)           _update_val "FG" "$2";          changed=true; shift 2 ;;
         --opacity)      _update_val "KITTY_BG_OPACITY" "$2"; changed=true; shift 2 ;;
+        --popup-opacity) _update_val "POPUP_BG_OPACITY" "$2"; changed=true; shift 2 ;;
         --render)       changed=true; shift ;;
         --help|-h)
             sed -n '2,22p' "$0" | sed 's/^# \?//'

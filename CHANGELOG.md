@@ -2,6 +2,24 @@
 
 All notable changes to the Fox ML theme.
 
+## 2026-05-15 — v2.8.3
+
+### Popup glass: blur + tunable transparency
+
+- **Notification blur fixed** — mako/dunst bubbles now correctly blur their backdrop. The previous rule used the `layerrule { ... }` block form with `ignorealpha`, which Hyprland 0.54.3 silently rejects (block form only accepts `blur`/`xray`/`unset`/`noanim`/`name`/`match:*`). Rewrote `shared/hyprland_modules/rules.conf` to the keyword form: `layerrule = blur on, ignore_alpha 0.1, match:namespace ^(rofi|mako|dunst|notifications)$`. The `ignore_alpha 0.1` threshold keeps blur from leaking into the transparent margin around the bubble (mako's layer surface is larger than the visible popup).
+- **`POPUP_BG_OPACITY` palette knob** — new `0.0–1.0` variable in `palette.sh` (default `0.7`) drives rofi + mako + dunst background alpha. Float → 2-char hex conversion (`{{POPUP_BG_OPACITY_HEX}}`) is derived in both `fox-render-fast` (C++) and `render.sh` (shell fallback), mirroring the existing `KITTY_BG_OPACITY_HEX` pattern.
+- **`fox-theme-tweak --popup-opacity`** — wired the new knob into the live-tweak tool. `fox-theme-tweak --popup-opacity 0.55` writes the palette, re-renders templates, and reloads Hyprland. `--opacity` continues to control the terminal (`KITTY_BG_OPACITY`) only.
+- **Gemini notifications match Claude** — both AI-agent notification rules in mako + dunst now use the primary peach border (`PRIMARY`) instead of the lavender accent (`ACCENT`). Notification chrome now reads as "an agent is talking to you" uniformly; `app-name` still distinguishes them in the title.
+- **`INVARIANTS.md`** — extended [I-02] with the layerrule keyword-form sub-rule so the next person editing rules.conf doesn't re-step on the same parse error.
+
+### Previously-undocumented (rolled forward from recent unreleased commits)
+
+- **`fox-theme-tweak`** (`shared/bin/fox-theme-tweak`) — bash tool that edits the active palette in place, re-renders, and reloads. Flags: `--rounding`, `--blur-size`, `--blur-passes`, `--gap-in`, `--gap-out`, `--border-size`, `--primary`, `--secondary`, `--accent`, `--bg`, `--fg`, `--opacity`, `--popup-opacity`, `--render`.
+- **Centralized aesthetic controls in palette.sh** — `ROUNDING`, `BLUR_SIZE`, `BLUR_PASSES`, `GAP_IN`, `GAP_OUT`, `BORDER_SIZE` are now palette variables (was: hardcoded across templates).
+- **Unified popup borders** — 2px solid peach across rofi/mako/dunst/waybar for a consistent look.
+
+---
+
 ## 2026-05-14 — v2.8.2
 
 ### Installation Safety & UX

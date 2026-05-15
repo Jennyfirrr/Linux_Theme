@@ -101,7 +101,7 @@ build_sed_expr() {
             WARM SAND WHEAT CLAY NVIM_BG_HL NVIM_SEL
         )
         str_vars=(
-            THEME_TYPE NVIM_STYLE NVIM_BG KITTY_BG_OPACITY SHOW_WELCOME SHOW_BANNER WALLPAPER
+            THEME_TYPE NVIM_STYLE NVIM_BG KITTY_BG_OPACITY POPUP_BG_OPACITY SHOW_WELCOME SHOW_BANNER WALLPAPER
             MAKO_ICON_THEME VSCODE_UI_THEME FONT_FAMILY
             ANSI_ACCENT1 ANSI_ACCENT2 ANSI_ACCENT3 ANSI_ACCENT4 ANSI_ACCENT5
             ANSI_TEXT ANSI_MUTED ANSI_ERROR ANSI_OK ANSI_STANDOUT_BG
@@ -138,11 +138,13 @@ build_sed_expr() {
         [[ -z "$val" ]] && continue
         sed_expr+="s|{{${var}}}|${val}|g;"
 
-        # Special case: convert KITTY_BG_OPACITY to hex alpha
-        if [[ "$var" == "KITTY_BG_OPACITY" ]]; then
+        # Special case: convert *_BG_OPACITY (0.0-1.0) to hex alpha (00-ff).
+        # KITTY_BG_OPACITY → {{KITTY_BG_OPACITY_HEX}}  (used by kitty)
+        # POPUP_BG_OPACITY → {{POPUP_BG_OPACITY_HEX}}  (used by mako/dunst)
+        if [[ "$var" == "KITTY_BG_OPACITY" || "$var" == "POPUP_BG_OPACITY" ]]; then
             local hex_alpha
             hex_alpha=$(opacity_to_hex "$val")
-            sed_expr+="s|{{KITTY_BG_OPACITY_HEX}}|${hex_alpha}|g;"
+            sed_expr+="s|{{${var}_HEX}}|${hex_alpha}|g;"
         fi
     done
 
@@ -318,7 +320,7 @@ build_reverse_sed_expr() {
             WARM SAND WHEAT CLAY NVIM_BG_HL NVIM_SEL
         )
         str_vars=(
-            THEME_TYPE NVIM_STYLE NVIM_BG KITTY_BG_OPACITY SHOW_WELCOME SHOW_BANNER WALLPAPER
+            THEME_TYPE NVIM_STYLE NVIM_BG KITTY_BG_OPACITY POPUP_BG_OPACITY SHOW_WELCOME SHOW_BANNER WALLPAPER
             MAKO_ICON_THEME VSCODE_UI_THEME FONT_FAMILY
             ANSI_ACCENT1 ANSI_ACCENT2 ANSI_ACCENT3 ANSI_ACCENT4 ANSI_ACCENT5
             ANSI_TEXT ANSI_MUTED ANSI_ERROR ANSI_OK ANSI_STANDOUT_BG

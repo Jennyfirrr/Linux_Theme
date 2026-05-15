@@ -12,6 +12,11 @@ Load-bearing rules. Breaking them causes silent drift or visible failure.
 - **Standard** — Keyword: `windowrule`. Property: `col.active_border`.
 - **Prohibited** — `windowrulev2`, `bordercolor`.
 - **Enforcement** — `grep -rn 'windowrulev2\|bordercolor' shared/ templates/` returns nothing.
+- **Layerrule sub-rule** — The `layerrule { ... }` block form silently drops
+  `ignore_alpha`/`ignorezero`; only the keyword form works:
+  `layerrule = blur on, ignore_alpha 0.1, match:namespace <regex>`.
+  Property is `ignore_alpha` (underscore), not `ignorealpha`. `blur` requires
+  `on` (bare `blur` errors "missing a value"). See `shared/hyprland_modules/rules.conf`.
 
 ## [I-03] Safe System Mutex
 - **Rule** — Never overwrite a system file without a backup.

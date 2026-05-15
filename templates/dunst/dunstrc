@@ -67,21 +67,21 @@
     mouse_right_click = close_all
 
 [urgency_low]
-    background = "#{{BG_DUNST}}E6"
+    background = "#{{BG_DUNST}}{{POPUP_BG_OPACITY_HEX}}"
     foreground = "#{{FG_DIM}}"
     frame_color = "#{{SURFACE}}"
     highlight = "#{{PRIMARY}}"
     timeout = 5
 
 [urgency_normal]
-    background = "#{{BG_DUNST}}E6"
+    background = "#{{BG_DUNST}}{{POPUP_BG_OPACITY_HEX}}"
     foreground = "#{{FG}}"
     frame_color = "#{{PRIMARY}}"
     highlight = "#{{PRIMARY}}"
     timeout = 8
 
 [urgency_critical]
-    background = "#{{BG_DUNST}}E6"
+    background = "#{{BG_DUNST}}{{POPUP_BG_OPACITY_HEX}}"
     foreground = "#{{FG}}"
     frame_color = "#{{RED}}"
     highlight = "#{{RED}}"
@@ -90,7 +90,7 @@
 # Spotify notifications - lavender accent
 [spotify]
     appname = Spotify
-    background = "#{{BG_DUNST}}E6"
+    background = "#{{BG_DUNST}}{{POPUP_BG_OPACITY_HEX}}"
     foreground = "#{{FG}}"
     frame_color = "#{{ACCENT}}"
     highlight = "#{{ACCENT}}"
@@ -100,19 +100,21 @@
 # Spotify (flatpak)
 [spotify-flatpak]
     appname = "com.spotify.Client"
-    background = "#{{BG_DUNST}}E6"
+    background = "#{{BG_DUNST}}{{POPUP_BG_OPACITY_HEX}}"
     foreground = "#{{FG}}"
     frame_color = "#{{ACCENT}}"
     highlight = "#{{ACCENT}}"
     format = "<b>%s</b>\n%b"
     timeout = 5
 
-# AI agents — primary accent for Claude, secondary for Gemini.
-# Critical-urgency entries (Notification hook = permission/input prompt)
-# still get the red border from urgency_critical above.
+# AI agents — both Claude and Gemini share the primary peach accent
+# so notification chrome reads as "an agent is talking to you", not
+# "which agent is talking." Critical-urgency entries (Notification
+# hook = permission/input prompt) still get the red border from
+# urgency_critical above.
 [claude]
     appname = Claude
-    background = "#{{BG_DUNST}}E6"
+    background = "#{{BG_DUNST}}{{POPUP_BG_OPACITY_HEX}}"
     foreground = "#{{FG}}"
     frame_color = "#{{PRIMARY}}"
     highlight = "#{{PRIMARY}}"
@@ -121,9 +123,9 @@
 
 [gemini]
     appname = Gemini
-    background = "#{{BG_DUNST}}E6"
+    background = "#{{BG_DUNST}}{{POPUP_BG_OPACITY_HEX}}"
     foreground = "#{{FG}}"
-    frame_color = "#{{ACCENT}}"
-    highlight = "#{{ACCENT}}"
+    frame_color = "#{{PRIMARY}}"
+    highlight = "#{{PRIMARY}}"
     format = "<b>%s</b>\n%b"
     timeout = 6

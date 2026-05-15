@@ -66,7 +66,7 @@ std::unordered_map<std::string, std::string> hardcoded_fallback() {
         nullptr,
     };
     static const char* STR_VARS[] = {
-        "THEME_TYPE","NVIM_STYLE","NVIM_BG","KITTY_BG_OPACITY",
+        "THEME_TYPE","NVIM_STYLE","NVIM_BG","KITTY_BG_OPACITY","POPUP_BG_OPACITY",
         "SHOW_WELCOME","SHOW_BANNER","WALLPAPER",
         "MAKO_ICON_THEME","VSCODE_UI_THEME","FONT_FAMILY",
         "ANSI_ACCENT1","ANSI_ACCENT2","ANSI_ACCENT3","ANSI_ACCENT4","ANSI_ACCENT5",

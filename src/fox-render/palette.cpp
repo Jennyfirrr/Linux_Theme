@@ -106,15 +106,17 @@ parse_palette(const std::string& palette_path) {
         } else {
             table["{{" + name + "}}"] = val;
 
-            // Special case: convert KITTY_BG_OPACITY to hex alpha (00-ff).
-            if (name == "KITTY_BG_OPACITY") {
+            // Special case: convert *_BG_OPACITY (0.0-1.0) to hex alpha (00-ff).
+            // KITTY_BG_OPACITY → {{KITTY_BG_OPACITY_HEX}}  (used by kitty)
+            // POPUP_BG_OPACITY → {{POPUP_BG_OPACITY_HEX}}  (used by mako/dunst)
+            if (name == "KITTY_BG_OPACITY" || name == "POPUP_BG_OPACITY") {
                 double o = std::strtod(val.c_str(), nullptr);
                 int alpha = static_cast<int>(o * 255.0 + 0.5);
                 if (alpha < 0) alpha = 0;
                 if (alpha > 255) alpha = 255;
                 char abuf[4];
                 std::snprintf(abuf, sizeof(abuf), "%02x", alpha);
-                table["{{KITTY_BG_OPACITY_HEX}}"] = abuf;
+                table["{{" + name + "_HEX}}"] = abuf;
             }
         }
     }

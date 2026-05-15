@@ -21,12 +21,13 @@ window {
   anchor: north;
   y-offset: 50px;
   width: 480px;
-  border-radius: 0;
+  border-radius: {{ROUNDING}}px;
   border: 2px;
   border-color: #{{PRIMARY}};
-  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.9); /* More opaque for dropdown clarity */
+  background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},{{POPUP_BG_OPACITY}});
   padding: 12px;
 }
+
 
 mainbox {
   children: [ inputbar, listview ];

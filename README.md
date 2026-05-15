@@ -354,7 +354,8 @@ The palette defines ~60 variables across:
 - **Tmux** — `colour216`-style palette
 - **App overrides** — per-app background tweaks (dunst, spicetify, vencord)
 - **Font** — `FONT_FAMILY` (default `Hack Nerd Font`)
-- **Metadata** — NVIM_STYLE, KITTY_BG_OPACITY, VSCODE_UI_THEME
+- **Metadata** — NVIM_STYLE, KITTY_BG_OPACITY, POPUP_BG_OPACITY, VSCODE_UI_THEME
+- **Aesthetic knobs** — ROUNDING, BLUR_SIZE, BLUR_PASSES, GAP_IN, GAP_OUT, BORDER_SIZE (live-tunable via `fox-theme-tweak`)
 
 ### Changing the font
 

@@ -38,6 +38,7 @@ Dark theme with earthy, muted tones — warm peach, dusty rose, sage, and wheat 
 | `NVIM_STYLE` | `storm` | Neovim style variant |
 | `NVIM_BG` | `dark` | `vim.o.background` |
 | `KITTY_BG_OPACITY` | `0.6` | Terminal transparency |
+| `POPUP_BG_OPACITY` | `0.7` | Rofi / mako / dunst popup transparency |
 | `VSCODE_UI_THEME` | `vs-dark` | VS Code/Cursor base theme |
 
 ## Aesthetic
