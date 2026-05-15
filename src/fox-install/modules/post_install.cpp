@@ -96,7 +96,7 @@ void run_post_install(Context& ctx) {
 
     if (sh::dry_run()) {
         ui::substep("[dry-run] would: write .active-theme + install marker, "
-                    "render waybar for current layout, restart waybar+dunst, "
+                    "render waybar for current layout, restart waybar+dunst+mako, "
                     "Lazy sync + TSUpdateSync (60s/120s caps), "
                     "Cursor/VS Code workbench.colorTheme=Fox ML, "
                     "remove rendered/ dir");
@@ -136,6 +136,18 @@ void run_post_install(Context& ctx) {
     if (process_running("dunst")) {
         restart_detached("dunst", "dunst");
         ui::ok("Dunst restarted");
+    }
+
+    // mako: native reload via makoctl is preferred (no popup queue loss),
+    // fall back to restart if makoctl isn't around.
+    if (process_running("mako")) {
+        if (have("makoctl") &&
+            sh::run({"sh", "-c", "makoctl reload >/dev/null 2>&1"}) == 0) {
+            ui::ok("mako reloaded");
+        } else {
+            restart_detached("mako", "mako");
+            ui::ok("mako restarted");
+        }
     }
 
     if (have("nvim") && fs::is_directory(ctx.home / ".local/share/nvim/lazy")) {

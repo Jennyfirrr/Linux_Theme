@@ -21,7 +21,7 @@
 
 @define-color bubble       rgba({{BG_R}},{{BG_G}},{{BG_B}}, 0.7);
 @define-color bubble_hover rgba({{SURFACE_R}},{{SURFACE_G}},{{SURFACE_B}}, {{KITTY_BG_OPACITY}});
-@define-color border       rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.85);
+@define-color border       #{{PRIMARY}};
 
 /* Size tokens (__FONT_BASE__, __FONT_LOGO__, __FONT_STATS__, __PAD_WIN__,
    __PAD_MOD__, __MARGIN_MOD__) are substituted by start_waybar.sh based on
@@ -69,7 +69,7 @@ window#waybar > box {
 #custom-system_health,
 #launcher {
     background-color: @bubble;
-    border: 4px solid @border;
+    border: 2px solid @border;
     padding: __PAD_MOD__;
     margin: __MARGIN_MOD__;
     border-radius: 0;
@@ -110,7 +110,7 @@ window#waybar > box {
 #workspaces button.active {
     background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.35);
     color: @peach;
-    border: 4px solid @peach;
+    border: 2px solid @peach;
     box-shadow: inset 0 0 8px rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.5);
     text-shadow: 0 0 8px rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.4);
 }
@@ -118,7 +118,7 @@ window#waybar > box {
 #workspaces button.urgent {
     background-color: rgba({{RED_R}},{{RED_G}},{{RED_B}}, 0.3);
     color: #{{RED}};
-    border: 4px solid #{{RED}};
+    border: 2px solid #{{RED}};
 }
 
 
@@ -133,13 +133,13 @@ window#waybar > box {
    ───────────────────────────────────────── */
 #custom-media {
     background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.15);
-    border: 4px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.3);
+    border: 2px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.3);
     color: @peach;
 }
 
 #custom-system_health {
     background-color: rgba({{SURFACE_R}},{{SURFACE_G}},{{SURFACE_B}}, 0.5);
-    border: 4px solid @slate;
+    border: 2px solid @slate;
     color: @peach;
 }
 
@@ -149,12 +149,12 @@ window#waybar > box {
 
 #custom-security.warning {
     color: #{{YELLOW}};
-    border: 4px solid #{{YELLOW}};
+    border: 2px solid #{{YELLOW}};
 }
 
 #custom-security.critical {
     color: #{{RED}};
-    border: 4px solid #{{RED}};
+    border: 2px solid #{{RED}};
 }
 
 #custom-overwatch {
@@ -163,7 +163,7 @@ window#waybar > box {
 
 #custom-overwatch.alert {
     color: #{{YELLOW}};
-    border: 4px solid #{{YELLOW}};
+    border: 2px solid #{{YELLOW}};
 }
 
 /* Sentry: inherit the standard @bubble background + @border from the
@@ -171,17 +171,17 @@ window#waybar > box {
    the widget keeps the same shape/feel as net_speed, cpu, etc. */
 #custom-foxml_sentry {
     color: @peach;
-    border: 4px solid @border;
+    border: 2px solid @border;
 }
 
 #custom-foxml_sentry.warning {
     color: #{{YELLOW}};
-    border: 4px solid rgba({{YELLOW_R}},{{YELLOW_G}},{{YELLOW_B}}, {{KITTY_BG_OPACITY}});
+    border: 2px solid rgba({{YELLOW_R}},{{YELLOW_G}},{{YELLOW_B}}, {{KITTY_BG_OPACITY}});
 }
 
 #custom-foxml_sentry.critical {
     color: #{{RED}};
-    border: 4px solid rgba({{RED_R}},{{RED_G}},{{RED_B}}, 0.7);
+    border: 2px solid rgba({{RED_R}},{{RED_G}},{{RED_B}}, 0.7);
 }
 
 #custom-ai_status {
@@ -233,14 +233,14 @@ window#waybar > box {
 #memory.warning,
 #custom-disk.warning {
     color: #{{YELLOW}};
-    border: 4px solid #{{YELLOW}};
+    border: 2px solid #{{YELLOW}};
 }
 
 #custom-cpu.critical,
 #memory.critical,
 #custom-disk.critical {
     color: #{{RED}};
-    border: 4px solid #{{RED}};
+    border: 2px solid #{{RED}};
 }
 
 /* ─────────────────────────────────────────
@@ -278,12 +278,12 @@ window#waybar > box {
 
 #custom-battery.warning {
     color: #{{YELLOW}};
-    border: 4px solid #{{YELLOW}};
+    border: 2px solid #{{YELLOW}};
 }
 
 #custom-battery.critical {
     color: #{{RED}};
-    border: 4px solid #{{RED}};
+    border: 2px solid #{{RED}};
 }
 
 /* ─────────────────────────────────────────
@@ -316,7 +316,7 @@ window#waybar > box {
    ───────────────────────────────────────── */
 tooltip {
     background: rgba({{BG_R}},{{BG_G}},{{BG_B}}, 0.9);
-    border: 4px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.4);
+    border: 2px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.4);
     border-radius: 0;
 }
 

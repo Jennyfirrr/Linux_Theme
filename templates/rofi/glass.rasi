@@ -22,8 +22,8 @@ window {
   y-offset: 50px;
   width: 480px;
   border-radius: 0;
-  border: 1px;
-  border-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}},0.4);
+  border: 2px;
+  border-color: #{{PRIMARY}};
   background-color: rgba({{BG_R}},{{BG_G}},{{BG_B}},0.9); /* More opaque for dropdown clarity */
   padding: 12px;
 }

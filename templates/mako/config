@@ -1,7 +1,7 @@
 font={{FONT_FAMILY}} 10
 background-color=#{{BG}}E6
 text-color=#{{FG}}
-border-color=#{{PRIMARY}}66
+border-color=#{{PRIMARY}}
 # OSD progress bar (volume / brightness) — mako defaults to blue,
 # which breaks theme cohesion. `over <color>` overlays the bar onto
 # the bubble background using the peach primary at 50% opacity.
@@ -24,21 +24,21 @@ icon-path=/usr/share/icons/{{MAKO_ICON_THEME}}
 [urgency=low]
 background-color=#{{BG}}E6
 text-color=#{{FG_DIM}}
-border-color=#{{SURFACE}}66
+border-color=#{{SURFACE}}
 default-timeout=2000
 
 [urgency=critical]
 background-color=#{{BG}}E6
 text-color=#{{FG}}
-border-color=#{{RED}}66
+border-color=#{{RED}}
 default-timeout=15000
 
 [app-name=Spotify]
-border-color=#{{ACCENT}}66
+border-color=#{{ACCENT}}
 default-timeout=4000
 
 [app-name="com.spotify.Client"]
-border-color=#{{ACCENT}}66
+border-color=#{{ACCENT}}
 default-timeout=4000
 
 # AI agents — primary accent for Claude, secondary for Gemini, so a glance
@@ -46,9 +46,9 @@ default-timeout=4000
 # i.e. permission/input prompts) still gets the red border from the
 # urgency=critical block above.
 [app-name=Claude]
-border-color=#{{PRIMARY}}99
+border-color=#{{PRIMARY}}
 default-timeout=6000
 
 [app-name=Gemini]
-border-color=#{{ACCENT}}99
+border-color=#{{ACCENT}}
 default-timeout=6000

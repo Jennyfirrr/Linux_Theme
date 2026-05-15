@@ -230,11 +230,16 @@ bool parse(int argc, char** argv, Parsed& out, Context& ctx) {
             switch_to_exclusive();
             out.module_enabled[idx] = true;
 
-            // UX: --render almost always wants --symlinks to actually deploy
-            // the fresh bits. Enabling render implies enabling symlinks.
+            // UX: --render almost always wants --symlinks to deploy the fresh
+            // bits AND --post-install to re-render waybar style.css from the
+            // .tmpl and restart waybar/dunst/mako so the changes are visible.
+            // Without post_install, the new .tmpl sits on disk and the running
+            // bars keep their stale CSS until next login.
             if (std::string(MODULES[idx].slug) == "render") {
-                std::size_t s_idx = find_by_slug("symlinks");
-                if (s_idx != SIZE_MAX) out.module_enabled[s_idx] = true;
+                for (const char* implied : {"symlinks", "post_install"}) {
+                    std::size_t s_idx = find_by_slug(implied);
+                    if (s_idx != SIZE_MAX) out.module_enabled[s_idx] = true;
+                }
             }
             continue;
         }

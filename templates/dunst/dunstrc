@@ -23,7 +23,7 @@
     padding = 12
     horizontal_padding = 12
     text_icon_padding = 12
-    frame_width = 3
+    frame_width = 2
     gap_size = 6
     separator_color = frame
     sort = yes
@@ -69,21 +69,21 @@
 [urgency_low]
     background = "#{{BG_DUNST}}E6"
     foreground = "#{{FG_DIM}}"
-    frame_color = "#{{SURFACE}}66"
+    frame_color = "#{{SURFACE}}"
     highlight = "#{{PRIMARY}}"
     timeout = 5
 
 [urgency_normal]
     background = "#{{BG_DUNST}}E6"
     foreground = "#{{FG}}"
-    frame_color = "#{{PRIMARY}}66"
+    frame_color = "#{{PRIMARY}}"
     highlight = "#{{PRIMARY}}"
     timeout = 8
 
 [urgency_critical]
     background = "#{{BG_DUNST}}E6"
     foreground = "#{{FG}}"
-    frame_color = "#{{RED}}66"
+    frame_color = "#{{RED}}"
     highlight = "#{{RED}}"
     timeout = 0
 
@@ -92,7 +92,7 @@
     appname = Spotify
     background = "#{{BG_DUNST}}E6"
     foreground = "#{{FG}}"
-    frame_color = "#{{ACCENT}}66"
+    frame_color = "#{{ACCENT}}"
     highlight = "#{{ACCENT}}"
     format = "<b>%s</b>\n%b"
     timeout = 5
@@ -102,7 +102,7 @@
     appname = "com.spotify.Client"
     background = "#{{BG_DUNST}}E6"
     foreground = "#{{FG}}"
-    frame_color = "#{{ACCENT}}66"
+    frame_color = "#{{ACCENT}}"
     highlight = "#{{ACCENT}}"
     format = "<b>%s</b>\n%b"
     timeout = 5
@@ -114,7 +114,7 @@
     appname = Claude
     background = "#{{BG_DUNST}}E6"
     foreground = "#{{FG}}"
-    frame_color = "#{{PRIMARY}}99"
+    frame_color = "#{{PRIMARY}}"
     highlight = "#{{PRIMARY}}"
     format = "<b>%s</b>\n%b"
     timeout = 6
@@ -123,7 +123,7 @@
     appname = Gemini
     background = "#{{BG_DUNST}}E6"
     foreground = "#{{FG}}"
-    frame_color = "#{{ACCENT}}99"
+    frame_color = "#{{ACCENT}}"
     highlight = "#{{ACCENT}}"
     format = "<b>%s</b>\n%b"
     timeout = 6
