@@ -32,6 +32,7 @@ Alternate palette — see `themes/Cave_Data_Center/palette.sh`.
 - Arch Linux (the installer uses `pacman`)
 - Hyprland
 - `bash`, `git`, `sed`
+- **At least 1GB of free space on the boot partition**
 - The apps you want themed should already be installed, or pass `--deps` to install them.
 
 Optional: `greetd` + `greetd-regreet` for the themed login screen.

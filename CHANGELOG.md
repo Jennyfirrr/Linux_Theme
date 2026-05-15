@@ -2,6 +2,16 @@
 
 All notable changes to the Fox ML theme.
 
+## 2026-05-14 — v2.8.2
+
+### Installation Safety & UX
+
+- **Disk Space Verification** — Added a pre-installation check in `install.sh` and `bootstrap.sh` to ensure at least 1GB of free space on the boot partition (detects `/boot` or falls back to `/`). Includes a critical threshold (256MB) that hard-fails to prevent boot breakage during kernel/initramfs updates.
+- **Improved Installer Interactivity** — Updated all major confirmation prompts (disk space check, self-update, installer selection) to use single-key input (`read -n 1`). Prompts now respond immediately to `y`, `n`, `1`, or `2` without requiring the Enter key.
+- **Requirements Update** — `README.md` now explicitly lists the 1GB free space requirement for safe operation.
+
+---
+
 ## 2026-05-13 — v2.8.1
 
 ### Orchestrator & RAG Stability

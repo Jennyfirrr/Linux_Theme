@@ -23,6 +23,55 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FOX_INSTALL_BIN="$SCRIPT_DIR/src/fox-install/fox-install"
 
 # ─────────────────────────────────────────
+# Pre-install checks.
+# ─────────────────────────────────────────
+
+# Check free space on /boot (or / if /boot is not separate)
+# FoxML requires space for kernel images, initramfs, and AI models.
+_boot_path="/boot"
+[[ ! -d "$_boot_path" ]] && _boot_path="/"
+_boot_free_kb=$(df -Pk "$_boot_path" | awk 'NR==2 {print $4}')
+_boot_free_mb=$((_boot_free_kb / 1024))
+_rec_mb=1024
+
+if (( _boot_free_mb < _rec_mb )); then
+    echo "╭──────────────────────────────────────────────────────────────────╮"
+    echo "│   Disk Space Check: $_boot_path                                   "
+    echo "│   Detected:  ${_boot_free_mb} MB free                                      "
+    echo "│   Recommended: ${_rec_mb} MB free                                     "
+    echo "├──────────────────────────────────────────────────────────────────┤"
+    echo "│   Warning: Your boot partition is below the recommended size.    │"
+    echo "│   FoxML needs space for kernel updates and initramfs builds.     │"
+    echo "│   Please consider freeing up some space (e.g., 'paccache -r').   │"
+    echo "╰──────────────────────────────────────────────────────────────────╯"
+    echo ""
+
+    # Hard fail if extremely low (prevent certain breakage)
+    if (( _boot_free_mb < 256 )); then
+        echo ":: ERROR: Only ${_boot_free_mb}MB available. This is likely to fail during"
+        echo "   initramfs generation. Free at least 256MB to continue."
+        exit 1
+    fi
+
+    # Auto-yes if --yes / -y is in argv, $ASSUME_YES=1, or no TTY
+    _autoyes=0
+    for _a in "$@"; do
+        case "$_a" in -y|--yes) _autoyes=1 ;; esac
+    done
+    [[ "${ASSUME_YES:-0}" == "1" ]] && _autoyes=1
+    [[ ! -t 0 ]] && _autoyes=1
+
+    if (( ! _autoyes )); then
+        read -r -n 1 -p "  Continue anyway? [y/N] " _reply || true
+        echo "" # New line after single-char input
+        case "${_reply:-n}" in
+            y|Y) echo ":: Proceeding despite low space." ;;
+            *)   echo ":: Aborting."; exit 1 ;;
+        esac
+    fi
+fi
+
+# ─────────────────────────────────────────
 # Self-update — fast-forward from origin/main + re-exec.
 #
 # Flow:
@@ -69,10 +118,11 @@ if [[ "${FOXML_NO_UPDATE:-0}" != "1" && "${FOXML_UPDATED:-0}" != "1" ]] \
                 [[ ! -t 0 ]] && _autoyes=1
 
                 if (( ! _autoyes )); then
-                    read -r -p "  Download + install latest? [Y/n] " _reply || true
+                    read -r -n 1 -p "  Download + install latest? [Y/n] " _reply || true
+                    echo "" # New line after single-char input
                     case "${_reply:-y}" in
-                        n|N|no|NO) _do_update=0 ;;
-                        *)         _do_update=1 ;;
+                        n|N) _do_update=0 ;;
+                        *)   _do_update=1 ;;
                     esac
                 fi
 

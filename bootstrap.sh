@@ -34,6 +34,25 @@ if ! command -v pacman >/dev/null 2>&1; then
     exit 1
 fi
 
+# Check free space on /boot (or / if /boot is not separate)
+_boot_path="/boot"
+[[ ! -d "$_boot_path" ]] && _boot_path="/"
+_boot_free_kb=$(df -Pk "$_boot_path" | awk 'NR==2 {print $4}')
+_boot_free_mb=$((_boot_free_kb / 1024))
+_rec_mb=1024
+
+if (( _boot_free_mb < _rec_mb )); then
+    echo "WARNING: Low disk space on $_boot_path (${_boot_free_mb}MB available)."
+    echo "         FoxML recommends at least ${_rec_mb}MB for safe kernel updates."
+
+    if (( _boot_free_mb < 256 )); then
+        echo "ERROR: Only ${_boot_free_mb}MB available. This is critically low."
+        echo "       Free at least 256MB on your boot partition to continue."
+        exit 1
+    fi
+    echo "         Continuing with bootstrap..."
+fi
+
 # Clear sudo prompt up front so the rest can run unattended
 echo "Caching sudo (needed for pacman, greetd config, etc.)..."
 sudo -v || { echo "ERROR: sudo required."; exit 1; }
@@ -106,7 +125,8 @@ if [[ -z "$_force" && -t 0 ]]; then
     echo "  │      at the migration cutover. Safe       │"
     echo "  │      fallback if the C++ path breaks.     │"
     echo "  ╰───────────────────────────────────────────╯"
-    read -r -p "  Pick [1/2, default 1]: " _pick
+    read -r -n 1 -p "  Pick [1/2, default 1]: " _pick
+    echo "" # New line after single-char input
     case "$_pick" in
         2|bash|legacy|b) _force=bash ;;
         *) _force=cpp ;;
