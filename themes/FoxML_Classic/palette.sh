@@ -14,6 +14,14 @@ SHOW_WELCOME=true
 SHOW_BANNER=true
 WALLPAPER=foxml_earthy.jpg
 
+# ─── Aesthetic controls ───
+ROUNDING=10
+BLUR_SIZE=3
+BLUR_PASSES=2
+GAP_IN=6
+GAP_OUT=12
+BORDER_SIZE=2
+
 # ─── Core palette ───
 BG=1a1214
 BG_DARK=150f0f

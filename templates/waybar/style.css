@@ -72,7 +72,7 @@ window#waybar > box {
     border: 2px solid @border;
     padding: __PAD_MOD__;
     margin: __MARGIN_MOD__;
-    border-radius: 0;
+    border-radius: {{ROUNDING}}px;
     color: @peach;
 }
 

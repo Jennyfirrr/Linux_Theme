@@ -14,6 +14,14 @@ SHOW_WELCOME=true
 SHOW_BANNER=false
 WALLPAPER=cave_data_center.jpg
 
+# ─── Aesthetic controls ───
+ROUNDING=10
+BLUR_SIZE=3
+BLUR_PASSES=2
+GAP_IN=6
+GAP_OUT=12
+BORDER_SIZE=2
+
 # ─── Core palette ───
 BG=151526
 BG_DARK=0f0f1c

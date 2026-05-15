@@ -15,7 +15,7 @@
     progress_bar_frame_width = 1
     progress_bar_min_width = 150
     progress_bar_max_width = 300
-    progress_bar_corner_radius = 0
+    progress_bar_corner_radius = {{ROUNDING}}
 
     # Appearance - crisp, no rounded corners
     transparency = 0
@@ -27,7 +27,7 @@
     gap_size = 6
     separator_color = frame
     sort = yes
-    corner_radius = 0
+    corner_radius = {{ROUNDING}}
 
     # Text
     font = {{FONT_FAMILY}} 10

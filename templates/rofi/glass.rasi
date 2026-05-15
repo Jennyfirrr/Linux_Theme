@@ -63,7 +63,7 @@ listview {
 element {
   background-color: transparent;
   text-color: #{{FG}};
-  border-radius: 0;
+  border-radius: {{ROUNDING}}px;
   padding: 8px 12px;
   border: 1px;
   border-color: transparent;
@@ -89,3 +89,4 @@ element-text {
 
 /* subtle separators */
 separator { color: rgba({{WHITE_R}},{{WHITE_G}},{{WHITE_B}},0.12); }
+
