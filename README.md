@@ -1,6 +1,8 @@
-# Linux_Theme (FoxML)
+# FoxML_Workstation
 
-Arch Linux + Hyprland theme + dotfiles for 24 apps. Configs live as templates with `{{COLOR}}` placeholders; each theme is one `palette.sh` file. `install.sh` renders templates into your real configs, `update.sh` pulls live edits back into templates, and `swap.sh` switches themes.
+Opinionated Arch Linux + Hyprland workstation provisioner. Native C++ install orchestrator, integrated local-AI tooling, hardened security baseline, multi-theme rendering for ~25 apps.
+
+Not just dotfiles. `install.sh` is a 90-line wrapper around `fox-install` — a 51-module native C++ orchestrator. Adding an install step is one `.cpp` and one line in `core/modules.def`; the args parser, `--help`, dry-run plan, dispatcher, and registry test all derive from it.
 
 ## Screenshots
 
@@ -10,50 +12,23 @@ Arch Linux + Hyprland theme + dotfiles for 24 apps. Configs live as templates wi
 
 ![Neovim + Avante](shared/screenshots/nvim_avante.png?v=2)
 
-## Themes
-
-### [FoxML Classic](themes/FoxML_Classic/) (dark)
-Earthy, muted: warm peach, dusty rose, sage, wheat on a deep plum background.
-
-| Role | Color | |
-|------|-------|-|
-| Background | `#1a1214` | Warm dark |
-| Foreground | `#d5c4b0` | Warm cream |
-| Primary | `#c4956e` | Peach |
-| Secondary | `#b8967a` | Dusty rose |
-| Accent | `#8a9a7a` | Sage |
-| Surface | `#3a414b` | Slate |
-
-### [Cave Data Center](themes/Cave_Data_Center/)
-Alternate palette — see `themes/Cave_Data_Center/palette.sh`.
-
-## Requirements
-
-- Arch Linux (the installer uses `pacman`)
-- Hyprland
-- `bash`, `git`, `sed`
-- **At least 1GB of free space on the boot partition**
-- The apps you want themed should already be installed, or pass `--deps` to install them.
-
-Optional: `greetd` + `greetd-regreet` for the themed login screen.
-
 ## Install
 
-**New machine, walk-away install (one command, no clone needed):**
+**Fresh machine, no clone needed:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Jennyfirrr/Linux_Theme/main/bootstrap.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Jennyfirrr/FoxML_Workstation/main/bootstrap.sh | bash
 ```
-Caches sudo, installs git+curl, clones the repo to `~/code/Linux_Theme`, runs the full Fox ML setup (theme + deps + AI stack + GitHub workspace clone). One `gh auth login` prompt mid-flow, otherwise hands-off.
+Caches sudo, installs git+curl, clones to `~/code/FoxML_Workstation`, runs the full setup (theme + deps + AI stack + GitHub workspace clone). One `gh auth login` prompt mid-flow, otherwise hands-off.
 
-**Already cloned, painless one-command:**
+**Already cloned:**
 ```bash
 ./setup            # full kitchen sink — theme + deps + AI + GitHub clone
 ./setup-minimal    # theme + system deps only (no AI, no GitHub clone)
+./install.sh       # interactive, prompts at each step
 ```
 
-**Already cloned, fine-grained control:**
+**Fine-grained:**
 ```bash
-./install.sh                                       # interactive, prompts at each step
 ./install.sh monitors                              # surgical run: just the monitor wizard
 ./install.sh Cave_Data_Center monitors render      # specific theme + specific modules only
 ./install.sh FoxML_Classic --deps --yes            # specific flags, no prompts
@@ -74,38 +49,41 @@ Caches sudo, installs git+curl, clones the repo to `~/code/Linux_Theme`, runs th
 | `--privacy` | DNS-over-HTTPS |
 | `--vault` | GPG-encrypted `pass` manager + Git signing |
 | `--nvidia` | nvidia-open-dkms + Hyprland on dGPU (Optimus laptops) |
+| `--render` | Re-render templates + redeploy + restart waybar/mako/dunst |
+| `--dry-run` | Print every step without executing |
 
 `--nvidia` requires `systemd-boot`; other bootloaders print manual instructions. Reboot afterwards.
+
+`./install.sh --help` lists all 51 module flags.
 
 ### Archinstall profile
 
 Boot the Arch ISO and load FoxML directly:
 
 ```bash
-archinstall --config https://raw.githubusercontent.com/Jennyfirrr/Linux_Theme/main/shared/foxml-profile.json
+archinstall --config https://raw.githubusercontent.com/Jennyfirrr/FoxML_Workstation/main/shared/foxml-profile.json
 ```
 
 Installs `linux-zen`, NVIDIA drivers, and runs the bootstrap on first boot.
 
-## Switching themes
+## Architecture
 
-```bash
-./swap.sh
-```
+`install.sh` is a 90-line wrapper that self-updates, warms sudo, builds the native orchestrator, and `exec`s it. The 2400-line bash predecessor is gone; every install step now lives as a C++ module.
 
-Interactive picker with color previews.
+Native C++ tools under `src/`:
 
-## Editing configs
+| Tool | Role |
+|---|---|
+| `fox-install` | Module-registry-driven install orchestrator (51 modules) |
+| `fox-intel` | `libfox-intel.a` — Ollama client + embedding API; linked into every AI tool |
+| `fox-render-fast` | Concurrent template engine; drop-in for the old `render.sh` |
+| `fox-pulse` | Single-epoll daemon multiplexing Hyprland IPC + inotify + debouncers |
+| `fox-vault` | `mlock()`-protected in-RAM secret store with Unix-socket CLI |
+| `fox-ask`, `fox-ai-doctor`, `fox-ai-oracle`, `fox-ai-snitch`, `fox-ai-audit`, `fox-ai-bouncer`, `fox-ai-review`, `fox-ai-swap` | One-shot AI tools that link `libfox-intel.a` — pattern is `#include "fox_intel.hpp"` + `ai.ask(prompt)`. No plugin framework. |
 
-Edit the templates in `templates/`, not your live configs. Templates use `{{TOKEN}}` placeholders; `install.sh` renders them with the active theme's colors.
+The X-macro registry in `src/fox-install/core/modules.def` is the single source of truth for install modules. Each module is a `void run_foo(Context&)` function. Subprocess goes through `sh::run` / `sh::capture` / `sh::pacman` / `sh::systemctl_*` so `--dry-run` and logging stay centralized.
 
-If you've already edited a live config and want to keep the changes:
-
-```bash
-./update.sh
-```
-
-This reverse-renders your live configs back into templates, replacing rendered colors with `{{PLACEHOLDER}}` tokens so the edits survive theme swaps.
+Bash is retained where it makes sense — small Hyprland event scripts, `mappings.sh` as a *runtime* helper sourced by `~/.config/hypr/scripts/`. `aider` is the one Python install (~60 transitive deps).
 
 ## Security hardening
 
@@ -136,22 +114,71 @@ Day-to-day tooling:
 
 See `fox help` for the full surface (70+ subcommands).
 
-## Architecture
+## AI layer (optional)
 
-`install.sh` used to be a 2400-line bash script. It's now a 90-line wrapper that self-updates, warms sudo, builds the native orchestrator, and `exec`s it. Every install step lives as a module under `src/fox-install/modules/` — 50 modules registered via an X-macro in `core/modules.def`. The same registry drives `--help`, the dry-run plan, the args parser, and the dispatcher, so adding a step is one `.cpp` and one line.
+Installed via `--ai`. Three local-model surfaces (terminal agent, in-editor, one-shot Q&A) all backed by Ollama. `--ai` installs Ollama, `mxbai-embed-large` embedder, OpenCode (terminal agent), and aider (git-native pair programmer). `--models` pulls the chat/coder stack sized to your RAM+VRAM.
 
-Native C++ tools under `src/`:
+### Agents
 
-| Tool | Role |
-|---|---|
-| `fox-install` | Module-registry-driven install orchestrator |
-| `fox-intel` | `libfox-intel.a` — Ollama client + embedding API, linked into every AI tool |
-| `fox-render-fast` | Concurrent template engine; drop-in for the old `render.sh` |
-| `fox-pulse` | Single-epoll daemon multiplexing Hyprland IPC + inotify + debouncers |
-| `fox-vault` | `mlock()`-protected in-RAM secret store with Unix-socket CLI |
-| `fox-ask`, `fox-ai-doctor`, `fox-ai-oracle`, `fox-ai-snitch`, `fox-ai-audit`, `fox-ai-bouncer`, `fox-ai-review`, `fox-ai-swap` | One-shot AI tools that link `libfox-intel.a` — pattern is `#include "fox_intel.hpp"` + `ai.ask(prompt)`. No plugin framework. |
+- **OpenCode** — Claude-Code-style terminal agent. Multi-provider; in this install pointed at local Ollama. Theme + skill paths + model picker generated from `ollama list` and `~/code/*/claude-skills/`. Auto-wakes the daemon on launch.
+- **aider** — git-native pair programmer. Commits its own edits per change. Useful for surgical "make this change" workflows where OpenCode's multi-turn agent loop is overkill.
 
-Bash is retained where it makes sense — small wrappers, Hyprland event scripts, `mappings.sh` as a runtime helper sourced by `~/.config/hypr/scripts/`. `aider` is the one Python install (~60 transitive deps, slow but worth it).
+### RAG (`fask` / `findex`)
+
+`findex` builds a chunked semantic index of the current directory using `mxbai-embed-large`. Files are split into 100-line chunks with 10-line overlap so functions spanning chunk boundaries still appear whole somewhere. The model name is persisted in the index — re-running with a different embedder triggers a clean rebuild instead of mixing incompatible vectors. `fask` cosine-ranks chunks against your question, opens each top-K match at its exact line range, and streams a model answer.
+
+| Command | What it does |
+|---------|--------------|
+| `findex [opts]` | Build semantic index (tunable via `--size`, `--model`, etc.) |
+| `fask "<q>"` | RAG Q&A over the current project's `.foxml_index.json` |
+| `fox ask "<question>"` | One-shot terminal Q&A — no index needed; uses the OpenCode-configured model |
+| `fox-ai-commit` | AI-drafted commit message from staged diff |
+| `fox-ai-explain <file>` | Plain-English explanation of code/logs/errors |
+| `fox-ai-swap [tag]` | Switch the default model + free VRAM via `ollama stop` |
+| `fox-ai-doctor` | AI-augmented system diagnostics |
+| `fox-ai-review` | Pre-commit guardrail (`BLOCK:` / `WARN:` lines from local model) |
+| `fhelp` | Full command reference |
+
+`cd`-ing into a directory containing an `AGENT.md` auto-exports project context, scoping `fask`/`findex` to that workspace.
+
+### Theme integration
+
+- Palette-driven OpenCode theme (`templates/opencode/foxml.json`) rendered through the same `{{TOKEN}}` system — theme swaps re-render OpenCode too.
+- `fask`/`fox-ask` pick up the active palette's `ANSI_ACCENT1` via `~/.config/foxml/ansi_colors.json` for status banners like `[Thinking...]`.
+
+## Themes
+
+### [FoxML Classic](themes/FoxML_Classic/) (dark)
+Earthy, muted: warm peach, dusty rose, sage, wheat on a deep plum background.
+
+| Role | Color | |
+|------|-------|-|
+| Background | `#1a1214` | Warm dark |
+| Foreground | `#d5c4b0` | Warm cream |
+| Primary | `#c4956e` | Peach |
+| Secondary | `#b8967a` | Dusty rose |
+| Accent | `#8a9a7a` | Sage |
+| Surface | `#3a414b` | Slate |
+
+### [Cave Data Center](themes/Cave_Data_Center/)
+Alternate palette — see `themes/Cave_Data_Center/palette.sh`.
+
+### Switching themes
+
+```bash
+./swap.sh
+```
+Interactive picker with color previews.
+
+### Editing configs
+
+Edit the templates in `templates/`, not your live configs. Templates use `{{TOKEN}}` placeholders; `install.sh --render` renders them with the active theme's colors and restarts waybar/mako/dunst so the new look applies live.
+
+If you've already edited a live config and want to keep the changes:
+```bash
+./update.sh
+```
+Reverse-renders your live configs back into templates, replacing rendered colors with `{{PLACEHOLDER}}` tokens so the edits survive theme swaps.
 
 ## How it works
 
@@ -275,12 +302,12 @@ Stack: LSP via mason, DAP, cmake-tools, neotest, lazygit, telescope, harpoon, ne
 
 ## Multi-monitor
 
-`./install.sh` runs `configure_monitors` near the end, which detects every output via `hyprctl monitors -j` and prompts for position (left / right / above / below the laptop) and orientation (landscape / portrait-left / portrait-right) per external monitor. The picker writes:
+`./install.sh` runs the `monitors` module near the end, which detects every output via `hyprctl monitors -j` and prompts for position (left / right / above / below the laptop) and orientation (landscape / portrait-left / portrait-right) per external monitor. The picker writes:
 
 - `~/.config/hypr/modules/monitors.conf` — name-keyed Hyprland rules. Unplugged monitors are silently skipped, so undocking just works; plugging the same external back in restores the saved layout.
 - `~/.config/foxml/monitor-layout.conf` — sidecar consumed by `start_waybar.sh` and `rotate_wallpaper.sh`.
 
-When a portrait output is detected, `_generate_portrait_wallpapers` uses ImageMagick to center-crop every landscape wallpaper into a `${name}_portrait.${ext}` variant (1080×1920). `rotate_wallpaper.sh` then applies per-monitor: portrait outputs get the variant; landscape outputs get the source.
+The `personalize` module pre-renders a wallpaper variant per **unique** monitor resolution: `magick <src> -resize ${WxH}^ -gravity center -extent ${WxH}` writes `${name}_${WxH}.${ext}` for each entry in the sidecar's `MONITOR_RESOLUTIONS` list (e.g. `eDP-1:1920x1080 DP-2:1440x2560`). Each variant is scaled-to-cover at the monitor's native resolution then center-cropped — pixel-perfect, no runtime scaling. `rotate_wallpaper.sh` picks the matching variant per monitor from `hyprctl monitors`, falling back to the source if a variant is missing. Source wallpapers smaller than your monitor will upscale (and look soft); the shipped FoxML wallpapers are large enough that 4K monitors don't see this.
 
 External monitors get a stripped-down secondary waybar (workspaces + clock + fox/SysHub launcher) — main bar stays on the laptop. Single-monitor setups render the original full bar unchanged.
 
@@ -299,41 +326,19 @@ Under `-y`, externals default to right-of-laptop landscape with no prompts.
 
 ## Login screen (greetd + regreet)
 
-regreet (a GTK4 greeter for greetd) runs inside a minimal Hyprland session — no cage, no TTY flash. `./install.sh --deps` installs `greetd` + `greetd-regreet` and `install_greetd()` deploys the css/toml + wallpaper, writes `/etc/greetd/config.toml`, and enables the systemd unit. Idempotent — rerunning preserves a customized `config.toml`.
+regreet (a GTK4 greeter for greetd) runs inside a minimal Hyprland session — no cage, no TTY flash. `./install.sh --deps` installs `greetd` + `greetd-regreet` and the `greetd` module deploys the css/toml + wallpaper, writes `/etc/greetd/config.toml`, and enables the systemd unit. Idempotent — rerunning preserves a customized `config.toml`.
 
 On first login, pick your Hyprland session from the dropdown — regreet remembers it.
 
-## AI layer (optional)
+## Requirements
 
-Installed via `--ai`. Provides three local-model surfaces (terminal agent, in-editor, one-shot Q&A) all backed by Ollama. `--ai` installs Ollama itself, the `mxbai-embed-large` embedder, OpenCode (terminal agent), and aider (git-native pair programmer). `--models` pulls the chat/coder stack sized to your RAM+VRAM.
+- Arch Linux (the installer uses `pacman`)
+- Hyprland
+- `bash`, `git`, `sed`
+- **At least 1GB of free space on the boot partition**
+- The apps you want themed should already be installed, or pass `--deps` to install them.
 
-### Agents
-
-- **OpenCode** — Claude-Code-style terminal agent. Multi-provider; in this install pointed at local Ollama. Theme + skill paths + model picker generated from `ollama list` and `~/code/*/claude-skills/`. Auto-wakes the daemon on launch.
-- **aider** — git-native pair programmer. Commits its own edits per change. Useful for surgical "make this change" workflows where OpenCode's multi-turn agent loop is overkill.
-
-### RAG (`fask` / `findex`)
-
-`findex` builds a chunked semantic index of the current directory using `mxbai-embed-large`. Files are split into 100-line chunks with 10-line overlap so functions spanning chunk boundaries still appear whole somewhere. The model name is persisted in the index — re-running with a different embedder triggers a clean rebuild instead of mixing incompatible vectors. `fask` cosine-ranks chunks against your question, opens each top-K match at its exact line range (not the whole file), and streams a model answer.
-
-| Command | What it does |
-|---------|--------------|
-| `findex [opts]` | Build semantic index (tunable via `--size`, `--model`, etc.) |
-| `fask "<q>"` | RAG Q&A over the current project's `.foxml_index.json` |
-| `fox ask "<question>"` | One-shot terminal Q&A — no index needed; uses the OpenCode-configured model |
-| `fox-ai-commit` | AI-drafted commit message from staged diff |
-| `fox-ai-explain <file>` | Plain-English explanation of code/logs/errors |
-| `fox-ai-swap [tag]` | Switch the default model + free VRAM via `ollama stop` |
-| `fox-ai-doctor` | AI-augmented system diagnostics |
-| `fox-ai-review` | Pre-commit guardrail (`BLOCK:` / `WARN:` lines from local model) |
-| `fhelp` | Full command reference |
-
-`cd`-ing into a directory containing an `AGENT.md` auto-exports project context, scoping `fask`/`findex` to that workspace.
-
-### Theme integration
-
-- Palette-driven OpenCode theme (`templates/opencode/foxml.json`) rendered through the same `{{TOKEN}}` system — theme swaps re-render OpenCode too.
-- `fask`/`fox-ask` pick up the active palette's `ANSI_ACCENT1` via `~/.config/foxml/ansi_colors.json` for status banners like `[Thinking...]`.
+Optional: `greetd` + `greetd-regreet` for the themed login screen.
 
 ## Creating a new theme
 

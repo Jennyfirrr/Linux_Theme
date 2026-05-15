@@ -28,7 +28,7 @@ DEBOUNCE_SECONDS=2
 #   3. Walk up from the running script's symlink-resolved location
 #      (handles `~/.config/hypr/scripts/` install AND repo-local invocation)
 #   4. Common conventional locations as a last resort
-# Hardcoding $HOME/code/Linux_Theme would silently break for any user
+# Hardcoding $HOME/code/FoxML_Workstation would silently break for any user
 # who clones elsewhere — this script is the multi-monitor hot-swap
 # nerve so a wrong path means the dock event drops on the floor.
 _resolve_foxml_dir() {
@@ -55,7 +55,7 @@ _resolve_foxml_dir() {
         dir="$(dirname "$dir")"
     done
 
-    for candidate in "$HOME/code/Linux_Theme" "$HOME/Linux_Theme" "$HOME/.local/share/Linux_Theme"; do
+    for candidate in "$HOME/code/FoxML_Workstation" "$HOME/code/Linux_Theme" "$HOME/FoxML_Workstation" "$HOME/Linux_Theme" "$HOME/.local/share/FoxML_Workstation"; do
         if [[ -f "$candidate/mappings.sh" ]]; then
             FOXML_DIR="$candidate"; return 0
         fi

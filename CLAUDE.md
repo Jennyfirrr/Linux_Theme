@@ -1,6 +1,6 @@
-# Linux_Theme — Development Guide
+# FoxML_Workstation — Development Guide
 
-Project-specific guidance for working on the FoxML Theme Hub / "Arch + Hyprland + AI" distro lite. Loaded automatically when `claude` runs from this directory.
+Project-specific guidance for working on the opinionated Arch + Hyprland + local-AI workstation. Loaded automatically when `claude` runs from this directory.
 
 ## What this repo is
 
