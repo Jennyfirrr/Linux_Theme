@@ -229,6 +229,13 @@ bool parse(int argc, char** argv, Parsed& out, Context& ctx) {
         if (idx != SIZE_MAX) {
             switch_to_exclusive();
             out.module_enabled[idx] = true;
+
+            // UX: --render almost always wants --symlinks to actually deploy
+            // the fresh bits. Enabling render implies enabling symlinks.
+            if (std::string(MODULES[idx].slug) == "render") {
+                std::size_t s_idx = find_by_slug("symlinks");
+                if (s_idx != SIZE_MAX) out.module_enabled[s_idx] = true;
+            }
             continue;
         }
 
