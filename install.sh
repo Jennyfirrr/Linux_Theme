@@ -1,21 +1,19 @@
 #!/usr/bin/env bash
 # FoxML Theme Hub — installer entry point.
 #
-# As of the C++ orchestrator migration, install.sh is a thin wrapper:
+# Thin wrapper around the C++ orchestrator (src/fox-install). Adding a
+# new install step means writing one .cpp under src/fox-install/modules/
+# and one line in core/modules.def. Do NOT add logic here.
 #
 #   1. (Optionally) self-update from origin/main.
-#   2. Cache sudo + keep the credential alive across the long-running
-#      module sequence.
+#   2. Cache sudo + keep the credential alive across the long install.
 #   3. Build fox-install if it isn't already on disk.
-#   4. exec fox-install with the same argv. Every install step lives in
-#      src/fox-install/modules/ now — adding new functionality means
-#      writing one .cpp and adding one line to core/modules.def.
+#   4. exec fox-install with the same argv.
 #
-# The previous 2400-line bash implementation is preserved as
-# install.sh.legacy for one-version-rollback safety; mappings.sh stays
-# as the source of truth for modules still bridged to bash (security,
-# personalize, monitors, github — see CLAUDE.md "install.sh migration
-# status").
+# The pre-migration bash implementation lives in legacy/ for reference
+# only; nothing in the live install path sources it. mappings.sh at the
+# repo root stays because three deployed Hyprland helper scripts and
+# update.sh source it at RUNTIME — it is not an install-time dep.
 
 set -euo pipefail
 
