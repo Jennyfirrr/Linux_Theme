@@ -21,7 +21,7 @@
 
 @define-color bubble       rgba({{BG_R}},{{BG_G}},{{BG_B}}, 0.7);
 @define-color bubble_hover rgba({{SURFACE_R}},{{SURFACE_G}},{{SURFACE_B}}, {{KITTY_BG_OPACITY}});
-@define-color border       rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.4);
+@define-color border       rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.85);
 
 /* Size tokens (__FONT_BASE__, __FONT_LOGO__, __FONT_STATS__, __PAD_WIN__,
    __PAD_MOD__, __MARGIN_MOD__) are substituted by start_waybar.sh based on
@@ -69,10 +69,11 @@ window#waybar > box {
 #custom-system_health,
 #launcher {
     background-color: @bubble;
-    border: 2px solid @border;
+    border: 4px solid @border;
     padding: __PAD_MOD__;
     margin: __MARGIN_MOD__;
     border-radius: 0;
+    color: @peach;
 }
 
 #launcher {
@@ -109,7 +110,7 @@ window#waybar > box {
 #workspaces button.active {
     background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.35);
     color: @peach;
-    border: 2px solid @peach;
+    border: 4px solid @peach;
     box-shadow: inset 0 0 8px rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.5);
     text-shadow: 0 0 8px rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.4);
 }
@@ -117,7 +118,7 @@ window#waybar > box {
 #workspaces button.urgent {
     background-color: rgba({{RED_R}},{{RED_G}},{{RED_B}}, 0.3);
     color: #{{RED}};
-    border: 2px solid #{{RED}};
+    border: 4px solid #{{RED}};
 }
 
 
@@ -131,64 +132,68 @@ window#waybar > box {
    Info Modules
    ───────────────────────────────────────── */
 #custom-media {
-    background-color: rgba({{ACCENT_R}},{{ACCENT_G}},{{ACCENT_B}}, 0.15);
-    border: 2px solid rgba({{ACCENT_R}},{{ACCENT_G}},{{ACCENT_B}}, 0.3);
-    color: @lavender;
+    background-color: rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.15);
+    border: 4px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.3);
+    color: @peach;
 }
 
 #custom-system_health {
     background-color: rgba({{SURFACE_R}},{{SURFACE_G}},{{SURFACE_B}}, 0.5);
-    border: 2px solid @slate;
+    border: 4px solid @slate;
+    color: @peach;
 }
 
 #custom-security {
-    color: #{{GREEN_BRIGHT}};
+    color: @peach;
 }
 
 #custom-security.warning {
     color: #{{YELLOW}};
+    border: 4px solid #{{YELLOW}};
 }
 
 #custom-security.critical {
     color: #{{RED}};
+    border: 4px solid #{{RED}};
 }
 
 #custom-overwatch {
-    color: @dim;
+    color: @peach;
 }
 
 #custom-overwatch.alert {
     color: #{{YELLOW}};
+    border: 4px solid #{{YELLOW}};
 }
 
 /* Sentry: inherit the standard @bubble background + @border from the
    shared module rule. Differentiate severity ONLY via border color so
    the widget keeps the same shape/feel as net_speed, cpu, etc. */
 #custom-foxml_sentry {
-    color: #{{GREEN_BRIGHT}};
-    border: 2px solid rgba({{GREEN_BRIGHT_R}},{{GREEN_BRIGHT_G}},{{GREEN_BRIGHT_B}}, 0.55);
+    color: @peach;
+    border: 4px solid @border;
 }
 
 #custom-foxml_sentry.warning {
     color: #{{YELLOW}};
-    border: 2px solid rgba({{YELLOW_R}},{{YELLOW_G}},{{YELLOW_B}}, {{KITTY_BG_OPACITY}});
+    border: 4px solid rgba({{YELLOW_R}},{{YELLOW_G}},{{YELLOW_B}}, {{KITTY_BG_OPACITY}});
 }
 
 #custom-foxml_sentry.critical {
     color: #{{RED}};
-    border: 2px solid rgba({{RED_R}},{{RED_G}},{{RED_B}}, 0.7);
+    border: 4px solid rgba({{RED_R}},{{RED_G}},{{RED_B}}, 0.7);
 }
 
 #custom-ai_status {
-    color: @lavender;
+    color: @peach;
 }
 
 #custom-ai_status.fast {
-    color: #{{GREEN_BRIGHT}};
+    color: @peach;
 }
 
 #custom-ai_status.smart {
-    color: @lavender;
+    color: @peach;
 }
 
 #custom-ai_status.expert {
@@ -196,7 +201,7 @@ window#waybar > box {
 }
 
 #custom-net_speed {
-    color: @lavender;
+    color: @peach;
     font-size: __FONT_STATS__pt;
 }
 
@@ -216,27 +221,26 @@ window#waybar > box {
     font-size: __FONT_STATS__pt;
     font-weight: bold;
     letter-spacing: 0.5px;
+    color: @peach;
 }
 
-#custom-cpu  { color: @peach; }
-#memory      { color: @lavender; }
-#custom-gpu  { color: #{{GREEN_BRIGHT}}; }
-#custom-disk { color: @fg; }
-
 #custom-gpu.idle {
-    color: @dim;
+    color: @peach;
+    opacity: 0.8;
 }
 
 #custom-cpu.warning,
 #memory.warning,
 #custom-disk.warning {
     color: #{{YELLOW}};
+    border: 4px solid #{{YELLOW}};
 }
 
 #custom-cpu.critical,
 #memory.critical,
 #custom-disk.critical {
     color: #{{RED}};
+    border: 4px solid #{{RED}};
 }
 
 /* ─────────────────────────────────────────
@@ -265,7 +269,7 @@ window#waybar > box {
    The script emits a "class" field in its JSON so waybar applies these
    state selectors — same color set as the old built-in battery module. */
 #custom-battery {
-    color: @fg;
+    color: @peach;
 }
 
 #custom-battery.charging {
@@ -274,10 +278,12 @@ window#waybar > box {
 
 #custom-battery.warning {
     color: #{{YELLOW}};
+    border: 4px solid #{{YELLOW}};
 }
 
 #custom-battery.critical {
     color: #{{RED}};
+    border: 4px solid #{{RED}};
 }
 
 /* ─────────────────────────────────────────
@@ -310,7 +316,7 @@ window#waybar > box {
    ───────────────────────────────────────── */
 tooltip {
     background: rgba({{BG_R}},{{BG_G}},{{BG_B}}, 0.9);
-    border: 2px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.4);
+    border: 4px solid rgba({{PRIMARY_R}},{{PRIMARY_G}},{{PRIMARY_B}}, 0.4);
     border-radius: 0;
 }
 
