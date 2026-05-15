@@ -81,11 +81,15 @@ case "$MODE" in
         (( idx == -1 )) && idx=$(calendar_slot_index)
         target_idx=$(( (idx + 1) % ${#slots[@]} ))
         ;;
+    --static)
+        # Always use the midday slot (foxml_earthy.jpg).
+        target_idx=1
+        ;;
     bucket|"")
         target_idx=$(calendar_slot_index)
         ;;
     *)
-        echo "usage: $0 [--cycle]" >&2
+        echo "usage: $0 [--cycle|--static]" >&2
         exit 2
         ;;
 esac

@@ -37,17 +37,21 @@ fi
 # Check free space on /boot (or / if /boot is not separate)
 _boot_path="/boot"
 [[ ! -d "$_boot_path" ]] && _boot_path="/"
-_boot_free_kb=$(df -Pk "$_boot_path" | awk 'NR==2 {print $4}')
+_boot_info=$(df -Pk "$_boot_path" | awk 'NR==2 {print $2" "$4}')
+read -r _boot_total_kb _boot_free_kb <<< "$_boot_info"
+_boot_total_mb=$((_boot_total_kb / 1024))
 _boot_free_mb=$((_boot_free_kb / 1024))
-_rec_mb=1024
+_rec_total_mb=1024
+_min_free_mb=256
 
-if (( _boot_free_mb < _rec_mb )); then
-    echo "WARNING: Low disk space on $_boot_path (${_boot_free_mb}MB available)."
-    echo "         FoxML recommends at least ${_rec_mb}MB for safe kernel updates."
+if (( _boot_total_mb < _rec_total_mb || _boot_free_mb < _min_free_mb )); then
+    echo "WARNING: Low disk space on $_boot_path."
+    echo "         Capacity:  ${_boot_total_mb}MB (${_boot_free_mb}MB free)"
+    echo "         FoxML recommends at least ${_rec_total_mb}MB total capacity for safe updates."
 
-    if (( _boot_free_mb < 256 )); then
+    if (( _boot_free_mb < 128 )); then
         echo "ERROR: Only ${_boot_free_mb}MB available. This is critically low."
-        echo "       Free at least 256MB on your boot partition to continue."
+        echo "       Free at least 128MB on your boot partition to continue."
         exit 1
     fi
     echo "         Continuing with bootstrap..."

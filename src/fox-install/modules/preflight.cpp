@@ -9,17 +9,28 @@
 #include "../core/ui.hpp"
 
 #include <cstdlib>
+#include <filesystem>
 #include <string>
 #include <sys/statvfs.h>
+
+namespace fs = std::filesystem;
 
 namespace fox_install {
 
 namespace {
 
-long free_mb(const char* path) {
+struct DiskInfo {
+    long total_mb;
+    long free_mb;
+};
+
+DiskInfo get_disk_info(const char* path) {
     struct statvfs vfs{};
-    if (::statvfs(path, &vfs) != 0) return -1;
-    return static_cast<long>((vfs.f_bavail * vfs.f_bsize) / (1024 * 1024));
+    if (::statvfs(path, &vfs) != 0) return {-1, -1};
+    return {
+        static_cast<long>((vfs.f_blocks * vfs.f_bsize) / (1024 * 1024)),
+        static_cast<long>((vfs.f_bavail * vfs.f_bsize) / (1024 * 1024))
+    };
 }
 
 bool can_reach_internet() {
@@ -32,16 +43,29 @@ bool can_reach_internet() {
 void run_preflight(Context& ctx) {
     ui::section("Pre-flight checks");
 
-    long home_mb = free_mb(ctx.home.c_str());
-    long root_mb = free_mb("/");
-    if (home_mb >= 0) ui::summary_row("$HOME free", std::to_string(home_mb) + " MB");
-    if (root_mb >= 0) ui::summary_row("/ free",     std::to_string(root_mb) + " MB");
+    DiskInfo home = get_disk_info(ctx.home.c_str());
+    DiskInfo root = get_disk_info("/");
+    
+    // /boot check (parity with install.sh)
+    fs::path boot_path = "/boot";
+    if (!fs::exists(boot_path)) boot_path = "/";
+    DiskInfo boot = get_disk_info(boot_path.c_str());
 
-    if (home_mb >= 0 && home_mb < 2048) {
+    if (home.free_mb >= 0) ui::summary_row("$HOME free", std::to_string(home.free_mb) + " MB");
+    if (root.free_mb >= 0) ui::summary_row("/ free",     std::to_string(root.free_mb) + " MB");
+    if (boot.free_mb >= 0 && boot_path == "/boot") {
+        ui::summary_row("/boot capacity", std::to_string(boot.total_mb) + " MB (" + 
+                                         std::to_string(boot.free_mb) + " MB free)");
+    }
+
+    if (home.free_mb >= 0 && home.free_mb < 2048) {
         ui::warn("$HOME has <2 GB free — installs that pull AI models may fail");
     }
-    if (root_mb >= 0 && root_mb < 512) {
+    if (root.free_mb >= 0 && root.free_mb < 512) {
         ui::warn("/ has <512 MB free — pacman installs may fail");
+    }
+    if (boot.free_mb >= 0 && (boot.total_mb < 1024 || boot.free_mb < 256)) {
+        ui::warn(boot_path.string() + " is below recommended size (1024MB total, 256MB free)");
     }
 
     if (sh::dry_run()) {

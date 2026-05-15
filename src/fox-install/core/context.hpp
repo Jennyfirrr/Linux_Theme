@@ -35,6 +35,9 @@ struct Context {
     bool quiet      = false;
     bool render_only = false;
 
+    // Wallpaper.
+    bool rotate_wallpapers = false;       // --rotate-wallpapers (default off)
+
     // Opt-in fine-grained hardening. Bash kept these as separate
     // INSTALL_* flags so --full could enable the security suite
     // without flipping every annoying daily-use toggle on.

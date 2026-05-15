@@ -126,6 +126,7 @@ SHARED_MAPPINGS=(
     "zsh_history_scrub.zsh|~/.config/zsh/history-scrub.zsh"
     "bin/fox-aider|~/.local/bin/fox-aider"
     "bin/fox-ai-swap|~/.local/bin/fox-ai-swap"
+    "bin/fox-wallpaper|~/.local/bin/fox-wallpaper"
     "bin/fox-ai-status|~/.local/bin/fox-ai-status"
     "bin/fox-ai-commit|~/.local/bin/fox-ai-commit"
     "bin/fox-ai-purge|~/.local/bin/fox-ai-purge"

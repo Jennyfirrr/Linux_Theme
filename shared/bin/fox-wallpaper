@@ -1,0 +1,179 @@
+#!/usr/bin/env bash
+# fox-wallpaper — manage rotation and static wallpapers.
+#
+# Usage:
+#   fox-wallpaper --rotate on/off
+#   fox-wallpaper --set <name>
+#   fox-wallpaper --menu
+#   fox-wallpaper --status
+
+set -euo pipefail
+
+WALLPAPER_DIR="${HOME}/.wallpapers"
+ROTATE_SCRIPT="${HOME}/.config/hypr/scripts/rotate_wallpaper.sh"
+AUTOSTART_CONF="${HOME}/.config/hypr/modules/autostart.conf"
+
+# ─────────────────────────────────────────
+# Helpers
+# ─────────────────────────────────────────
+
+_show_help() {
+    cat <<EOF
+Usage: fox-wallpaper [command]
+
+Commands:
+  --rotate on      Enable time-of-day wallpaper rotation
+  --rotate off     Disable rotation (stay on static wallpaper)
+  --set <name>     Set a specific wallpaper (disables rotation)
+  --menu           Open rofi menu to pick a wallpaper
+  --status         Show current rotation status and wallpaper
+  --help           Show this help
+EOF
+}
+
+_get_status() {
+    local timer_active="off"
+    if systemctl --user is-active --quiet wallpaper-rotate.timer 2>/dev/null; then
+        timer_active="on"
+    fi
+    
+    local autostart_mode="rotating"
+    if grep -q "rotate_wallpaper.sh --static" "$AUTOSTART_CONF" 2>/dev/null; then
+        autostart_mode="static"
+    fi
+
+    echo "Rotation (timer):   $timer_active"
+    echo "Autostart mode:    $autostart_mode"
+    if [[ -f "${WALLPAPER_DIR}/.current" ]]; then
+        echo "Current wallpaper: $(basename "$(readlink -f "${WALLPAPER_DIR}/.current")")"
+    fi
+}
+
+_set_rotation() {
+    local mode="$1"
+    if [[ "$mode" == "on" ]]; then
+        systemctl --user enable --now wallpaper-rotate.timer &>/dev/null || true
+        sed -i 's|rotate_wallpaper.sh --static|rotate_wallpaper.sh|g' "$AUTOSTART_CONF"
+        "$ROTATE_SCRIPT"
+        echo "Wallpaper rotation enabled."
+    else
+        systemctl --user disable --now wallpaper-rotate.timer &>/dev/null || true
+        # Ensure --static flag exists exactly once.
+        if ! grep -q "rotate_wallpaper.sh --static" "$AUTOSTART_CONF"; then
+            sed -i '/rotate_wallpaper.sh/ s|rotate_wallpaper.sh|rotate_wallpaper.sh --static|' "$AUTOSTART_CONF"
+        fi
+        echo "Wallpaper rotation disabled (static mode)."
+    fi
+}
+
+_set_wallpaper() {
+    local target="$1"
+    local full_path=""
+
+    if [[ -f "$target" ]]; then
+        full_path="$target"
+    elif [[ -f "${WALLPAPER_DIR}/$target" ]]; then
+        full_path="${WALLPAPER_DIR}/$target"
+    else
+        # Try matching base name if extension was omitted
+        local match
+        match=$(find "$WALLPAPER_DIR" -maxdepth 1 -name "${target}.*" | head -n1)
+        if [[ -n "$match" ]]; then
+            full_path="$match"
+        else
+            echo "Error: wallpaper '$target' not found in $WALLPAPER_DIR"
+            exit 1
+        fi
+    fi
+
+    # Disable rotation if it was on
+    _set_rotation off
+    
+    # Apply via rotate_wallpaper.sh mechanism but force this file
+    # We do this by symlinking .current and calling the script in static mode
+    ln -sf "$full_path" "${WALLPAPER_DIR}/.current"
+    "$ROTATE_SCRIPT" --static
+    echo "Wallpaper set to $(basename "$full_path")"
+}
+
+_menu() {
+    if ! command -v rofi &>/dev/null; then
+        echo "Error: rofi is not installed."
+        exit 1
+    fi
+
+    # shellcheck source=/dev/null
+    source ~/.config/hypr/scripts/_rofi_zone.sh
+
+    local wallpapers=()
+    while IFS= read -r f; do
+        # Filter out WxH variants and hidden files
+        local base
+        base=$(basename "$f")
+        [[ "$base" == .* ]] && continue
+        [[ "$base" =~ _[0-9]+x[0-9]+ ]] && continue
+        wallpapers+=("$base")
+    done < <(find "$WALLPAPER_DIR" -maxdepth 1 -type f \( -name "*.jpg" -o -name "*.jpeg" -o -name "*.png" -o -name "*.webp" \))
+
+    if (( ${#wallpapers[@]} == 0 )); then
+        rofi -e "No wallpapers found in $WALLPAPER_DIR" -theme-str "$ROFI_POS_THEME"
+        exit 0
+    fi
+
+    # Add special options
+    local entries=()
+    if systemctl --user is-active --quiet wallpaper-rotate.timer 2>/dev/null; then
+        entries+=("󰑐  Disable Rotation (Static)")
+    else
+        entries+=("󰑐  Enable Rotation (Time-of-Day)")
+    fi
+    
+    for w in "${wallpapers[@]}"; do
+        entries+=("󰸉  $w")
+    done
+
+    local chosen
+    chosen=$(printf '%s\n' "${entries[@]}" | rofi -dmenu -i -p "Wallpapers" -theme-str "$ROFI_POS_THEME window {width: 40%;} listview {lines: 12;}")
+
+    [[ -z "$chosen" ]] && exit 0
+
+    if [[ "$chosen" == *"Enable Rotation"* ]]; then
+        _set_rotation on
+    elif [[ "$chosen" == *"Disable Rotation"* ]]; then
+        _set_rotation off
+    else
+        local wp_name="${chosen#*  }"
+        _set_wallpaper "$wp_name"
+    fi
+}
+
+# ─────────────────────────────────────────
+# Main
+# ─────────────────────────────────────────
+
+[[ $# -eq 0 ]] && _menu && exit 0
+
+case "$1" in
+    --rotate)
+        if [[ "${2:-}" == "on" ]]; then _set_rotation on;
+        elif [[ "${2:-}" == "off" ]]; then _set_rotation off;
+        else _show_help; exit 1; fi
+        ;;
+    --set)
+        if [[ -z "${2:-}" ]]; then _show_help; exit 1; fi
+        _set_wallpaper "$2"
+        ;;
+    --menu)
+        _menu
+        ;;
+    --status)
+        _get_status
+        ;;
+    --help|-h)
+        _show_help
+        ;;
+    *)
+        _show_help
+        exit 1
+        ;;
+esac

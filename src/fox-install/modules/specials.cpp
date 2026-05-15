@@ -454,6 +454,57 @@ void do_btop_theme(const Context& ctx) {
     ui::substep("btop color_theme → foxml");
 }
 
+// ─── Systemd user services ─────────────────────────────────────────
+void do_systemd_user(const Context& ctx) {
+    fs::path src_root = ctx.script_dir / "shared/systemd_user";
+    fs::path dst_root = ctx.home       / ".config/systemd/user";
+    std::error_code ec;
+    if (!fs::is_directory(src_root, ec)) return;
+    fs::create_directories(dst_root);
+
+    std::size_t done = 0;
+    for (auto& e : fs::directory_iterator(src_root, ec)) {
+        if (!e.is_regular_file()) continue;
+        if (deploy_file(ctx, e.path(), dst_root / e.path().filename())) ++done;
+    }
+    if (done == 0) return;
+
+    sh::systemctl_daemon_reload(/*user=*/true);
+
+    // Auto-enable core watchers
+    for (const char* svc : { "fox-monitor-watch.service", "foxml-focus-pulse.service" }) {
+        if (fs::exists(dst_root / svc)) {
+            sh::systemctl_enable(svc, /*user=*/true);
+        }
+    }
+
+    // Wallpaper rotation timer
+    if (ctx.rotate_wallpapers) {
+        sh::systemctl_enable("wallpaper-rotate.timer", /*user=*/true);
+        ui::ok("wallpaper rotation timer enabled");
+    } else {
+        // Explicitly disable if it was previously enabled.
+        sh::run({"systemctl", "--user", "disable", "--now", "wallpaper-rotate.timer"});
+        ui::ok("wallpaper rotation timer disabled (static mode)");
+    }
+}
+
+// ─── Wallpaper mode patch ──────────────────────────────────────────
+void do_wallpaper_mode(const Context& ctx) {
+    fs::path autostart = ctx.home / ".config/hypr/modules/autostart.conf";
+    if (!fs::exists(autostart)) return;
+
+    if (ctx.rotate_wallpapers) {
+        // Ensure no --static flag
+        sh::run({"sed", "-i", "s|rotate_wallpaper.sh --static|rotate_wallpaper.sh|g", autostart.string()});
+        ui::substep("wallpaper mode: rotating");
+    } else {
+        // Ensure --static flag exists exactly once.
+        sh::run({"sed", "-i", "/rotate_wallpaper.sh/ { /--static/! s|rotate_wallpaper.sh|rotate_wallpaper.sh --static| }", autostart.string()});
+        ui::substep("wallpaper mode: static (FoxML Earthy)");
+    }
+}
+
 }  // namespace
 
 void run_specials(Context& ctx) {
@@ -463,7 +514,7 @@ void run_specials(Context& ctx) {
         ui::substep("[dry-run] would: Firefox CSS+user.js, Cursor/VS Code theme, "
                     "Bat cache rebuild, Gemini+Claude settings jq-merge, "
                     "hyprland_scripts + waybar_scripts + hyprland_modules + wallpapers + bin deploy, "
-                    "KEYBINDS.md to ~/.local/share/foxml/");
+                    "KEYBINDS.md to ~/.local/share/foxml/, systemd user units");
         return;
     }
 
@@ -489,9 +540,11 @@ void run_specials(Context& ctx) {
     for (auto& s : BULK) deploy_dir_files(ctx, s);
 
     do_hyprland_modules(ctx);
+    do_wallpaper_mode(ctx);
     do_keybinds_md(ctx);
     do_regreet_stage(ctx);
     do_btop_theme(ctx);
+    do_systemd_user(ctx);
 }
 
 }  // namespace fox_install

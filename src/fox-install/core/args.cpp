@@ -63,6 +63,7 @@ void print_help(const char* argv0) {
         "      --monitor     surgical run of the multi-monitor wizard only\n"
         "      --only <slugs> comma-separated allow-list; everything else skipped\n"
         "      --polkit-strict   add polkit strict mode (every GUI sudo re-prompts)\n"
+        "      --rotate-wallpapers enable time-of-day wallpaper rotation (default: static)\n"
         "      --cpp-pro     C++ toolchain extras (clang/lldb/mold/perf/etc)\n"
         "      --arm, --paranoid chain into fox-arm at end of install\n"
         "      --arm-heavy, --heavy   ditto, runs fox-arm --heavy\n"
@@ -86,10 +87,24 @@ void print_version() {
 }
 
 bool parse(int argc, char** argv, Parsed& out, Context& ctx) {
+    // Initial state: everything is default_on. We only clear this and switch
+    // to exclusive mode if we see a module-specific flag (e.g. --render)
+    // or an explicit --only.
     out.module_enabled.assign(MODULES_COUNT, false);
     for (std::size_t i = 0; i < MODULES_COUNT; ++i) {
         out.module_enabled[i] = MODULES[i].default_on;
     }
+
+    bool provided_explicit_module = false;
+
+    auto switch_to_exclusive = [&]() {
+        if (out.only) return;
+        out.only = true;
+        provided_explicit_module = true;
+        for (std::size_t k = 0; k < MODULES_COUNT; ++k) {
+            out.module_enabled[k] = false;
+        }
+    };
 
     for (int i = 1; i < argc; ++i) {
         std::string a = argv[i];
@@ -108,17 +123,20 @@ bool parse(int argc, char** argv, Parsed& out, Context& ctx) {
 
         if (a == "--cpp-pro") {
             ctx.cpp_pro = true;
-            for (std::size_t k = 0; k < MODULES_COUNT; ++k) {
-                if (std::string(MODULES[k].slug) == "cpp_pro") {
-                    out.module_enabled[k] = true;
-                    break;
-                }
+            std::size_t idx = find_by_slug("cpp_pro");
+            if (idx != SIZE_MAX) {
+                // If this is the only module flag, switch to exclusive.
+                // But wait, if they pass --full --cpp-pro, we don't want to
+                // clear everything. switch_to_exclusive handles this via out.only check.
+                switch_to_exclusive();
+                out.module_enabled[idx] = true;
             }
             continue;
         }
 
         if (a == "--full" || a == "--all") {
             out.full = true;
+            out.only = true; // prevents later flags from clearing
             for (std::size_t k = 0; k < MODULES_COUNT; ++k) {
                 out.module_enabled[k] = true;
             }
@@ -143,6 +161,15 @@ bool parse(int argc, char** argv, Parsed& out, Context& ctx) {
             continue;
         }
 
+        if (a == "--rotate-wallpapers") {
+            ctx.rotate_wallpapers = true;
+            continue;
+        }
+        if (a == "--no-rotate-wallpapers") {
+            ctx.rotate_wallpapers = false;
+            continue;
+        }
+
         if (a == "--quick") {
             for (std::size_t k = 0; k < MODULES_COUNT; ++k) {
                 std::string s = MODULES[k].slug;
@@ -154,55 +181,39 @@ bool parse(int argc, char** argv, Parsed& out, Context& ctx) {
         }
 
         if (a == "--monitor") {
-            out.only = true;
-            for (std::size_t k = 0; k < MODULES_COUNT; ++k) {
-                out.module_enabled[k] = (std::string(MODULES[k].slug) == "monitors");
-            }
+            switch_to_exclusive();
+            std::size_t idx = find_by_slug("monitors");
+            if (idx != SIZE_MAX) out.module_enabled[idx] = true;
             continue;
         }
 
         if (a == "--render-only") {
-            out.only = true;
+            switch_to_exclusive();
             static const char* KEEP[] = {
                 "detect", "preflight", "theme",
                 "render", "symlinks", "specials",
                 "personalize", "post_install", "summary", nullptr,
             };
-            for (std::size_t k = 0; k < MODULES_COUNT; ++k) {
-                out.module_enabled[k] = false;
-            }
             for (auto** s = KEEP; *s; ++s) {
-                for (std::size_t k = 0; k < MODULES_COUNT; ++k) {
-                    if (std::string(MODULES[k].slug) == *s) {
-                        out.module_enabled[k] = true;
-                        break;
-                    }
-                }
+                std::size_t idx = find_by_slug(*s);
+                if (idx != SIZE_MAX) out.module_enabled[idx] = true;
             }
             continue;
         }
 
         if (a == "--only" && i + 1 < argc) {
-            out.only = true;
+            switch_to_exclusive();
             std::string list = argv[++i];
-            for (std::size_t k = 0; k < MODULES_COUNT; ++k) {
-                out.module_enabled[k] = false;
-            }
             std::size_t pos = 0;
             while (pos <= list.size()) {
                 std::size_t comma = list.find(',', pos);
                 std::string slug = list.substr(
                     pos, comma == std::string::npos ? std::string::npos : comma - pos);
                 if (!slug.empty()) {
-                    bool found = false;
-                    for (std::size_t k = 0; k < MODULES_COUNT; ++k) {
-                        if (slug == MODULES[k].slug) {
-                            out.module_enabled[k] = true;
-                            found = true;
-                            break;
-                        }
-                    }
-                    if (!found) {
+                    std::size_t idx = find_by_slug(slug);
+                    if (idx != SIZE_MAX) {
+                        out.module_enabled[idx] = true;
+                    } else {
                         std::fprintf(stderr,
                             "fox-install: --only: unknown slug '%s'\n", slug.c_str());
                         return false;
@@ -215,23 +226,23 @@ bool parse(int argc, char** argv, Parsed& out, Context& ctx) {
         }
 
         std::size_t idx = find_by_flag(a);
-        if (idx != SIZE_MAX) { out.module_enabled[idx] = true; continue; }
+        if (idx != SIZE_MAX) {
+            switch_to_exclusive();
+            out.module_enabled[idx] = true;
+            continue;
+        }
 
         idx = find_by_no_slug(a);
-        if (idx != SIZE_MAX) { out.module_enabled[idx] = false; continue; }
+        if (idx != SIZE_MAX) {
+            // Note: --no-foo doesn't trigger exclusive mode; it just disables.
+            out.module_enabled[idx] = false;
+            continue;
+        }
 
         if (!a.empty() && a[0] != '-') {
             std::size_t slug_idx = find_by_slug(a);
             if (slug_idx != SIZE_MAX) {
-                // Positional module slug (e.g. `fox install monitors`)
-                // On the FIRST module slug we see, if --only hasn't already
-                // been set, we flip to exclusive mode.
-                if (!out.only) {
-                    out.only = true;
-                    for (std::size_t k = 0; k < MODULES_COUNT; ++k) {
-                        out.module_enabled[k] = false;
-                    }
-                }
+                switch_to_exclusive();
                 out.module_enabled[slug_idx] = true;
                 continue;
             }
@@ -245,6 +256,18 @@ bool parse(int argc, char** argv, Parsed& out, Context& ctx) {
         std::fprintf(stderr, "fox-install: unknown argument: %s\n", a.c_str());
         return false;
     }
+
+    // If we switched to exclusive mode because of flags like --render,
+    // we MUST ensure discovery/theme modules stay on, otherwise the
+    // selected module might fail (no palette, no hardware info).
+    if (provided_explicit_module) {
+        static const char* REQ[] = { "detect", "preflight", "theme", nullptr };
+        for (auto** s = REQ; *s; ++s) {
+            std::size_t idx = find_by_slug(*s);
+            if (idx != SIZE_MAX) out.module_enabled[idx] = true;
+        }
+    }
+
     return true;
 }
 

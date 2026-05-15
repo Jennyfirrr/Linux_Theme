@@ -6,7 +6,7 @@ border-color=#{{PRIMARY}}66
 # which breaks theme cohesion. `over <color>` overlays the bar onto
 # the bubble background using the peach primary at 50% opacity.
 progress-color=over #{{PRIMARY}}80
-border-size=1
+border-size=2
 border-radius=0
 padding=12
 margin=12

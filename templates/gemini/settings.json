@@ -1,79 +1,79 @@
 {
   "ui": {
-    "theme": "FoxML",
     "customThemes": {
       "FoxML": {
-        "name": "FoxML",
-        "type": "custom",
         "background": {
-          "primary": "#{{BG}}",
           "diff": {
             "added": "#{{DIFF_ADD}}",
             "removed": "#{{DIFF_DELETE}}"
-          }
-        },
-        "text": {
-          "primary": "#{{FG}}",
-          "secondary": "#{{YELLOW}}",
-          "link": "#{{BLUE}}",
-          "accent": "#{{PRIMARY}}",
-          "response": "#{{FG}}"
+          },
+          "primary": "#{{BG}}"
         },
         "border": {
           "default": "#{{SURFACE}}",
           "focused": "#{{PRIMARY}}"
         },
+        "name": "FoxML",
         "status": {
+          "error": "#{{RED}}",
           "success": "#{{GREEN_BRIGHT}}",
-          "warning": "#{{YELLOW}}",
-          "error": "#{{RED}}"
+          "warning": "#{{YELLOW}}"
         },
+        "text": {
+          "accent": "#{{PRIMARY}}",
+          "link": "#{{BLUE}}",
+          "primary": "#{{FG}}",
+          "response": "#{{FG}}",
+          "secondary": "#{{YELLOW}}"
+        },
+        "type": "custom",
         "ui": {
           "comment": "#{{COMMENT}}",
-          "symbol": "#{{PRIMARY}}",
           "gradient": [
             "#{{YELLOW}}",
             "#{{PRIMARY}}"
-          ]
+          ],
+          "symbol": "#{{PRIMARY}}"
         }
       }
-    }
+    },
+    "theme": "FoxML"
   },
   "hooks": {
     "AfterAgent": [
       {
-        "matcher": "",
         "hooks": [
           {
+            "command": "~/.config/hypr/scripts/agent_notify.sh gemini stop",
             "name": "foxml-turn-complete",
-            "type": "command",
-            "command": "~/.config/hypr/scripts/agent_notify.sh gemini stop"
+            "type": "command"
           }
-        ]
+        ],
+        "matcher": ""
       }
     ],
     "AfterTool": [
       {
-        "matcher": "",
         "hooks": [
           {
+            "command": "~/.config/hypr/scripts/agent_notify.sh gemini subagent",
             "name": "foxml-subagent-stop",
-            "type": "command",
-            "command": "~/.config/hypr/scripts/agent_notify.sh gemini subagent"
+            "type": "command"
           }
-        ]
+        ],
+        "matcher": ""
       }
     ],
     "Notification": [
       {
-        "matcher": "",
         "hooks": [
           {
+            "command": "~/.config/hypr/scripts/agent_notify.sh gemini notification",
             "name": "foxml-needs-input",
-            "type": "command",
-            "command": "~/.config/hypr/scripts/agent_notify.sh gemini notification"
+            "type": "command"
           }
-        ]
+        ],
+        "matcher": ""
       }
     ]
   },

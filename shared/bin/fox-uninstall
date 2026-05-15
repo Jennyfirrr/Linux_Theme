@@ -42,7 +42,8 @@ declare -a SERVICES=()
 # 1. ~/.local/bin/fox-* + fask/findex/fhelp.
 shopt -s nullglob
 for b in "$HOME/.local/bin/"fox-* "$HOME/.local/bin/"fox \
-         "$HOME/.local/bin/"fask "$HOME/.local/bin/"findex "$HOME/.local/bin/"fhelp; do
+         "$HOME/.local/bin/"fask "$HOME/.local/bin/"findex "$HOME/.local/bin/"fhelp \
+         "$HOME/.local/bin/"fox-wallpaper; do
     [[ -f "$b" ]] && TARGETS+=("$b")
 done
 shopt -u nullglob

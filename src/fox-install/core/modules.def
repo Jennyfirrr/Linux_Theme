@@ -42,6 +42,7 @@ FOX_MODULE( greetd,            run_greetd,             "--greetd",           "Th
 FOX_MODULE( greetd_fingerprint,run_greetd_fingerprint, "--greetd-fingerprint","pam_fprintd in /etc/pam.d/greetd ONLY (NOT sudo)",          false )
 
 // ── Phase 2: rendering + deploy ───────────────────────────────────
+FOX_MODULE( wallpaper,   run_wallpaper,     "--wallpaper",   "Wallpaper rotation toggle (static vs time-of-day)", true )
 FOX_MODULE( render,      run_render,        "--render",      "Render templates with the theme palette",          true  )
 FOX_MODULE( symlinks,    run_symlinks,      "--symlinks",    "Deploy rendered + shared configs (mapping tables)", true  )
 FOX_MODULE( specials,    run_specials,      "--specials",    "Firefox + Cursor + Bat + Gemini + Claude + bulk dirs", true )

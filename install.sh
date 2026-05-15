@@ -30,15 +30,18 @@ FOX_INSTALL_BIN="$SCRIPT_DIR/src/fox-install/fox-install"
 # FoxML requires space for kernel images, initramfs, and AI models.
 _boot_path="/boot"
 [[ ! -d "$_boot_path" ]] && _boot_path="/"
-_boot_free_kb=$(df -Pk "$_boot_path" | awk 'NR==2 {print $4}')
+_boot_info=$(df -Pk "$_boot_path" | awk 'NR==2 {print $2" "$4}')
+read -r _boot_total_kb _boot_free_kb <<< "$_boot_info"
+_boot_total_mb=$((_boot_total_kb / 1024))
 _boot_free_mb=$((_boot_free_kb / 1024))
-_rec_mb=1024
+_rec_total_mb=1024
+_min_free_mb=256
 
-if (( _boot_free_mb < _rec_mb )); then
+if (( _boot_total_mb < _rec_total_mb || _boot_free_mb < _min_free_mb )); then
     echo "╭──────────────────────────────────────────────────────────────────╮"
     echo "│   Disk Space Check: $_boot_path                                   "
-    echo "│   Detected:  ${_boot_free_mb} MB free                                      "
-    echo "│   Recommended: ${_rec_mb} MB free                                     "
+    printf "│   Capacity:  %4d MB (%d MB free)                              \n" "$_boot_total_mb" "$_boot_free_mb"
+    echo "│   Recommended: ${_rec_total_mb} MB total capacity                         "
     echo "├──────────────────────────────────────────────────────────────────┤"
     echo "│   Warning: Your boot partition is below the recommended size.    │"
     echo "│   FoxML needs space for kernel updates and initramfs builds.     │"
@@ -47,9 +50,9 @@ if (( _boot_free_mb < _rec_mb )); then
     echo ""
 
     # Hard fail if extremely low (prevent certain breakage)
-    if (( _boot_free_mb < 256 )); then
+    if (( _boot_free_mb < 128 )); then
         echo ":: ERROR: Only ${_boot_free_mb}MB available. This is likely to fail during"
-        echo "   initramfs generation. Free at least 256MB to continue."
+        echo "   initramfs generation. Free at least 128MB to continue."
         exit 1
     fi
 
