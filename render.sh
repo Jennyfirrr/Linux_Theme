@@ -61,6 +61,15 @@ _derive_palette_vars() {
     done < "$palette_file"
 }
 
+# ─────────────────────────────────────────
+# Compute hex alpha from float opacity (0.0 - 1.0)
+# ─────────────────────────────────────────
+opacity_to_hex() {
+    local opacity="$1"
+    # Use awk for float math, then printf for hex
+    awk -v o="$opacity" 'BEGIN { printf "%02x", int(o * 255 + 0.5) }'
+}
+
 build_sed_expr() {
     local sed_expr=""
 
@@ -128,6 +137,13 @@ build_sed_expr() {
         local val="${!var}"
         [[ -z "$val" ]] && continue
         sed_expr+="s|{{${var}}}|${val}|g;"
+
+        # Special case: convert KITTY_BG_OPACITY to hex alpha
+        if [[ "$var" == "KITTY_BG_OPACITY" ]]; then
+            local hex_alpha
+            hex_alpha=$(opacity_to_hex "$val")
+            sed_expr+="s|{{KITTY_BG_OPACITY_HEX}}|${hex_alpha}|g;"
+        fi
     done
 
     # PALETTE_LABELS is special (array) — skip, handled by swap.sh directly

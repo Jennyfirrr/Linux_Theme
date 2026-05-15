@@ -105,6 +105,17 @@ parse_palette(const std::string& palette_path) {
             emit_rgb(table, name, val);
         } else {
             table["{{" + name + "}}"] = val;
+
+            // Special case: convert KITTY_BG_OPACITY to hex alpha (00-ff).
+            if (name == "KITTY_BG_OPACITY") {
+                double o = std::strtod(val.c_str(), nullptr);
+                int alpha = static_cast<int>(o * 255.0 + 0.5);
+                if (alpha < 0) alpha = 0;
+                if (alpha > 255) alpha = 255;
+                char abuf[4];
+                std::snprintf(abuf, sizeof(abuf), "%02x", alpha);
+                table["{{KITTY_BG_OPACITY_HEX}}"] = abuf;
+            }
         }
     }
     return table;
