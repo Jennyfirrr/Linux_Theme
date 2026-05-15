@@ -6,7 +6,7 @@
 #
 # Usage:
 #   fox-theme-tweak --rounding 12 --blur-size 4
-#   fox-theme-tweak --gap-out 20
+#   fox-theme-tweak --primary ffb200 --opacity 0.8
 #
 # Flags:
 #   --rounding <px>      Set corner radius
@@ -15,6 +15,12 @@
 #   --gap-in <px>        Set inner gaps
 #   --gap-out <px>       Set outer gaps
 #   --border-size <px>   Set border thickness
+#   --primary <hex>      Set primary accent color (no #)
+#   --secondary <hex>    Set secondary color (no #)
+#   --accent <hex>       Set accent color (no #)
+#   --bg <hex>           Set background color (no #)
+#   --fg <hex>           Set foreground color (no #)
+#   --opacity <0.0-1.0>  Set kitty/window transparency
 #   --render             Just re-render without changing values
 #   --help
 
@@ -61,9 +67,15 @@ while [[ $# -gt 0 ]]; do
         --gap-in)       _update_val "GAP_IN" "$2";      changed=true; shift 2 ;;
         --gap-out)      _update_val "GAP_OUT" "$2";     changed=true; shift 2 ;;
         --border-size)  _update_val "BORDER_SIZE" "$2"; changed=true; shift 2 ;;
+        --primary)      _update_val "PRIMARY" "$2";     changed=true; shift 2 ;;
+        --secondary)    _update_val "SECONDARY" "$2";   changed=true; shift 2 ;;
+        --accent)       _update_val "ACCENT" "$2";      changed=true; shift 2 ;;
+        --bg)           _update_val "BG" "$2";          changed=true; shift 2 ;;
+        --fg)           _update_val "FG" "$2";          changed=true; shift 2 ;;
+        --opacity)      _update_val "KITTY_BG_OPACITY" "$2"; changed=true; shift 2 ;;
         --render)       changed=true; shift ;;
         --help|-h)
-            sed -n '2,16p' "$0" | sed 's/^# \?//'
+            sed -n '2,22p' "$0" | sed 's/^# \?//'
             exit 0
             ;;
         *) echo "unknown flag: $1"; exit 1 ;;
