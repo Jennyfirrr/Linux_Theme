@@ -5,6 +5,7 @@
 // mappings.sh::install_no_coredumps.
 
 #include "../core/context.hpp"
+#include "../core/idempotency.hpp"
 #include "../core/shell.hpp"
 #include "../core/ui.hpp"
 
@@ -40,7 +41,7 @@ bool write_root_file(const fs::path& dst, const std::string& body,
 
 }  // namespace
 
-void run_no_coredumps(Context&) {
+void run_no_coredumps(Context& ctx) {
     ui::section("Disable core dumps");
 
     if (sh::dry_run()) {
@@ -54,14 +55,21 @@ void run_no_coredumps(Context&) {
     }
 
     fs::path coredump = "/etc/systemd/coredump.conf.d/foxml-no-coredumps.conf";
+    fs::path limits_path = "/etc/security/limits.d/99-foxml-no-coredumps.conf";
+    constexpr const char* LIMITS_BODY = "* hard core 0\n";
+    if (idem::up_to_date(coredump, COREDUMP_BODY, ctx.force_reapply)
+        && idem::up_to_date(limits_path, LIMITS_BODY, ctx.force_reapply)) {
+        ui::skipped("core dumps already disabled");
+        return;
+    }
+
     if (write_root_file(coredump, COREDUMP_BODY)) {
         ui::ok("systemd-coredump set to Storage=none (no crash RAM hits disk)");
     } else {
         ui::warn("could not write " + coredump.string());
     }
 
-    fs::path limits = "/etc/security/limits.d/99-foxml-no-coredumps.conf";
-    if (write_root_file(limits, "* hard core 0\n")) {
+    if (write_root_file(limits_path, LIMITS_BODY)) {
         ui::ok("/etc/security/limits.d hard core=0 (applies next login)");
     } else {
         ui::warn("/etc/security/limits.d not writable — systemd-coredump is the primary defense");

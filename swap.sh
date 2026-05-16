@@ -26,6 +26,50 @@ if [[ ${#themes[@]} -eq 0 ]]; then
 fi
 
 # ─────────────────────────────────────────
+# Lean swap path: bypass install.sh (skips boot pre-flight,
+# git self-update, sudo warmup, and every default-on security
+# module). Only the modules that actually rewrite the theme run.
+# ─────────────────────────────────────────
+_do_swap() {
+    local theme="$1"
+    local fox_install="$SCRIPT_DIR/src/fox-install/fox-install"
+
+    if [[ ! -x "$fox_install" ]]; then
+        echo ":: Building fox-install..."
+        make -C "$SCRIPT_DIR/src/fox-install" >/dev/null || {
+            echo "fox-install build failed; falling back to install.sh"
+            exec "$SCRIPT_DIR/install.sh" "$theme"
+        }
+    fi
+
+    echo ":: Swapping to $theme..."
+    "$fox_install" "$theme" \
+        --only theme,render,symlinks,specials --yes --quiet \
+        || { echo "swap failed"; exit 1; }
+
+    if command -v hyprctl >/dev/null 2>&1; then
+        hyprctl reload >/dev/null 2>&1 || true
+    fi
+    echo ":: Done."
+}
+
+# ─────────────────────────────────────────
+# Non-interactive: `swap.sh <theme-name>`
+# ─────────────────────────────────────────
+if [[ $# -ge 1 ]]; then
+    requested="$1"
+    for t in "${themes[@]}"; do
+        if [[ "$t" == "$requested" ]]; then
+            _do_swap "$requested"
+            exit 0
+        fi
+    done
+    echo "Unknown theme: $requested"
+    echo "Available: ${themes[*]}"
+    exit 1
+fi
+
+# ─────────────────────────────────────────
 # Render color swatch (truecolor)
 # ─────────────────────────────────────────
 hex_to_rgb() {
@@ -111,7 +155,7 @@ fi
 if [[ "$choice" -ge 1 && "$choice" -le ${#themes[@]} ]] 2>/dev/null; then
     selected="${themes[$((choice-1))]}"
     echo ""
-    exec "$SCRIPT_DIR/install.sh" "$selected"
+    _do_swap "$selected"
 else
     echo "Invalid selection."
     exit 1

@@ -118,7 +118,7 @@ void wire_fox_service(const Context& ctx,
     if (sh::run({"systemctl", "--user", "is-enabled", "--quiet",
                  unit_name + ".service"}) == 0
         && !ctx.force_reapply) {
-        ui::ok(bin + " already enabled");
+        ui::skipped(bin + " already enabled");
         return;
     }
     if (sh::run({"sh", "-c", bin + " --install >/dev/null 2>&1"}) == 0) {
@@ -134,7 +134,7 @@ void maybe_offer_setup(const Context& ctx) {
     fs::path conf       = ctx.config_home / "foxml/dispatch.conf";
     fs::path marker     = ctx.config_home / "foxml/.skipped-dispatch";
 
-    if (fs::exists(conf))   { ui::ok("fox-dispatch webhook already configured"); return; }
+    if (fs::exists(conf))   { ui::skipped("fox-dispatch webhook already configured"); return; }
     if (fs::exists(marker)) { ui::ok("fox-dispatch previously declined — remove " +
                                       marker.string() + " to re-prompt"); return; }
     if (!have("fox-dispatch")) return;

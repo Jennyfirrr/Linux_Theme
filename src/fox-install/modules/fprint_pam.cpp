@@ -127,7 +127,7 @@ void run_fprint_pam(Context& ctx) {
         return;
     }
     if (already_spliced(pam)) {
-        ui::ok("pam_fprintd already in " + pam.string() + " — leaving as-is");
+        ui::skipped("pam_fprintd already in " + pam.string() + " — leaving as-is");
         return;
     }
 

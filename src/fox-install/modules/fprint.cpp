@@ -22,6 +22,14 @@ void run_fprint(Context& ctx) {
         ui::warn("no fingerprint reader detected — skipping (re-run with --fprint to force)");
     }
 
+    bool installed = sh::run({"sh", "-c", "pacman -Qi fprintd >/dev/null 2>&1"}) == 0;
+    bool enabled = sh::run({"systemctl", "is-enabled", "--quiet",
+                            "fprintd.service"}) == 0;
+    if (installed && enabled && !ctx.force_reapply) {
+        ui::skipped("fprintd already installed and enabled");
+        return;
+    }
+
     if (!sh::dry_run() && !sh::sudo_warmup()) {
         ui::err("sudo cache cold — `sudo -v` first");
         return;

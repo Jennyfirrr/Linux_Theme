@@ -127,7 +127,7 @@ void run_greetd(Context& ctx) {
             ui::ok("/etc/greetd/config.toml (Hyprland greeter session)");
         }
     } else {
-        ui::ok("/etc/greetd/config.toml already customized — leaving as-is");
+        ui::skipped("/etc/greetd/config.toml already customized — leaving as-is");
     }
 
     if (sh::run({"systemctl", "is-enabled", "--quiet", "greetd"}) != 0) {
@@ -135,7 +135,7 @@ void run_greetd(Context& ctx) {
             ui::ok("greetd enabled (login screen on next boot)");
         }
     } else {
-        ui::ok("greetd already enabled");
+        ui::skipped("greetd already enabled");
     }
 }
 

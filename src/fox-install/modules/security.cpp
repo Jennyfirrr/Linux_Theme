@@ -249,7 +249,7 @@ constexpr const char* KERNEL_HARDENING_BODY =
 void install_kernel_hardening(const Context& ctx) {
     fs::path conf = "/etc/sysctl.d/99-foxml-hardening.conf";
     if (read_file(conf) == KERNEL_HARDENING_BODY && !ctx.force_reapply) {
-        ui::ok("kernel hardening sysctls already in place");
+        ui::skipped("kernel hardening sysctls already in place");
         return;
     }
     ui::substep("writing kernel hardening sysctls to " + conf.string());
@@ -300,7 +300,7 @@ void install_usbguard(const Context& ctx) {
         sh::run({"sudo", "chown", "root:root", rules.string()});
         ui::ok("→ " + rules.string() + " (" + (count.empty() ? "?" : count) + " device rules)");
     } else {
-        ui::ok("USBGuard rules already present at " + rules.string());
+        ui::skipped("USBGuard rules already present at " + rules.string());
     }
 
     // Grant current user IPC access so usbguard list-devices works without sudo.
@@ -321,7 +321,7 @@ void install_usbguard(const Context& ctx) {
         }
     } else {
         sh::run({"sh", "-c", "sudo systemctl reload usbguard >/dev/null 2>&1 || true"});
-        ui::ok("usbguard already active (reloaded)");
+        ui::skipped("usbguard already active (reloaded)");
     }
 }
 
@@ -361,7 +361,7 @@ void apparmor_systemd_boot() {
         ++modified;
     }
     if (modified == 0) {
-        ui::ok("all systemd-boot entries already include apparmor in lsm=");
+        ui::skipped("all systemd-boot entries already include apparmor in lsm=");
     }
 }
 
@@ -371,7 +371,7 @@ bool apparmor_grub() {
     std::string body = read_file(defaults);
     if (body.find("lsm=") != std::string::npos &&
         body.find("apparmor") != std::string::npos) {
-        ui::ok("grub cmdline already includes apparmor");
+        ui::skipped("grub cmdline already includes apparmor");
         return true;
     }
     if (body.find("lsm=") != std::string::npos) {
@@ -415,7 +415,7 @@ void install_apparmor() {
             ui::ok("apparmor.service enabled (loads profiles at boot)");
         }
     } else {
-        ui::ok("apparmor.service already enabled");
+        ui::skipped("apparmor.service already enabled");
     }
     ui::substep("reboot to activate AppArmor; then: sudo aa-status");
     ui::substep("comprehensive profile pack: `yay -S apparmor.d` (1500+ profiles)");
@@ -491,7 +491,7 @@ void install_fail2ban() {
         if (sh::run({"sh", "-c",
                      "sudo systemctl reload fail2ban >/dev/null 2>&1 || "
                      "sudo systemctl restart fail2ban >/dev/null 2>&1"}) == 0) {
-            ui::ok("fail2ban already active (reloaded for new jail.local)");
+            ui::skipped("fail2ban already active (reloaded for new jail.local)");
         } else {
             ui::warn("fail2ban reload failed (sudo cold?) — service still running on old config");
         }
@@ -534,9 +534,9 @@ void install_auditd() {
         }
     } else {
         if (sh::run({"sh", "-c", "sudo systemctl restart auditd >/dev/null 2>&1"}) == 0) {
-            ui::ok("auditd already active (restarted to load new rules)");
+            ui::skipped("auditd already active (restarted to load new rules)");
         } else {
-            ui::ok("auditd already active (couldn't restart — rules apply on next reboot)");
+            ui::skipped("auditd already active (couldn't restart — rules apply on next reboot)");
         }
     }
 }
@@ -554,7 +554,7 @@ void install_waybar_sudoers(const Context& ctx) {
     // had the same `! -f` gate and lived with the same race.
     std::error_code ec;
     if (fs::exists(sudoers, ec) && !ec && !ctx.force_reapply) {
-        ui::ok("waybar sudoers already configured");
+        ui::skipped("waybar sudoers already configured");
         return;
     }
     std::string user = username();

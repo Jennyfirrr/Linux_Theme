@@ -33,6 +33,19 @@ bool has_tmp_tmpfs(const std::string& fstab) {
     return false;
 }
 
+bool tmp_fstab_locked_down(const std::string& fstab) {
+    std::istringstream is(fstab);
+    std::string line;
+    std::regex pat(R"(^\S+\s+/tmp\s+tmpfs)");
+    while (std::getline(is, line)) {
+        if (!std::regex_search(line, pat)) continue;
+        return line.find("noexec") != std::string::npos
+            && line.find("nosuid") != std::string::npos
+            && line.find("nodev")  != std::string::npos;
+    }
+    return false;
+}
+
 std::string read_file(const fs::path& p) {
     std::ifstream f(p);
     if (!f) return {};
@@ -43,7 +56,7 @@ std::string read_file(const fs::path& p) {
 
 }  // namespace
 
-void run_noexec_tmp(Context&) {
+void run_noexec_tmp(Context& ctx) {
     ui::section("/tmp + /dev/shm noexec,nosuid,nodev");
 
     if (sh::dry_run()) {
@@ -57,24 +70,38 @@ void run_noexec_tmp(Context&) {
     }
 
     fs::path fstab = "/etc/fstab";
-    sh::run({"sh", "-c", "sudo cp /etc/fstab /etc/fstab.foxml-bak 2>/dev/null"});
-
     std::string body = read_file(fstab);
-    if (!has_tmp_tmpfs(body)) {
-        sh::run({"sh", "-c",
-                 "echo 'tmpfs   /tmp        tmpfs   "
-                 "defaults,noexec,nosuid,nodev,size=4G  0 0' | "
-                 "sudo tee -a /etc/fstab >/dev/null"});
-        ui::ok("/tmp added to /etc/fstab as tmpfs with noexec,nosuid,nodev");
-    } else {
-        // Amend defaults with each missing flag.
-        sh::run({"sh", "-c",
-                 "sudo sed -i -E '/^\\S+\\s+\\/tmp\\s+tmpfs.*defaults/{"
-                 "/noexec/!s/defaults/defaults,noexec/;"
-                 "/nosuid/!s/defaults/defaults,nosuid/;"
-                 "/nodev/!s/defaults/defaults,nodev/"
-                 "}' /etc/fstab"});
-        ui::ok("/tmp tmpfs entry amended with noexec,nosuid,nodev");
+
+    bool tmp_locked = tmp_fstab_locked_down(body);
+    bool tmp_live = sh::run({"sh", "-c",
+                             "findmnt /tmp 2>/dev/null | grep -q noexec"}) == 0;
+    bool shm_live = sh::run({"sh", "-c",
+                             "findmnt /dev/shm 2>/dev/null | grep -q noexec"}) == 0;
+    if (tmp_locked && tmp_live && shm_live && !ctx.force_reapply) {
+        ui::skipped("/tmp + /dev/shm already noexec,nosuid,nodev (fstab + live)");
+        return;
+    }
+
+    // Only back up /etc/fstab when we're actually about to edit it —
+    // a pure /dev/shm remount needs no fstab change.
+    if (!tmp_locked) {
+        sh::run({"sh", "-c", "sudo cp /etc/fstab /etc/fstab.foxml-bak 2>/dev/null"});
+        if (!has_tmp_tmpfs(body)) {
+            sh::run({"sh", "-c",
+                     "echo 'tmpfs   /tmp        tmpfs   "
+                     "defaults,noexec,nosuid,nodev,size=4G  0 0' | "
+                     "sudo tee -a /etc/fstab >/dev/null"});
+            ui::ok("/tmp added to /etc/fstab as tmpfs with noexec,nosuid,nodev");
+        } else {
+            // Amend defaults with each missing flag.
+            sh::run({"sh", "-c",
+                     "sudo sed -i -E '/^\\S+\\s+\\/tmp\\s+tmpfs.*defaults/{"
+                     "/noexec/!s/defaults/defaults,noexec/;"
+                     "/nosuid/!s/defaults/defaults,nosuid/;"
+                     "/nodev/!s/defaults/defaults,nodev/"
+                     "}' /etc/fstab"});
+            ui::ok("/tmp tmpfs entry amended with noexec,nosuid,nodev");
+        }
     }
 
     if (sh::run({"sh", "-c",
@@ -86,14 +113,16 @@ void run_noexec_tmp(Context&) {
 
     if (sh::run({"sh", "-c",
                  "findmnt /tmp 2>/dev/null | grep -q noexec"}) == 0) {
-        ui::ok("/tmp already noexec live");
+        ui::skipped("/tmp already noexec live");
     } else if (sh::run({"sh", "-c",
                         "sudo mount -o remount,noexec,nosuid,nodev /tmp 2>/dev/null"}) == 0) {
         ui::ok("/tmp live-remounted noexec,nosuid,nodev");
     } else {
         ui::ok("/tmp fstab updated — reboot to apply live (kernel refused: /tmp busy)");
     }
-    ui::substep("backup at /etc/fstab.foxml-bak — revert with: sudo mv /etc/fstab.foxml-bak /etc/fstab");
+    if (!tmp_locked) {
+        ui::substep("backup at /etc/fstab.foxml-bak — revert with: sudo mv /etc/fstab.foxml-bak /etc/fstab");
+    }
 }
 
 }  // namespace fox_install

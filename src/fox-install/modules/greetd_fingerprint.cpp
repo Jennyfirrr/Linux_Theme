@@ -91,7 +91,7 @@ void run_greetd_fingerprint(Context& ctx) {
         return;
     }
     if (already_wired(greetd_pam)) {
-        ui::ok("/etc/pam.d/greetd already enables pam_fprintd — leaving as-is");
+        ui::skipped("/etc/pam.d/greetd already enables pam_fprintd — leaving as-is");
         return;
     }
 

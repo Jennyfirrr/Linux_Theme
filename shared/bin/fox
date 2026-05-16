@@ -24,6 +24,10 @@ case "$1" in
         shift
         cd "$FOXML_DIR" && exec ./swap.sh "$@"
         ;;
+    tweak)
+        shift
+        exec fox-theme-tweak "$@"
+        ;;
     update|save)
         shift
         cd "$FOXML_DIR" && exec ./update.sh "$@"
@@ -301,7 +305,8 @@ case "$1" in
         echo ""
         echo "Core Commands:"
         echo "  install [theme]  Run the main installer (e.g., fox install FoxML_Classic --deps)"
-        echo "  swap             Open the interactive theme switcher"
+        echo "  swap [theme]     Switch theme (interactive picker if no name given)"
+        echo "  tweak [flags]    Live-edit active theme aesthetics (--primary, --rounding, etc.)"
         echo "  update           Save current live config edits back into templates"
         echo "  rollback         Restore configs from a previous backup"
         echo "  lock             Pre-checked screen lock (dbus/awww sanity + hyprlock)"

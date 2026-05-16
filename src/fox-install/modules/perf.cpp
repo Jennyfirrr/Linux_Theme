@@ -11,8 +11,16 @@
 namespace fox_install {
 
 void run_perf(Context& ctx) {
-    (void)ctx;
     ui::section("Performance tuning");
+
+    bool chrony_installed = sh::run({"sh", "-c",
+                                     "pacman -Qi chrony >/dev/null 2>&1"}) == 0;
+    bool chrony_active = sh::run({"systemctl", "is-active", "--quiet",
+                                  "chronyd"}) == 0;
+    if (chrony_installed && chrony_active && !ctx.force_reapply) {
+        ui::skipped("chronyd already active (replaces timesyncd)");
+        return;
+    }
 
     if (!sh::dry_run() && !sh::sudo_warmup()) {
         ui::err("sudo cache cold — `sudo -v` first");

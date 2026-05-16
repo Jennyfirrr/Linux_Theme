@@ -15,6 +15,7 @@
 // (catches misconfigured directives without leaving the service dead).
 
 #include "../core/context.hpp"
+#include "../core/idempotency.hpp"
 #include "../core/shell.hpp"
 #include "../core/ui.hpp"
 
@@ -50,7 +51,6 @@ bool dir_exists(const fs::path& p) {
 }  // namespace
 
 void run_ollama_hardening(Context& ctx) {
-    (void)ctx;
     ui::section("Ollama systemd hardening drop-in");
 
     if (!unit_exists("ollama.service")) {
@@ -139,6 +139,11 @@ void run_ollama_hardening(Context& ctx) {
 
     fs::path drop_in_dir = "/etc/systemd/system/ollama.service.d";
     fs::path drop_in     = drop_in_dir / "foxml-hardening.conf";
+
+    if (idem::up_to_date(drop_in, body.str(), ctx.force_reapply)) {
+        ui::skipped("ollama hardening drop-in already up to date (GPU: " + has_gpu + ")");
+        return;
+    }
 
     if (sh::run({"sudo", "install", "-d", drop_in_dir.string()}) != 0) {
         ui::err("sudo install -d failed");

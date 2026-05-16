@@ -61,6 +61,12 @@ void ok(const std::string& msg) {
     std::printf("  %s+%s %s\n", c(C_GRN), c(C_RESET), msg.c_str());
 }
 
+void skipped(const std::string& msg) {
+    std::printf("  %s-%s %s%s%s\n",
+                c(C_DIM), c(C_RESET),
+                c(C_DIM), msg.c_str(), c(C_RESET));
+}
+
 void warn(const std::string& msg) {
     std::fprintf(stderr, "%swarning:%s %s\n", c(C_YLW), c(C_RESET), msg.c_str());
 }

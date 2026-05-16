@@ -15,6 +15,13 @@ void run_intel_gpu(Context& ctx) {
         ui::ok("no Intel GPU detected — skipping (set ctx.has_intel_gpu=true to force)");
         return;
     }
+    if (sh::run({"sh", "-c",
+                 "pacman -Qi intel-media-driver libva-intel-driver vulkan-intel "
+                 ">/dev/null 2>&1"}) == 0
+        && !ctx.force_reapply) {
+        ui::skipped("Intel userspace stack already installed");
+        return;
+    }
     if (!sh::dry_run() && !sh::sudo_warmup()) {
         ui::err("sudo cache cold — `sudo -v` first");
         return;

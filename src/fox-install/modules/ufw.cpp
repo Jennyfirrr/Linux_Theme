@@ -62,8 +62,14 @@ void run_ufw(Context& ctx) {
     }
 
     std::string status_out;
-    sh::capture({"sudo", "ufw", "status"}, status_out);
+    sh::capture({"sudo", "ufw", "status", "verbose"}, status_out);
     bool active = status_out.find("Status: active") != std::string::npos;
+    bool baseline_set = status_out.find("Default: deny (incoming)") != std::string::npos
+                     && status_out.find("allow (outgoing)") != std::string::npos;
+    if (active && baseline_set && systemctl_enabled("ufw") && !ctx.force_reapply) {
+        ui::skipped("UFW already active with deny-in/allow-out baseline — skipping");
+        return;
+    }
     if (active) {
         ui::ok("UFW active — re-applying baseline (preserves existing rules)");
     } else {

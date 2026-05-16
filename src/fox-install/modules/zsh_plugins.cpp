@@ -58,7 +58,7 @@ void run_zsh_plugins(Context& ctx) {
             ui::warn(std::string("clone failed: ") + repo);
         }
     }
-    if (cloned == 0) ui::ok("all plugins already present");
+    if (cloned == 0) ui::skipped("all plugins already present");
 }
 
 }  // namespace fox_install

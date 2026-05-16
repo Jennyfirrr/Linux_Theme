@@ -55,7 +55,7 @@ void run_catppuccin_cursor(Context& ctx) {
     fs::path sys_dir  = "/usr/share/icons";
 
     if (fs::is_directory(sys_dir / theme) || fs::is_directory(user_dir / theme)) {
-        ui::ok(theme + " already installed");
+        ui::skipped(theme + " already installed");
         return;
     }
     if (sh::dry_run()) {

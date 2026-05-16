@@ -246,7 +246,7 @@ void install_github_gpg_signing() {
         std::string keys;
         sh::capture({"gh", "gpg-key", "list"}, keys);
         if (keys.find(keyid) != std::string::npos) {
-            ui::ok("GPG key already on GitHub");
+            ui::skipped("GPG key already on GitHub");
         } else {
             std::string status;
             sh::capture({"gh", "auth", "status"}, status);

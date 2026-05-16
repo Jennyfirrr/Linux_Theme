@@ -67,6 +67,8 @@ void print_help(const char* argv0) {
         "      --arm, --paranoid chain into fox-arm at end of install\n"
         "      --arm-heavy, --heavy   ditto, runs fox-arm --heavy\n"
         "      --quiet       suppress per-step chatter (errors still print)\n"
+        "      --no-update   skip install.sh's git self-update (handled by the\n"
+        "                    bash wrapper; equivalent to FOXML_NO_UPDATE=1)\n"
         "  -h, --help        show this help and exit\n"
         "      --version     print version and exit\n\n"
         "Modules (default-on shown with *):\n",
@@ -114,6 +116,7 @@ bool parse(int argc, char** argv, Parsed& out, Context& ctx) {
         if (a == "--resume")               { out.resume = true;       continue; }
         if (a == "--dry-run")              { ctx.dry_run = true;      continue; }
         if (a == "--quiet")                { ctx.quiet = true; out.quiet = true; continue; }
+        if (a == "--no-update")            { /* consumed by install.sh wrapper */ continue; }
 
         if (a == "--phase" && i + 1 < argc) {
             out.phase = argv[++i];

@@ -35,8 +35,13 @@ core/registry.o: core/registry.cpp core/module.hpp core/modules.def
 
 install: all
 	@mkdir -p $(PREFIX)
-	@cp $(BIN) $(PREFIX)/
+	@install -m 755 $(BIN) $(PREFIX)/$(BIN)
 	@echo "  + $(BIN) installed to $(PREFIX)"
+	@# Record the source repo path so the installed binary can find
+	@# templates/ + themes/ when invoked from outside the repo.
+	@mkdir -p $(HOME)/.local/share/foxml
+	@cd ../.. && pwd > $(HOME)/.local/share/foxml/repo-dir
+	@echo "  + repo path recorded: $$(cat $(HOME)/.local/share/foxml/repo-dir)"
 
 test: tests/test_registry
 	@./tests/test_registry

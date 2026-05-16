@@ -96,7 +96,7 @@ void run_etckeeper(Context& ctx) {
         sh::run({"sh", "-c", "sudo etckeeper init >/dev/null 2>&1 || true"});
         ui::ok("etckeeper initialised /etc/.git");
     } else {
-        ui::ok("etckeeper already initialised in /etc");
+        ui::skipped("etckeeper already initialised in /etc");
     }
 
     // Root identity for etckeeper commits.
@@ -152,7 +152,7 @@ void run_etckeeper(Context& ctx) {
             ui::warn("fox-etcwatch.path enable failed — try `systemctl --user unmask fox-etcwatch.path` then re-run --etckeeper");
         }
     } else {
-        ui::ok("fox-etcwatch already configured");
+        ui::skipped("fox-etcwatch already configured");
     }
 }
 

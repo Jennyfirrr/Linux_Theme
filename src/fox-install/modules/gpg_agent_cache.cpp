@@ -92,7 +92,7 @@ void run_gpg_agent_cache(Context& ctx) {
             touched = true;
         }
         if (touched) ui::ok("gpg-agent cache TTL → " + ttl + "s (appended)");
-        else         ui::ok("gpg-agent.conf already has cache TTLs — leaving as-is");
+        else         ui::skipped("gpg-agent.conf already has cache TTLs — leaving as-is");
     }
 
     sh::run({"sh", "-c", "gpgconf --reload gpg-agent 2>/dev/null || true"});

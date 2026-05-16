@@ -73,7 +73,7 @@ void run_papirus_icons(Context& ctx) {
             }
         }
     } else {
-        ui::ok("Papirus already present" + (papirus_root.empty() ? "" : " at " + papirus_root.string()));
+        ui::skipped("Papirus already present" + (papirus_root.empty() ? "" : " at " + papirus_root.string()));
         if (papirus_root.empty()) papirus_root = sys_icons;
     }
 
@@ -85,7 +85,7 @@ void run_papirus_icons(Context& ctx) {
         : ctx.config_home / "foxml/catppuccin-papirus-injected.marker";
 
     if (fs::exists(cat_marker) && !ctx.force_reapply) {
-        ui::ok("Catppuccin folder palette already injected");
+        ui::skipped("Catppuccin folder palette already injected");
     } else {
         if (sh::dry_run()) {
             ui::substep("[dry-run] would inject Catppuccin folder palette into " + papirus_root.string());
@@ -114,7 +114,7 @@ void run_papirus_icons(Context& ctx) {
     // Apply cat-mocha-peach folders
     fs::path pf_marker = ctx.config_home / "foxml/catppuccin-folders-applied.marker";
     if (fs::exists(pf_marker)) {
-        ui::ok("folders already cat-mocha-peach");
+        ui::skipped("folders already cat-mocha-peach");
     } else {
         if (sh::dry_run()) {
             ui::substep("[dry-run] would run papirus-folders -C cat-mocha-peach");

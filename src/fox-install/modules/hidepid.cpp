@@ -5,6 +5,7 @@
 // `# foxml-managed` sentinel and exit early.
 
 #include "../core/context.hpp"
+#include "../core/idempotency.hpp"
 #include "../core/shell.hpp"
 #include "../core/ui.hpp"
 
@@ -49,7 +50,7 @@ bool write_root_file(const fs::path& dst, const std::string& body) {
 
 }  // namespace
 
-void run_hidepid(Context&) {
+void run_hidepid(Context& ctx) {
     ui::section("/proc hidepid=2 (hide other users' processes)");
 
     if (sh::dry_run()) {
@@ -63,6 +64,16 @@ void run_hidepid(Context&) {
     }
 
     fs::path unit = "/etc/systemd/system/proc-hidepid.service";
+    bool enabled = sh::run({"systemctl", "is-enabled", "--quiet",
+                            "proc-hidepid.service"}) == 0;
+    bool live_applied = sh::run({"sh", "-c",
+                                 "grep -q 'hidepid=2' /proc/mounts"}) == 0;
+    if (idem::up_to_date(unit, UNIT_BODY, ctx.force_reapply)
+        && enabled && live_applied) {
+        ui::skipped("/proc hidepid=2 already enabled and live");
+        return;
+    }
+
     if (!write_root_file(unit, UNIT_BODY)) {
         ui::err("could not write " + unit.string());
         return;

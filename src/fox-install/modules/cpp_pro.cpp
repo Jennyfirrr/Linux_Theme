@@ -21,9 +21,16 @@
 
 namespace fox_install {
 
-void run_cpp_pro(Context&) {
+void run_cpp_pro(Context& ctx) {
     ui::section("C++ toolchain extras (clang / lldb / mold / valgrind / perf)");
 
+    if (sh::run({"sh", "-c",
+                 "pacman -Qi clang lldb mold ccache gdb valgrind perf hyperfine "
+                 ">/dev/null 2>&1"}) == 0
+        && !ctx.force_reapply) {
+        ui::skipped("C++ toolchain extras already installed");
+        return;
+    }
     if (sh::dry_run()) {
         ui::substep("[dry-run] would pacman -S clang lldb mold ccache gdb "
                     "valgrind perf hyperfine");

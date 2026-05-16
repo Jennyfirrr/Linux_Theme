@@ -28,16 +28,26 @@ namespace {
 constexpr const char* DEFAULT_THEME = "FoxML_Classic";
 
 fs::path detect_script_dir(const char* argv0) {
-    // argv0 typically points inside the repo or at $HOME/.local/bin.
-    // For dev runs (./src/fox-install/fox-install …) we want the repo
-    // root so templates/, themes/, shared/ resolve correctly.
+    // Resolution order:
+    //   1. $FOXML_REPO env var (explicit override).
+    //   2. Walk up from argv0 looking for templates/ + themes/. This works
+    //      for dev runs (./src/fox-install/fox-install …).
+    //   3. ~/.local/share/foxml/repo-dir marker, written by `make install`
+    //      so a binary at ~/.local/bin/fox-install can find its source.
+    //   4. fs::current_path() as last resort.
+    if (const char* env = std::getenv("FOXML_REPO"); env && *env) {
+        fs::path p = env;
+        if (fs::is_directory(p / "templates") && fs::is_directory(p / "themes")) {
+            return p;
+        }
+    }
+
     fs::path p = argv0;
     if (!p.is_absolute()) {
         std::error_code ec;
         p = fs::absolute(p, ec);
     }
     p = fs::weakly_canonical(p);
-    // Walk up until we find a dir containing both `templates/` and `themes/`.
     fs::path dir = p.parent_path();
     while (!dir.empty() && dir != dir.root_path()) {
         if (fs::is_directory(dir / "templates") &&
@@ -46,6 +56,22 @@ fs::path detect_script_dir(const char* argv0) {
         }
         dir = dir.parent_path();
     }
+
+    if (const char* home = std::getenv("HOME"); home && *home) {
+        fs::path marker = fs::path(home) / ".local/share/foxml/repo-dir";
+        std::ifstream f(marker);
+        if (f) {
+            std::string line;
+            if (std::getline(f, line) && !line.empty()) {
+                fs::path repo = line;
+                if (fs::is_directory(repo / "templates") &&
+                    fs::is_directory(repo / "themes")) {
+                    return repo;
+                }
+            }
+        }
+    }
+
     return fs::current_path();
 }
 

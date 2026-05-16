@@ -6,6 +6,7 @@
 // mappings.sh::install_mac_random.
 
 #include "../core/context.hpp"
+#include "../core/idempotency.hpp"
 #include "../core/shell.hpp"
 #include "../core/ui.hpp"
 
@@ -48,7 +49,7 @@ bool write_root_file(const fs::path& dst, const std::string& body) {
 
 }  // namespace
 
-void run_mac_random(Context&) {
+void run_mac_random(Context& ctx) {
     ui::section("NetworkManager MAC randomization");
 
     if (sh::dry_run()) {
@@ -62,6 +63,10 @@ void run_mac_random(Context&) {
     }
 
     fs::path conf = "/etc/NetworkManager/conf.d/00-foxml-mac-random.conf";
+    if (idem::up_to_date(conf, MAC_RANDOM_BODY, ctx.force_reapply)) {
+        ui::skipped("MAC randomization config already up to date");
+        return;
+    }
     if (!write_root_file(conf, MAC_RANDOM_BODY)) {
         ui::err("could not write " + conf.string());
         return;

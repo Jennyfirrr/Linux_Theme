@@ -2,6 +2,26 @@
 
 All notable changes to the Fox ML theme.
 
+## 2026-05-16 — v2.8.4
+
+### Installer idempotency + render safety
+
+Re-running the installer used to silently rewrite system files and re-prompt wizard questions every time. The audit below makes modules check on-disk content before writing, and the render module refuses to wipe live `~/.config` edits without asking first.
+
+- **`core/idempotency.hpp`** — new header-only helper: `idem::up_to_date(path, expected_body, force_reapply)` returns true when `path` exists with byte-for-byte matching content. Modules opt in by including it and early-returning when the check passes. `--full` (sets `ctx.force_reapply`) forces re-apply.
+- **Guarded ~17 modules** — `ufw`, `arch_audit`, `hidepid`, `no_coredumps`, `noexec_tmp`, `makepkg_hardening`, `mac_random`, `privacy`, `ollama_hardening`, `endlessh`, `fprint`, `ai` (model pull short-circuit), `amd_gpu`, `intel_gpu`, `nvidia` (pacman pre-check), `cpp_pro`, `perf`, `wallpaper` (prompt now defaults to existing autostart state), `configure_opencode` (content-checks JSON before rewriting). Opt-in wizards (`ssh-harden`, `throttling`, `github`) intentionally re-prompt — they only run with explicit flags.
+- **Render drift detector** — before re-rendering, `modules/render.cpp` compares the prior rendered output (in `ctx.rendered_dir`) against the deployed copies in `~/.config`. If any deployed file differs, it lists the drifted paths, suggests `./update.sh`, and prompts y/N. `--yes` / non-TTY aborts to protect edits; `--full` overrides.
+- **`ui::skipped()`** — new dim-text helper for "already configured" lines. Re-runs now print a wall of dim `- foo already configured` lines so successful no-op installs are visually distinct from real work.
+- **`--no-update` CLI flag** — surfaces the existing `FOXML_NO_UPDATE=1` env var. Skips `install.sh`'s git self-update + sudo warmup. Stripped from argv by `install.sh` and silently consumed by `fox-install` so calling either directly accepts it.
+- **`fox-install` finds the repo from anywhere** — previously, running the installed binary from outside the repo set `script_dir` to `fs::current_path()`, which caused `themes/` resolution to fail. New resolution order: `$FOXML_REPO` env → walk-up from argv0 → `~/.local/share/foxml/repo-dir` marker (written by `make install`) → cwd. The marker is written automatically when `install.sh` triggers `make install`, so a fresh clone + first install still works.
+- **Lean theme swap path** — `swap.sh` and `fox-theme-tweak` no longer route through `install.sh` (with its boot-space check, git self-update, sudo warmup, and full default-on module list). They exec `fox-install` directly with `--only theme,render,symlinks,specials --yes --quiet`. Falls back to `install.sh` if the native binary isn't built yet.
+- **`fox swap [theme]` non-interactive** — `swap.sh` now accepts a positional theme name and skips the interactive picker; `fox swap FoxML_Classic` works from anywhere.
+- **`fox tweak`** — new dispatcher verb in `shared/bin/fox` that delegates to `fox-theme-tweak`. Surfaces live aesthetic tweaks (`--primary`, `--rounding`, `--opacity`, etc.) under the unified `fox` entrypoint.
+- **No stray `.foxml-bak` files** — `noexec_tmp` now only writes `/etc/fstab.foxml-bak` when it's actually about to edit fstab. Other backup callers (`fprint_pam`, `greetd_fingerprint`, `iommu`, `nvidia`) were already gated.
+- **`FoxML_Rose` theme** — rose-gold + lilac on cool purple-black, softer geometry (rounding 16, blur 5/3, gaps 8/16, 1px border, opacity 0.55). Swap with `fox swap FoxML_Rose`.
+
+---
+
 ## 2026-05-15 — v2.8.3
 
 ### Popup glass: blur + tunable transparency

@@ -18,6 +18,7 @@ bool tty();                                   // are we writing to a real TTY?
 void section(const std::string& title);       // ":: Title"
 void substep(const std::string& msg);         // " -> msg"
 void ok     (const std::string& msg);         // "  + msg"
+void skipped(const std::string& msg);         // "  - msg" dimmed — "already configured" lines
 void warn   (const std::string& msg);         // "warning: msg"
 void err    (const std::string& msg);         // "error: msg"
 

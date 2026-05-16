@@ -11,6 +11,7 @@
 //     claude-skills wired in via relative path.
 
 #include "../core/context.hpp"
+#include "../core/idempotency.hpp"
 #include "../core/shell.hpp"
 #include "../core/ui.hpp"
 
@@ -142,27 +143,45 @@ void run_configure_opencode(Context& ctx) {
         {"theme",   "foxml"},
     };
 
-    fs::create_directories(conf_dir);
-    { std::ofstream o(conf_dir / "opencode.json"); o << opencode_json.dump(2); }
-    { std::ofstream o(conf_dir / "tui.json");      o << tui_json.dump(2); }
+    std::string opencode_body = opencode_json.dump(2);
+    std::string tui_body      = tui_json.dump(2);
+    fs::path opencode_path = conf_dir / "opencode.json";
+    fs::path tui_path      = conf_dir / "tui.json";
 
-    ui::ok("theme: foxml (palette-driven)");
-    ui::ok("models exposed to picker: " + std::to_string(models.size()) +
-           " (default: " + default_model + ")");
-    ui::ok("skill workspaces wired: " + std::to_string(skill_paths.size()));
+    bool user_configs_current =
+        idem::up_to_date(opencode_path, opencode_body, ctx.force_reapply) &&
+        idem::up_to_date(tui_path,      tui_body,      ctx.force_reapply);
+
+    if (user_configs_current) {
+        ui::skipped("opencode.json + tui.json already up to date");
+    } else {
+        fs::create_directories(conf_dir);
+        { std::ofstream o(opencode_path); o << opencode_body; }
+        { std::ofstream o(tui_path);      o << tui_body; }
+        ui::ok("theme: foxml (palette-driven)");
+        ui::ok("models exposed to picker: " + std::to_string(models.size()) +
+               " (default: " + default_model + ")");
+        ui::ok("skill workspaces wired: " + std::to_string(skill_paths.size()));
+    }
 
     // Project-local override at .opencode/opencode.json — references the
     // in-repo claude-skills via a relative path. Safe to commit (no
     // username / path leaks).
-    fs::path proj_dir = ctx.script_dir / ".opencode";
-    fs::create_directories(proj_dir);
+    fs::path proj_dir  = ctx.script_dir / ".opencode";
+    fs::path proj_path = proj_dir / "opencode.json";
     json proj = {
         {"$schema", "https://opencode.ai/config.json"},
         {"skills",  {{"paths", json::array({ "./claude-skills" })}}},
     };
-    std::ofstream o(proj_dir / "opencode.json");
-    o << proj.dump(2);
-    ui::ok("project-local .opencode/opencode.json written");
+    std::string proj_body = proj.dump(2);
+    if (idem::up_to_date(proj_path, proj_body, ctx.force_reapply)) {
+        ui::skipped("project-local .opencode/opencode.json already up to date");
+    } else {
+        fs::create_directories(proj_dir);
+        std::ofstream o(proj_path);
+        o << proj_body;
+        ui::ok("project-local .opencode/opencode.json written");
+    }
 }
 
 }  // namespace fox_install

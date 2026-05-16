@@ -18,6 +18,7 @@
 //     after the drop-in lands.
 
 #include "../core/context.hpp"
+#include "../core/idempotency.hpp"
 #include "../core/shell.hpp"
 #include "../core/ui.hpp"
 
@@ -66,7 +67,6 @@ bool write_root_file(const fs::path& path, const std::string& body) {
 }  // namespace
 
 void run_privacy(Context& ctx) {
-    (void)ctx;
     ui::section("Configuring DNS-over-HTTPS + DNSSEC strictness");
 
     if (sh::dry_run()) {
@@ -81,28 +81,34 @@ void run_privacy(Context& ctx) {
         return;
     }
 
-    if (!write_root_file(DOH_PATH, DOH_BODY)) {
+    if (idem::up_to_date(DOH_PATH, DOH_BODY, ctx.force_reapply)) {
+        ui::skipped(std::string(DOH_PATH) + " already up to date");
+    } else if (!write_root_file(DOH_PATH, DOH_BODY)) {
         ui::err("could not install " + std::string(DOH_PATH));
         return;
-    }
-    ui::ok("wrote " + std::string(DOH_PATH));
-
-    // DNSSEC strictness picker. Mirrors the bash install_resolved_dnssec
-    // [0/1/2] choice. Defaults to '1' (allow-downgrade) for the
-    // recommended laptop posture: validate when upstream supports it,
-    // accept gracefully when it doesn't.
-    std::printf("  DNSSEC strictness:\n"
-                "    [0] off — DoH only (no validation)\n"
-                "    [1] relaxed (allow-downgrade) [recommended]\n"
-                "    [2] strict (yes) — can wedge DNS on hotel/cafe wifi\n"
-                "  choose [1]: ");
-    char picked = ui::ask_choice("", "012", '1', ctx.assume_yes);
-    const char* val = dnssec_value(picked);
-    std::string dnssec_body = std::string("[Resolve]\nDNSSEC=") + val + "\n";
-    if (!write_root_file(DNSSEC_PATH, dnssec_body)) {
-        ui::warn("could not install " + std::string(DNSSEC_PATH));
     } else {
-        ui::ok("wrote " + std::string(DNSSEC_PATH) + " (DNSSEC=" + val + ")");
+        ui::ok("wrote " + std::string(DOH_PATH));
+    }
+
+    // DNSSEC strictness picker. Re-prompt only when the drop-in is
+    // missing or --full was passed; the user's last choice is whatever
+    // currently lives at DNSSEC_PATH, so preserve it across re-runs.
+    if (fs::exists(DNSSEC_PATH) && !ctx.force_reapply) {
+        ui::skipped(std::string(DNSSEC_PATH) + " already configured — keeping current DNSSEC choice");
+    } else {
+        std::printf("  DNSSEC strictness:\n"
+                    "    [0] off — DoH only (no validation)\n"
+                    "    [1] relaxed (allow-downgrade) [recommended]\n"
+                    "    [2] strict (yes) — can wedge DNS on hotel/cafe wifi\n"
+                    "  choose [1]: ");
+        char picked = ui::ask_choice("", "012", '1', ctx.assume_yes);
+        const char* val = dnssec_value(picked);
+        std::string dnssec_body = std::string("[Resolve]\nDNSSEC=") + val + "\n";
+        if (!write_root_file(DNSSEC_PATH, dnssec_body)) {
+            ui::warn("could not install " + std::string(DNSSEC_PATH));
+        } else {
+            ui::ok("wrote " + std::string(DNSSEC_PATH) + " (DNSSEC=" + val + ")");
+        }
     }
 
     // Comment any active DNSSEC= line in the main resolved.conf — leaving

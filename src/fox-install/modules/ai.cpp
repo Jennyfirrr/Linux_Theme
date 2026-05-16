@@ -63,7 +63,6 @@ void wait_for_http(const std::string& url, int max_attempts, int sleep_ms) {
 }  // namespace
 
 void run_ai(Context& ctx) {
-    (void)ctx;
     ui::section("Installing AI tooling (Ollama + OpenCode + aider)");
 
     if (!sh::dry_run() && !sh::sudo_warmup()) {
@@ -73,7 +72,7 @@ void run_ai(Context& ctx) {
 
     // 1. Ollama
     if (have("ollama")) {
-        ui::ok("Ollama already installed");
+        ui::skipped("Ollama already installed");
     } else {
         ui::substep("installing Ollama");
         install_via_aur_or_script("ollama-bin",
@@ -92,25 +91,33 @@ void run_ai(Context& ctx) {
                 ui::warn("could not enable ollama via systemd — start it manually");
             }
         } else {
-            ui::ok("ollama.service already active");
+            ui::skipped("ollama.service already active");
         }
     }
 
     // 3. Embedding model (libfox-intel RAG dep — used by findex/fask)
-    ui::substep("pulling mxbai-embed-large (embedding model, ~670 MB)");
-    for (int attempt = 1; attempt <= 3; ++attempt) {
-        if (sh::run({"ollama", "pull", "mxbai-embed-large"}) == 0) break;
-        if (attempt == 3) {
-            ui::warn("mxbai-embed-large pull failed after 3 attempts — retry: `ollama pull mxbai-embed-large`");
-            break;
+    {
+        bool model_present = sh::run({"sh", "-c",
+            "ollama list 2>/dev/null | grep -q mxbai-embed-large"}) == 0;
+        if (model_present && !ctx.force_reapply) {
+            ui::skipped("mxbai-embed-large already pulled");
+        } else {
+            ui::substep("pulling mxbai-embed-large (embedding model, ~670 MB)");
+            for (int attempt = 1; attempt <= 3; ++attempt) {
+                if (sh::run({"ollama", "pull", "mxbai-embed-large"}) == 0) break;
+                if (attempt == 3) {
+                    ui::warn("mxbai-embed-large pull failed after 3 attempts — retry: `ollama pull mxbai-embed-large`");
+                    break;
+                }
+                ui::substep("retrying in 3s (attempt " + std::to_string(attempt + 1) + "/3)");
+                std::this_thread::sleep_for(std::chrono::seconds(3));
+            }
         }
-        ui::substep("retrying in 3s (attempt " + std::to_string(attempt + 1) + "/3)");
-        std::this_thread::sleep_for(std::chrono::seconds(3));
     }
 
     // 4. OpenCode (chat-style CLI client that uses Ollama)
     if (have("opencode")) {
-        ui::ok("OpenCode already installed");
+        ui::skipped("OpenCode already installed");
     } else {
         ui::substep("installing OpenCode");
         install_via_aur_or_script("opencode-bin",
@@ -121,7 +128,7 @@ void run_ai(Context& ctx) {
     // commit-per-edit workflows. Python tool, so AUR (aider-chat) first,
     // pipx fallback — no curl|sh path makes sense here.
     if (have("aider")) {
-        ui::ok("aider already installed");
+        ui::skipped("aider already installed");
     } else {
         ui::substep("installing aider-chat (pulls ~60 Python deps — 2-5 min)");
         std::string aur = aur_helper();

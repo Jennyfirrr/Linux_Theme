@@ -72,7 +72,7 @@ void run_vault(Context& ctx) {
 
     bool wrote = write_unit(unit_path, unit);
     if (wrote) ui::ok("wrote " + unit_path.string());
-    else       ui::ok("unit already current");
+    else       ui::skipped("unit already current");
 
     if (sh::dry_run()) {
         ui::substep("[dry-run] would daemon-reload + enable --now " + std::string(UNIT_NAME));

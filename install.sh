@@ -20,6 +20,18 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FOX_INSTALL_BIN="$SCRIPT_DIR/src/fox-install/fox-install"
 
+# Strip --no-update from argv and set FOXML_NO_UPDATE=1 so the
+# self-update block below skips the git fetch + re-exec. Equivalent
+# to `FOXML_NO_UPDATE=1 ./install.sh` but discoverable from --help.
+_argv=()
+for _a in "$@"; do
+    case "$_a" in
+        --no-update) export FOXML_NO_UPDATE=1 ;;
+        *) _argv+=("$_a") ;;
+    esac
+done
+set -- "${_argv[@]+"${_argv[@]}"}"
+
 # ─────────────────────────────────────────
 # Pre-install checks.
 # ─────────────────────────────────────────

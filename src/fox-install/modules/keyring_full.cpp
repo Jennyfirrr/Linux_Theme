@@ -56,7 +56,7 @@ void run_keyring_full(Context& ctx) {
     if (masked > 0) {
         ui::ok("masked " + std::to_string(masked) + " gnome-keyring autostart unit(s)");
     } else {
-        ui::ok("gnome-keyring limited autostart units already masked");
+        ui::skipped("gnome-keyring limited autostart units already masked");
     }
 
     // Bridge the current session. Masking the limited units stops new

@@ -4,6 +4,7 @@
 // there are upgradable CVEs (--uf upgrades-only flag).
 
 #include "../core/context.hpp"
+#include "../core/idempotency.hpp"
 #include "../core/shell.hpp"
 #include "../core/ui.hpp"
 
@@ -70,8 +71,21 @@ void run_arch_audit(Context& ctx) {
     }
 
     fs::path unit_dir = ctx.config_home / "systemd/user";
-    write_file(unit_dir / "foxml-arch-audit.service", SERVICE_BODY);
-    write_file(unit_dir / "foxml-arch-audit.timer",   TIMER_BODY);
+    fs::path service_unit = unit_dir / "foxml-arch-audit.service";
+    fs::path timer_unit   = unit_dir / "foxml-arch-audit.timer";
+
+    bool units_up_to_date =
+        idem::up_to_date(service_unit, SERVICE_BODY, ctx.force_reapply) &&
+        idem::up_to_date(timer_unit,   TIMER_BODY,   ctx.force_reapply);
+    bool timer_enabled = sh::run({"systemctl", "--user", "is-enabled",
+                                  "--quiet", "foxml-arch-audit.timer"}) == 0;
+    if (units_up_to_date && timer_enabled) {
+        ui::skipped("arch-audit daily timer already installed");
+        return;
+    }
+
+    write_file(service_unit, SERVICE_BODY);
+    write_file(timer_unit,   TIMER_BODY);
 
     sh::systemctl_daemon_reload(/*user=*/true);
     if (sh::systemctl_enable("foxml-arch-audit.timer", /*user=*/true) == 0) {

@@ -20,6 +20,12 @@ void run_amd_gpu(Context& ctx) {
         ui::ok("no AMD GPU detected — skipping (set ctx.has_amd_gpu=true to force)");
         return;
     }
+    if (sh::run({"sh", "-c",
+                 "pacman -Qi vulkan-radeon libva-mesa-driver >/dev/null 2>&1"}) == 0
+        && !ctx.force_reapply) {
+        ui::skipped("AMD userspace stack already installed");
+        return;
+    }
     if (!sh::dry_run() && !sh::sudo_warmup()) {
         ui::err("sudo cache cold — `sudo -v` first");
         return;

@@ -83,7 +83,7 @@ void run_iommu(Context& ctx) {
     if (sh::run({"sh", "-c",
                  "sudo grep -q \"" + iommu_args + "\" " + cmdline_file.string()}) == 0
         && !ctx.force_reapply) {
-        ui::ok("IOMMU already enabled in " + cmdline_file.string());
+        ui::skipped("IOMMU already enabled in " + cmdline_file.string());
         return;
     }
 

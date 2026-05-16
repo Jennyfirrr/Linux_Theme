@@ -10,6 +10,7 @@
 // for port 22 (endlessh wants connections, not blocks).
 
 #include "../core/context.hpp"
+#include "../core/idempotency.hpp"
 #include "../core/shell.hpp"
 #include "../core/ui.hpp"
 
@@ -87,12 +88,22 @@ bool write_root_file(const fs::path& dst, const std::string& body) {
 
 }  // namespace
 
-void run_endlessh(Context&) {
+void run_endlessh(Context& ctx) {
     ui::section("Endlessh tarpit — port 22 honeypot");
 
     std::string port = real_ssh_port();
     if (port.empty() || port == "22") {
         ui::ok("Endlessh skipped — real sshd on port 22 (run --ssh-harden first to move it)");
+        return;
+    }
+
+    bool active = sh::run({"sh", "-c",
+                           "sudo systemctl is-active --quiet endlessh 2>/dev/null "
+                           "|| sudo systemctl is-active --quiet endlessh-go 2>/dev/null"}) == 0;
+    if (have("endlessh")
+        && idem::up_to_date("/etc/endlessh/config", CONF_BODY, ctx.force_reapply)
+        && active) {
+        ui::skipped("endlessh tarpit already running on :22 (real sshd on " + port + ")");
         return;
     }
 

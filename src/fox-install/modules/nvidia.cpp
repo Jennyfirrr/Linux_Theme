@@ -135,7 +135,14 @@ void run_nvidia(Context& ctx) {
     }
 
     // 1. Driver packages.
-    sh::pacman({"nvidia-open-dkms", "linux-headers", "libva-nvidia-driver"});
+    if (sh::run({"sh", "-c",
+                 "pacman -Qi nvidia-open-dkms linux-headers libva-nvidia-driver "
+                 ">/dev/null 2>&1"}) == 0
+        && !ctx.force_reapply) {
+        ui::skipped("NVIDIA driver packages already installed");
+    } else {
+        sh::pacman({"nvidia-open-dkms", "linux-headers", "libva-nvidia-driver"});
+    }
 
     // 2. PCI / DRM detection.
     std::string nvidia_addr = find_pci_addr_by_vendor({"0x10de"});
@@ -209,7 +216,7 @@ void run_nvidia(Context& ctx) {
             sh::run({"sudo", "mkinitcpio", "-P"});
         }
     } else if (file_contains(mkinit, "nvidia_drm")) {
-        ui::ok("mkinitcpio already has nvidia modules");
+        ui::skipped("mkinitcpio already has nvidia modules");
     }
 
     // 5. systemd-boot kernel cmdline.

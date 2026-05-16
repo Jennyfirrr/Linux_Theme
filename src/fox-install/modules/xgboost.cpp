@@ -28,7 +28,7 @@ void run_xgboost(Context& ctx) {
     ui::section("XGBoost — build from source");
 
     if (fs::exists("/usr/local/lib/libxgboost.so")) {
-        ui::ok("XGBoost already installed (skipping build)");
+        ui::skipped("XGBoost already installed (skipping build)");
         return;
     }
 
@@ -47,7 +47,7 @@ void run_xgboost(Context& ctx) {
             return;
         }
     } else {
-        ui::ok("xgboost checkout already present at " + xgb_dir.string());
+        ui::skipped("xgboost checkout already present at " + xgb_dir.string());
     }
 
     fs::path build_dir = xgb_dir / "build";

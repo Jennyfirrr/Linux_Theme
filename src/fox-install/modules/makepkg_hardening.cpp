@@ -7,6 +7,7 @@
 // mappings.sh::install_makepkg_hardening.
 
 #include "../core/context.hpp"
+#include "../core/idempotency.hpp"
 #include "../core/shell.hpp"
 #include "../core/ui.hpp"
 
@@ -46,7 +47,7 @@ bool write_root_file(const fs::path& dst, const std::string& body) {
 
 }  // namespace
 
-void run_makepkg_hardening(Context&) {
+void run_makepkg_hardening(Context& ctx) {
     ui::section("makepkg.conf hardening (FORTIFY_SOURCE=3 + stack-protector + PIE)");
 
     if (sh::dry_run()) {
@@ -59,6 +60,10 @@ void run_makepkg_hardening(Context&) {
     }
 
     fs::path dst = "/etc/makepkg.conf.d/99-foxml-hardening.conf";
+    if (idem::up_to_date(dst, BODY, ctx.force_reapply)) {
+        ui::skipped("makepkg hardening drop-in already up to date");
+        return;
+    }
     if (write_root_file(dst, BODY)) {
         ui::ok("makepkg hardening drop-in (applies to every AUR build)");
     } else {

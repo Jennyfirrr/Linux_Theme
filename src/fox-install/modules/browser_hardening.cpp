@@ -119,7 +119,7 @@ void do_arkenfox(const Context& ctx) {
             fs::remove(tmp, ec);
         }
     } else {
-        ui::ok("arkenfox user.js already up-to-date");
+        ui::skipped("arkenfox user.js already up-to-date");
     }
 
     if (!fs::exists(overrides)) {
@@ -146,7 +146,7 @@ void do_firejail(const Context& ctx) {
             ui::ok("firejail symlinks applied (firefox now runs sandboxed)");
         }
     } else {
-        ui::ok("firejail already wired for firefox");
+        ui::skipped("firejail already wired for firefox");
     }
 
     // Walk back firecfg's overreach. The default firecfg wraps ~60
@@ -205,7 +205,7 @@ void do_firejail(const Context& ctx) {
         o << FIREJAIL_LOCAL_BODY;
         ui::ok("firejail firefox.local override (DNS pinned to 127.0.0.53 for DoH)");
     } else {
-        ui::ok("firejail firefox.local already configured");
+        ui::skipped("firejail firefox.local already configured");
     }
 }
 
